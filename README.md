@@ -74,6 +74,25 @@ Este repositório já possui blueprint de deploy em `render.yaml` para subir:
 
 Guia operacional rápido: `DEPLOY_RENDER_SUPABASE.md`.
 
+### Deploy automatizado via GitHub Actions
+
+Este repositório agora possui workflows em `.github/workflows` para publicar automaticamente:
+
+- Frontend no GitHub Pages: `.github/workflows/deploy-frontend-pages.yml`
+- Backend no Render (deploy hook): `.github/workflows/deploy-backend-render.yml`
+
+Configure os seguintes secrets no GitHub (Settings > Secrets and variables > Actions):
+
+- `VITE_API_URL` (obrigatório para o frontend)
+- `VITE_SUPABASE_URL` (opcional)
+- `VITE_SUPABASE_ANON_KEY` (opcional)
+- `RENDER_DEPLOY_HOOK_URL` (obrigatório para acionar deploy do backend no Render)
+
+Observações:
+
+- O workflow do frontend faz build com `VITE_BASE_PATH=/<repo>/` para compatibilidade com GitHub Pages.
+- O backend continua hospedado no Render (GitHub apenas dispara o deploy automático).
+
 ### 1) Criar projeto no Supabase
 
 1. Crie um novo projeto no Supabase.
