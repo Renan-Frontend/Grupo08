@@ -3,6 +3,7 @@ import styles from './Usuarios.module.css';
 import { UserContext } from '../../Context/UserContext';
 import Pagination from '../Common/Pagination';
 import Close from '../Helper/Close';
+import { USER_GET, USER_PUT, USER_DELETE } from '../../Api';
 
 const niveis = [
   {
@@ -55,7 +56,12 @@ function Usuarios() {
   };
 
   const fetchUsuarios = (page = 1) => {
-    fetch(`http://localhost:8000/users?page=${page}&limit=8`)
+    const { url, options } = USER_GET(token);
+    const usersUrl = new URL(url);
+    usersUrl.searchParams.set('page', String(page));
+    usersUrl.searchParams.set('limit', '8');
+
+    fetch(usersUrl.toString(), options)
       .then((res) => res.json())
       .then((data) => setUsuarios(data))
       .catch((err) => console.error('Erro ao buscar usuários:', err));
@@ -74,19 +80,17 @@ function Usuarios() {
 
   const handleSave = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8000/users/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      const { url, options } = USER_PUT(
+        id,
+        {
           nivel: nivelEdit,
           cargo: cargoEdit,
           admin: adminEdit,
           role: adminEdit ? 'admin' : 'user',
-        }),
-      });
+        },
+        token,
+      );
+      const res = await fetch(url, options);
 
       if (!res.ok) {
         const message = await getErrorMessage(res);
@@ -103,12 +107,8 @@ function Usuarios() {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:8000/users/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { url, options } = USER_DELETE(id, token);
+      const res = await fetch(url, options);
 
       if (!res.ok) {
         const message = await getErrorMessage(res);
