@@ -1,0 +1,14 @@
+{
+  "name": "bp-company-root",
+  "private": true,
+  "scripts": {
+    "dev": "cd Frontend && npm run dev",
+    "dev:frontend": "cd Frontend && npm run dev",
+    "build": "cd Frontend && npm run build",
+    "preview": "cd Frontend && npm run preview",
+    "dev:backend": "cd Backend && uvicorn main:app --reload",
+    "start": "cd Frontend && npm run preview",
+    "deploy:check": "node scripts/deploy-check.mjs",
+    "deploy:check:strict": "node scripts/deploy-check.mjs --strict"
+  }
+}
