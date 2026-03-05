@@ -1,0 +1,157 @@
+.dashboardContainer {
+  background: #f7f7f7;
+  padding: 2rem;
+  border-radius: 0.75rem;
+  min-height: calc(100vh - 4rem);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.pageTitle {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* ==================== METRICS GRID ==================== */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.metricCard {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  border: 1px solid #eee;
+}
+
+.metricIcon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  color: #2fa866;
+}
+
+.metricContent {
+  flex: 1;
+}
+
+.metricLabel {
+  font-size: 0.75rem;
+  color: #777;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.metricValue {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.metricChange {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2fa866;
+}
+
+/* ==================== CHART SECTION ==================== */
+.chartSection {
+  background: white;
+  border-radius: 0.5rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  border: 1px solid #eee;
+}
+
+.chartHeader {
+  margin-bottom: 1.5rem;
+}
+
+.chartTitle {
+  font-size: 1.4rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  font-weight: 700;
+}
+
+.chartSubtitle {
+  color: #777;
+  font-size: 1rem;
+}
+
+.chartPlaceholder {
+  position: relative;
+}
+
+.chart {
+  width: 100%;
+  height: auto;
+  max-height: 350px;
+}
+
+.chartFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #eee;
+}
+
+.chartGrowth {
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.chartGrowthValue {
+  color: #2fa866;
+}
+
+.chartTotal {
+  font-size: 0.9rem;
+  color: #777;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 1024px) {
+  .dashboardContainer {
+    padding: 1.25rem;
+    min-height: auto;
+  }
+
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardContainer {
+    padding: 1rem;
+    min-height: auto;
+  }
+
+  .pageTitle {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .metricsGrid {
+    gap: 1rem;
+  }
+
+  .chartSection {
+    padding: 1rem;
+  }
+}

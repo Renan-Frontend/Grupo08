@@ -1,0 +1,213 @@
+.board {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.boardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.boardTitle {
+  margin: 0 0 0.65rem;
+  color: #1f2937;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.boardText {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.openButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  font-size: 0.86rem;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+
+.openButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.draftSection {
+  margin-top: 1rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 0.8rem;
+  background: #ffffff;
+}
+
+.helperText {
+  margin: 0.9rem 0 0;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.metaGrid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.metaCard {
+  border: 1px solid #dbe1ea;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.metaLabel {
+  color: #64748b;
+  font-size: 0.74rem;
+}
+
+.metaValue {
+  color: #0f172a;
+  font-size: 0.84rem;
+  word-break: break-word;
+}
+
+.entitySection {
+  margin-top: 1rem;
+  border-top: 1px solid #dbe1ea;
+  padding-top: 1rem;
+}
+
+.entityTitle {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  color: #1f2937;
+}
+
+.entityRow {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.entitySelect {
+  flex: 1;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  background: #fff;
+}
+
+.secondaryButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primaryButton {
+  border: 1px solid #278a55;
+  background: #2fa866;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #278a55;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.entityActions {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1024px) {
+  .metaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .entityRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 768px) {
+  .board {
+    padding: 0.9rem;
+  }
+
+  .boardHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .openButton {
+    width: 100%;
+    min-height: 2.2rem;
+  }
+
+  .entityActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .secondaryButton,
+  .primaryButton {
+    width: 100%;
+    min-height: 2.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .board {
+    padding: 0.75rem;
+  }
+
+  .boardTitle {
+    font-size: 0.88rem;
+  }
+
+  .boardText,
+  .helperText {
+    font-size: 0.8rem;
+  }
+
+  .metaCard {
+    padding: 0.5rem 0.6rem;
+  }
+
+  .metaValue {
+    font-size: 0.8rem;
+  }
+}

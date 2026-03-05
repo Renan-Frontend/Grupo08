@@ -1,0 +1,776 @@
+.pipelineShell {
+  display: flex;
+  flex-direction: column;
+}
+
+.pipelineFrame {
+  background: #efefef;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.4rem;
+  display: flex;
+  gap: 0;
+  align-items: stretch;
+  overflow: visible;
+}
+
+.pipelineLeft {
+  background: #2fb36d;
+  border-radius: 0.4rem 0 0 0.4rem;
+  min-width: 15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.75rem;
+  gap: 0.25rem;
+}
+
+.editableField {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
+.editIcon {
+  position: absolute;
+  right: 0;
+  top: 0.2rem;
+  color: rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.editableField:hover .editIcon {
+  opacity: 0.8;
+}
+
+.leftTitle {
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1.2;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  padding-right: 1.25rem;
+  width: 100%;
+  font-family: inherit;
+  resize: none;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  max-height: 2.04rem;
+  overflow: hidden;
+}
+
+.leftTitle::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.leftSubtitle {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0;
+  padding-right: 1.25rem;
+  width: 100%;
+  font-family: inherit;
+  resize: none;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  max-height: 1.73rem;
+  overflow: hidden;
+}
+
+.leftSubtitle::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.pipelineMain {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+}
+
+.pipelineTopBar {
+  background: #00000033;
+  height: 0.3rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-evenly;
+  gap: 0;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.progressBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: var(--progress-percentage, 0%);
+  background: #2fb36d;
+  transition: width 0.3s ease;
+  z-index: 5;
+  border-radius: 0;
+}
+
+.circleWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  top: -1rem;
+  gap: 0.1rem;
+  z-index: 10;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+.circle {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #d0d0d0;
+  border: 2px solid #efefef;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.circleCompleted {
+  background: #2fb36d;
+}
+
+.completeButton {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: rgba(47, 179, 109, 0.3);
+  border: 2px solid #2fb36d;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.completeButton:hover {
+  background: rgba(47, 179, 109, 0.5);
+  transform: scale(1.1);
+}
+
+.circleCompleted .completeButton {
+  background: white;
+  border-color: white;
+  color: #2fb36d;
+}
+
+.removeButton {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: #ff4444;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 0.875rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 11;
+}
+
+.removeButton:hover {
+  background: #cc0000;
+}
+
+.addButton {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #2fb36d;
+  color: white;
+  border: 2px solid #2fb36d;
+  cursor: pointer;
+  font-size: 1.125rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  right: -0.3rem;
+  top: 0;
+  transform: translateY(-50%);
+  z-index: 10;
+  transition: all 0.3s ease;
+}
+
+.addButton:hover:not(:disabled) {
+  background: #259654;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.resetButton {
+  background: #d0d0d0 !important;
+  border-color: #b0b0b0 !important;
+  color: #888 !important;
+}
+
+.resetButton:hover {
+  background: #c0c0c0 !important;
+  transform: translateY(-50%) scale(1.05);
+}
+
+.circleLabel {
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #333;
+  outline: none;
+  margin-top: 0.1rem;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-all;
+  resize: none;
+  min-height: 1.2rem;
+  height: auto;
+  overflow: visible;
+  font-family: monospace;
+  line-height: 1.1;
+  white-space: pre-wrap;
+  letter-spacing: 0;
+}
+
+.circleLabel::-webkit-scrollbar {
+  display: none;
+}
+
+.circleLabel:focus {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid #ccc;
+}
+
+.pipelineBody {
+  width: 100%;
+  min-height: 5rem;
+  padding: 0.75rem;
+}
+
+.pipelineVisual {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e5e9ee;
+  border-radius: 0.4rem;
+  padding: 0.75rem 0.7rem;
+  margin-bottom: 0.25rem;
+}
+
+.pipelineBadge {
+  background: #2fb36d;
+  color: white;
+  border-radius: 0.3rem;
+  padding: 0.4rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pipelineBadge strong {
+  font-weight: 600;
+}
+
+.pipelineBadge span {
+  font-size: 0.65rem;
+  opacity: 0.9;
+}
+
+/* SVG do Pipeline */
+.pipelineVisual > svg {
+  flex: 1;
+  cursor: pointer;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: #2fb36d;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.75rem;
+  padding: 0.5rem;
+  transition: color 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.linkButton:hover {
+  color: #1e8a4f;
+}
+
+.pipelineActions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.75rem;
+}
+
+.toggleEditorBtn {
+  background: #2fb36d;
+  color: white;
+  border: none;
+  border-radius: 0.3rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.toggleEditorBtn:hover {
+  background: #1e8a4f;
+}
+
+.addStageInline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.addStageInput {
+  border: 1px solid #cfd6dc;
+  border-radius: 0.3rem;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  min-width: 10rem;
+  outline: none;
+}
+
+.addStageInput:focus {
+  border-color: #2fb36d;
+  box-shadow: 0 0 0 2px rgba(47, 179, 109, 0.12);
+}
+
+.addStageInlineBtn {
+  background: white;
+  color: #2fb36d;
+  border: 1px solid #2fb36d;
+  border-radius: 0.3rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addStageInlineBtn:hover {
+  background: #2fb36d;
+  color: white;
+}
+
+.stageEditBox {
+  width: 100%;
+  height: 1.625rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stageEditInput {
+  width: 90%;
+  border: 1px solid #2fb36d;
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.75rem;
+  outline: none;
+  text-align: center;
+}
+
+/* Editor de Etapas */
+.pipelineEditor {
+  background: white;
+  border: 1px solid #e5e9ee;
+  border-radius: 0.4rem;
+  padding: 1.2rem;
+}
+
+.pipelineEditor h4 {
+  margin: 0 0 1rem 0;
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stagesList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.stageItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem;
+  background: #fafafa;
+  border: 1px solid #e5e9ee;
+  border-radius: 0.3rem;
+  transition: all 0.2s ease;
+}
+
+.stageItem:hover {
+  background: #f0f0f0;
+  border-color: #2fb36d;
+}
+
+.stageItemLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.stageCheckbox {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #2fb36d;
+}
+
+.stageName {
+  font-size: 0.9rem;
+  color: #66707a;
+  cursor: pointer;
+  padding: 0.35rem;
+  border-radius: 0.2rem;
+  transition: all 0.2s ease;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stageName:hover {
+  background: rgba(47, 179, 109, 0.1);
+  color: #2fb36d;
+}
+
+.stageName.done {
+  text-decoration: line-through;
+  color: #999;
+}
+
+.stageInput {
+  font-size: 0.9rem;
+  padding: 0.4rem;
+  border: 1px solid #2fb36d;
+  border-radius: 0.2rem;
+  outline: none;
+  color: #66707a;
+  flex: 1;
+  min-width: 9.375rem;
+}
+
+.stageInput:focus {
+  border-color: #2fb36d;
+  box-shadow: 0 0 0 2px rgba(47, 179, 109, 0.1);
+}
+
+.stageItemActions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.editBtn,
+.deleteBtn {
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid #cfd6dc;
+  border-radius: 0.2rem;
+  background: white;
+  color: #66707a;
+  cursor: pointer;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.editBtn:hover {
+  border-color: #2fb36d;
+  color: #2fb36d;
+  background: rgba(47, 179, 109, 0.05);
+}
+
+.deleteBtn:hover {
+  border-color: #dd2727;
+  color: #dd2727;
+  background: rgba(221, 39, 39, 0.05);
+}
+
+.addStageBtn {
+  width: 100%;
+  padding: 0.65rem;
+  border: 2px dashed #2fb36d;
+  border-radius: 0.3rem;
+  background: transparent;
+  color: #2fb36d;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.addStageBtn:hover {
+  background: rgba(47, 179, 109, 0.05);
+  border-color: #1e8a4f;
+  color: #1e8a4f;
+}
+
+.addStageForm {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+  align-items: center;
+}
+
+.addStageForm .stageInput {
+  margin: 0;
+  flex: 1;
+}
+
+.confirmAddBtn,
+.cancelAddBtn {
+  width: 1.625rem;
+  height: 1.625rem;
+  border: 1px solid #cfd6dc;
+  border-radius: 0.2rem;
+  background: white;
+  cursor: pointer;
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.confirmAddBtn:hover {
+  border-color: #2fb36d;
+  color: #2fb36d;
+  background: rgba(47, 179, 109, 0.05);
+}
+
+.cancelAddBtn:hover {
+  border-color: #dd2727;
+  color: #dd2727;
+  background: rgba(221, 39, 39, 0.05);
+}
+
+/* Save Bar */
+.saveBar {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  border-top: 1px solid #e5e9ee;
+  padding-top: 1rem;
+}
+
+.saveBtn {
+  background: #2fb36d;
+  color: white;
+  border: none;
+  border-radius: 0.3rem;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.saveBtn:hover {
+  background: #1e8a4f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.saveBtn:active {
+  transform: scale(0.98);
+}
+
+.pipelineNote {
+  font-size: 0.8rem;
+  color: #999;
+  font-style: italic;
+  padding: 0;
+  margin: 0.5rem;
+  height: auto;
+  min-height: 0;
+  line-height: 1.2;
+  display: block;
+  width: 100%;
+  white-space: normal;
+  text-align: center;
+  background: none;
+  box-shadow: none;
+}
+
+.pipelineNote strong {
+  color: #2fb36d;
+  font-weight: 600;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .pipelineFrame {
+    flex-direction: column;
+  }
+
+  .pipelineLeft {
+    border-radius: 0.4rem 0.4rem 0 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pipelineTopBar {
+    height: auto;
+    min-height: 9.5rem;
+    padding: 0.5rem 0.6rem 0.5rem 2rem;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 0.7rem;
+    background: transparent;
+  }
+
+  .progressBar {
+    left: 1rem;
+    top: 0.5rem;
+    bottom: auto;
+    width: 0.2rem;
+    height: var(--progress-percentage, 0%);
+    transition: height 0.3s ease;
+  }
+
+  .circleWrapper {
+    top: 0;
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    min-height: 2.9rem;
+  }
+
+  .circle {
+    width: 2.55rem;
+    height: 2.55rem;
+    border-width: 2px;
+  }
+
+  .completeButton {
+    width: 1.55rem;
+    height: 1.55rem;
+    font-size: 0.95rem;
+    border-width: 2px;
+    touch-action: manipulation;
+  }
+
+  .removeButton {
+    top: -0.38rem;
+    right: -0.38rem;
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.82rem;
+    line-height: 1.2rem;
+    touch-action: manipulation;
+  }
+
+  .circleLabel {
+    text-align: left;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .addButton {
+    position: static;
+    transform: none;
+    margin: 0.2rem 0 0.55rem 0.85rem;
+  }
+
+  .addButton:hover:not(:disabled),
+  .resetButton:hover {
+    transform: scale(1.05);
+  }
+
+  .pipelineVisual {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .pipelineEditor {
+    padding: 0.9rem;
+  }
+
+  .stageItem {
+    flex-wrap: wrap;
+  }
+
+  .stageItemLeft {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .stageInput {
+    min-width: 100%;
+  }
+
+  .stageItemActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .pipelineBadge {
+    min-width: fit-content;
+  }
+}

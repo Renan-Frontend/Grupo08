@@ -1,0 +1,109 @@
+.empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.fieldLabel {
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.fieldInput {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.38rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+.fieldInput::placeholder {
+  color: #94a3b8;
+}
+
+.selectPlaceholder {
+  color: #94a3b8;
+}
+
+.fieldInputDisabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.fieldInputDisabled::placeholder {
+  color: #94a3b8;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.inlineActions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.listRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.errorText {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.75rem;
+}
+
+.connectionInfo {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.primaryButton {
+  border: 1px solid #27ae60;
+  background: #27ae60;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  border: 1px solid #27ae60;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.iconActionButton {
+  width: 1.9rem;
+  height: 1.9rem;
+  min-width: 1.9rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,538 @@
+.opportunitiesContainer {
+  padding: 2rem;
+  background: #f7f7f7;
+  border-radius: 0.75rem;
+  min-height: calc(100vh - 4rem);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.createBtn {
+  background: #2fa866;
+  color: white;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.createBtn:hover {
+  background: #278a55;
+}
+
+.title {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+.subtitle {
+  font-size: 0.9rem;
+  color: #95a5a6;
+  margin: 0;
+}
+
+.tableWrapper {
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-top: 0.75rem;
+  margin-bottom: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border: none;
+  box-shadow: none;
+  table-layout: fixed;
+  min-width: 860px;
+}
+
+.table thead {
+  background: #f3f3f3;
+}
+
+.table th {
+  padding: 0.55rem 0.42rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #374151;
+  vertical-align: middle;
+}
+
+.colName {
+  width: 17%;
+}
+
+.colOwner {
+  width: 18%;
+}
+
+.colAssigned {
+  width: 15%;
+}
+
+.colStatus {
+  width: 12%;
+}
+
+.colCreated {
+  width: 14%;
+}
+
+.colEnd {
+  width: 11%;
+}
+
+.colActions {
+  width: 13%;
+  min-width: 120px;
+}
+
+.table tbody tr {
+  border-bottom: 1px solid #e5e7eb;
+  transition: background 0.2s;
+}
+
+.table tbody tr:hover {
+  background: #fafafa;
+}
+
+.table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.table tbody {
+  min-height: 400px;
+  display: table-row-group;
+}
+
+.table td {
+  padding: 0.55rem 0.42rem;
+  color: #1f2937;
+  font-size: 0.85rem;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nameCell {
+  white-space: nowrap;
+}
+
+.colAssigned,
+.colStatus,
+.colCreated,
+.colEnd {
+  white-space: nowrap;
+}
+
+.tableActions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  min-width: max-content;
+}
+
+.actionButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.iconActionButton {
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.editActionButton {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.editActionButton:hover {
+  background: #eff6ff;
+}
+
+.bpmnActionButton {
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+.bpmnActionButton:hover {
+  background: #ecfdf3;
+}
+
+.editIconGlyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(1.15);
+}
+
+.colName {
+  white-space: nowrap;
+}
+
+.nameLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  max-width: 100%;
+  color: #2fa866;
+  font-weight: 600;
+  cursor: pointer;
+  transition: text-decoration 0.2s;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  line-height: 1;
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}
+
+.assignedTo {
+  color: #27ae60;
+  font-weight: 500;
+}
+
+.assignedSelect {
+  width: 100%;
+  max-width: 180px;
+  border: 1px solid #ddd;
+  border-radius: 0.4rem;
+  background: #fff;
+  color: #333;
+  font-size: 0.82rem;
+  line-height: 1.2;
+  padding: 0.35rem;
+  height: 30px;
+}
+
+.assignedSelect option {
+  color: #333;
+}
+
+.pagination {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0 0 0;
+  font-size: 0.9rem;
+  color: #95a5a6;
+  border-top: 1px solid #efefef;
+  margin-top: 0.35rem;
+}
+
+.pageButton {
+  background: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  color: #555;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.25rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pageButton:hover {
+  background: #eeeeee;
+}
+
+.pageButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  color: #777;
+}
+
+/* Responsivo */
+@media (max-width: 1024px) {
+  .opportunitiesContainer {
+    padding: 1.25rem;
+    min-height: 100%;
+  }
+
+  .table {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 768px) {
+  .opportunitiesContainer {
+    padding: 1rem;
+    min-height: 100%;
+  }
+
+  .createBtn,
+  .pageButton {
+    min-height: 2.1rem;
+    font-size: 0.78rem;
+    padding: 0.35rem 0.62rem;
+  }
+
+  .actionButton {
+    min-height: 2.1rem;
+    font-size: 0.78rem;
+  }
+
+  .iconActionButton {
+    width: 2.1rem;
+    height: 2.1rem;
+    min-width: 2.1rem;
+    min-height: 2.1rem;
+    font-size: 0.95rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+  }
+
+  .headerActions {
+    width: 100%;
+  }
+
+  .createBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 1.25rem;
+    margin: 0;
+  }
+
+  .tableWrapper {
+    overflow: visible;
+  }
+
+  .table {
+    min-width: 0;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tbody {
+    min-height: 0;
+  }
+
+  .table tr {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.45rem 0.6rem;
+    margin-bottom: 0.6rem;
+    background: #fff;
+  }
+
+  .table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .table td {
+    border-bottom: none;
+    padding: 0.42rem 0;
+    display: grid;
+    grid-template-columns: 6.8rem 1fr;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    overflow: visible;
+  }
+
+  .table td > * {
+    min-width: 0;
+  }
+
+  .table td::before {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+  }
+
+  .table td:nth-child(1)::before {
+    content: 'Nome';
+  }
+
+  .table td:nth-child(2)::before {
+    content: 'Proprietário';
+  }
+
+  .table td:nth-child(3)::before {
+    content: 'Atribuído';
+  }
+
+  .table td:nth-child(4)::before {
+    content: 'Status';
+  }
+
+  .table td:nth-child(5)::before {
+    content: 'Criação';
+  }
+
+  .table td:nth-child(6)::before {
+    content: 'Final';
+  }
+
+  .table td:nth-child(7)::before {
+    content: 'Ações';
+  }
+
+  .tableActions {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .table td.tableActions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-top: 0.45rem;
+  }
+
+  .table td.tableActions::before {
+    content: 'Ações';
+    width: 100%;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    margin-bottom: 0.08rem;
+  }
+
+  .assignedSelect {
+    width: min(100%, 14rem);
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .opportunitiesContainer {
+    padding: 0.7rem;
+    min-height: 100%;
+  }
+
+  .createBtn,
+  .pageButton {
+    min-height: 2rem;
+    font-size: 0.75rem;
+    padding: 0.3rem 0.55rem;
+  }
+
+  .actionButton {
+    min-height: 2rem;
+    font-size: 0.75rem;
+  }
+
+  .iconActionButton {
+    width: 2rem;
+    height: 2rem;
+    min-width: 2rem;
+    min-height: 2rem;
+    font-size: 0.9rem;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .table {
+    min-width: 0;
+    border: none;
+    box-shadow: none;
+  }
+
+  .nameCell {
+    display: block;
+  }
+
+  .nameLink {
+    font-size: 0.82rem;
+    text-align: left;
+  }
+
+  .assignedSelect {
+    max-width: 100%;
+    height: 32px;
+    font-size: 0.78rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.38rem 0;
+    font-size: 0.76rem;
+    grid-template-columns: 6rem 1fr;
+  }
+
+  .table td.tableActions {
+    gap: 0.35rem;
+    padding-top: 0.42rem;
+  }
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": 1,
+    "nome": "Renan",
+    "email": "renan1395@hotmail.com",
+    "senha": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "ativo": true,
+    "admin": true,
+    "role": "admin",
+    "nivel": "3",
+    "created_at": "2026-02-12T11:43:40",
+    "cargo": ""
+  },
+  {
+    "id": 2,
+    "nome": "Marcos da Silva",
+    "email": "marcos@hotmail.com",
+    "senha": "c00357563669ed21c34e13687cad669038eb88a2831fc8109b40ddc62f63e934",
+    "ativo": true,
+    "created_at": "2026-02-13T17:15:41.483170",
+    "admin": false,
+    "role": "user"
+  },
+  {
+    "id": 3,
+    "nome": "Rogerio",
+    "email": "Rogerio@hotmail.com",
+    "senha": "e6f492a85e61b2dc50dc1bc5f976fc43b900b092c3b4df38d840c68c8be8e58d",
+    "ativo": true,
+    "created_at": "2026-02-13T17:33:27.136517",
+    "admin": false,
+    "role": "user"
+  },
+  {
+    "id": 4,
+    "nome": "Renan Naves",
+    "email": "renan1395@gmail.com",
+    "senha": "ae6ee2d9efe52f7d0398a1668f38ef29f003f7501adbdc3bedc1691ff960706c",
+    "ativo": true,
+    "created_at": "2026-03-04T10:53:42.979853",
+    "admin": false,
+    "role": "user"
+  }
+]

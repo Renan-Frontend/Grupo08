@@ -1,0 +1,229 @@
+.empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.fieldLabel {
+  font-size: 0.76rem;
+  color: #475569;
+}
+
+.fieldInput {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.38rem 0.5rem;
+  font-size: 0.82rem;
+}
+
+.fieldInput::placeholder {
+  color: #94a3b8;
+}
+
+.descriptionInput {
+  min-height: 74px;
+  resize: vertical;
+}
+
+.fieldInputDisabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.fieldInputDisabled::placeholder {
+  color: #94a3b8;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.entityFieldsBlock {
+  margin-top: 0.15rem;
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 0.38rem 0.42rem;
+  display: flex;
+  justify-content: flex-end;
+  min-height: auto;
+}
+
+.entityFieldsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.entityFieldsTitle {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.entityFieldsCount {
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #1f2937;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.entityFieldsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: clamp(160px, 30vh, 280px);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.entityFieldItem {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  padding: 0.32rem 0.4rem;
+}
+
+.entityFieldName {
+  font-size: 0.76rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.entityFieldBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.entityFieldBadge,
+.entityFieldBadgeMuted {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.08rem 0.4rem;
+  font-size: 0.67rem;
+  font-weight: 600;
+}
+
+.entityFieldBadge {
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.entityFieldBadgeMuted {
+  border: 1px solid #e2e8f0;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.entityFieldsLink {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.24rem 0.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  align-self: stretch;
+}
+
+.entityFieldsLink:hover {
+  background: #f8fafc;
+  color: #334155;
+}
+
+.modeRow {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.modeOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.76rem;
+  color: #334155;
+}
+
+.inlineActions {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.listRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+}
+
+.errorText {
+  margin: 0;
+  color: #b91c1c;
+  font-size: 0.75rem;
+}
+
+.connectionInfo {
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.primaryButton {
+  border: 1px solid #27ae60;
+  background: #27ae60;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.secondaryButton {
+  border: 1px solid #27ae60;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

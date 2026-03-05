@@ -1,0 +1,760 @@
+.nameInput {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.4rem 0.55rem;
+  min-width: 220px;
+}
+
+.sidebarTabs {
+  display: flex;
+  flex-direction: row;
+  gap: 0.35rem;
+  width: 100%;
+  border-bottom: 1px solid #cbd5e1;
+  padding-bottom: 0.35rem;
+}
+
+.sidebarTabButton {
+  display: block;
+  position: relative;
+  text-align: center;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  width: auto;
+  flex: 1;
+  min-height: 1.9rem;
+  border: none;
+  background: transparent;
+  color: #334155;
+  cursor: pointer;
+  border-radius: 6px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.sidebarTabButton:hover {
+  color: #1f7f4b;
+  background: #f0fdf4;
+}
+
+.sidebarTabButton.sidebarTabButtonActive {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.sidebarTabButton.sidebarTabButtonActive:hover {
+  color: #15803d;
+}
+
+.contextPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.55rem;
+  background: #f8fafc;
+}
+
+.contextPanelTitle {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.contextPanelDescription {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.35;
+}
+
+.contextPanelTextarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  min-height: 84px;
+  font-size: 0.82rem;
+  resize: vertical;
+}
+
+.contextPanelActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.mobileDualFieldRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.22rem;
+  width: 100%;
+}
+
+.mobileFieldGroup {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+}
+
+.sidebar {
+  border: 1px solid #dbe1ea;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sidebarMobileMenu {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+}
+
+.sidebarCollapsed {
+  max-height: none;
+}
+
+.mobileCompactBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.24rem;
+}
+
+.mobilePopupRoot {
+  width: 100%;
+}
+
+.mobilePopupOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2.2rem 0.4rem 0.45rem;
+}
+
+.mobilePopupCardWrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mobilePopupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.32rem;
+}
+
+.mobileStepHint {
+  margin: 0;
+  font-size: 0.66rem;
+  color: #475569;
+  line-height: 1.2;
+}
+
+.mobileCompactTitle {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mobileCollapseButton {
+  border: 1px solid #27ae60;
+  background: #f8fafc;
+  color: #14532d;
+  border-radius: 999px;
+  padding: 0.1rem 0.34rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.1;
+  cursor: pointer;
+}
+
+.mobileCollapseButton:hover {
+  background: #ecfdf3;
+}
+
+.sidebarTop {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebarBody {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.sidebarFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.55rem;
+}
+
+.sidebarSectionTitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sidebarEntityActionButton {
+  margin-top: 0.35rem;
+}
+
+.entitySavedMessage {
+  margin: 0.12rem 0 0;
+  font-size: 0.75rem;
+  color: #15803d;
+}
+
+.entityErrorMessage {
+  margin: 0.12rem 0 0;
+  font-size: 0.75rem;
+  color: #dc2626;
+}
+
+.entitySuggestionCard {
+  margin-top: 0.25rem;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.entitySuggestionTitle {
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.entitySuggestionLine {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #334155;
+  line-height: 1.3;
+}
+
+.entitySuggestionActions {
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  border: 1px solid #27ae60;
+  background: #27ae60;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.primaryButton:hover {
+  background: #229954;
+  border-color: #229954;
+}
+
+.secondaryButton {
+  border: 1px solid #27ae60;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 0.38rem 0.6rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .nameInput {
+    min-width: 0;
+    width: 100%;
+    padding: 0.42rem 0.56rem;
+    font-size: 0.79rem;
+  }
+
+  .sidebar {
+    order: -1;
+    width: 100%;
+    max-width: 100%;
+    align-self: start;
+    padding: 0.52rem;
+    gap: 0.45rem;
+    border-radius: 10px;
+    max-height: 52dvh;
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
+  }
+
+  .sidebarMobileMenu {
+    position: relative;
+    top: auto;
+    z-index: 41;
+    width: min(84vw, 300px);
+    max-width: 84vw;
+    padding: 0.28rem;
+    gap: 0.18rem;
+    border-radius: 8px;
+    max-height: none;
+    box-shadow: 0 10px 28px rgba(2, 6, 23, 0.32);
+    overflow: visible;
+  }
+
+  .mobileCompactBar {
+    min-height: 1.9rem;
+    padding: 0.08rem 0;
+  }
+
+  .mobileCompactTitle {
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+
+  .mobileCollapseButton {
+    padding: 0.28rem 0.54rem;
+    font-size: 0.72rem;
+    border-radius: 999px;
+  }
+
+  .mobilePopupRoot .mobileCompactBar {
+    width: fit-content;
+    max-width: 100%;
+    margin: 0;
+    padding: 0.14rem 0.2rem;
+    border-radius: 999px;
+    border: 1px solid #dbe1ea;
+    background: #ffffff;
+    box-shadow: 0 1px 6px rgba(15, 23, 42, 0.12);
+  }
+
+  .mobilePopupRoot .mobileCompactTitle {
+    font-size: 0.62rem;
+    line-height: 1;
+  }
+
+  .mobilePopupRoot .mobileCollapseButton {
+    font-size: 0.56rem;
+    min-height: 1.1rem;
+    padding: 0.08rem 0.3rem;
+  }
+
+  .sidebarMobileMenu .mobileCompactBar {
+    min-height: 1.34rem;
+    padding: 0;
+    gap: 0.18rem;
+  }
+
+  .sidebarMobileMenu .mobileCompactTitle {
+    font-size: 0.64rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .sidebarMobileMenu .mobileCollapseButton {
+    font-size: 0.58rem;
+    padding: 0.1rem 0.34rem;
+    line-height: 1;
+    min-height: 1.12rem;
+  }
+
+  .sidebarTop {
+    gap: 0.45rem;
+  }
+
+  .sidebarMobileMenu .sidebarTop {
+    gap: 0.22rem;
+  }
+
+  .sidebarMobileMenu .mobileStepHint {
+    font-size: 0.58rem;
+    line-height: 1.15;
+  }
+
+  .sidebarBody {
+    gap: 0.38rem;
+    overflow-y: hidden;
+    padding-right: 0.08rem;
+  }
+
+  .sidebarMobileMenu .sidebarBody {
+    gap: 0.16rem;
+    padding-right: 0;
+    overflow-y: visible;
+  }
+
+  .sidebarFooter {
+    gap: 0.4rem;
+    padding-top: 0.45rem;
+  }
+
+  .sidebarMobileMenu .sidebarFooter {
+    gap: 0.22rem;
+    padding-top: 0.24rem;
+  }
+
+  .sidebarSectionTitle {
+    font-size: 0.84rem;
+  }
+
+  .sidebarTabs {
+    gap: 0.32rem;
+    padding-bottom: 0.34rem;
+  }
+
+  .sidebarMobileMenu .sidebarTabs {
+    gap: 0.12rem;
+    padding-bottom: 0.12rem;
+  }
+
+  .sidebarTabButton {
+    min-height: 2rem;
+    padding: 0.36rem 0.48rem;
+    font-size: 0.78rem;
+  }
+
+  .sidebarMobileMenu .sidebarTabButton {
+    min-height: 1.32rem;
+    padding: 0.12rem 0.2rem;
+    font-size: 0.6rem;
+    border-radius: 5px;
+  }
+
+  .contextPanel {
+    gap: 0.4rem;
+    padding: 0.5rem;
+  }
+
+  .sidebarMobileMenu .contextPanel {
+    gap: 0.14rem;
+    padding: 0.18rem;
+    border-radius: 6px;
+  }
+
+  .sidebarMobileMenu .mobileDualFieldRow {
+    gap: 0.16rem;
+  }
+
+  .sidebarMobileMenu .mobileFieldGroup {
+    gap: 0.1rem;
+  }
+
+  .contextPanelTitle {
+    font-size: 0.82rem;
+  }
+
+  .sidebarMobileMenu .contextPanelTitle {
+    font-size: 0.66rem;
+    line-height: 1.1;
+  }
+
+  .contextPanelDescription {
+    font-size: 0.76rem;
+    line-height: 1.35;
+  }
+
+  .sidebarMobileMenu .contextPanelDescription {
+    font-size: 0.58rem;
+    line-height: 1.12;
+  }
+
+  .contextPanelTextarea {
+    min-height: 82px;
+    padding: 0.42rem 0.54rem;
+    font-size: 0.79rem;
+  }
+
+  .sidebarMobileMenu .contextPanelTextarea {
+    min-height: 46px;
+    padding: 0.22rem 0.32rem;
+    font-size: 0.64rem;
+    border-radius: 6px;
+  }
+
+  .sidebarMobileMenu .nameInput {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.14rem 0.26rem;
+    font-size: 0.58rem;
+    min-height: 1.28rem;
+    border-radius: 6px;
+  }
+
+  .sidebarMobileMenu .contextPanelActions {
+    gap: 0.16rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+
+  .sidebarMobileMenu .contextPanelActions .primaryButton,
+  .sidebarMobileMenu .contextPanelActions .secondaryButton {
+    width: 100%;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    padding: 0.34rem 0.54rem;
+    font-size: 0.78rem;
+    border-radius: 7px;
+  }
+
+  .sidebarMobileMenu .primaryButton,
+  .sidebarMobileMenu .secondaryButton {
+    padding: 0.16rem 0.24rem;
+    font-size: 0.58rem;
+    border-radius: 6px;
+    min-height: 1.28rem;
+  }
+
+  .sidebarMobileMenu .entitySuggestionCard {
+    margin-top: 0.14rem;
+    padding: 0.24rem;
+    gap: 0.16rem;
+  }
+
+  .sidebarMobileMenu .entitySuggestionTitle {
+    font-size: 0.64rem;
+  }
+
+  .sidebarMobileMenu .entitySuggestionLine {
+    font-size: 0.6rem;
+    line-height: 1.15;
+  }
+
+  .sidebarMobileMenu .entitySuggestionActions {
+    margin-top: 0.1rem;
+    gap: 0.18rem;
+  }
+
+  .sidebarMobileMenu .entitySavedMessage,
+  .sidebarMobileMenu .entityErrorMessage {
+    font-size: 0.62rem;
+    margin-top: 0.04rem;
+  }
+
+  .sidebarMobileMenu input:not([type='checkbox']):not([type='radio']),
+  .sidebarMobileMenu select,
+  .sidebarMobileMenu textarea {
+    width: 100%;
+    max-width: 100%;
+    min-height: 1.32rem;
+    padding: 0.16rem 0.28rem;
+    font-size: 0.6rem;
+    line-height: 1.1;
+    border-radius: 5px;
+  }
+
+  .sidebarMobileMenu textarea {
+    min-height: 34px;
+  }
+
+  .sidebarMobileMenu button {
+    width: auto;
+    max-width: 100%;
+    min-height: 1.18rem;
+    padding: 0.1rem 0.2rem;
+    font-size: 0.58rem;
+    line-height: 1;
+  }
+
+  .sidebarMobileMenu p,
+  .sidebarMobileMenu label,
+  .sidebarMobileMenu small,
+  .sidebarMobileMenu span {
+    font-size: 0.54rem;
+    line-height: 1.08;
+  }
+
+  .sidebarMobileMenu h3,
+  .sidebarMobileMenu h4,
+  .sidebarMobileMenu h5 {
+    font-size: 0.6rem;
+    line-height: 1.1;
+  }
+
+  .sidebarMobileMenu ul,
+  .sidebarMobileMenu ol {
+    margin: 0;
+    padding-left: 0.65rem;
+  }
+
+  .sidebarMobileMenu li {
+    margin: 0;
+    line-height: 1.12;
+  }
+}
+
+@media (max-width: 560px) {
+  .sidebar {
+    max-height: 48dvh;
+    padding: 0.46rem;
+    gap: 0.38rem;
+  }
+
+  .sidebarSectionTitle,
+  .contextPanelTitle {
+    font-size: 0.8rem;
+  }
+
+  .nameInput,
+  .contextPanelTextarea {
+    font-size: 0.77rem;
+  }
+
+  .contextPanelTextarea {
+    min-height: 76px;
+  }
+
+  .sidebarTabButton {
+    min-height: 1.9rem;
+    font-size: 0.75rem;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    font-size: 0.75rem;
+    padding: 0.32rem 0.48rem;
+  }
+
+  .mobileCompactBar {
+    min-height: 1.8rem;
+  }
+
+  .mobileCompactTitle {
+    font-size: 0.78rem;
+  }
+
+  .mobileCollapseButton {
+    font-size: 0.7rem;
+    padding: 0.24rem 0.46rem;
+  }
+
+  .sidebarMobileMenu {
+    width: 84vw;
+    max-width: 84vw;
+    max-height: none;
+    padding: 0.22rem;
+    gap: 0.16rem;
+  }
+
+  .mobilePopupOverlay {
+    padding: 2rem 0.2rem 0.35rem;
+  }
+
+  .sidebarMobileMenu .mobileCompactBar {
+    min-height: 1.24rem;
+  }
+
+  .sidebarMobileMenu .mobileCompactTitle {
+    font-size: 0.6rem;
+  }
+
+  .sidebarMobileMenu .mobileCollapseButton {
+    font-size: 0.54rem;
+    padding: 0.08rem 0.3rem;
+    min-height: 1.02rem;
+  }
+
+  .sidebarMobileMenu .sidebarTabButton {
+    min-height: 1.34rem;
+    font-size: 0.6rem;
+    padding: 0.12rem 0.2rem;
+  }
+
+  .sidebarMobileMenu .contextPanelTitle {
+    font-size: 0.62rem;
+  }
+
+  .sidebarMobileMenu .mobileDualFieldRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.12rem;
+  }
+
+  .sidebarMobileMenu .contextPanelDescription {
+    font-size: 0.58rem;
+  }
+
+  .sidebarMobileMenu .nameInput,
+  .sidebarMobileMenu .contextPanelTextarea {
+    font-size: 0.6rem;
+  }
+
+  .sidebarMobileMenu .contextPanelTextarea {
+    min-height: 42px;
+  }
+
+  .sidebarMobileMenu .primaryButton,
+  .sidebarMobileMenu .secondaryButton {
+    font-size: 0.58rem;
+    padding: 0.16rem 0.28rem;
+    min-height: 1.34rem;
+  }
+
+  .sidebarMobileMenu .contextPanelActions {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebarMobileMenu input:not([type='checkbox']):not([type='radio']),
+  .sidebarMobileMenu select,
+  .sidebarMobileMenu textarea {
+    min-height: 1.2rem;
+    padding: 0.12rem 0.22rem;
+    font-size: 0.56rem;
+  }
+
+  .sidebarMobileMenu textarea {
+    min-height: 36px;
+  }
+
+  .sidebarMobileMenu button {
+    min-height: 1.18rem;
+    padding: 0.1rem 0.2rem;
+    font-size: 0.54rem;
+  }
+
+  .sidebarMobileMenu p,
+  .sidebarMobileMenu label,
+  .sidebarMobileMenu small,
+  .sidebarMobileMenu span {
+    font-size: 0.54rem;
+    line-height: 1.1;
+  }
+
+  .sidebarMobileMenu h3,
+  .sidebarMobileMenu h4,
+  .sidebarMobileMenu h5 {
+    font-size: 0.6rem;
+  }
+}

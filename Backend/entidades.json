@@ -1,0 +1,100 @@
+[
+  {
+    "categoria": "BPMN TESTE2",
+    "id": 12,
+    "nome": "Cliente",
+    "descricao": "Armazena as informações do cliente que inicia o processo de compra, como nome, e-mail e identificação.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": true,
+    "atributoChave": "222222222",
+    "campos": [
+      {
+        "id": "campo-1772636088916-z3l8pfn0",
+        "nome": "11111111111111",
+        "tipo": "Texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "isUnique": false,
+        "relacionamento": null
+      },
+      {
+        "id": "campo-1772636098376-zy4da7vl",
+        "nome": "222222222",
+        "tipo": "Número",
+        "obrigatorio": false,
+        "keyType": "PK",
+        "isUnique": false,
+        "relacionamento": "222_id"
+      }
+    ],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 2,
+    "ativo": true,
+    "created_at": "2026-03-03T12:27:11.186620",
+    "updated_at": "2026-03-04T15:11:52.030328",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "BPMN TESTE2",
+    "id": 13,
+    "nome": "Pedido",
+    "descricao": "Representa o pedido realizado pelo cliente contendo itens, valores e status.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": true,
+    "atributoChave": "",
+    "campos": [],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 2,
+    "ativo": true,
+    "created_at": "2026-03-03T12:27:11.220799",
+    "updated_at": "2026-03-04T15:11:52.054859",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "BPMN TESTE2",
+    "id": 14,
+    "nome": "LogErroPedido",
+    "descricao": "Registra erros caso o pedido não seja criado corretamente.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": false,
+    "atributoChave": "",
+    "campos": [],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 2,
+    "ativo": true,
+    "created_at": "2026-03-03T12:27:11.320621",
+    "updated_at": "2026-03-04T15:11:52.173583",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "BPMN TESTE2",
+    "id": 15,
+    "nome": "ItemPedido",
+    "descricao": "Relaciona produtos ao pedido armazenando quantidade e valor unitário.",
+    "tipoEntidade": "Associativa",
+    "isPrimaryEntity": false,
+    "atributoChave": "",
+    "campos": [],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 2,
+    "ativo": true,
+    "created_at": "2026-03-03T12:27:11.351683",
+    "updated_at": "2026-03-04T15:11:52.316549",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "tabela de entidades",
+    "id": 16,
+    "nome": "venda",
+    "descricao": "testando a venda aqui",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": true,
+    "atributoChave": null,
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 0,
+    "ativo": true,
+    "created_at": "2026-03-03T14:09:50.565982",
+    "updated_at": "2026-03-04T10:51:42.777121",
+    "criadoPor": "Renan"
+  }
+]

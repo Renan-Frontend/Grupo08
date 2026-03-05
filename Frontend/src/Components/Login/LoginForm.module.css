@@ -1,0 +1,97 @@
+.form {
+  margin-bottom: 2rem;
+}
+
+/* Aviso offline */
+.offlineWarning {
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+}
+
+.offlineWarning span {
+  font-size: 1.5rem;
+}
+
+.offlineWarning strong {
+  display: block;
+  color: #856404;
+  margin-bottom: 0.25rem;
+}
+
+.offlineWarning p {
+  color: #856404;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+/* Títulos */
+.title,
+.subtitle {
+  font-family: var(--type-second);
+  line-height: 1;
+  font-size: 2rem;
+}
+
+.title {
+  margin-bottom: 1.5rem;
+}
+
+.title::after,
+.subtitle::after {
+  content: '';
+  display: block;
+  background: #ddd;
+  height: 0.5rem;
+  width: 3rem;
+  border-radius: 0.2rem;
+  margin-top: 0.5rem;
+}
+
+/* Links */
+.link,
+.perdeu {
+  display: inline-block;
+  color: #666;
+  padding: 0.5rem 0;
+  line-height: 1;
+}
+
+.link {
+  margin-top: 1rem;
+}
+
+.link::after,
+.perdeu::after {
+  content: '';
+  height: 2px;
+  width: 100%;
+  background: currentColor;
+  display: block;
+}
+
+/* Área de cadastro */
+.cadastro {
+  margin-top: 4rem;
+}
+
+.cadastro p {
+  margin: 2rem 0;
+}
+
+/* Responsivo */
+@media (max-width: 40rem) {
+  .cadastro {
+    margin-top: 2.5rem;
+  }
+
+  .title,
+  .subtitle {
+    font-size: 1.75rem;
+  }
+}

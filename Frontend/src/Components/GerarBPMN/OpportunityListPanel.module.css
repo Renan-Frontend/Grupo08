@@ -1,0 +1,67 @@
+.opportunityPanel {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #ffffff;
+  max-height: 560px;
+  overflow: auto;
+}
+
+.panelTitle {
+  margin: 0 0 0.8rem;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.muted {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.92rem;
+}
+
+.opportunityList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.opportunityButton {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  cursor: pointer;
+}
+
+.opportunityButton:hover {
+  border-color: #93c5fd;
+}
+
+.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+}
+
+.opportunityName {
+  color: #111827;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.opportunityStage {
+  color: #4b5563;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 1024px) {
+  .opportunityPanel {
+    max-height: 280px;
+  }
+}

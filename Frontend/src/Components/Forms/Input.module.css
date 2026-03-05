@@ -1,0 +1,81 @@
+.input::placeholder,
+.inputWithIcon::placeholder {
+  opacity: 0.4;
+}
+.wrapper {
+  margin-bottom: 0.8rem;
+}
+
+.inputWrapper {
+  position: relative;
+  width: 85%;
+  margin: 0 auto 1rem;
+}
+
+@media (max-width: 768px) {
+  .inputWrapper {
+    width: 100%;
+    margin: 0 auto 0.7rem;
+  }
+  .input,
+  .inputWithIcon {
+    font-size: 0.98rem;
+    padding: 0.7rem;
+  }
+  .icon {
+    font-size: 1rem;
+    left: 0.7rem;
+  }
+}
+
+.icon {
+  position: absolute;
+  left: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  pointer-events: none;
+}
+
+.input,
+.inputWithIcon {
+  border: 1.5px solid #e0e0e0;
+  display: block;
+  font-size: 1.12rem;
+  padding: 1.15rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
+  border-radius: 0.5rem;
+  background: #fcfcfc;
+  box-shadow: 0 1px 4px rgba(39, 174, 96, 0.04);
+  transition: 0.18s;
+}
+
+.inputWithIcon {
+  padding-left: 3rem;
+}
+
+.input:focus,
+.inputWithIcon:focus {
+  outline: none;
+  border-color: #27ae60;
+  background: #f8f8f8;
+  box-shadow: 0 0 0 2px #27ae6040;
+}
+
+.label {
+  display: block;
+  font-size: 0.9rem;
+  padding-bottom: 0.4rem;
+}
+
+.error {
+  color: #e74c3c;
+  font-size: 0.88rem;
+  margin-top: 0.35rem;
+  font-weight: 600;
+  text-align: left;
+  padding-left: 0.5rem;
+}
