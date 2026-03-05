@@ -130,8 +130,13 @@ function AppContent() {
 }
 
 function App() {
+  const baseUrl = String(import.meta.env.BASE_URL || '/');
+  const routerBase = baseUrl.endsWith('/')
+    ? baseUrl.slice(0, -1) || '/'
+    : baseUrl;
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={routerBase === '/' ? undefined : routerBase}>
       <UserStorage>
         <EntidadesProvider>
           <AppContent />
