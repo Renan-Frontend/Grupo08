@@ -150,132 +150,138 @@ def save_bpmn_editor_state(file_path, state_payload):
 
 
 def init_supabase_storage():
+    global USE_SUPABASE_DB
     if not USE_SUPABASE_DB:
         return
 
     _, json_adapter = _require_db_dependencies()
 
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {USERS_TABLE} (
-                    id BIGINT PRIMARY KEY,
-                    payload JSONB NOT NULL
-                )
-                """
-            )
-            cursor.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {ENTIDADES_TABLE} (
-                    id BIGINT PRIMARY KEY,
-                    payload JSONB NOT NULL
-                )
-                """
-            )
-            cursor.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {OPORTUNIDADES_TABLE} (
-                    id BIGINT PRIMARY KEY,
-                    payload JSONB NOT NULL
-                )
-                """
-            )
-            cursor.execute(
-                f"""
-                CREATE TABLE IF NOT EXISTS {BPMN_EDITOR_STATE_TABLE} (
-                    state_key TEXT PRIMARY KEY,
-                    payload JSONB NOT NULL
-                )
-                """
-            )
-
-            cursor.execute(f"SELECT COUNT(*) FROM {USERS_TABLE}")
-            users_row = cursor.fetchone()
-            users_count = int((users_row[0] if users_row else 0) or 0)
-            if users_count == 0:
-                for item in load_json(USERS_FILE, []):
-                    if not isinstance(item, dict):
-                        continue
-                    raw_id = item.get("id")
-                    if raw_id is None:
-                        continue
-                    try:
-                        item_id = int(raw_id)
-                    except Exception:
-                        continue
-                    cursor.execute(
-                        f"INSERT INTO {USERS_TABLE} (id, payload) VALUES (%s, %s)",
-                        (item_id, json_adapter({**item, "id": item_id})),
-                    )
-
-            cursor.execute(f"SELECT COUNT(*) FROM {ENTIDADES_TABLE}")
-            entidades_row = cursor.fetchone()
-            entidades_count = int((entidades_row[0] if entidades_row else 0) or 0)
-            if entidades_count == 0:
-                for item in load_json(ENTIDADES_FILE, []):
-                    if not isinstance(item, dict):
-                        continue
-                    raw_id = item.get("id")
-                    if raw_id is None:
-                        continue
-                    try:
-                        item_id = int(raw_id)
-                    except Exception:
-                        continue
-                    cursor.execute(
-                        f"INSERT INTO {ENTIDADES_TABLE} (id, payload) VALUES (%s, %s)",
-                        (item_id, json_adapter({**item, "id": item_id})),
-                    )
-
-            cursor.execute(f"SELECT COUNT(*) FROM {OPORTUNIDADES_TABLE}")
-            oportunidades_row = cursor.fetchone()
-            oportunidades_count = int((oportunidades_row[0] if oportunidades_row else 0) or 0)
-            if oportunidades_count == 0:
-                for item in load_json(OPORTUNIDADES_FILE, []):
-                    if not isinstance(item, dict):
-                        continue
-                    raw_id = item.get("id")
-                    if raw_id is None:
-                        continue
-                    try:
-                        item_id = int(raw_id)
-                    except Exception:
-                        continue
-                    cursor.execute(
-                        f"INSERT INTO {OPORTUNIDADES_TABLE} (id, payload) VALUES (%s, %s)",
-                        (item_id, json_adapter({**item, "id": item_id})),
-                    )
-
-            cursor.execute(
-                f"SELECT COUNT(*) FROM {BPMN_EDITOR_STATE_TABLE} WHERE state_key = %s",
-                ("default",),
-            )
-            bpmn_state_row = cursor.fetchone()
-            bpmn_state_count = int((bpmn_state_row[0] if bpmn_state_row else 0) or 0)
-            if bpmn_state_count == 0:
-                initial_state = load_json(
-                    BPMN_EDITOR_STATE_FILE,
-                    {
-                        "name": "Novo BPMN",
-                        "nodes": [],
-                        "connections": [],
-                        "updated_at": "",
-                    },
-                )
-                if not isinstance(initial_state, dict):
-                    initial_state = {
-                        "name": "Novo BPMN",
-                        "nodes": [],
-                        "connections": [],
-                        "updated_at": "",
-                    }
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
                 cursor.execute(
-                    f"INSERT INTO {BPMN_EDITOR_STATE_TABLE} (state_key, payload) VALUES (%s, %s)",
-                    ("default", json_adapter(initial_state)),
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {USERS_TABLE} (
+                        id BIGINT PRIMARY KEY,
+                        payload JSONB NOT NULL
+                    )
+                    """
+                )
+                cursor.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {ENTIDADES_TABLE} (
+                        id BIGINT PRIMARY KEY,
+                        payload JSONB NOT NULL
+                    )
+                    """
+                )
+                cursor.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {OPORTUNIDADES_TABLE} (
+                        id BIGINT PRIMARY KEY,
+                        payload JSONB NOT NULL
+                    )
+                    """
+                )
+                cursor.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {BPMN_EDITOR_STATE_TABLE} (
+                        state_key TEXT PRIMARY KEY,
+                        payload JSONB NOT NULL
+                    )
+                    """
                 )
 
-        conn.commit()
+                cursor.execute(f"SELECT COUNT(*) FROM {USERS_TABLE}")
+                users_row = cursor.fetchone()
+                users_count = int((users_row[0] if users_row else 0) or 0)
+                if users_count == 0:
+                    for item in load_json(USERS_FILE, []):
+                        if not isinstance(item, dict):
+                            continue
+                        raw_id = item.get("id")
+                        if raw_id is None:
+                            continue
+                        try:
+                            item_id = int(raw_id)
+                        except Exception:
+                            continue
+                        cursor.execute(
+                            f"INSERT INTO {USERS_TABLE} (id, payload) VALUES (%s, %s)",
+                            (item_id, json_adapter({**item, "id": item_id})),
+                        )
+
+                cursor.execute(f"SELECT COUNT(*) FROM {ENTIDADES_TABLE}")
+                entidades_row = cursor.fetchone()
+                entidades_count = int((entidades_row[0] if entidades_row else 0) or 0)
+                if entidades_count == 0:
+                    for item in load_json(ENTIDADES_FILE, []):
+                        if not isinstance(item, dict):
+                            continue
+                        raw_id = item.get("id")
+                        if raw_id is None:
+                            continue
+                        try:
+                            item_id = int(raw_id)
+                        except Exception:
+                            continue
+                        cursor.execute(
+                            f"INSERT INTO {ENTIDADES_TABLE} (id, payload) VALUES (%s, %s)",
+                            (item_id, json_adapter({**item, "id": item_id})),
+                        )
+
+                cursor.execute(f"SELECT COUNT(*) FROM {OPORTUNIDADES_TABLE}")
+                oportunidades_row = cursor.fetchone()
+                oportunidades_count = int((oportunidades_row[0] if oportunidades_row else 0) or 0)
+                if oportunidades_count == 0:
+                    for item in load_json(OPORTUNIDADES_FILE, []):
+                        if not isinstance(item, dict):
+                            continue
+                        raw_id = item.get("id")
+                        if raw_id is None:
+                            continue
+                        try:
+                            item_id = int(raw_id)
+                        except Exception:
+                            continue
+                        cursor.execute(
+                            f"INSERT INTO {OPORTUNIDADES_TABLE} (id, payload) VALUES (%s, %s)",
+                            (item_id, json_adapter({**item, "id": item_id})),
+                        )
+
+                cursor.execute(
+                    f"SELECT COUNT(*) FROM {BPMN_EDITOR_STATE_TABLE} WHERE state_key = %s",
+                    ("default",),
+                )
+                bpmn_state_row = cursor.fetchone()
+                bpmn_state_count = int((bpmn_state_row[0] if bpmn_state_row else 0) or 0)
+                if bpmn_state_count == 0:
+                    initial_state = load_json(
+                        BPMN_EDITOR_STATE_FILE,
+                        {
+                            "name": "Novo BPMN",
+                            "nodes": [],
+                            "connections": [],
+                            "updated_at": "",
+                        },
+                    )
+                    if not isinstance(initial_state, dict):
+                        initial_state = {
+                            "name": "Novo BPMN",
+                            "nodes": [],
+                            "connections": [],
+                            "updated_at": "",
+                        }
+                    cursor.execute(
+                        f"INSERT INTO {BPMN_EDITOR_STATE_TABLE} (state_key, payload) VALUES (%s, %s)",
+                        ("default", json_adapter(initial_state)),
+                    )
+
+            conn.commit()
+    except Exception as exc:
+        # Keep API online even when Supabase is temporarily unreachable.
+        print(f"[WARN] Falha ao conectar no Supabase ({exc}). Usando JSON local.")
+        USE_SUPABASE_DB = False
 
 
 def load_users_data():
