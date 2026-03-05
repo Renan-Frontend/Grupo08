@@ -18,16 +18,25 @@ export const UserStorage = ({ children }) => {
   // API proxy: login
   const userLogin = async (username, password) => {
     const { url, options } = TOKEN_POST({ username, password });
-    const res = await fetch(url, options);
-    if (!res.ok) throw new Error('Usuário ou senha incorretos');
-    const data = await res.json();
-    const token = data.access_token;
-    window.sessionStorage.setItem('token', token);
-    window.localStorage.setItem('token', token);
-    // Buscar e setar o usuário logado imediatamente após login
-    const userData = await getUser(token);
-    setUser(userData);
-    return token;
+    try {
+      const res = await fetch(url, options);
+      if (!res.ok) throw new Error('Usuário ou senha incorretos');
+      const data = await res.json();
+      const token = data.access_token;
+      window.sessionStorage.setItem('token', token);
+      window.localStorage.setItem('token', token);
+      // Buscar e setar o usuário logado imediatamente após login
+      const userData = await getUser(token);
+      setUser(userData);
+      return token;
+    } catch (error) {
+      if (error instanceof TypeError) {
+        throw new Error(
+          'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
+        );
+      }
+      throw error;
+    }
   };
 
   // API proxy: logout (just remove token)

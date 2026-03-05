@@ -309,8 +309,24 @@ def save_oportunidades_data(rows):
 
 
 def get_allowed_origins():
-    origins_raw = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173")
-    return [origin.strip() for origin in origins_raw.split(",") if origin.strip()]
+    origins_raw = os.getenv("ALLOWED_ORIGINS", "")
+    frontend_url = os.getenv("FRONTEND_URL", "")
+
+    # Keep local dev working even when production env vars are set.
+    allowed = {
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+    }
+
+    for value in (origins_raw, frontend_url):
+        for origin in value.split(","):
+            cleaned = origin.strip().rstrip("/")
+            if cleaned:
+                allowed.add(cleaned)
+
+    return sorted(allowed)
 
 
 def normalize_oportunidade(oportunidade: dict):
