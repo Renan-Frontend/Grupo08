@@ -148,6 +148,17 @@
   line-height: 1;
 }
 
+.editActionButton {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.editActionButton:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
 .opportunityActionButton {
   border-color: #2563eb;
   color: #1d4ed8;
@@ -164,6 +175,21 @@
   padding: 0.6rem 0.7rem;
   font-size: 0.92rem;
   color: #111827;
+}
+
+.assignedSelect {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  padding: 0.3rem 0.45rem;
+  font-size: 0.78rem;
+  min-width: 8.2rem;
+}
+
+.assignedSelect:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
 }
 
 @media (max-width: 1024px) {

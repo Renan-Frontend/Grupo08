@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 /**
  * Hook para salvar automaticamente o título/tópico no localStorage.
@@ -11,6 +11,9 @@ export function useAutoSaveTitle(
   storageKey = 'layoutTitle',
   onSaveLayout,
 ) {
+  const titleRef = useRef(title);
+  titleRef.current = title;
+
   // Salva no localStorage sempre que o título mudar
   useEffect(() => {
     if (title) {
@@ -18,27 +21,24 @@ export function useAutoSaveTitle(
     }
   }, [title, storageKey]);
 
-  // Salva ao clicar em "Salvar Layout"
-  useEffect(() => {
-    if (typeof onSaveLayout === 'function') {
-      const handler = () => {
-        localStorage.setItem(storageKey, title);
-      };
-      onSaveLayout(handler);
-      return () => onSaveLayout(null);
-    }
-  }, [onSaveLayout, storageKey, title]);
-
-  // Salva ao fechar/atualizar a página
+  // Salva ao clicar em "Salvar Layout" + ao fechar/atualizar a página
   useEffect(() => {
     const handleBeforeUnload = () => {
-      localStorage.setItem(storageKey, title);
+      localStorage.setItem(storageKey, titleRef.current);
     };
+
+    if (typeof onSaveLayout === 'function') {
+      onSaveLayout(handleBeforeUnload);
+    }
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      if (typeof onSaveLayout === 'function') {
+        onSaveLayout(null);
+      }
     };
-  }, [storageKey, title]);
+  }, [onSaveLayout, storageKey]);
 }
 
 /**

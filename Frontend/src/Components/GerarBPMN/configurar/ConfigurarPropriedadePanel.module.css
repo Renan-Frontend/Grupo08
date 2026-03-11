@@ -80,6 +80,11 @@
   cursor: pointer;
 }
 
+.primaryButton:hover:not(:disabled) {
+  background: #229954;
+  border-color: #229954;
+}
+
 .secondaryButton {
   border: 1px solid #27ae60;
   background: #fff;
@@ -100,6 +105,11 @@
   justify-content: center;
   font-size: 0.95rem;
   line-height: 1;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .primaryButton:disabled,

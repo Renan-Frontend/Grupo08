@@ -9,15 +9,23 @@ const authHeaders = (token) => ({
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 });
 
-export const getAuthToken = () => window.localStorage.getItem('token');
+export const getAuthToken = () =>
+  window.sessionStorage.getItem('token') ||
+  window.localStorage.getItem('token');
 
-export const fetchOpportunitiesPage = async ({ page, limit, token }) => {
-  const response = await fetch(
-    `${API_URL}/oportunidades?page=${page}&limit=${limit}`,
-    {
-      headers: authHeaders(token),
-    },
-  );
+export const fetchOpportunitiesPage = async ({
+  page,
+  limit,
+  token,
+  search,
+}) => {
+  let url = `${API_URL}/oportunidades?page=${page}&limit=${limit}`;
+  if (search) {
+    url += `&search=${encodeURIComponent(search)}`;
+  }
+  const response = await fetch(url, {
+    headers: authHeaders(token),
+  });
 
   if (!response.ok) {
     throw new Error('Erro ao buscar oportunidades');
@@ -70,10 +78,19 @@ export const createOpportunity = async ({ payload, token }) => {
   });
 
   if (!response.ok) {
-    throw new Error('Erro ao atribuir oportunidade');
+    let detail = '';
+    try {
+      const errorBody = await response.json();
+      detail = errorBody?.detail || '';
+    } catch {
+      // no-op
+    }
+    throw new Error(
+      detail || `Erro ao criar oportunidade (HTTP ${response.status})`,
+    );
   }
 
-  return response;
+  return response.json();
 };
 
 export const deleteOpportunityById = async ({ opportunityId, token }) => {
@@ -87,4 +104,18 @@ export const deleteOpportunityById = async ({ opportunityId, token }) => {
   }
 
   return response;
+};
+
+export const batchSyncEntidades = async ({ items, token }) => {
+  const response = await fetch(`${API_URL}/entidades/batch/sync`, {
+    method: 'PUT',
+    headers: jsonHeaders(token),
+    body: JSON.stringify({ items }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Erro ao sincronizar entidades em lote');
+  }
+
+  return response.json();
 };

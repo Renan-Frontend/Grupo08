@@ -96,14 +96,47 @@ const BpmnFlow = ({
   invalidNodeId,
   connectorsEnabled = true,
   connectorRevealMode = 'always',
+  onNodeLabelChange,
 }) => {
   const flowWrapRef = React.useRef(null);
+  const [editingNodeId, setEditingNodeId] = React.useState(null);
+  const [editingValue, setEditingValue] = React.useState('');
+  const editInputRef = React.useRef(null);
   const nodeRefs = React.useRef({});
   const [connectionLines, setConnectionLines] = React.useState([]);
   const [dragState, setDragState] = React.useState(null);
   const [linkDrag, setLinkDrag] = React.useState(null);
+  const [touchConnectionDraft, setTouchConnectionDraft] = React.useState(null);
   const [hoveredConnector, setHoveredConnector] = React.useState(null);
+  const [isCoarsePointer, setIsCoarsePointer] = React.useState(false);
   const ignoreNextNodeClickRef = React.useRef(false);
+  const longPressTimerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (editingNodeId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingNodeId]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia('(pointer: coarse)');
+    const updatePointerMode = () => {
+      setIsCoarsePointer(Boolean(mediaQuery.matches));
+    };
+
+    updatePointerMode();
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', updatePointerMode);
+      return () => mediaQuery.removeEventListener('change', updatePointerMode);
+    }
+
+    mediaQuery.addListener(updatePointerMode);
+    return () => mediaQuery.removeListener(updatePointerMode);
+  }, []);
 
   const getConnectionByHandle = React.useCallback(
     (nodeId, handle) =>
@@ -115,11 +148,6 @@ const BpmnFlow = ({
             (connection.toHandle || 'left') === handle),
       ) || null,
     [connections],
-  );
-
-  const hasConnectionAtHandle = React.useCallback(
-    (nodeId, handle) => Boolean(getConnectionByHandle(nodeId, handle)),
-    [getConnectionByHandle],
   );
 
   const hasOutgoingConnectionAtHandle = React.useCallback(
@@ -228,11 +256,14 @@ const BpmnFlow = ({
   }, []);
 
   const isConnectorVisible = React.useCallback(
-    (nodeId) => {
+    (nodeId, handle) => {
       if (!connectorsEnabled) return false;
-      return selectedNodeId === nodeId;
+      if (selectedNodeId === nodeId) return true;
+
+      // Keep linked output handles visible even when the node is not selected.
+      return hasOutgoingConnectionAtHandle(nodeId, handle);
     },
-    [connectorsEnabled, selectedNodeId],
+    [connectorsEnabled, hasOutgoingConnectionAtHandle, selectedNodeId],
   );
 
   const startConnectorDrag = React.useCallback(
@@ -299,12 +330,24 @@ const BpmnFlow = ({
         return;
       }
 
+      const isTouchPointer =
+        event.pointerType === 'touch' || event.pointerType === 'pen';
+      if (isTouchPointer) {
+        event.stopPropagation();
+        event.preventDefault();
+        onSelectConnection?.('');
+        onSelectNode?.(nodeId);
+        setTouchConnectionDraft({ fromId: nodeId, fromHandle: handle });
+        return;
+      }
+
       startConnectorDrag(event, nodeId, handle);
     },
     [
       connectorsEnabled,
       getConnectionByHandle,
       onSelectConnection,
+      onSelectNode,
       startConnectorDrag,
     ],
   );
@@ -324,10 +367,15 @@ const BpmnFlow = ({
   );
 
   React.useEffect(() => {
-    if (!connectorsEnabled && linkDrag) {
-      setLinkDrag(null);
+    if (!connectorsEnabled) {
+      if (linkDrag) {
+        setLinkDrag(null);
+      }
+      if (touchConnectionDraft) {
+        setTouchConnectionDraft(null);
+      }
     }
-  }, [connectorsEnabled, linkDrag]);
+  }, [connectorsEnabled, linkDrag, touchConnectionDraft]);
 
   React.useEffect(() => {
     if (connectorRevealMode !== 'hover-side' || !connectorsEnabled) {
@@ -671,7 +719,7 @@ const BpmnFlow = ({
           const active = isNodeActive(node);
           const textScale = zoom < 1 ? Math.max(0.82, zoom) : 1;
           const connectorScale = zoom < 1 ? Math.max(0.9, zoom) : 1;
-          const connectorSize = 14 * connectorScale;
+          const connectorSize = (isCoarsePointer ? 32 : 14) * connectorScale;
           const connectorHalf = connectorSize / 2;
           const activeIndex = activeIndexById[node.id];
           const isDone =
@@ -738,6 +786,7 @@ const BpmnFlow = ({
                       '--node-text-scale': textScale,
                       '--connector-size': `${connectorSize}px`,
                       '--connector-half': `${connectorHalf}px`,
+                      touchAction: disableNodeDrag ? undefined : 'none',
                     }
                   : {
                       '--node-text-scale': textScale,
@@ -745,11 +794,37 @@ const BpmnFlow = ({
                       '--connector-half': `${connectorHalf}px`,
                     }
               }
-              onClick={() => {
+              onClick={(event) => {
                 if (ignoreNextNodeClickRef.current) {
                   ignoreNextNodeClickRef.current = false;
                   return;
                 }
+
+                if (touchConnectionDraft) {
+                  if (touchConnectionDraft.fromId !== node.id) {
+                    const toHandle = getClosestSideHandle(
+                      node.id,
+                      event.clientX,
+                      event.clientY,
+                    );
+
+                    onCreateConnection?.(
+                      touchConnectionDraft.fromId,
+                      node.id,
+                      touchConnectionDraft.fromHandle,
+                      toHandle,
+                      {
+                        clientX: event.clientX,
+                        clientY: event.clientY,
+                      },
+                    );
+                    ignoreNextNodeClickRef.current = true;
+                  }
+
+                  setTouchConnectionDraft(null);
+                  return;
+                }
+
                 onSelectConnection?.('');
                 onSelectNode?.(node.id);
                 if (!active || typeof activeIndex !== 'number') return;
@@ -849,10 +924,15 @@ const BpmnFlow = ({
                   <button
                     type="button"
                     className={`${styles.connectorIn} ${
-                      hasConnectionAtHandle(node.id, 'left')
+                      hasOutgoingConnectionAtHandle(node.id, 'left')
                         ? styles.connectorLinked
                         : ''
                     } ${getDecisionClass(node.id, 'left')} ${
+                      touchConnectionDraft?.fromId === node.id &&
+                      touchConnectionDraft?.fromHandle === 'left'
+                        ? styles.connectorPending
+                        : ''
+                    } ${
                       isConnectorVisible(node.id, 'left')
                         ? styles.connectorVisible
                         : styles.connectorHidden
@@ -874,10 +954,15 @@ const BpmnFlow = ({
                   <button
                     type="button"
                     className={`${styles.connectorOut} ${
-                      hasConnectionAtHandle(node.id, 'right')
+                      hasOutgoingConnectionAtHandle(node.id, 'right')
                         ? styles.connectorLinked
                         : ''
                     } ${getDecisionClass(node.id, 'right')} ${
+                      touchConnectionDraft?.fromId === node.id &&
+                      touchConnectionDraft?.fromHandle === 'right'
+                        ? styles.connectorPending
+                        : ''
+                    } ${
                       isConnectorVisible(node.id, 'right')
                         ? styles.connectorVisible
                         : styles.connectorHidden
@@ -899,10 +984,15 @@ const BpmnFlow = ({
                   <button
                     type="button"
                     className={`${styles.connectorTop} ${
-                      hasConnectionAtHandle(node.id, 'top')
+                      hasOutgoingConnectionAtHandle(node.id, 'top')
                         ? styles.connectorLinked
                         : ''
                     } ${getDecisionClass(node.id, 'top')} ${
+                      touchConnectionDraft?.fromId === node.id &&
+                      touchConnectionDraft?.fromHandle === 'top'
+                        ? styles.connectorPending
+                        : ''
+                    } ${
                       isConnectorVisible(node.id, 'top')
                         ? styles.connectorVisible
                         : styles.connectorHidden
@@ -924,10 +1014,15 @@ const BpmnFlow = ({
                   <button
                     type="button"
                     className={`${styles.connectorBottom} ${
-                      hasConnectionAtHandle(node.id, 'bottom')
+                      hasOutgoingConnectionAtHandle(node.id, 'bottom')
                         ? styles.connectorLinked
                         : ''
                     } ${getDecisionClass(node.id, 'bottom')} ${
+                      touchConnectionDraft?.fromId === node.id &&
+                      touchConnectionDraft?.fromHandle === 'bottom'
+                        ? styles.connectorPending
+                        : ''
+                    } ${
                       isConnectorVisible(node.id, 'bottom')
                         ? styles.connectorVisible
                         : styles.connectorHidden
@@ -977,7 +1072,63 @@ const BpmnFlow = ({
                 </button>
               </div>
               <div className={styles.cardBody}>
-                <strong className={styles.stageLabel}>{label}</strong>
+                {editingNodeId === node.id ? (
+                  <input
+                    ref={editInputRef}
+                    className={styles.stageLabelInput}
+                    value={editingValue}
+                    onChange={(event) => setEditingValue(event.target.value)}
+                    onBlur={() => {
+                      const trimmed = editingValue.trim();
+                      if (trimmed && trimmed !== label) {
+                        onNodeLabelChange?.(node.id, trimmed);
+                      }
+                      setEditingNodeId(null);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.target.blur();
+                      }
+                      if (event.key === 'Escape') {
+                        setEditingNodeId(null);
+                      }
+                    }}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => event.stopPropagation()}
+                  />
+                ) : (
+                  <strong
+                    className={styles.stageLabel}
+                    onDoubleClick={(event) => {
+                      if (disabled) return;
+                      event.stopPropagation();
+                      setEditingNodeId(node.id);
+                      setEditingValue(label);
+                    }}
+                    onTouchStart={() => {
+                      if (disabled) return;
+                      longPressTimerRef.current = setTimeout(() => {
+                        setEditingNodeId(node.id);
+                        setEditingValue(label);
+                        longPressTimerRef.current = null;
+                      }, 500);
+                    }}
+                    onTouchEnd={() => {
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current);
+                        longPressTimerRef.current = null;
+                      }
+                    }}
+                    onTouchMove={() => {
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current);
+                        longPressTimerRef.current = null;
+                      }
+                    }}
+                  >
+                    {label}
+                  </strong>
+                )}
                 {getNodeSubtitle(node) ? (
                   <span className={styles.stageSubtitle}>
                     {getNodeSubtitle(node)}
@@ -995,4 +1146,4 @@ const BpmnFlow = ({
   );
 };
 
-export default BpmnFlow;
+export default React.memo(BpmnFlow);

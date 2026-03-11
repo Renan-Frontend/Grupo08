@@ -23,12 +23,57 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.editorNameGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  width: min(460px, 100%);
+  position: relative;
+}
+
+.editorNameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+  min-width: 0;
+}
+
+.editorNameRow .nameInput {
+  flex: 1;
+  min-width: 0;
 }
 
 .topbarInlineActions {
   display: flex;
   align-items: center;
   gap: 0.38rem;
+}
+
+.editorNameSaveFeedback {
+  position: absolute;
+  top: calc(100% + 0.1rem);
+  left: 0.1rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #15803d;
+  line-height: 1.15;
+  white-space: normal;
+  max-width: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.editorNameSaveFeedbackVisible {
+  visibility: visible;
+}
+
+.editorNameSaveFeedbackHidden {
+  visibility: hidden;
 }
 
 .topbarCenter {
@@ -54,14 +99,16 @@
 }
 
 .secondaryButton.tutorialButton:hover {
-  background: #27ae60;
-  color: #fff;
+  background: #ecfdf3;
+  color: #15803d;
+  border-color: #16a34a;
 }
 
 .title {
   margin: 0;
   font-size: 0.98rem;
   color: #0f172a;
+  flex-shrink: 0;
 }
 
 .nameInput {
@@ -88,6 +135,32 @@
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+@media (min-width: 901px) {
+  .topbar {
+    display: grid;
+    grid-template-columns: minmax(360px, 1fr) auto auto;
+    align-items: start;
+    column-gap: 0.8rem;
+    row-gap: 0.4rem;
+  }
+
+  .topbarLeft {
+    min-width: 0;
+  }
+
+  .topbarCenter {
+    justify-content: center;
+    align-self: center;
+    min-width: 0;
+  }
+
+  .topbarActions {
+    justify-content: flex-end;
+    align-self: start;
+    min-width: 0;
+  }
 }
 
 .workspace {
@@ -585,6 +658,11 @@
   border-color: #229954;
 }
 
+.secondaryButton:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
 .secondaryButton {
   border: 1px solid #27ae60;
   background: #fff;
@@ -612,10 +690,10 @@
 }
 
 .iconActionButton:hover {
-  background: #27ae60;
-  color: #fff;
+  background: #ecfdf3;
+  color: #15803d;
   border-color: #27ae60;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  box-shadow: none;
 }
 
 .iconActionButtonActive {
@@ -628,6 +706,19 @@
   background: #fff;
   border-color: #27ae60;
   color: #27ae60;
+}
+
+.fullscreenToggleButton {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.fullscreenToggleButton.iconActionButtonActive,
+.fullscreenToggleButton.iconActionButtonActive:hover {
+  background: #27ae60;
+  border-color: #27ae60;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(39, 174, 96, 0.28);
 }
 
 .iconActionButton:disabled {
@@ -860,10 +951,16 @@
     row-gap: 0.28rem;
   }
 
+  .editorNameGroup {
+    grid-column: 1;
+    width: 100%;
+  }
+
   .topbarInlineActions {
     grid-column: 2;
     grid-row: 1 / span 2;
     align-self: start;
+    justify-self: end;
   }
 
   .topbarCenter {

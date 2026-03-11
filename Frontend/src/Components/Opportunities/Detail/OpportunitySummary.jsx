@@ -2,6 +2,7 @@ import React from 'react';
 import styles from '../OpportunityDetail.module.css';
 
 const OpportunitySummary = ({
+  isReadOnlyMode,
   title,
   setTitle,
   createdDate,
@@ -21,19 +22,26 @@ const OpportunitySummary = ({
         <div className={styles.avatar}>O</div>
         <div>
           <span className={styles.infoLabel}>Informacoes da oportunidade</span>
-          <input
+          <textarea
             className={styles.title}
-            type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value.slice(0, 50))}
+            onChange={(e) => {
+              if (isReadOnlyMode) return;
+              setTitle(e.target.value.slice(0, 120));
+            }}
+            readOnly={isReadOnlyMode}
             placeholder="Oportunidade"
-            maxLength={20}
+            maxLength={120}
+            rows={2}
             style={{
               fontWeight: 'bold',
               border: 'none',
               background: 'transparent',
               width: '100%',
               fontSize: '1.5em',
+              resize: 'none',
+              overflow: 'hidden',
+              fontFamily: 'inherit',
             }}
           />
         </div>
@@ -45,7 +53,11 @@ const OpportunitySummary = ({
             type="text"
             className={styles.dateInput}
             value={createdDate}
-            onChange={(e) => setCreatedDate(e.target.value)}
+            onChange={(e) => {
+              if (isReadOnlyMode) return;
+              setCreatedDate(e.target.value);
+            }}
+            readOnly={isReadOnlyMode}
             placeholder="dd/mm/aaaa"
             autoComplete="off"
             inputMode="numeric"
@@ -57,7 +69,11 @@ const OpportunitySummary = ({
             type="text"
             className={styles.dateInput}
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={(e) => {
+              if (isReadOnlyMode) return;
+              setEndDate(e.target.value);
+            }}
+            readOnly={isReadOnlyMode}
             placeholder="dd/mm/aaaa"
             autoComplete="off"
             inputMode="numeric"
@@ -74,7 +90,11 @@ const OpportunitySummary = ({
               type="text"
               className={styles.dateInput}
               value={manualStatus}
-              onChange={(e) => setManualStatus(e.target.value)}
+              onChange={(e) => {
+                if (isReadOnlyMode) return;
+                setManualStatus(e.target.value);
+              }}
+              readOnly={isReadOnlyMode}
               placeholder="Digite o Status..."
             />
           )}
@@ -85,7 +105,11 @@ const OpportunitySummary = ({
             type="text"
             className={styles.dateInput}
             value={selectedOwner}
-            onChange={(e) => setSelectedOwner(e.target.value)}
+            onChange={(e) => {
+              if (isReadOnlyMode) return;
+              setSelectedOwner(e.target.value);
+            }}
+            readOnly={isReadOnlyMode}
             placeholder="Digite o proprietário..."
           />
         </div>

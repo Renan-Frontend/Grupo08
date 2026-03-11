@@ -95,6 +95,7 @@
   padding: 1rem 2rem;
   margin: 0 auto;
 }
+
 @media (max-width: 768px) {
   .buttonRow {
     width: 100%;
@@ -107,48 +108,6 @@
     min-width: 120px;
     padding: 0.7rem 1.2rem;
     font-size: 0.95rem;
-    margin: 0 auto;
-  }
-}
-@media (max-width: 768px) {
-  .buttonRow {
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-    margin-top: 1.2rem;
-    margin-bottom: 0.7rem;
-  }
-  .buttonRow button {
-    min-width: 120px;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.95rem;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-}
-@media (max-width: 768px) {
-  .buttonRow {
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-  }
-  .buttonRow button {
-    min-width: 120px;
-    padding: 0.7rem 1.2rem;
-    font-size: 0.95rem;
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
-@media (max-width: 768px) {
-  .buttonRow {
-    width: 100%;
-    justify-content: center;
-    align-items: center;
-  }
-  .buttonRow button {
     margin: 0 auto;
     display: block;
   }

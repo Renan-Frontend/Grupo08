@@ -1,5 +1,6 @@
 import os
 import uuid
+import threading
 import requests
 from datetime import datetime, timedelta
 from typing import Any
@@ -24,9 +25,13 @@ from models import Oportunidade, UserOut, User, UserUpdate, Entidade, AuthReques
 
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL", "").strip()
 USE_SUPABASE_DB = bool(SUPABASE_DB_URL and psycopg2 is not None)
+DB_CONNECT_TIMEOUT = int(os.getenv("DB_CONNECT_TIMEOUT", "3"))
 USERS_TABLE = "users_store"
 ENTIDADES_TABLE = "entidades_store"
 OPORTUNIDADES_TABLE = "oportunidades_store"
+
+# Lock to serialise read-modify-write cycles on JSON files.
+_data_lock = threading.Lock()
 BPMN_EDITOR_STATE_TABLE = "bpmn_editor_state_store"
 
 if SUPABASE_DB_URL and psycopg2 is None:
@@ -50,7 +55,7 @@ def get_db_connection():
         separator = "&" if "?" in db_url else "?"
         db_url = f"{db_url}{separator}sslmode=require"
 
-    return db_driver.connect(db_url, connect_timeout=10)
+    return db_driver.connect(db_url, connect_timeout=DB_CONNECT_TIMEOUT)
 
 
 def _merge_record_payload(record_id, payload):
@@ -288,6 +293,100 @@ def load_users_data():
     return load_collection(USERS_FILE, USERS_TABLE, [])
 
 
+def get_user_by_id(user_id: int):
+    if USE_SUPABASE_DB:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"SELECT id, payload FROM {USERS_TABLE} WHERE id = %s",
+                    (int(user_id),),
+                )
+                row = cursor.fetchone()
+                if row:
+                    return _merge_record_payload(row[0], row[1])
+        return None
+
+    users = load_users_data()
+    return next((u for u in users if int(u.get("id", -1)) == int(user_id)), None)
+
+
+def get_user_by_email(email: str):
+    normalized_email = str(email or "").strip().lower()
+
+    if USE_SUPABASE_DB:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    SELECT id, payload
+                    FROM {USERS_TABLE}
+                    WHERE LOWER(payload->>'email') = %s
+                    LIMIT 1
+                    """,
+                    (normalized_email,),
+                )
+                row = cursor.fetchone()
+                if row:
+                    return _merge_record_payload(row[0], row[1])
+        return None
+
+    users = load_users_data()
+    return next(
+        (
+            u
+            for u in users
+            if str(u.get("email", "")).strip().lower() == normalized_email
+        ),
+        None,
+    )
+
+
+def _is_admin_user(user: dict[str, Any]) -> bool:
+    return bool(user.get("admin", False) or user.get("role") == "admin")
+
+
+def _parse_user_created_at(value: Any) -> datetime:
+    if not value:
+        return datetime.max
+
+    value_str = str(value).strip()
+    if not value_str:
+        return datetime.max
+
+    normalized = value_str.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except Exception:
+        return datetime.max
+
+
+def get_principal_admin_id(users: list[dict[str, Any]]) -> int | None:
+    admin_candidates: list[tuple[datetime, int]] = []
+
+    for candidate in users:
+        if not isinstance(candidate, dict) or not _is_admin_user(candidate):
+            continue
+
+        raw_id = candidate.get("id")
+        if raw_id is None:
+            continue
+        try:
+            candidate_id = int(raw_id)
+        except Exception:
+            continue
+
+        created_at = _parse_user_created_at(
+            candidate.get("created_at", candidate.get("data", ""))
+        )
+        admin_candidates.append((created_at, candidate_id))
+
+    if not admin_candidates:
+        return None
+
+    admin_candidates.sort(key=lambda item: (item[0], item[1]))
+    return admin_candidates[0][1]
+
+
 def save_users_data(rows):
     save_collection(USERS_FILE, USERS_TABLE, rows)
 
@@ -316,6 +415,12 @@ def get_allowed_origins():
     allowed = {
         "http://localhost:5173",
         "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+        "http://localhost:5176",
+        "http://127.0.0.1:5176",
         "http://localhost:4173",
         "http://127.0.0.1:4173",
     }
@@ -416,18 +521,24 @@ app = get_app()
 @app.post("/oportunidades", status_code=201)
 def create_oportunidade(oportunidade: Oportunidade):
     global fake_oportunidades
-    fake_oportunidades = load_oportunidades_data()
-    new_id = max([o["id"] for o in fake_oportunidades], default=0) + 1
-    now = now_iso()
-    oportunidade_dict = normalize_oportunidade(oportunidade.dict())
-    oportunidade_dict["id"] = new_id
-    oportunidade_dict["created_at"] = oportunidade_dict.get("created_at") or now
-    oportunidade_dict["createdDate"] = normalize_oportunidade(
-        {"createdDate": oportunidade_dict.get("createdDate") or oportunidade_dict["created_at"]}
-    )["createdDate"]
-    oportunidade_dict["criadoPor"] = oportunidade_dict.get("criadoPor") or "admin"
-    fake_oportunidades.append(oportunidade_dict)
-    save_oportunidades_data(fake_oportunidades)
+    with _data_lock:
+        fake_oportunidades = load_oportunidades_data()
+        new_id = max([o["id"] for o in fake_oportunidades], default=0) + 1
+        now = now_iso()
+        oportunidade_dict = normalize_oportunidade(oportunidade.dict())
+        oportunidade_dict["id"] = new_id
+        oportunidade_dict["created_at"] = oportunidade_dict.get("created_at") or now
+        oportunidade_dict["createdDate"] = normalize_oportunidade(
+            {"createdDate": oportunidade_dict.get("createdDate") or oportunidade_dict["created_at"]}
+        )["createdDate"]
+        oportunidade_dict["criadoPor"] = oportunidade_dict.get("criadoPor") or "admin"
+        fake_oportunidades.append(oportunidade_dict)
+        try:
+            save_oportunidades_data(fake_oportunidades)
+        except Exception as e:
+            print(f"[ERRO] Falha ao salvar oportunidades: {e}")
+            raise HTTPException(status_code=500, detail=f"Falha ao persistir: {e}")
+        print(f"[OK] Oportunidade criada: id={new_id}, nome={oportunidade_dict.get('nome')}, total={len(fake_oportunidades)}")
     return oportunidade_dict
 
 # Armazenamento temporário de tokens de recuperação (em memória)
@@ -497,26 +608,27 @@ BPMN_EDITOR_STATE_FILE = os.path.join(
 init_supabase_storage()
 
 # --- Load persisted data or use defaults ---
-fake_entidades = load_entidades_data()
-bpmn_editor_state = load_bpmn_editor_state(
-    BPMN_EDITOR_STATE_FILE,
-    {
-        "name": "Novo BPMN",
-        "nodes": [],
-        "connections": [],
-        "updated_at": "",
-    },
-)
+bpmn_editor_state = {
+    "name": "Novo BPMN",
+    "nodes": [],
+    "connections": [],
+    "updated_at": "",
+}
 
-fake_oportunidades = load_oportunidades_data()
-if not isinstance(fake_oportunidades, list):
-    fake_oportunidades = []
+fake_entidades = []
+fake_oportunidades = []
 # Endpoint para listar oportunidades (fake)
 @app.get("/oportunidades")
-def get_oportunidades(page: int = 1, limit: int = 10):
+def get_oportunidades(page: int = 1, limit: int = 10, search: str = ""):
     global fake_oportunidades
     fake_oportunidades = load_oportunidades_data()
     normalized = [normalize_oportunidade(item) for item in fake_oportunidades]
+    if search.strip():
+        search_lower = search.strip().lower()
+        normalized = [
+            item for item in normalized
+            if search_lower in (item.get("nome") or item.get("name") or "").lower()
+        ]
     start = (page - 1) * limit
     end = start + limit
     total = len(normalized)
@@ -529,6 +641,11 @@ def get_oportunidades(page: int = 1, limit: int = 10):
 
 @app.put("/oportunidades/{oportunidade_id}")
 def update_oportunidade(oportunidade_id: int, oportunidade: Oportunidade):
+    global fake_oportunidades
+    with _data_lock:
+        return _update_oportunidade_locked(oportunidade_id, oportunidade)
+
+def _update_oportunidade_locked(oportunidade_id: int, oportunidade: Oportunidade):
     global fake_oportunidades
     fake_oportunidades = load_oportunidades_data()
     oportunidade_payload = oportunidade.dict(exclude_unset=True)
@@ -588,7 +705,12 @@ def update_oportunidade(oportunidade_id: int, oportunidade: Oportunidade):
             )
 
             fake_oportunidades[idx] = merged
-            save_oportunidades_data(fake_oportunidades)
+            try:
+                save_oportunidades_data(fake_oportunidades)
+            except Exception as e:
+                print(f"[ERRO] Falha ao salvar oportunidades (update): {e}")
+                raise HTTPException(status_code=500, detail=f"Falha ao persistir: {e}")
+            print(f"[OK] Oportunidade atualizada: id={oportunidade_id}, nome={merged.get('nome')}")
             return merged
 
     oportunidade_dict["id"] = oportunidade_id
@@ -607,15 +729,16 @@ def update_oportunidade(oportunidade_id: int, oportunidade: Oportunidade):
 @app.delete("/oportunidades/{oportunidade_id}", status_code=204)
 def delete_oportunidade(oportunidade_id: int):
     global fake_oportunidades
-    fake_oportunidades = load_oportunidades_data()
-    idx = next(
-        (i for i, oportunidade in enumerate(fake_oportunidades) if oportunidade["id"] == oportunidade_id),
-        None,
-    )
-    if idx is None:
-        raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
-    fake_oportunidades.pop(idx)
-    save_oportunidades_data(fake_oportunidades)
+    with _data_lock:
+        fake_oportunidades = load_oportunidades_data()
+        idx = next(
+            (i for i, oportunidade in enumerate(fake_oportunidades) if oportunidade["id"] == oportunidade_id),
+            None,
+        )
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
+        fake_oportunidades.pop(idx)
+        save_oportunidades_data(fake_oportunidades)
     return
 
 @app.get("/entidades")
@@ -678,53 +801,118 @@ def get_entidades():
 @app.post("/entidades", status_code=201)
 def create_entidade(entidade: Entidade):
     global fake_entidades
-    fake_entidades = load_entidades_data()
-    new_id = max([e["id"] for e in fake_entidades], default=0) + 1
-    now = now_iso()
-    entidade_dict = entidade.dict()
-    if not isinstance(entidade_dict.get("campos"), list):
-        entidade_dict["campos"] = []
-    entidade_dict["id"] = new_id
-    entidade_dict["created_at"] = now
-    entidade_dict["updated_at"] = now
-    entidade_dict["criadoPor"] = entidade_dict.get("criadoPor") or "admin"
-    fake_entidades.append(entidade_dict)
-    save_entidades_data(fake_entidades)
+    with _data_lock:
+        fake_entidades = load_entidades_data()
+        new_id = max([e["id"] for e in fake_entidades], default=0) + 1
+        now = now_iso()
+        entidade_dict = entidade.dict()
+        if not isinstance(entidade_dict.get("campos"), list):
+            entidade_dict["campos"] = []
+        entidade_dict["id"] = new_id
+        entidade_dict["created_at"] = now
+        entidade_dict["updated_at"] = now
+        entidade_dict["criadoPor"] = entidade_dict.get("criadoPor") or "admin"
+        fake_entidades.append(entidade_dict)
+        save_entidades_data(fake_entidades)
     return entidade_dict
 
 
 @app.put("/entidades/{entidade_id}")
 def update_entidade(entidade_id: int, entidade: Entidade):
     global fake_entidades
-    fake_entidades = load_entidades_data()
-    for idx, e in enumerate(fake_entidades):
-        if e["id"] == entidade_id:
-            entidade_dict = entidade.dict()
-            incoming_campos = entidade_dict.get("campos")
-            if not isinstance(incoming_campos, list):
-                entidade_dict["campos"] = (
-                    e.get("campos") if isinstance(e.get("campos"), list) else []
-                )
-            entidade_dict["id"] = entidade_id
-            entidade_dict["created_at"] = e["created_at"]
-            entidade_dict["updated_at"] = now_iso()
-            entidade_dict["criadoPor"] = e["criadoPor"]
-            fake_entidades[idx] = entidade_dict
-            save_entidades_data(fake_entidades)
-            return entidade_dict
+    with _data_lock:
+        fake_entidades = load_entidades_data()
+        for idx, e in enumerate(fake_entidades):
+            if e["id"] == entidade_id:
+                entidade_dict = entidade.dict()
+                incoming_campos = entidade_dict.get("campos")
+                if not isinstance(incoming_campos, list):
+                    entidade_dict["campos"] = (
+                        e.get("campos") if isinstance(e.get("campos"), list) else []
+                    )
+                entidade_dict["id"] = entidade_id
+                entidade_dict["created_at"] = e["created_at"]
+                entidade_dict["updated_at"] = now_iso()
+                entidade_dict["criadoPor"] = e["criadoPor"]
+                fake_entidades[idx] = entidade_dict
+                save_entidades_data(fake_entidades)
+                return entidade_dict
     raise HTTPException(status_code=404, detail="Entidade não encontrada")
 
 
 @app.delete("/entidades/{entidade_id}", status_code=204)
 def delete_entidade(entidade_id: int):
     global fake_entidades
-    fake_entidades = load_entidades_data()
-    idx = next((i for i, e in enumerate(fake_entidades) if e["id"] == entidade_id), None)
-    if idx is None:
-        raise HTTPException(status_code=404, detail="Entidade não encontrada")
-    fake_entidades.pop(idx)
-    save_entidades_data(fake_entidades)
+    with _data_lock:
+        fake_entidades = load_entidades_data()
+        idx = next((i for i, e in enumerate(fake_entidades) if e["id"] == entidade_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Entidade não encontrada")
+        fake_entidades.pop(idx)
+        save_entidades_data(fake_entidades)
     return
+
+
+@app.put("/entidades/batch/sync")
+def batch_sync_entidades(payload: dict = Body(...)):
+    """Sync multiple entities in a single request (one lock acquisition, one disk write)."""
+    global fake_entidades
+    items = payload.get("items")
+    if not isinstance(items, list):
+        raise HTTPException(status_code=400, detail="items deve ser uma lista")
+
+    results = []
+    with _data_lock:
+        fake_entidades = load_entidades_data()
+        changed = False
+
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            action = item.get("action", "upsert")
+            entity_id = item.get("id")
+            data = item.get("data", {})
+            nome = data.get("nome", "")
+
+            if action == "upsert" and entity_id is not None:
+                # Update existing
+                found = False
+                for idx, e in enumerate(fake_entidades):
+                    if e["id"] == int(entity_id):
+                        if not isinstance(data.get("campos"), list):
+                            data["campos"] = e.get("campos") if isinstance(e.get("campos"), list) else []
+                        data["id"] = int(entity_id)
+                        data["created_at"] = e.get("created_at", now_iso())
+                        data["updated_at"] = now_iso()
+                        data["criadoPor"] = e.get("criadoPor", "admin")
+                        fake_entidades[idx] = data
+                        results.append(data)
+                        changed = True
+                        found = True
+                        break
+                if not found:
+                    results.append({"id": entity_id, "error": "not_found"})
+
+            elif action == "upsert" and entity_id is None:
+                # Create new
+                new_id = max([e["id"] for e in fake_entidades], default=0) + 1
+                now = now_iso()
+                if not isinstance(data.get("campos"), list):
+                    data["campos"] = []
+                data["id"] = new_id
+                data["created_at"] = now
+                data["updated_at"] = now
+                data["criadoPor"] = data.get("criadoPor") or "admin"
+                fake_entidades.append(data)
+                results.append(data)
+                changed = True
+
+        if changed:
+            save_entidades_data(fake_entidades)
+
+    return {"items": results}
+
+
 # Função mock para extrair user_id do token fake
 def get_current_user(authorization: str = Header(...)):
     if not authorization.startswith("Bearer "):
@@ -737,8 +925,7 @@ def get_current_user(authorization: str = Header(...)):
         user_id = int(token.replace("fake-token-", ""))
     except Exception:
         raise HTTPException(status_code=401, detail="Token inválido")
-    users = load_users_data()
-    user = next((u for u in users if u["id"] == user_id), None)
+    user = get_user_by_id(user_id)
     if not user:
         raise HTTPException(status_code=401, detail="Token inválido")
     user_dict = {k: v for k, v in user.items() if k != "senha"}
@@ -803,8 +990,9 @@ def update_bpmn_editor_state(payload: dict = Body(...)):
         "updated_at": now_iso(),
     }
 
-    bpmn_editor_state = next_state
-    save_bpmn_editor_state(BPMN_EDITOR_STATE_FILE, bpmn_editor_state)
+    with _data_lock:
+        bpmn_editor_state = next_state
+        save_bpmn_editor_state(BPMN_EDITOR_STATE_FILE, bpmn_editor_state)
     return bpmn_editor_state
 
 @app.get("/users")
@@ -812,6 +1000,8 @@ def get_users(page: int = 1, limit: int = 8):
     users = load_users_data()
     if not isinstance(users, list):
         return paginated_users_response([], 0, page, limit)
+
+    principal_admin_id = get_principal_admin_id(users)
 
     total = len(users)
     start = (page - 1) * limit
@@ -826,6 +1016,7 @@ def get_users(page: int = 1, limit: int = 8):
             "data": user.get("created_at", user.get("data", "")),
             "admin": user.get("admin", False),
             "role": "admin" if user.get("admin", False) else "user",
+            "is_principal_admin": int(user.get("id", index + 1)) == principal_admin_id,
         }
         for index, user in enumerate(users[start:end], start)
     ]
@@ -862,22 +1053,37 @@ def create_user(user: User):
 
 @app.post("/auth/login")
 def auth_login(auth: AuthRequest):
-    users = load_users_data()
-    user = next((u for u in users if u["email"] == auth.email), None)
+    user = get_user_by_email(auth.email)
     senha_hash = hash_password(auth.senha)
     if not user or user["senha"] != senha_hash:
         raise HTTPException(status_code=400, detail="Email ou senha inválidos")
+
+    safe_user = {k: v for k, v in user.items() if k != "senha"}
     return {
         "access_token": f"fake-token-{user['id']}",
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "user": safe_user,
     }
 
 @app.put("/users/{user_id}")
-def update_user(user_id: int, user: UserUpdate):
+def update_user(user_id: int, user: UserUpdate, current_user: dict = Depends(get_current_user)):
     users = load_users_data()
     idx = next((i for i, u in enumerate(users) if u["id"] == user_id), None)
     if idx is None:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    principal_admin_id = get_principal_admin_id(users)
+    current_user_id = int(current_user.get("id", -1))
+    if (
+        principal_admin_id is not None
+        and int(user_id) == int(principal_admin_id)
+        and current_user_id != int(principal_admin_id)
+    ):
+        raise HTTPException(
+            status_code=403,
+            detail="Não é permitido editar o administrador principal.",
+        )
+
     update_data = user.dict(exclude_unset=True)
     # Validação de email se enviado
     if "email" in update_data:
@@ -928,11 +1134,18 @@ def update_user(user_id: int, user: UserUpdate):
     return {k: v for k, v in users[idx].items() if k != "senha"}
 
 @app.delete("/users/{user_id}", status_code=204)
-def delete_user(user_id: int):
+def delete_user(user_id: int, current_user: dict = Depends(get_current_user)):
     users = load_users_data()
     idx = next((i for i, u in enumerate(users) if u["id"] == user_id), None)
     if idx is None:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
+
+    principal_admin_id = get_principal_admin_id(users)
+    if principal_admin_id is not None and int(user_id) == int(principal_admin_id):
+        raise HTTPException(
+            status_code=403,
+            detail="Não é permitido excluir o administrador principal.",
+        )
 
     target_user = users[idx]
     target_is_admin = bool(

@@ -4,19 +4,7 @@ import { Link } from 'react-router-dom';
 import { UserContext } from '../Context/UserContext';
 
 const Header = () => {
-  const { getUser } = React.useContext(UserContext);
-  const [user, setUser] = React.useState(null);
-
-  React.useEffect(() => {
-    const token = window.localStorage.getItem('token');
-    if (token) {
-      getUser(token)
-        .then(setUser)
-        .catch(() => setUser(null));
-    } else {
-      setUser(null);
-    }
-  }, [getUser]);
+  const { user } = React.useContext(UserContext);
 
   return (
     <header className={styles.header}>
@@ -42,4 +30,4 @@ const Header = () => {
   );
 };
 
-export default Header;
+export default React.memo(Header);

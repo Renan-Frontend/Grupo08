@@ -250,22 +250,24 @@ const Opportunities = () => {
                   >
                     🤖
                   </button>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
-                    title="Editar oportunidade"
-                    aria-label="Editar oportunidade"
-                    onClick={() =>
-                      navigate(
-                        `/oportunidades/${toOpportunitySlug(opportunity.name)}`,
-                        {
-                          state: { opportunity },
-                        },
-                      )
-                    }
-                  >
-                    <span className={styles.editIconGlyph}>✏️</span>
-                  </button>
+                  {!isReadOnlyMode ? (
+                    <button
+                      type="button"
+                      className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
+                      title="Editar oportunidade"
+                      aria-label="Editar oportunidade"
+                      onClick={() =>
+                        navigate(
+                          `/oportunidades/${toOpportunitySlug(opportunity.name)}`,
+                          {
+                            state: { opportunity },
+                          },
+                        )
+                      }
+                    >
+                      <span className={styles.editIconGlyph}>✏️</span>
+                    </button>
+                  ) : null}
                 </td>
               </tr>
             ))}

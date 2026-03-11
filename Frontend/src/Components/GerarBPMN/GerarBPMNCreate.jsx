@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BPMN_EDITOR_STATE_GET, BPMN_EDITOR_STATE_PUT } from '../../Api';
 import {
+  batchSyncEntidades,
   createOpportunity,
   fetchOpportunitiesPage,
   getAuthToken,
@@ -38,6 +39,8 @@ import {
 } from './gerarBpmnCreate.shared';
 import styles from './GerarBPMNCreate.module.css';
 
+const NOOP = () => {};
+
 const getEntityTypeInfoLabel = (rawType) => {
   const normalized = String(rawType || '')
     .trim()
@@ -49,14 +52,70 @@ const getEntityTypeInfoLabel = (rawType) => {
   return 'Entidade: Apoio';
 };
 
+const createEmptyEntityFieldDraft = () => ({
+  id: null,
+  nome: '',
+  tipo: '',
+  obrigatorio: null,
+  keyType: '',
+  referencia: '',
+});
+
+const normalizeEntityFieldEntry = (field) => ({
+  id: String(field?.id || '').trim(),
+  nome: String(field?.nome || '').trim(),
+  tipo: String(field?.tipo || '').trim(),
+  obrigatorio:
+    field?.obrigatorio === true || String(field?.obrigatorio || '') === 'Sim',
+  keyType: String(field?.keyType || field?.chave || 'NORMAL')
+    .trim()
+    .toUpperCase(),
+  relacionamento: String(field?.relacionamento || '').trim() || null,
+});
+
+const mergeEntityFieldEntries = (baseFields = [], extraFields = []) => {
+  const merged = [];
+  const seen = new Set();
+
+  const appendField = (field) => {
+    const normalizedField = normalizeEntityFieldEntry(field);
+    const byId = normalizedField.id
+      ? `id:${normalizedField.id}`
+      : `name:${String(normalizedField.nome || '')
+          .trim()
+          .toLowerCase()}`;
+
+    if (!normalizedField.nome) return;
+    if (seen.has(byId)) return;
+
+    seen.add(byId);
+    merged.push({
+      ...normalizedField,
+      id: normalizedField.id || generateUniqueId('field'),
+    });
+  };
+
+  (Array.isArray(baseFields) ? baseFields : []).forEach(appendField);
+  (Array.isArray(extraFields) ? extraFields : []).forEach(appendField);
+
+  return merged;
+};
+
 const GerarBPMNCreate = () => {
   const navigate = useNavigate();
   const { bpmnSlug = '' } = useParams();
+  const BPMN_EDITOR_NAME_DRAFT_KEY = React.useMemo(
+    () => `bpmn_editor_name_draft:${String(bpmnSlug || '').trim() || 'create'}`,
+    [bpmnSlug],
+  );
   const viewportRef = React.useRef(null);
   const workspaceFullscreenRef = React.useRef(null);
   const hasAutoFocusedRef = React.useRef(false);
   const hasNormalizedInitialLayoutRef = React.useRef(false);
   const hasHydratedBpmnRef = React.useRef(false);
+  const skipNavigationPromptRef = React.useRef(false);
+  const isPageUnloadingRef = React.useRef(false);
+  const currentPageUrlRef = React.useRef('');
   const lastSelectedNodeIdRef = React.useRef('');
   const pendingTimelineItemsRef = React.useRef([]);
   const currentDraftRef = React.useRef({
@@ -75,9 +134,28 @@ const GerarBPMNCreate = () => {
     startScrollTop: 0,
     pointerId: null,
   });
+  const pinchRef = React.useRef({ startDist: 0, startZoom: 1 });
   const baseCanvasWidth = 4200;
   const baseCanvasHeight = 2600;
-  const [name, setName] = React.useState(() => bpmnNameFromSlug(bpmnSlug));
+  const [name, setName] = React.useState(() => {
+    const fallbackName = bpmnNameFromSlug(bpmnSlug);
+    const isCreateMode = !String(bpmnSlug || '').trim();
+
+    if (!isCreateMode || typeof window === 'undefined') {
+      return fallbackName;
+    }
+
+    try {
+      const savedName = window.sessionStorage.getItem(
+        'bpmn_editor_name_draft:create',
+      );
+      window.localStorage.removeItem('bpmn_editor_name_draft:create');
+      const normalizedSavedName = String(savedName || '').trim();
+      return normalizedSavedName || fallbackName;
+    } catch {
+      return fallbackName;
+    }
+  });
   const [nodes, setNodes] = React.useState([
     createNode('node-1', 'Entidade', 20, 30),
     createNode('node-2', 'Entidade', 300, 30),
@@ -167,6 +245,7 @@ const GerarBPMNCreate = () => {
   const isZoomBetweenLimits = zoom > MIN_ZOOM && zoom < MAX_ZOOM;
   const {
     entidades,
+    refetchEntidades,
     adicionarEntidade,
     editarEntidade,
     deletarEntidade,
@@ -196,6 +275,11 @@ const GerarBPMNCreate = () => {
       navigate('/gerar-bpmn', { replace: true });
     }
   }, [bpmnSlug, isReadOnlyMode, navigate]);
+
+  React.useEffect(() => {
+    refetchEntidades().catch(() => {});
+  }, [refetchEntidades]);
+
   const [entityMode, setEntityMode] = React.useState('nova');
   const [stageConfigMode, setStageConfigMode] = React.useState('');
   const [selectedExistingEntityId, setSelectedExistingEntityId] =
@@ -203,6 +287,8 @@ const GerarBPMNCreate = () => {
   const [entityError, setEntityError] = React.useState('');
   const [entitySavedNotice, setEntitySavedNotice] = React.useState('');
   const [entitySavedNoticeNodeId, setEntitySavedNoticeNodeId] =
+    React.useState('');
+  const [editorNameSaveFeedback, setEditorNameSaveFeedback] =
     React.useState('');
   const [entitySuggestionEntityId, setEntitySuggestionEntityId] =
     React.useState('');
@@ -215,22 +301,24 @@ const GerarBPMNCreate = () => {
   const [taskForm, setTaskForm] = React.useState(EMPTY_TASK_FORM);
   const [gatewayTypeDraft, setGatewayTypeDraft] = React.useState('xor');
   const [newEntityFields, setNewEntityFields] = React.useState([]);
+  const [selectedDataFieldIds, setSelectedDataFieldIds] = React.useState([]);
   const [entityDraftsByNodeId, setEntityDraftsByNodeId] = React.useState({});
-  const [entityFieldDraft, setEntityFieldDraft] = React.useState({
-    id: null,
-    nome: '',
-    tipo: '',
-    obrigatorio: null,
-  });
-  const [linkedFieldDraft, setLinkedFieldDraft] = React.useState({
-    id: null,
-    nome: '',
-    tipo: '',
-    obrigatorio: null,
-  });
+  const [entityFieldDraft, setEntityFieldDraft] = React.useState(() =>
+    createEmptyEntityFieldDraft(),
+  );
+  const [linkedFieldDraft, setLinkedFieldDraft] = React.useState(() =>
+    createEmptyEntityFieldDraft(),
+  );
   const [linkedEntityFieldsDraft, setLinkedEntityFieldsDraft] =
     React.useState(null);
   const [activeSidebarTab, setActiveSidebarTab] = React.useState('entidade');
+
+  const confirmLeavePage = React.useCallback(() => {
+    if (skipNavigationPromptRef.current) return true;
+    return window.confirm(
+      'Tem certeza que deseja sair desta pagina? As alteracoes nao salvas podem ser perdidas.',
+    );
+  }, []);
 
   const tutorialSteps = React.useMemo(
     () => [
@@ -646,6 +734,22 @@ const GerarBPMNCreate = () => {
     [linkedEntityFields, linkedEntityFieldsDraft],
   );
 
+  const selectedDataFieldsForNode = React.useMemo(() => {
+    const fieldMap = new Map(
+      (Array.isArray(newEntityFields) ? newEntityFields : []).map((field) => [
+        String(field?.id ?? '').trim(),
+        {
+          id: String(field?.id ?? '').trim(),
+          nome: String(field?.nome || '').trim(),
+        },
+      ]),
+    );
+
+    return (Array.isArray(selectedDataFieldIds) ? selectedDataFieldIds : [])
+      .map((fieldId) => fieldMap.get(String(fieldId || '').trim()))
+      .filter(Boolean);
+  }, [newEntityFields, selectedDataFieldIds]);
+
   React.useEffect(() => {
     setLinkedEntityFieldsDraft(null);
   }, [selectedExistingEntityId, selectedNodeId]);
@@ -705,6 +809,7 @@ const GerarBPMNCreate = () => {
       newEntityForm,
       conditionalForm,
       newEntityFields,
+      selectedDataFieldIds,
     };
 
     setEntityDraftsByNodeId((previous) => {
@@ -720,7 +825,9 @@ const GerarBPMNCreate = () => {
         JSON.stringify(current.conditionalForm) ===
           JSON.stringify(nextDraft.conditionalForm) &&
         JSON.stringify(current.newEntityFields) ===
-          JSON.stringify(nextDraft.newEntityFields);
+          JSON.stringify(nextDraft.newEntityFields) &&
+        JSON.stringify(current.selectedDataFieldIds) ===
+          JSON.stringify(nextDraft.selectedDataFieldIds);
 
       if (isSameDraft) return previous;
 
@@ -734,6 +841,7 @@ const GerarBPMNCreate = () => {
     entityMode,
     newEntityFields,
     newEntityForm,
+    selectedDataFieldIds,
     selectedExistingEntityId,
     selectedNodeId,
     stageConfigMode,
@@ -761,18 +869,9 @@ const GerarBPMNCreate = () => {
       setConditionalForm(EMPTY_CONDITIONAL_FORM);
       setTaskForm(EMPTY_TASK_FORM);
       setGatewayTypeDraft('xor');
-      setEntityFieldDraft({
-        id: null,
-        nome: '',
-        tipo: '',
-        obrigatorio: null,
-      });
-      setLinkedFieldDraft({
-        id: null,
-        nome: '',
-        tipo: '',
-        obrigatorio: null,
-      });
+      setSelectedDataFieldIds([]);
+      setEntityFieldDraft(createEmptyEntityFieldDraft());
+      setLinkedFieldDraft(createEmptyEntityFieldDraft());
       setEntitySuggestionEntityId('');
       return;
     }
@@ -810,18 +909,20 @@ const GerarBPMNCreate = () => {
           ? savedDraft.newEntityFields
           : [],
       );
-      setEntityFieldDraft({
-        id: null,
-        nome: '',
-        tipo: '',
-        obrigatorio: null,
-      });
-      setLinkedFieldDraft({
-        id: null,
-        nome: '',
-        tipo: '',
-        obrigatorio: null,
-      });
+      setSelectedDataFieldIds(
+        Array.isArray(savedDraft.selectedDataFieldIds)
+          ? savedDraft.selectedDataFieldIds
+              .map((value) => String(value || '').trim())
+              .filter(Boolean)
+          : (Array.isArray(savedDraft.newEntityFields)
+              ? savedDraft.newEntityFields
+              : []
+            )
+              .map((field) => String(field?.id ?? '').trim())
+              .filter(Boolean),
+      );
+      setEntityFieldDraft(createEmptyEntityFieldDraft());
+      setLinkedFieldDraft(createEmptyEntityFieldDraft());
       setEntityError('');
       return;
     }
@@ -848,14 +949,37 @@ const GerarBPMNCreate = () => {
       });
 
       const existingFields = getCamposEntidade(selectedNodeLinkedEntity).map(
-        (campo) => ({
-          id: campo.id ?? generateUniqueId('field'),
-          nome: String(campo.nome || '').trim(),
-          tipo: String(campo.tipo || '').trim(),
-          obrigatorio: campo.obrigatorio === true,
-        }),
+        normalizeEntityFieldEntry,
       );
-      setNewEntityFields(existingFields);
+      const restoredNodeFields = Array.isArray(
+        selectedNode?.selectedEntityFields,
+      )
+        ? selectedNode.selectedEntityFields.map(normalizeEntityFieldEntry)
+        : [];
+      const mergedFields = mergeEntityFieldEntries(
+        existingFields,
+        restoredNodeFields,
+      );
+
+      setNewEntityFields(mergedFields);
+      const availableFieldIds = new Set(
+        mergedFields
+          .map((field) => String(field?.id ?? '').trim())
+          .filter(Boolean),
+      );
+      const storedNodeFieldIds = (
+        Array.isArray(selectedNode?.selectedEntityFieldIds)
+          ? selectedNode.selectedEntityFieldIds
+          : []
+      )
+        .map((value) => String(value || '').trim())
+        .filter((value) => availableFieldIds.has(value));
+
+      setSelectedDataFieldIds(
+        storedNodeFieldIds.length > 0
+          ? storedNodeFieldIds
+          : Array.from(availableFieldIds),
+      );
     } else if (hasNodeChanged) {
       setSelectedExistingEntityId('');
       setEntityMode('nova');
@@ -866,13 +990,41 @@ const GerarBPMNCreate = () => {
         descricao: String(selectedNode.subtitle || '').trim(),
         atributoChave: String(selectedNode.info || '').trim(),
       });
-      setNewEntityFields([]);
-      setEntityFieldDraft({
-        id: null,
-        nome: '',
-        tipo: '',
-        obrigatorio: null,
-      });
+      const restoredNodeFields = Array.isArray(
+        selectedNode?.selectedEntityFields,
+      )
+        ? selectedNode.selectedEntityFields.map((field) => ({
+            id: String(field?.id || '').trim(),
+            nome: String(field?.nome || '').trim(),
+            tipo: String(field?.tipo || '').trim(),
+            obrigatorio:
+              field?.obrigatorio === true ||
+              String(field?.obrigatorio || '') === 'Sim',
+            keyType: String(field?.keyType || field?.chave || 'NORMAL')
+              .trim()
+              .toUpperCase(),
+            relacionamento: String(field?.relacionamento || '').trim() || null,
+          }))
+        : [];
+      setNewEntityFields(restoredNodeFields);
+      setSelectedDataFieldIds(
+        (() => {
+          const restoredIds = (
+            Array.isArray(selectedNode?.selectedEntityFieldIds)
+              ? selectedNode.selectedEntityFieldIds
+              : []
+          )
+            .map((value) => String(value || '').trim())
+            .filter(Boolean);
+
+          if (restoredIds.length > 0) return restoredIds;
+
+          return restoredNodeFields
+            .map((field) => String(field?.id || '').trim())
+            .filter(Boolean);
+        })(),
+      );
+      setEntityFieldDraft(createEmptyEntityFieldDraft());
     }
 
     setEntityError('');
@@ -889,6 +1041,25 @@ const GerarBPMNCreate = () => {
     selectedNodeLinkedEntity,
     stageConfigMode,
   ]);
+
+  const handleNodeLabelChange = React.useCallback(
+    (nodeId, newLabel) => {
+      if (isReadOnlyMode || !nodeId || !newLabel) return;
+      setNodes((previous) =>
+        previous.map((node) => {
+          if (node.id !== nodeId) return node;
+          if (node.nodeType === 'task') {
+            return { ...node, taskNome: newLabel };
+          }
+          if (node.nodeType === 'condicional') {
+            return { ...node, condicionalNome: newLabel };
+          }
+          return node;
+        }),
+      );
+    },
+    [isReadOnlyMode],
+  );
 
   const handleSelectNode = React.useCallback((nodeId) => {
     setSelectedNodeId(nodeId);
@@ -1189,14 +1360,17 @@ const GerarBPMNCreate = () => {
     setDisableCreateNodeConnectionPromptDraft(false);
   }, [disableCreateNodeConnectionPromptDraft]);
 
-  const handleNodePositionChange = (nodeId, position) => {
-    if (isReadOnlyMode) return;
-    setNodes((previous) =>
-      previous.map((node) =>
-        node.id === nodeId ? { ...node, x: position.x, y: position.y } : node,
-      ),
-    );
-  };
+  const handleNodePositionChange = React.useCallback(
+    (nodeId, position) => {
+      if (isReadOnlyMode) return;
+      setNodes((previous) =>
+        previous.map((node) =>
+          node.id === nodeId ? { ...node, x: position.x, y: position.y } : node,
+        ),
+      );
+    },
+    [isReadOnlyMode],
+  );
 
   const handleRemoveNodeById = React.useCallback(
     (nodeId) => {
@@ -1744,12 +1918,8 @@ const GerarBPMNCreate = () => {
   const resetNewEntityForm = React.useCallback(() => {
     setNewEntityForm(EMPTY_ENTITY_FORM);
     setNewEntityFields([]);
-    setEntityFieldDraft({
-      id: null,
-      nome: '',
-      tipo: '',
-      obrigatorio: null,
-    });
+    setSelectedDataFieldIds([]);
+    setEntityFieldDraft(createEmptyEntityFieldDraft());
   }, []);
 
   const applyEntityToSelectedNode = React.useCallback(
@@ -1773,6 +1943,24 @@ const GerarBPMNCreate = () => {
         condicionalDescricao: '',
         taskNome: '',
         taskDescricao: '',
+        selectedEntityFieldIds: selectedDataFieldsForNode.map((field) =>
+          String(field.id || '').trim(),
+        ),
+        selectedEntityFieldNames: selectedDataFieldsForNode
+          .map((field) => String(field.nome || '').trim())
+          .filter(Boolean),
+        selectedEntityFields: selectedDataFieldsForNode.map((field) => ({
+          id: String(field?.id || '').trim(),
+          nome: String(field?.nome || '').trim(),
+          tipo: String(field?.tipo || '').trim(),
+          obrigatorio:
+            field?.obrigatorio === true ||
+            String(field?.obrigatorio || '') === 'Sim',
+          keyType: String(field?.keyType || field?.chave || 'NORMAL')
+            .trim()
+            .toUpperCase(),
+          relacionamento: String(field?.relacionamento || '').trim() || null,
+        })),
       });
 
       appendPendingSidebarTimelineItem({
@@ -1790,6 +1978,7 @@ const GerarBPMNCreate = () => {
       appendPendingSidebarTimelineItem,
       selectedNode,
       selectedNodeId,
+      selectedDataFieldsForNode,
       updateSelectedNode,
     ],
   );
@@ -1816,21 +2005,36 @@ const GerarBPMNCreate = () => {
   ]);
 
   const handleSaveEntityFieldDraft = React.useCallback(() => {
+    const isEditingField = Boolean(entityFieldDraft.id);
     const nome = String(entityFieldDraft.nome || '').trim();
     if (!nome) {
+      setEntitySavedNotice('');
       setEntityError('Nome do campo é obrigatório.');
       return null;
     }
 
     if (!String(entityFieldDraft.tipo || '').trim()) {
+      setEntitySavedNotice('');
       setEntityError('Selecione o tipo do campo.');
       return null;
     }
 
     if (typeof entityFieldDraft.obrigatorio !== 'boolean') {
+      setEntitySavedNotice('');
       setEntityError('Informe se o campo é obrigatório.');
       return null;
     }
+
+    if (!String(entityFieldDraft.keyType || '').trim()) {
+      setEntitySavedNotice('');
+      setEntityError('Selecione o tipo de chave do campo.');
+      return null;
+    }
+
+    const normalizedKeyType = String(entityFieldDraft.keyType || 'NORMAL')
+      .trim()
+      .toUpperCase();
+    const referencia = String(entityFieldDraft.referencia || '').trim();
 
     const duplicated = validarNomeCampoDuplicado(
       newEntityFields,
@@ -1839,6 +2043,7 @@ const GerarBPMNCreate = () => {
     );
 
     if (duplicated) {
+      setEntitySavedNotice('');
       setEntityError('Já existe um campo com esse nome na entidade.');
       return null;
     }
@@ -1851,6 +2056,8 @@ const GerarBPMNCreate = () => {
                 nome,
                 tipo: entityFieldDraft.tipo,
                 obrigatorio: entityFieldDraft.obrigatorio,
+                keyType: normalizedKeyType,
+                relacionamento: referencia || null,
               }
             : campo,
         )
@@ -1861,14 +2068,106 @@ const GerarBPMNCreate = () => {
             nome,
             tipo: entityFieldDraft.tipo,
             obrigatorio: entityFieldDraft.obrigatorio,
+            keyType: normalizedKeyType,
+            relacionamento: referencia || null,
           },
         ];
 
     setNewEntityFields(nextFields);
+    setSelectedDataFieldIds((previous) => {
+      const validIds = nextFields
+        .map((field) => String(field?.id ?? '').trim())
+        .filter(Boolean);
+      const validSet = new Set(validIds);
+      const preservedIds = (Array.isArray(previous) ? previous : [])
+        .map((value) => String(value || '').trim())
+        .filter((value) => validSet.has(value));
+
+      if (entityFieldDraft.id) {
+        return preservedIds;
+      }
+
+      const createdFieldId = String(
+        nextFields[nextFields.length - 1]?.id || '',
+      ).trim();
+      if (!createdFieldId) return preservedIds;
+      return Array.from(new Set([...preservedIds, createdFieldId]));
+    });
 
     setEntityError('');
+    setEntitySavedNotice(
+      isEditingField
+        ? 'Campo atualizado na configuracao da etapa.'
+        : 'Campo adicionado na configuracao da etapa.',
+    );
+    setEntitySavedNoticeNodeId(String(selectedNode?.id || '').trim());
+
+    if (!isEditingField) {
+      setEntityFieldDraft(createEmptyEntityFieldDraft());
+    }
+
     return nextFields;
-  }, [entityFieldDraft, newEntityFields, validarNomeCampoDuplicado]);
+  }, [
+    entityFieldDraft,
+    newEntityFields,
+    selectedNode?.id,
+    validarNomeCampoDuplicado,
+  ]);
+
+  const handleEditEntityFieldDraft = React.useCallback((field) => {
+    if (!field) return;
+
+    setEntityFieldDraft({
+      id: String(field?.id || '').trim() || null,
+      nome: String(field?.nome || '').trim(),
+      tipo: String(field?.tipo || field?.type || '').trim(),
+      obrigatorio:
+        field?.obrigatorio === true || String(field?.obrigatorio) === 'Sim',
+      keyType: String(field?.keyType || field?.chave || 'NORMAL')
+        .trim()
+        .toUpperCase(),
+      referencia: String(field?.relacionamento || '').trim(),
+    });
+    setEntityError('');
+  }, []);
+
+  const handleSelectCreateNewEntityMode = React.useCallback(() => {
+    setEntityMode('nova');
+    setSelectedExistingEntityId('');
+    setNewEntityForm(EMPTY_ENTITY_FORM);
+    setNewEntityFields([]);
+    setSelectedDataFieldIds([]);
+    setEntityFieldDraft(createEmptyEntityFieldDraft());
+    setEntityError('');
+    setEntitySavedNotice('');
+  }, []);
+
+  const handleRemoveEntityFieldDraft = React.useCallback(
+    (fieldId) => {
+      const normalizedId = String(fieldId || '').trim();
+      if (!normalizedId) return;
+
+      const nextFields = (
+        Array.isArray(newEntityFields) ? newEntityFields : []
+      ).filter((field) => String(field?.id || '').trim() !== normalizedId);
+
+      setNewEntityFields(nextFields);
+      setSelectedDataFieldIds((previous) =>
+        (Array.isArray(previous) ? previous : []).filter(
+          (value) => String(value || '').trim() !== normalizedId,
+        ),
+      );
+
+      if (String(entityFieldDraft?.id || '').trim() === normalizedId) {
+        setEntityFieldDraft(createEmptyEntityFieldDraft());
+      }
+
+      setEntitySavedNotice('Campo removido da configuracao da etapa.');
+      setEntitySavedNoticeNodeId(String(selectedNode?.id || '').trim());
+      setEntityError('');
+    },
+    [entityFieldDraft?.id, newEntityFields, selectedNode?.id],
+  );
 
   const handleCreateAndLinkEntity = React.useCallback(
     async (fieldsOverride) => {
@@ -1899,7 +2198,7 @@ const GerarBPMNCreate = () => {
       const updateTarget = selectedNodeLinkedEntity || duplicatedEntity || null;
 
       try {
-        const token = window.localStorage.getItem('token');
+        const token = getAuthToken();
 
         if (updateTarget) {
           const targetId = getEntidadeId(updateTarget);
@@ -2044,6 +2343,9 @@ const GerarBPMNCreate = () => {
       entidadeNome: '',
       taskNome: '',
       taskDescricao: '',
+      selectedEntityFieldIds: [],
+      selectedEntityFieldNames: [],
+      selectedEntityFields: [],
     });
 
     appendPendingSidebarTimelineItem({
@@ -2091,6 +2393,9 @@ const GerarBPMNCreate = () => {
       entidadeNome: '',
       condicionalNome: '',
       condicionalDescricao: '',
+      selectedEntityFieldIds: [],
+      selectedEntityFieldNames: [],
+      selectedEntityFields: [],
     });
 
     appendPendingSidebarTimelineItem({
@@ -2145,6 +2450,24 @@ const GerarBPMNCreate = () => {
       condicionalDescricao: '',
       taskNome: '',
       taskDescricao: '',
+      selectedEntityFieldIds: selectedDataFieldsForNode.map((field) =>
+        String(field.id || '').trim(),
+      ),
+      selectedEntityFieldNames: selectedDataFieldsForNode
+        .map((field) => String(field.nome || '').trim())
+        .filter(Boolean),
+      selectedEntityFields: selectedDataFieldsForNode.map((field) => ({
+        id: String(field?.id || '').trim(),
+        nome: String(field?.nome || '').trim(),
+        tipo: String(field?.tipo || '').trim(),
+        obrigatorio:
+          field?.obrigatorio === true ||
+          String(field?.obrigatorio || '') === 'Sim',
+        keyType: String(field?.keyType || field?.chave || 'NORMAL')
+          .trim()
+          .toUpperCase(),
+        relacionamento: String(field?.relacionamento || '').trim() || null,
+      })),
     });
 
     appendPendingSidebarTimelineItem({
@@ -2165,6 +2488,7 @@ const GerarBPMNCreate = () => {
     newEntityForm.atributoChave,
     newEntityForm.descricao,
     newEntityForm.nome,
+    selectedDataFieldsForNode,
     selectedNode,
     updateSelectedNode,
   ]);
@@ -2197,6 +2521,9 @@ const GerarBPMNCreate = () => {
           entidadeNome: '',
           condicionalNome: '',
           condicionalDescricao: '',
+          selectedEntityFieldIds: [],
+          selectedEntityFieldNames: [],
+          selectedEntityFields: [],
           taskNome:
             String(selectedNode.taskNome || '').trim() ||
             String(selectedNode.label || '').trim(),
@@ -2221,6 +2548,9 @@ const GerarBPMNCreate = () => {
           entidadeNome: '',
           taskNome: '',
           taskDescricao: '',
+          selectedEntityFieldIds: [],
+          selectedEntityFieldNames: [],
+          selectedEntityFields: [],
         });
         return;
       }
@@ -2329,7 +2659,7 @@ const GerarBPMNCreate = () => {
       setIsEntitySuggestionBusy(true);
 
       try {
-        const token = window.localStorage.getItem('token');
+        const token = getAuthToken();
         await deletarEntidade(entityId, token);
 
         if (selectedExistingEntityId === String(entityId)) {
@@ -2471,7 +2801,7 @@ const GerarBPMNCreate = () => {
         }
 
         try {
-          const token = window.localStorage.getItem('token');
+          const token = getAuthToken();
           const entidadeEditada = await editarEntidade(
             entidadeId,
             {
@@ -2541,15 +2871,28 @@ const GerarBPMNCreate = () => {
     }));
 
     const existingFields = getCamposEntidade(selectedExistingEntity).map(
-      (campo) => ({
-        id: campo.id ?? generateUniqueId('field'),
-        nome: String(campo.nome || '').trim(),
-        tipo: String(campo.tipo || '').trim(),
-        obrigatorio: campo.obrigatorio === true,
-      }),
+      normalizeEntityFieldEntry,
     );
-    setNewEntityFields(existingFields);
-  }, [entityMode, getCamposEntidade, selectedExistingEntity]);
+    const restoredNodeFields = Array.isArray(selectedNode?.selectedEntityFields)
+      ? selectedNode.selectedEntityFields.map(normalizeEntityFieldEntry)
+      : [];
+    const mergedFields = mergeEntityFieldEntries(
+      existingFields,
+      restoredNodeFields,
+    );
+
+    setNewEntityFields(mergedFields);
+    setSelectedDataFieldIds(
+      mergedFields
+        .map((field) => String(field?.id ?? '').trim())
+        .filter(Boolean),
+    );
+  }, [
+    entityMode,
+    getCamposEntidade,
+    selectedExistingEntity,
+    selectedNode?.selectedEntityFields,
+  ]);
 
   const handleSaveLinkedField = React.useCallback(async () => {
     const resolvedFieldEntityTarget =
@@ -2585,6 +2928,16 @@ const GerarBPMNCreate = () => {
       return;
     }
 
+    if (!String(linkedFieldDraft.keyType || '').trim()) {
+      setEntityError('Selecione o tipo de chave do campo.');
+      return;
+    }
+
+    const normalizedKeyType = String(linkedFieldDraft.keyType || 'NORMAL')
+      .trim()
+      .toUpperCase();
+    const referencia = String(linkedFieldDraft.referencia || '').trim();
+
     const duplicated = validarNomeCampoDuplicado(
       linkedEntityFieldsForPanel,
       nome,
@@ -2607,6 +2960,8 @@ const GerarBPMNCreate = () => {
             nome,
             tipo: linkedFieldDraft.tipo,
             obrigatorio: linkedFieldDraft.obrigatorio,
+            keyType: normalizedKeyType,
+            relacionamento: referencia || null,
           },
         );
       } else {
@@ -2616,6 +2971,8 @@ const GerarBPMNCreate = () => {
             nome,
             tipo: linkedFieldDraft.tipo,
             obrigatorio: linkedFieldDraft.obrigatorio,
+            keyType: normalizedKeyType,
+            relacionamento: referencia || null,
           },
         );
       }
@@ -2624,12 +2981,7 @@ const GerarBPMNCreate = () => {
         Array.isArray(camposAtualizados) ? camposAtualizados : null,
       );
 
-      setLinkedFieldDraft({
-        id: null,
-        nome: '',
-        tipo: '',
-        obrigatorio: null,
-      });
+      setLinkedFieldDraft(createEmptyEntityFieldDraft());
       setEntityError('');
     } catch (err) {
       setEntityError(err?.message || 'Não foi possível salvar o campo.');
@@ -2658,12 +3010,7 @@ const GerarBPMNCreate = () => {
           Array.isArray(camposAtualizados) ? camposAtualizados : null,
         );
         if (String(linkedFieldDraft.id) === String(campoId)) {
-          setLinkedFieldDraft({
-            id: null,
-            nome: '',
-            tipo: '',
-            obrigatorio: null,
-          });
+          setLinkedFieldDraft(createEmptyEntityFieldDraft());
         }
       } catch (err) {
         setEntityError(err?.message || 'Não foi possível remover o campo.');
@@ -2699,6 +3046,33 @@ const GerarBPMNCreate = () => {
     return hasEditingId || (hasName && hasType && hasRequired);
   }, [entityFieldDraft]);
 
+  const persistEditorDraftToLocalStorage = React.useCallback(() => {
+    if (!hasHydratedBpmnRef.current) return;
+
+    try {
+      window.localStorage.setItem(
+        BPMN_EDITOR_LOCAL_STORAGE_KEY,
+        JSON.stringify({
+          ...currentDraftRef.current,
+          pendingTimelineItems: pendingTimelineItemsRef.current,
+          updated_at: new Date().toISOString(),
+        }),
+      );
+    } catch {
+      // no-op
+    }
+  }, []);
+
+  const clearEditorDraftFromLocalStorage = React.useCallback(() => {
+    try {
+      window.localStorage.removeItem(BPMN_EDITOR_LOCAL_STORAGE_KEY);
+      window.localStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+      window.sessionStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+    } catch {
+      // no-op
+    }
+  }, [BPMN_EDITOR_NAME_DRAFT_KEY]);
+
   const handleSidebarPrimaryAction = React.useCallback(async () => {
     if (isConnectionTabActive || isGatewayInfoTabActive) {
       return;
@@ -2706,11 +3080,13 @@ const GerarBPMNCreate = () => {
 
     if (isTaskNodeSelected) {
       handleSaveTaskStage();
+      persistEditorDraftToLocalStorage();
       return;
     }
 
     if (isDataNodeSelected && entityMode === 'nova' && !isEditingEntityAction) {
       handleSaveEntityStageLocal();
+      persistEditorDraftToLocalStorage();
       return;
     }
 
@@ -2721,11 +3097,13 @@ const GerarBPMNCreate = () => {
       }
 
       await handleSubmitEntityAction(nextFields);
+      persistEditorDraftToLocalStorage();
       return;
     }
 
     if (isDecisionNodeSelected) {
       handleSaveConditionalStage();
+      persistEditorDraftToLocalStorage();
       return;
     }
 
@@ -2735,7 +3113,9 @@ const GerarBPMNCreate = () => {
     }
 
     await handleSubmitEntityAction();
+    persistEditorDraftToLocalStorage();
   }, [
+    persistEditorDraftToLocalStorage,
     entityMode,
     handleSaveEntityFieldDraft,
     handleSaveConditionalStage,
@@ -2873,7 +3253,7 @@ const GerarBPMNCreate = () => {
     setSelectedExistingEntityId,
   ]);
 
-  const handleToggleNodeActive = (nodeId) => {
+  const handleToggleNodeActive = React.useCallback((nodeId) => {
     setNodes((previous) => {
       const activeCount = previous.filter(
         (node) => node.active !== false,
@@ -2886,7 +3266,7 @@ const GerarBPMNCreate = () => {
         return { ...node, active: node.active === false };
       });
     });
-  };
+  }, []);
 
   React.useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -3141,7 +3521,48 @@ const GerarBPMNCreate = () => {
     async (resolvedNodes = []) => {
       const bpmnCategoryName =
         String(name || DEFAULT_BPMN_NAME || '').trim() || 'BPMN';
+      const normalizedBpmnCategoryName = normalizeEntityName(bpmnCategoryName);
+      const buildNameCategoryKey = (entityName, categoryName) => {
+        const normalizedEntityName = normalizeEntityName(entityName);
+        const normalizedCategoryName = normalizeEntityName(categoryName);
+        if (!normalizedEntityName || !normalizedCategoryName) return '';
+        return `${normalizedEntityName}@@${normalizedCategoryName}`;
+      };
+      const syncedNodes = (
+        Array.isArray(resolvedNodes) ? resolvedNodes : []
+      ).map((node) => ({ ...node }));
 
+      const rebindSyncedNodesEntity = ({
+        rawEntityId,
+        normalizedName,
+        entityId,
+        entityName,
+      }) => {
+        if (entityId === null || entityId === undefined) return;
+
+        syncedNodes.forEach((node) => {
+          const nodeType = String(node?.nodeType || '')
+            .trim()
+            .toLowerCase();
+          if (nodeType !== 'entidade') return;
+
+          const matchesById =
+            rawEntityId &&
+            String(node?.entidadeId ?? '').trim() === rawEntityId;
+          const matchesByName =
+            !rawEntityId &&
+            normalizeEntityName(
+              node?.entidadeNome || node?.label || node?.subtitle || '',
+            ) === normalizedName;
+
+          if (!matchesById && !matchesByName) return;
+
+          node.entidadeId = entityId;
+          node.entidadeNome = String(
+            entityName || node?.entidadeNome || '',
+          ).trim();
+        });
+      };
       const getNodeNome = (node) => {
         return String(
           node?.entidadeNome || node?.label || node?.subtitle || '',
@@ -3152,6 +3573,29 @@ const GerarBPMNCreate = () => {
         return String(
           node?.descricao || node?.subtitle || 'Entidade gerada pelo BPMN',
         ).trim();
+      };
+
+      const getNodeCampos = (node) => {
+        const rawFields = Array.isArray(node?.selectedEntityFields)
+          ? node.selectedEntityFields
+          : [];
+
+        return rawFields
+          .map((field) => ({
+            id:
+              String(field?.id || '').trim() ||
+              `campo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            nome: String(field?.nome || '').trim(),
+            tipo: String(field?.tipo || '').trim() || 'Texto',
+            obrigatorio:
+              field?.obrigatorio === true ||
+              String(field?.obrigatorio || '') === 'Sim',
+            keyType: String(field?.keyType || field?.chave || 'NORMAL')
+              .trim()
+              .toUpperCase(),
+            relacionamento: String(field?.relacionamento || '').trim() || null,
+          }))
+          .filter((field) => field.nome);
       };
 
       const dedupedEntities = new Map();
@@ -3192,9 +3636,12 @@ const GerarBPMNCreate = () => {
               (node?.isPrimaryEntity === true ? 'Principal' : 'Apoio'),
             isPrimaryEntity: node?.isPrimaryEntity === true,
             descricao: getNodeDescricao(node),
-            atributoChave: String(node?.atributoChave || '').trim(),
+            atributoChave: String(
+              node?.atributoChave || node?.info || '',
+            ).trim(),
             ativo: true,
             criadoPor: actorAccountName,
+            campos: getNodeCampos(node),
           },
         });
       });
@@ -3207,10 +3654,13 @@ const GerarBPMNCreate = () => {
           .filter(([id]) => id !== null && id !== undefined),
       );
 
-      const existingByName = new Map(
+      const existingByNameAndCategory = new Map(
         (Array.isArray(entidades) ? entidades : [])
           .map((entidade) => [
-            normalizeEntityName(getEntidadeNome(entidade)),
+            buildNameCategoryKey(
+              getEntidadeNome(entidade),
+              String(entidade?.categoria || '').trim(),
+            ),
             entidade,
           ])
           .filter(([key]) => Boolean(key)),
@@ -3218,46 +3668,75 @@ const GerarBPMNCreate = () => {
 
       const token = getAuthToken();
 
-      for (const entityCandidate of dedupedEntities.values()) {
-        const { rawEntityId, normalizedName, payload } = entityCandidate;
+      const batchItems = [...dedupedEntities.values()].map(
+        (entityCandidate) => {
+          const { rawEntityId, normalizedName, payload } = entityCandidate;
+          const nameCategoryKey =
+            normalizedName && normalizedBpmnCategoryName
+              ? `${normalizedName}@@${normalizedBpmnCategoryName}`
+              : '';
 
-        const existingByEntityId = rawEntityId
-          ? existingById.get(rawEntityId)
-          : null;
-        const existingByEntityName = normalizedName
-          ? existingByName.get(normalizedName)
-          : null;
-        const existing = existingByEntityId || existingByEntityName || null;
+          const existingByEntityId = rawEntityId
+            ? existingById.get(rawEntityId)
+            : null;
+          const existingByEntityIdCategoryMatches =
+            existingByEntityId &&
+            normalizeEntityName(
+              String(existingByEntityId?.categoria || '').trim(),
+            ) === normalizedBpmnCategoryName;
+          const existingByEntityNameAndCategory = nameCategoryKey
+            ? existingByNameAndCategory.get(nameCategoryKey)
+            : null;
+          const existing = existingByEntityIdCategoryMatches
+            ? existingByEntityId
+            : existingByEntityNameAndCategory || null;
 
-        const existingId = existing ? getEntidadeId(existing) : null;
-        if (existingId !== null && existingId !== undefined) {
-          await editarEntidade(existingId, payload, token);
+          const existingId = existing ? getEntidadeId(existing) : null;
 
-          const mergedEntity = {
-            ...existing,
-            ...payload,
-            id: existingId,
+          return {
+            action: 'upsert',
+            id:
+              existingId !== null && existingId !== undefined
+                ? existingId
+                : null,
+            data: payload,
+            _rawEntityId: rawEntityId,
+            _normalizedName: normalizedName,
           };
-          existingById.set(String(existingId), mergedEntity);
-          if (normalizedName) {
-            existingByName.set(normalizedName, mergedEntity);
-          }
-          continue;
-        }
+        },
+      );
 
-        const created = await adicionarEntidade(payload, token);
-        if (created) {
-          const createdId = getEntidadeId(created);
-          if (createdId !== null && createdId !== undefined) {
-            existingById.set(String(createdId), created);
-          }
-          if (normalizedName) {
-            existingByName.set(normalizedName, created);
-          }
-        }
+      try {
+        const batchResult = await batchSyncEntidades({
+          items: batchItems.map(
+            ({ _rawEntityId, _normalizedName, ...rest }) => rest,
+          ),
+          token,
+        });
+
+        const resultItems = Array.isArray(batchResult?.items)
+          ? batchResult.items
+          : [];
+
+        resultItems.forEach((resultEntity, index) => {
+          if (!resultEntity || resultEntity.error) return;
+          const batchItem = batchItems[index];
+          if (!batchItem) return;
+
+          rebindSyncedNodesEntity({
+            rawEntityId: batchItem._rawEntityId,
+            normalizedName: batchItem._normalizedName,
+            entityId: resultEntity.id,
+            entityName: resultEntity.nome || batchItem.data.nome,
+          });
+        });
+      } catch (syncErr) {
+        console.warn('[BPMN Sync] Falha no batch de entidades:', syncErr);
       }
+
+      return syncedNodes;
     },
-    [actorAccountName, adicionarEntidade, editarEntidade, entidades, name],
+    [actorAccountName, entidades, name],
   );
 
   const handleSaveBpmn = React.useCallback(async () => {
@@ -3298,6 +3777,84 @@ const GerarBPMNCreate = () => {
         };
       });
 
+      const resolvedNodesWithDrafts = resolvedNodes.map((node) => {
+        if (node?.nodeType === 'condicional' || node?.nodeType === 'task') {
+          return node;
+        }
+
+        const draftByNode = entityDraftsByNodeId[node.id] || null;
+        const isCurrentNode = String(node.id) === String(selectedNodeId || '');
+
+        const currentNodeDraft = isCurrentNode
+          ? {
+              newEntityForm,
+              newEntityFields,
+              selectedDataFieldIds,
+            }
+          : null;
+
+        const effectiveDraft = currentNodeDraft || draftByNode;
+        if (!effectiveDraft) return node;
+
+        const fieldsFromDraft = Array.isArray(effectiveDraft.newEntityFields)
+          ? effectiveDraft.newEntityFields
+          : [];
+        const selectedFieldIds = (
+          Array.isArray(effectiveDraft.selectedDataFieldIds)
+            ? effectiveDraft.selectedDataFieldIds
+            : []
+        )
+          .map((value) => String(value || '').trim())
+          .filter(Boolean);
+
+        const shouldUseAllFields = selectedFieldIds.length === 0;
+        const selectedFields = fieldsFromDraft
+          .filter((field) => {
+            if (shouldUseAllFields) return true;
+            const fieldId = String(field?.id || '').trim();
+            return fieldId && selectedFieldIds.includes(fieldId);
+          })
+          .map((field) => ({
+            id: String(field?.id || '').trim(),
+            nome: String(field?.nome || '').trim(),
+            tipo: String(field?.tipo || '').trim() || 'Texto',
+            obrigatorio:
+              field?.obrigatorio === true ||
+              String(field?.obrigatorio || '') === 'Sim',
+            keyType: String(field?.keyType || field?.chave || 'NORMAL')
+              .trim()
+              .toUpperCase(),
+            relacionamento: String(field?.relacionamento || '').trim() || null,
+          }))
+          .filter((field) => field.id || field.nome);
+
+        const draftName = String(
+          effectiveDraft?.newEntityForm?.nome || '',
+        ).trim();
+        const draftDescricao = String(
+          effectiveDraft?.newEntityForm?.descricao || '',
+        ).trim();
+        const draftAtributoChave = String(
+          effectiveDraft?.newEntityForm?.atributoChave || '',
+        ).trim();
+
+        return {
+          ...node,
+          entidadeNome:
+            draftName || String(node?.entidadeNome || node?.label || '').trim(),
+          label: draftName || String(node?.label || '').trim(),
+          subtitle: draftDescricao || String(node?.subtitle || '').trim(),
+          info: draftAtributoChave || String(node?.info || '').trim(),
+          selectedEntityFieldIds: selectedFields
+            .map((field) => String(field?.id || '').trim())
+            .filter(Boolean),
+          selectedEntityFieldNames: selectedFields
+            .map((field) => String(field?.nome || '').trim())
+            .filter(Boolean),
+          selectedEntityFields: selectedFields,
+        };
+      });
+
       const hasConfiguredEntity = (node) => {
         if (!node) return false;
         if (node.nodeType === 'condicional' || node.nodeType === 'task') {
@@ -3315,7 +3872,7 @@ const GerarBPMNCreate = () => {
         return hasEntityName;
       };
 
-      const nodeWithoutEntity = resolvedNodes.find(
+      const nodeWithoutEntity = resolvedNodesWithDrafts.find(
         (node) =>
           node.active !== false &&
           node.nodeType !== 'condicional' &&
@@ -3342,24 +3899,33 @@ const GerarBPMNCreate = () => {
         });
         return;
       }
-      const hasEntityIdUpgrade = resolvedNodes.some(
+      const syncedResolvedNodes = await syncBpmnNodesToEntidadesCatalog(
+        resolvedNodesWithDrafts,
+      );
+      const finalResolvedNodes =
+        Array.isArray(syncedResolvedNodes) &&
+        syncedResolvedNodes.length === resolvedNodesWithDrafts.length
+          ? syncedResolvedNodes
+          : resolvedNodesWithDrafts;
+
+      const hasEntityIdUpgrade = finalResolvedNodes.some(
         (node, index) =>
           String(node.entidadeId ?? '') !==
           String(nodes[index]?.entidadeId ?? ''),
       );
 
       if (hasEntityIdUpgrade) {
-        setNodes(resolvedNodes);
+        setNodes(finalResolvedNodes);
       }
 
-      const persistedNodes = resolvedNodes.map(sanitizeNodeForPersistence);
+      const persistedNodes = finalResolvedNodes.map(sanitizeNodeForPersistence);
       const persistedConnections = connections.map(
         sanitizeConnectionForPersistence,
       );
 
       setInvalidEntityNodeId('');
 
-      const explicitPrimaryNodeWithEntity = resolvedNodes.find(
+      const explicitPrimaryNodeWithEntity = finalResolvedNodes.find(
         (node) =>
           node.active !== false &&
           node.nodeType !== 'condicional' &&
@@ -3369,7 +3935,7 @@ const GerarBPMNCreate = () => {
           node.entidadeId !== undefined,
       );
 
-      const firstActiveNodeWithEntity = resolvedNodes.find(
+      const firstActiveNodeWithEntity = finalResolvedNodes.find(
         (node) =>
           node.active !== false &&
           node.nodeType !== 'condicional' &&
@@ -3408,31 +3974,15 @@ const GerarBPMNCreate = () => {
       } catch (error) {}
 
       const originalBpmnSlug = String(bpmnSlug || '').trim();
-      const savedOpportunityId =
+      let resolvedOpportunityId =
         Number(
           savedOpportunityBySlug[currentBpmnSlug] ||
             (originalBpmnSlug ? savedOpportunityBySlug[originalBpmnSlug] : 0) ||
             0,
         ) || null;
 
-      const opportunitiesPage = await fetchOpportunitiesPage({
-        page: 1,
-        limit: 500,
-        token: getAuthToken(),
-      });
-
-      const allOpportunities = Array.isArray(opportunitiesPage?.data)
-        ? opportunitiesPage.data
-        : [];
-
-      const existingOpportunity = savedOpportunityId
-        ? allOpportunities.find(
-            (item) => Number(item?.id) === Number(savedOpportunityId),
-          ) || null
-        : null;
-
-      const token = window.localStorage.getItem('token');
-      const { url, options } = BPMN_EDITOR_STATE_PUT(
+      const token = getAuthToken();
+      const bpmnStatePutPayload = BPMN_EDITOR_STATE_PUT(
         {
           name,
           nodes: persistedNodes,
@@ -3441,10 +3991,39 @@ const GerarBPMNCreate = () => {
         token,
       );
 
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        throw new Error('Falha ao salvar BPMN');
+      const searchName = name || DEFAULT_BPMN_NAME;
+
+      const [opportunitiesPage, bpmnStateResponse] = await Promise.all([
+        fetchOpportunitiesPage({
+          page: 1,
+          limit: 50,
+          token,
+          search: searchName,
+        }),
+        fetch(bpmnStatePutPayload.url, bpmnStatePutPayload.options),
+      ]);
+
+      if (!bpmnStateResponse.ok) {
+        let detail = '';
+        try {
+          const errorPayload = await bpmnStateResponse.json();
+          detail = String(errorPayload?.detail || '').trim();
+        } catch (error) {
+          // no-op
+        }
+
+        throw new Error(detail || 'Falha ao salvar BPMN');
       }
+
+      const allOpportunities = Array.isArray(opportunitiesPage?.data)
+        ? opportunitiesPage.data
+        : [];
+
+      let resolvedExistingOpportunity = resolvedOpportunityId
+        ? allOpportunities.find(
+            (item) => Number(item?.id) === Number(resolvedOpportunityId),
+          ) || null
+        : null;
 
       const buildNodeLabel = (node) => {
         if (!node) return 'Etapa';
@@ -3525,13 +4104,15 @@ const GerarBPMNCreate = () => {
         };
       };
 
-      const previousNodes = Array.isArray(existingOpportunity?.bpmn?.nodes)
-        ? existingOpportunity.bpmn.nodes
+      const previousNodes = Array.isArray(
+        resolvedExistingOpportunity?.bpmn?.nodes,
+      )
+        ? resolvedExistingOpportunity.bpmn.nodes
         : [];
       const previousConnections = Array.isArray(
-        existingOpportunity?.bpmn?.connections,
+        resolvedExistingOpportunity?.bpmn?.connections,
       )
-        ? existingOpportunity.bpmn.connections
+        ? resolvedExistingOpportunity.bpmn.connections
         : [];
 
       const previousEntityMap = getNodeMapByType(previousNodes, 'entidade');
@@ -3539,9 +4120,9 @@ const GerarBPMNCreate = () => {
       const entityDiff = computeNodeDiffNames(previousEntityMap, nextEntityMap);
 
       const existingTimelineItemsRaw = Array.isArray(
-        existingOpportunity?.timelineItems,
+        resolvedExistingOpportunity?.timelineItems,
       )
-        ? existingOpportunity.timelineItems
+        ? resolvedExistingOpportunity.timelineItems
         : [];
 
       const existingTimelineItems = existingTimelineItemsRaw;
@@ -3684,7 +4265,7 @@ const GerarBPMNCreate = () => {
 
       timelineGeneratedItems.push({
         id: noteIdBase + noteIdOffset,
-        title: savedOpportunityId ? 'BPMN atualizado' : 'BPMN criado',
+        title: resolvedOpportunityId ? 'BPMN atualizado' : 'BPMN criado',
         description: `Nós ${previousNodes.length}→${persistedNodes.length} | Conexões ${previousConnections.length}→${persistedConnections.length}`,
         time: nowTime,
         timestamp: nowTimestamp,
@@ -3692,7 +4273,7 @@ const GerarBPMNCreate = () => {
         actorId: actorAccountId,
         autoGenerated: true,
         source: 'bpmn-save',
-        actionType: savedOpportunityId ? 'update' : 'create',
+        actionType: resolvedOpportunityId ? 'update' : 'create',
         elementType: 'bpmn',
         itemName: name || DEFAULT_BPMN_NAME,
         before: `Nós ${previousNodes.length} | Conexões ${previousConnections.length}`,
@@ -3732,7 +4313,7 @@ const GerarBPMNCreate = () => {
         noteIdOffset += 1;
       };
 
-      if (!savedOpportunityId) {
+      if (!resolvedOpportunityId) {
         orderedActiveNodeEntries.forEach((entry) => {
           pushEntityEntryNote({
             title: `${entry.label} foi adicionada`,
@@ -3779,20 +4360,23 @@ const GerarBPMNCreate = () => {
         const sameName = normalizeBpmnName(itemName) === normalizedCurrentName;
         if (!sameName) return false;
 
-        if (!savedOpportunityId) return true;
-        return Number(item?.id) !== Number(savedOpportunityId);
+        if (!resolvedOpportunityId) return true;
+        return Number(item?.id) !== Number(resolvedOpportunityId);
       });
 
       if (duplicated) {
-        setNoticeModal({
-          open: true,
-          title: 'Nome duplicado',
-          message: 'Já existe um BPMN com esse nome na tabela.',
-        });
-        return;
+        if (!resolvedOpportunityId && duplicated?.id) {
+          resolvedOpportunityId = Number(duplicated.id);
+          resolvedExistingOpportunity = duplicated;
+        } else {
+          setNoticeModal({
+            open: true,
+            title: 'Nome duplicado',
+            message: 'Já existe um BPMN com esse nome na tabela.',
+          });
+          return;
+        }
       }
-
-      await syncBpmnNodesToEntidadesCatalog(resolvedNodes);
 
       const opportunityPayload = {
         nome: name || DEFAULT_BPMN_NAME,
@@ -3826,22 +4410,22 @@ const GerarBPMNCreate = () => {
         createdDate: new Date().toISOString(),
       };
 
-      if (savedOpportunityId) {
+      if (resolvedOpportunityId) {
         await updateOpportunityById({
-          opportunityId: savedOpportunityId,
+          opportunityId: resolvedOpportunityId,
           payload: {
-            ...(existingOpportunity || {}),
+            ...(resolvedExistingOpportunity || {}),
             ...opportunityPayload,
-            id: savedOpportunityId,
+            id: resolvedOpportunityId,
           },
           token: getAuthToken(),
         });
 
         savedOpportunityBySlug = {
           ...savedOpportunityBySlug,
-          [currentBpmnSlug]: savedOpportunityId,
+          [currentBpmnSlug]: resolvedOpportunityId,
           ...(originalBpmnSlug
-            ? { [originalBpmnSlug]: savedOpportunityId }
+            ? { [originalBpmnSlug]: resolvedOpportunityId }
             : {}),
         };
 
@@ -3850,11 +4434,10 @@ const GerarBPMNCreate = () => {
           JSON.stringify(savedOpportunityBySlug),
         );
       } else {
-        const createdOpportunityResponse = await createOpportunity({
+        const createdOpportunity = await createOpportunity({
           payload: opportunityPayload,
           token: getAuthToken(),
         });
-        const createdOpportunity = await createdOpportunityResponse.json();
 
         if (createdOpportunity?.id) {
           savedOpportunityBySlug = {
@@ -3873,25 +4456,22 @@ const GerarBPMNCreate = () => {
 
       pendingTimelineItemsRef.current = [];
       try {
-        window.localStorage.setItem(
-          BPMN_EDITOR_LOCAL_STORAGE_KEY,
-          JSON.stringify({
-            ...currentDraftRef.current,
-            pendingTimelineItems: [],
-            updated_at: new Date().toISOString(),
-          }),
-        );
+        window.localStorage.removeItem(BPMN_EDITOR_LOCAL_STORAGE_KEY);
       } catch (error) {}
     } catch (error) {
+      console.error('[BPMN Save Error]', error);
       setNoticeModal({
         open: true,
         title: 'Falha ao salvar',
-        message: 'Não foi possível salvar o BPMN agora.',
+        message:
+          String(error?.message || '').trim() ||
+          'Não foi possível salvar o BPMN agora.',
       });
     } finally {
       setIsSavingBpmn(false);
 
       if (saveSucceeded) {
+        skipNavigationPromptRef.current = true;
         navigate('/gerar-bpmn');
       }
     }
@@ -3900,12 +4480,17 @@ const GerarBPMNCreate = () => {
     connections,
     actorAccountId,
     actorAccountName,
+    entityDraftsByNodeId,
     entidadesById,
     isReadOnlyMode,
     name,
     navigate,
+    newEntityFields,
+    newEntityForm,
     nodes,
     resolveEntityIdFromNode,
+    selectedDataFieldIds,
+    selectedNodeId,
     syncBpmnNodesToEntidadesCatalog,
   ]);
 
@@ -3914,15 +4499,51 @@ const GerarBPMNCreate = () => {
     const isCreateMode = !bpmnSlug;
 
     const loadSavedBpmn = async () => {
+      let loadedFromLocalStorage = false;
+
       if (isCreateMode) {
+        try {
+          const localDraftRaw = window.localStorage.getItem(
+            BPMN_EDITOR_LOCAL_STORAGE_KEY,
+          );
+
+          if (localDraftRaw) {
+            const localDraft = JSON.parse(localDraftRaw);
+
+            if (localDraft && typeof localDraft === 'object') {
+              if (typeof localDraft.name === 'string') {
+                setName(localDraft.name);
+              }
+
+              if (Array.isArray(localDraft.nodes)) {
+                setNodes(localDraft.nodes.map(normalizeEditorNode));
+              }
+
+              if (Array.isArray(localDraft.connections)) {
+                setConnections(
+                  localDraft.connections.map(normalizeEditorConnection),
+                );
+              }
+
+              pendingTimelineItemsRef.current = Array.isArray(
+                localDraft.pendingTimelineItems,
+              )
+                ? localDraft.pendingTimelineItems
+                : [];
+
+              loadedFromLocalStorage = true;
+            }
+          }
+        } catch {
+          // no-op
+        }
+
         if (isMounted) {
           hasHydratedBpmnRef.current = true;
           setIsLoadingBpmn(false);
         }
         return;
       }
-
-      let loadedFromLocalStorage = false;
 
       try {
         const localDraftRaw = window.localStorage.getItem(
@@ -3972,7 +4593,7 @@ const GerarBPMNCreate = () => {
       }
 
       try {
-        const token = window.localStorage.getItem('token');
+        const token = getAuthToken();
         const { url, options } = BPMN_EDITOR_STATE_GET(token);
         const response = await fetch(url, options);
 
@@ -4018,8 +4639,93 @@ const GerarBPMNCreate = () => {
     };
   }, [connections, name, nodes]);
 
+  // Auto-persist draft to localStorage on every state change (debounced)
+  // and on component unmount (SPA navigation).
   React.useEffect(() => {
-    const handleBeforeUnload = () => {
+    if (!hasHydratedBpmnRef.current) return undefined;
+
+    const timerId = window.setTimeout(() => {
+      try {
+        window.localStorage.setItem(
+          BPMN_EDITOR_LOCAL_STORAGE_KEY,
+          JSON.stringify({
+            ...currentDraftRef.current,
+            pendingTimelineItems: pendingTimelineItemsRef.current,
+            updated_at: new Date().toISOString(),
+          }),
+        );
+      } catch {
+        // quota error – ignore
+      }
+    }, 400);
+
+    return () => {
+      window.clearTimeout(timerId);
+
+      // Persist immediately on unmount so SPA navigation never loses data.
+      // Skip if save already succeeded (navigating away intentionally).
+      if (hasHydratedBpmnRef.current && !skipNavigationPromptRef.current) {
+        try {
+          window.localStorage.setItem(
+            BPMN_EDITOR_LOCAL_STORAGE_KEY,
+            JSON.stringify({
+              ...currentDraftRef.current,
+              pendingTimelineItems: pendingTimelineItemsRef.current,
+              updated_at: new Date().toISOString(),
+            }),
+          );
+        } catch {
+          // quota error – ignore
+        }
+      }
+    };
+  }, [connections, name, nodes]);
+
+  const handleSaveEditorNameDraft = React.useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const normalizedName = String(name || '').trim();
+      if (normalizedName) {
+        window.sessionStorage.setItem(
+          BPMN_EDITOR_NAME_DRAFT_KEY,
+          normalizedName,
+        );
+        window.localStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+        setEditorNameSaveFeedback('Nome do editor salvo nesta sessao.');
+        return;
+      }
+
+      window.sessionStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+      window.localStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+      setEditorNameSaveFeedback(
+        'Nome do editor removido do rascunho desta sessao.',
+      );
+    } catch {
+      setEditorNameSaveFeedback(
+        'Nao foi possivel salvar o nome do editor agora.',
+      );
+    }
+  }, [BPMN_EDITOR_NAME_DRAFT_KEY, name]);
+
+  React.useEffect(() => {
+    if (!editorNameSaveFeedback) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setEditorNameSaveFeedback('');
+    }, 2200);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [editorNameSaveFeedback]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    currentPageUrlRef.current = window.location.href;
+
+    const persistSnapshot = () => {
       if (!hasHydratedBpmnRef.current) return;
 
       try {
@@ -4033,14 +4739,121 @@ const GerarBPMNCreate = () => {
           BPMN_EDITOR_LOCAL_STORAGE_KEY,
           JSON.stringify(snapshot),
         );
-      } catch (error) {}
+      } catch {
+        // no-op
+      }
+    };
+
+    const handleBeforeUnload = (event) => {
+      isPageUnloadingRef.current = true;
+      persistSnapshot();
+
+      if (skipNavigationPromptRef.current) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    const allowNavigation = () => {
+      const confirmed = confirmLeavePage();
+      if (!confirmed) return false;
+      skipNavigationPromptRef.current = true;
+      return true;
+    };
+
+    const handleDocumentClickCapture = (event) => {
+      if (skipNavigationPromptRef.current) return;
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+
+      const anchor = event.target?.closest?.('a[href]');
+      if (!anchor) return;
+      if (anchor.target && anchor.target !== '_self') return;
+      if (anchor.hasAttribute('download')) return;
+
+      const href = anchor.getAttribute('href') || '';
+      if (!href || href.startsWith('#')) return;
+
+      const nextUrl = new URL(anchor.href, window.location.href);
+      const currentUrl = new URL(window.location.href);
+      const isSameRoute =
+        nextUrl.pathname === currentUrl.pathname &&
+        nextUrl.search === currentUrl.search &&
+        nextUrl.hash === currentUrl.hash;
+
+      if (isSameRoute) return;
+
+      if (!allowNavigation()) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+
+    const originalPushState = window.history.pushState;
+    window.history.pushState = function patchedPushState(...args) {
+      if (!skipNavigationPromptRef.current) {
+        const target = args?.[2];
+        if (target) {
+          const nextUrl = new URL(String(target), window.location.href);
+          const currentUrl = new URL(window.location.href);
+          const isSameRoute =
+            nextUrl.pathname === currentUrl.pathname &&
+            nextUrl.search === currentUrl.search &&
+            nextUrl.hash === currentUrl.hash;
+
+          if (!isSameRoute && !allowNavigation()) {
+            return;
+          }
+        }
+      }
+
+      const result = originalPushState.apply(this, args);
+      currentPageUrlRef.current = window.location.href;
+      return result;
+    };
+
+    const handlePopState = () => {
+      if (skipNavigationPromptRef.current) {
+        currentPageUrlRef.current = window.location.href;
+        return;
+      }
+
+      const confirmed = confirmLeavePage();
+      if (!confirmed) {
+        window.history.pushState(null, '', currentPageUrlRef.current);
+        return;
+      }
+
+      skipNavigationPromptRef.current = true;
+      currentPageUrlRef.current = window.location.href;
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('click', handleDocumentClickCapture, true);
+    window.addEventListener('popstate', handlePopState);
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('click', handleDocumentClickCapture, true);
+      window.removeEventListener('popstate', handlePopState);
+      window.history.pushState = originalPushState;
     };
-  }, []);
+  }, [confirmLeavePage]);
+
+  React.useEffect(() => {
+    return () => {
+      // Keep name draft on refresh/tab close, but reset when leaving this route.
+      if (isPageUnloadingRef.current) return;
+      try {
+        window.sessionStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+        window.localStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
+      } catch {
+        // no-op
+      }
+    };
+  }, [BPMN_EDITOR_NAME_DRAFT_KEY]);
 
   React.useEffect(() => {
     if (hasAutoFocusedRef.current) return;
@@ -4106,6 +4919,46 @@ const GerarBPMNCreate = () => {
     };
   }, [handleViewportWheel]);
 
+  React.useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || !isTouchDevice) return undefined;
+
+    const getTouchDist = (touches) => {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    };
+
+    const onTouchStart = (event) => {
+      if (event.touches.length === 2) {
+        event.preventDefault();
+        pinchRef.current.startDist = getTouchDist(event.touches);
+        pinchRef.current.startZoom = zoom;
+      }
+    };
+
+    const onTouchMove = (event) => {
+      if (event.touches.length === 2) {
+        event.preventDefault();
+        const dist = getTouchDist(event.touches);
+        const scale = dist / pinchRef.current.startDist;
+        const newZoom = Math.min(
+          1,
+          Math.max(0.85, pinchRef.current.startZoom * scale),
+        );
+        setZoom(Math.round(newZoom * 100) / 100);
+      }
+    };
+
+    viewport.addEventListener('touchstart', onTouchStart, { passive: false });
+    viewport.addEventListener('touchmove', onTouchMove, { passive: false });
+
+    return () => {
+      viewport.removeEventListener('touchstart', onTouchStart);
+      viewport.removeEventListener('touchmove', onTouchMove);
+    };
+  }, [isTouchDevice, zoom]);
+
   const startPan = (event) => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -4126,15 +4979,13 @@ const GerarBPMNCreate = () => {
     const isTouchPointer =
       event.pointerType === 'touch' || event.pointerType === 'pen';
 
-    const shouldPanWithTouch =
-      isTouchPointer && !clickedNode && !clickedConnector;
-
     const shouldPanWithMouse =
       event.button === 1 ||
       event.button === 2 ||
       (event.button === 0 && (isSpacePressed || !clickedNode));
 
-    const shouldPan = shouldPanWithTouch || shouldPanWithMouse;
+    // On touch devices we rely on native scroll/pan from the viewport.
+    const shouldPan = !isTouchPointer && shouldPanWithMouse;
     if (!shouldPan) return;
 
     startPan(event);
@@ -4563,17 +5414,6 @@ const GerarBPMNCreate = () => {
             O editor BPMN em celular foi otimizado para tela horizontal. Gire o
             aparelho para continuar editando e mover as entidades.
           </p>
-          <button
-            type="button"
-            className={`${styles.secondaryButton} ${styles.orientationLockButton}`}
-            onClick={() => {
-              if (typeof window !== 'undefined') {
-                window.location.reload();
-              }
-            }}
-          >
-            Já girei • Atualizar
-          </button>
         </div>
       </section>
     );
@@ -4584,14 +5424,68 @@ const GerarBPMNCreate = () => {
       <header className={styles.topbar}>
         <div className={styles.topbarLeft}>
           <h1 className={styles.title}>Editor BPMN</h1>
-          <input
-            className={styles.nameInput}
-            data-tutorial-id="process-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            disabled={isReadOnlyMode}
-            placeholder="Nome do processo"
-          />
+          <div className={styles.editorNameGroup}>
+            <div className={styles.editorNameRow}>
+              <input
+                className={styles.nameInput}
+                data-tutorial-id="process-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                disabled={isReadOnlyMode}
+                placeholder="Nome do processo"
+              />
+              <button
+                type="button"
+                className={`${styles.secondaryButton} ${styles.iconActionButton}`}
+                onClick={handleSaveEditorNameDraft}
+                disabled={isReadOnlyMode}
+                aria-label="Salvar nome do editor"
+                title="Salvar nome do editor sem sair"
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 4H17L20 7V20H4V4Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8 4V10H15V4"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8 20V14H16V20"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+            <span
+              className={`${styles.editorNameSaveFeedback} ${
+                editorNameSaveFeedback
+                  ? styles.editorNameSaveFeedbackVisible
+                  : styles.editorNameSaveFeedbackHidden
+              }`}
+              role="status"
+              aria-live="polite"
+            >
+              {editorNameSaveFeedback || 'Mensagem de confirmacao'}
+            </span>
+          </div>
           <div className={styles.topbarInlineActions}>
             <button
               type="button"
@@ -4606,7 +5500,7 @@ const GerarBPMNCreate = () => {
             </button>
             <button
               type="button"
-              className={`${styles.secondaryButton} ${styles.iconActionButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
+              className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
               data-tutorial-id="fullscreen-toggle"
               onClick={handleToggleCanvasFullscreen}
               aria-pressed={isCanvasFullscreen}
@@ -4615,7 +5509,7 @@ const GerarBPMNCreate = () => {
               }
               title={isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
             >
-              ⛶
+              {isCanvasFullscreen ? '⤡' : '⤢'}
             </button>
           </div>
         </div>
@@ -4725,13 +5619,13 @@ const GerarBPMNCreate = () => {
         {isCanvasFullscreen ? (
           <button
             type="button"
-            className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.canvasOverlayFullscreenButton} ${styles.iconActionButtonActive}`}
+            className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${styles.canvasOverlayFullscreenButton} ${styles.iconActionButtonActive}`}
             onClick={handleToggleCanvasFullscreen}
             aria-pressed={isCanvasFullscreen}
             aria-label="Sair da tela cheia"
             title="Sair da tela cheia"
           >
-            ⛶
+            ⤡
           </button>
         ) : null}
         <div className={styles.canvas}>
@@ -4796,7 +5690,7 @@ const GerarBPMNCreate = () => {
                 nodes={nodesForCanvas}
                 connections={connections}
                 currentIndex={-1}
-                onStageChange={() => {}}
+                onStageChange={NOOP}
                 onSelectNode={handleSelectNode}
                 onRemoveNode={handleRemoveNodeById}
                 selectedNodeId={selectedNodeId}
@@ -4816,6 +5710,7 @@ const GerarBPMNCreate = () => {
                 invalidNodeId={invalidEntityNodeId}
                 connectorsEnabled
                 connectorRevealMode={connectorRevealMode}
+                onNodeLabelChange={handleNodeLabelChange}
               />
             </div>
           </div>
@@ -4934,6 +5829,12 @@ const GerarBPMNCreate = () => {
           entityFieldDraft={entityFieldDraft}
           setEntityFieldDraft={setEntityFieldDraft}
           newEntityFields={newEntityFields}
+          onSaveEntityFieldDraft={handleSaveEntityFieldDraft}
+          onEditEntityFieldDraft={handleEditEntityFieldDraft}
+          onRemoveEntityFieldDraft={handleRemoveEntityFieldDraft}
+          onSelectCreateNewEntityMode={handleSelectCreateNewEntityMode}
+          selectedDataFieldIds={selectedDataFieldIds}
+          setSelectedDataFieldIds={setSelectedDataFieldIds}
           setNewEntityFields={setNewEntityFields}
           toRequiredLabel={toRequiredLabel}
           entityError={entityError}

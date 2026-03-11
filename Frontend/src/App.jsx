@@ -5,17 +5,35 @@ import Header from './Components/Header';
 import Footer from './Components/Footer';
 import Navigation from './Components/Layout/Navigation';
 import Login from './Components/Login/Login';
-import Dashboard from './Components/Home/Dashboard';
 import PagePlaceholder from './Components/Home/PagePlaceholder';
-import GerarBPMN from './Components/GerarBPMN/GerarBPMN';
-import OpportunitiesRoutes from './Components/Opportunities/OpportunitiesRoutes';
-import Entidades from './Components/Entidades/Entidades';
-import CriarEntidades from './Components/Entidades/CriarEntidades';
-import Usuarios from './Components/Usuários/Usuarios';
 import { UserContext } from './Context/UserContext';
 import { UserStorage } from './Context/UserContext';
 import { EntidadesProvider } from './Context/EntidadesContext';
 import ProtectedRoute from './Components/Helper/ProtectedRoute';
+
+const Dashboard = React.lazy(() => import('./Components/Home/Dashboard'));
+const GerarBPMN = React.lazy(() => import('./Components/GerarBPMN/GerarBPMN'));
+const OpportunitiesRoutes = React.lazy(
+  () => import('./Components/Opportunities/OpportunitiesRoutes'),
+);
+const Entidades = React.lazy(() => import('./Components/Entidades/Entidades'));
+const CriarEntidades = React.lazy(
+  () => import('./Components/Entidades/CriarEntidades'),
+);
+const Usuarios = React.lazy(() => import('./Components/Usuários/Usuarios'));
+
+const LazyFallback = () => (
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '40vh',
+    }}
+  >
+    <div className="authLoadingSpinner" aria-hidden="true" />
+  </div>
+);
 
 function AppContent() {
   const { user, authLoading } = React.useContext(UserContext);
@@ -55,74 +73,77 @@ function AppContent() {
     <div>
       {isLogged && <Header />}
 
-      <Routes>
-        {/* rotas públicas */}
-        <Route path="/" element={loginElement} />
-        <Route path="/login" element={loginElement} />
-        <Route path="/login/criar" element={loginElement} />
-        <Route path="/login/perdeu" element={loginElement} />
-        <Route path="/login/resetar" element={loginElement} />
+      <React.Suspense fallback={<LazyFallback />}>
+        <Routes>
+          {/* rotas públicas */}
+          <Route path="/" element={loginElement} />
+          <Route path="/login" element={loginElement} />
+          <Route path="/login/criar" element={loginElement} />
+          <Route path="/login/perdeu" element={loginElement} />
+          <Route path="/login/resetar" element={loginElement} />
 
-        {/* rotas protegidas */}
-        <Route element={protectedNavigation}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/usuarios" element={<Usuarios />} />
-          <Route path="/entidades" element={<Entidades />} />
-          <Route path="/entidades/:entidadeSlug" element={<Entidades />} />
-          <Route path="/entidades/criar" element={<CriarEntidades />} />
-          <Route
-            path="/entidadesdes/criar"
-            element={<Navigate to="/entidades/criar" replace />}
-          />
-          <Route
-            path="/contatos"
-            element={
-              <PagePlaceholder
-                title="Contatos"
-                icon="📋"
-                description="Gerenciamento de contatos de clientes"
-              />
-            }
-          />
-          <Route
-            path="/contas"
-            element={
-              <PagePlaceholder
-                title="Contas"
-                icon="📞"
-                description="Gerenciamento de contas e relacionamentos"
-              />
-            }
-          />
-          <Route path="/oportunidades/*" element={<OpportunitiesRoutes />} />
-          <Route
-            path="/concorrentes"
-            element={
-              <PagePlaceholder
-                title="Concorrentes"
-                icon="🤝"
-                description="Análise de concorrência e mercado"
-              />
-            }
-          />
-          <Route path="/gerar-bpmn/*" element={<GerarBPMN />} />
-          <Route
-            path="/gerarbpmn/*"
-            element={<Navigate to="/gerar-bpmn" replace />}
-          />
-          <Route
-            path="/recomendacoes"
-            element={
-              <PagePlaceholder
-                title="Recomendações da inteligência artificial"
-                icon="💡"
-                description="Recomendações geradas pela IA"
-              />
-            }
-          />
-          <Route path="*" element={<Navigate to="/gerar-bpmn" replace />} />
-        </Route>
-      </Routes>
+          {/* rotas protegidas */}
+          <Route element={protectedNavigation}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/entidades" element={<Entidades />} />
+            <Route path="/entidades/id/:entidadeId" element={<Entidades />} />
+            <Route path="/entidades/:entidadeSlug" element={<Entidades />} />
+            <Route path="/entidades/criar" element={<CriarEntidades />} />
+            <Route
+              path="/entidadesdes/criar"
+              element={<Navigate to="/entidades/criar" replace />}
+            />
+            <Route
+              path="/contatos"
+              element={
+                <PagePlaceholder
+                  title="Contatos"
+                  icon="📋"
+                  description="Gerenciamento de contatos de clientes"
+                />
+              }
+            />
+            <Route
+              path="/contas"
+              element={
+                <PagePlaceholder
+                  title="Contas"
+                  icon="📞"
+                  description="Gerenciamento de contas e relacionamentos"
+                />
+              }
+            />
+            <Route path="/oportunidades/*" element={<OpportunitiesRoutes />} />
+            <Route
+              path="/concorrentes"
+              element={
+                <PagePlaceholder
+                  title="Concorrentes"
+                  icon="🤝"
+                  description="Análise de concorrência e mercado"
+                />
+              }
+            />
+            <Route path="/gerar-bpmn/*" element={<GerarBPMN />} />
+            <Route
+              path="/gerarbpmn/*"
+              element={<Navigate to="/gerar-bpmn" replace />}
+            />
+            <Route
+              path="/recomendacoes"
+              element={
+                <PagePlaceholder
+                  title="Recomendações da inteligência artificial"
+                  icon="💡"
+                  description="Recomendações geradas pela IA"
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="/gerar-bpmn" replace />} />
+          </Route>
+        </Routes>
+      </React.Suspense>
 
       {isLogged && <Footer />}
     </div>

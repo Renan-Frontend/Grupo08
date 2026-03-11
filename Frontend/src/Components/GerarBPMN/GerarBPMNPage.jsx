@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styles from './GerarBPMNPage.module.css';
 import { useBpmnOpportunities } from '../../Hooks/useBpmnOpportunities';
 import { EntidadesContext } from '../../Context/EntidadesContext';
+import { UserContext } from '../../Context/UserContext';
 import { BPMN_STAGES } from './bpmnStages';
 import {
   getOpportunityName,
@@ -11,9 +12,16 @@ import {
 } from './opportunityHelpers';
 import {
   createOpportunity,
+  fetchOpportunityUsers,
   getAuthToken,
 } from '../Opportunities/opportunityApi';
 import { toOpportunitySlug } from '../Opportunities/opportunityFormatters';
+import {
+  buildAssignmentPayloadFields,
+  canManageOpportunity,
+  getOpportunityAssignedName,
+} from '../Opportunities/opportunityOwnershipRules';
+import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
 import OpportunityListPanel from './OpportunityListPanel';
 import BpmnBoard from './BpmnBoard';
 import Close from '../Helper/Close';
@@ -32,6 +40,8 @@ const GerarBPMNPage = () => {
   const { opportunityId } = useParams();
   const isNewFlowRoute = String(opportunityId || '').toLowerCase() === 'novo';
   const { entidades, adicionarEntidade } = React.useContext(EntidadesContext);
+  const { user } = React.useContext(UserContext);
+  const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
   const [selectedEntity, setSelectedEntity] = React.useState('');
   const [draftProcessName, setDraftProcessName] =
     React.useState('Novo Processo BPMN');
@@ -39,6 +49,7 @@ const GerarBPMNPage = () => {
   const [creatingPaths, setCreatingPaths] = React.useState(false);
   const [isEntityPromptOpen, setIsEntityPromptOpen] = React.useState(false);
   const [entityNameDraft, setEntityNameDraft] = React.useState('');
+  const [userOptions, setUserOptions] = React.useState([]);
 
   const {
     loading,
@@ -151,7 +162,9 @@ const GerarBPMNPage = () => {
     if (!nome) return;
 
     try {
-      const token = window.localStorage.getItem('token');
+      const token =
+        window.sessionStorage.getItem('token') ||
+        window.localStorage.getItem('token');
       const created = await adicionarEntidade({ nome }, token);
       const createdName = getEntidadeName(created) || nome;
       setSelectedEntity(createdName);
@@ -217,7 +230,9 @@ const GerarBPMNPage = () => {
       }
 
       if (!existingEntityNames.includes(entityName)) {
-        const token = window.localStorage.getItem('token');
+        const token =
+          window.sessionStorage.getItem('token') ||
+          window.localStorage.getItem('token');
         const createdEntity = await adicionarEntidade(
           { nome: entityName },
           token,
@@ -243,12 +258,10 @@ const GerarBPMNPage = () => {
         createdDate: new Date().toISOString(),
       };
 
-      const response = await createOpportunity({
+      const createdOpportunity = await createOpportunity({
         payload,
         token: getAuthToken(),
       });
-
-      const createdOpportunity = await response.json();
       addOpportunity(createdOpportunity);
 
       const newId = createdOpportunity?.id;
@@ -272,6 +285,34 @@ const GerarBPMNPage = () => {
   }, [entidades, selectedOpportunity]);
 
   const createdBpmns = React.useMemo(() => opportunities, [opportunities]);
+
+  React.useEffect(() => {
+    async function loadUsers() {
+      try {
+        const users = await fetchOpportunityUsers({ token: getAuthToken() });
+        setUserOptions(users);
+      } catch {
+        setUserOptions([]);
+      }
+    }
+
+    loadUsers();
+  }, []);
+
+  const handleAssignedChange = async (item, assignedValue) => {
+    if (!item || !item.id) return;
+
+    if (isReadOnlyMode || !canManageOpportunity(user, item)) {
+      return;
+    }
+
+    await updateOpportunityData({
+      selectedOpportunity: item,
+      patch: {
+        ...buildAssignmentPayloadFields(assignedValue),
+      },
+    });
+  };
 
   const handleOpenBpmnFromTable = (item) => {
     if (!item?.id) return;
@@ -343,6 +384,7 @@ const GerarBPMNPage = () => {
                 <thead>
                   <tr>
                     <th>Processo</th>
+                    <th>Atribuído à</th>
                     <th>Entidade</th>
                     <th>Status</th>
                     <th>Caminho BPMN</th>
@@ -361,13 +403,37 @@ const GerarBPMNPage = () => {
                           {getOpportunityName(item)}
                         </button>
                       </td>
+                      <td>
+                        <select
+                          className={styles.assignedSelect}
+                          value={getOpportunityAssignedName(item)}
+                          disabled={
+                            isReadOnlyMode || !canManageOpportunity(user, item)
+                          }
+                          onChange={(event) =>
+                            handleAssignedChange(item, event.target.value)
+                          }
+                        >
+                          {[getOpportunityAssignedName(item), ...userOptions]
+                            .filter(Boolean)
+                            .filter(
+                              (value, index, arr) =>
+                                arr.indexOf(value) === index,
+                            )
+                            .map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                        </select>
+                      </td>
                       <td>{getLinkedEntityName(item) || '-'}</td>
                       <td>{getOpportunityStage(item)}</td>
                       <td>{`/gerar-bpmn/pipeline/${item.id}`}</td>
                       <td className={styles.tableActions}>
                         <button
                           type="button"
-                          className={`${styles.actionButton} ${styles.iconActionButton}`}
+                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
                           onClick={() => handleOpenBpmnFromTable(item)}
                           title="Abrir BPMN"
                           aria-label="Abrir BPMN"

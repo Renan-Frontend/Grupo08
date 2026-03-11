@@ -13,6 +13,15 @@ const basePath = normalizeBase(process.env.VITE_BASE_PATH || '/');
 
 export default defineConfig({
   base: basePath,
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     svgr(),

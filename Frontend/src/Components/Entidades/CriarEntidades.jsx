@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './CriarEntidades.module.css';
 import Button from '../Forms/Button';
 import useForm from '../../Hooks/useForm';
@@ -9,8 +9,13 @@ import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
 
 const CriarEntidades = () => {
   const navigate = useNavigate();
-  const { adicionarEntidade, entidades, validarNomeEntidadeDuplicado } =
-    React.useContext(EntidadesContext);
+  const location = useLocation();
+  const {
+    adicionarEntidade,
+    editarEntidade,
+    entidades,
+    validarNomeEntidadeDuplicado,
+  } = React.useContext(EntidadesContext);
   const { user } = React.useContext(UserContext);
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
   const [tabelaModo, setTabelaModo] = React.useState('nova');
@@ -19,6 +24,24 @@ const CriarEntidades = () => {
   const [descricao, setDescricao] = React.useState('');
   const [tipoEntidade, setTipoEntidade] = React.useState('Apoio');
   const [formError, setFormError] = React.useState('');
+  const entityIdFromQuery = React.useMemo(() => {
+    const params = new URLSearchParams(location.search || '');
+    const value = String(params.get('entidadeId') || '').trim();
+    return value || null;
+  }, [location.search]);
+
+  const entidadeEmEdicao = React.useMemo(() => {
+    if (!entityIdFromQuery) return null;
+
+    return (
+      (Array.isArray(entidades) ? entidades : []).find(
+        (entidade) =>
+          String(entidade?.id ?? entidade?._id ?? '') === entityIdFromQuery,
+      ) || null
+    );
+  }, [entidades, entityIdFromQuery]);
+
+  const isEditingMode = Boolean(entidadeEmEdicao && entityIdFromQuery);
 
   const tabelasDisponiveis = React.useMemo(
     () =>
@@ -42,6 +65,22 @@ const CriarEntidades = () => {
     setTabelaModo('nova');
   }, [hasTabelas]);
 
+  React.useEffect(() => {
+    if (!entidadeEmEdicao) return;
+
+    const categoriaAtual = String(entidadeEmEdicao?.categoria || '').trim();
+    const categoriaExiste = tabelasDisponiveis.some(
+      (item) => String(item || '').trim() === categoriaAtual,
+    );
+
+    nome.setValue(String(entidadeEmEdicao?.nome || ''));
+    setDescricao(String(entidadeEmEdicao?.descricao || ''));
+    setTipoEntidade(String(entidadeEmEdicao?.tipoEntidade || 'Apoio'));
+    setNomeTabela(categoriaAtual);
+    setTabelaModo(categoriaExiste ? 'existente' : 'nova');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entidadeEmEdicao, tabelasDisponiveis]);
+
   async function handleSubmit(event) {
     event.preventDefault();
     setFormError('');
@@ -51,34 +90,64 @@ const CriarEntidades = () => {
       return;
     }
 
-    if (nome.validate() && String(descricao || '').trim()) {
-      if (validarNomeEntidadeDuplicado(nome.value)) {
-        setFormError('Já existe uma entidade com esse nome.');
-        return;
-      }
+    const nomeValido = nome.validate();
+    const descValida = String(descricao || '').trim();
+    if (!nomeValido || !descValida) {
+      if (!descValida) setFormError('A descrição é obrigatória.');
+      return;
+    }
 
-      const novaEntidade = {
-        nome: nome.value,
-        descricao,
-        categoria: String(nomeTabela || '').trim() || 'Manual',
-        tipoEntidade,
-        criadoPor: user?.nome || user?.username || 'Usuário',
-        campos: [],
-      };
+    const categoriaDestino = String(nomeTabela || '').trim() || 'Manual';
+    const ignoreId = entidadeEmEdicao?.id ?? entidadeEmEdicao?._id ?? null;
 
-      const token = window.localStorage.getItem('token');
-      try {
+    if (validarNomeEntidadeDuplicado(nome.value, ignoreId, categoriaDestino)) {
+      setFormError('Já existe uma entidade com esse nome nesta tabela.');
+      return;
+    }
+
+    const novaEntidade = {
+      nome: nome.value,
+      descricao,
+      categoria: categoriaDestino,
+      tipoEntidade,
+      criadoPor: user?.nome || user?.username || 'Usuário',
+      campos: [],
+    };
+
+    const token =
+      window.sessionStorage.getItem('token') ||
+      window.localStorage.getItem('token');
+    try {
+      if (isEditingMode) {
+        await editarEntidade(
+          entidadeEmEdicao?.id ?? entidadeEmEdicao?._id,
+          {
+            ...novaEntidade,
+            campos: Array.isArray(entidadeEmEdicao?.campos)
+              ? entidadeEmEdicao.campos
+              : [],
+          },
+          token,
+        );
+      } else {
         await adicionarEntidade(novaEntidade, token);
-        navigate('/entidades');
-      } catch (error) {
-        setFormError(error?.message || 'Não foi possível criar a entidade.');
       }
+      navigate('/entidades');
+    } catch (error) {
+      setFormError(
+        error?.message ||
+          (isEditingMode
+            ? 'Não foi possível editar a entidade.'
+            : 'Não foi possível criar a entidade.'),
+      );
     }
   }
 
   return (
     <section className={styles.container}>
-      <h1 className={styles.title}>Criar Entidade</h1>
+      <h1 className={styles.title}>
+        {isEditingMode ? 'Editar Entidade' : 'Criar Entidade'}
+      </h1>
       {isReadOnlyMode ? (
         <p className={styles.error}>
           Seu usuário está em modo somente visualização e não pode criar
@@ -200,7 +269,7 @@ const CriarEntidades = () => {
           </select>
         </div>
         <Button className={styles.button} disabled={isReadOnlyMode}>
-          Criar
+          {isEditingMode ? 'Salvar alterações' : 'Criar'}
         </Button>
         {formError && <p className={styles.error}>{formError}</p>}
       </form>

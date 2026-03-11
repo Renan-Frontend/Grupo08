@@ -52,6 +52,29 @@ const formatTimelineDate = (item) => {
   });
 };
 
+const parseDateInput = (value, endOfDay = false) => {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+
+  const [year, month, day] = raw.split('-').map(Number);
+  if (!year || !month || !day) return null;
+
+  return endOfDay
+    ? new Date(year, month - 1, day, 23, 59, 59, 999)
+    : new Date(year, month - 1, day, 0, 0, 0, 0);
+};
+
+const parseTimeInputToMinutes = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+
+  const [hour, minute] = raw.split(':').map(Number);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+
+  return hour * 60 + minute;
+};
+
 const TimelineCard = ({
   showTimeline,
   isEditing,
@@ -59,9 +82,18 @@ const TimelineCard = ({
   toggleTimeline,
   timelineItems,
 }) => {
-  const filteredTimelineItems = React.useMemo(
-    () =>
-      (Array.isArray(timelineItems) ? timelineItems : []).filter((item) => {
+  const [updatedDate, setUpdatedDate] = React.useState('');
+  const [updatedTime, setUpdatedTime] = React.useState('');
+
+  const hasDateFilter = Boolean(updatedDate || updatedTime);
+
+  const filteredTimelineItems = React.useMemo(() => {
+    const parsedUpdatedDateStart = parseDateInput(updatedDate, false);
+    const parsedUpdatedDateEnd = parseDateInput(updatedDate, true);
+    const parsedUpdatedTime = parseTimeInputToMinutes(updatedTime);
+
+    return (Array.isArray(timelineItems) ? timelineItems : []).filter(
+      (item) => {
         const actionType =
           String(item?.actionType || 'update').trim() || 'update';
         if (!['create', 'update', 'delete'].includes(actionType)) {
@@ -78,7 +110,7 @@ const TimelineCard = ({
           .trim()
           .toLowerCase();
 
-        if (
+        const isEligibleByElementType =
           elementType === 'bpmn' ||
           elementType === 'elemento-bpmn' ||
           elementType === 'entidade' ||
@@ -88,23 +120,51 @@ const TimelineCard = ({
           elementType === 'status' ||
           elementType === 'layout' ||
           elementType === 'topico' ||
-          elementType === 'datas'
-        ) {
-          return true;
+          elementType === 'datas';
+
+        const isEligibleBySourceOrTitle =
+          source === 'bpmn-save' ||
+          source === 'opportunity-save' ||
+          title.includes('bpmn') ||
+          title.includes('entidade') ||
+          title.includes('oportunidade') ||
+          title.includes('pipeline') ||
+          title.includes('propriet');
+
+        if (!isEligibleByElementType && !isEligibleBySourceOrTitle) {
+          return false;
         }
 
-        if (source === 'bpmn-save') return true;
-        if (source === 'opportunity-save') return true;
-        if (title.includes('bpmn')) return true;
-        if (title.includes('entidade')) return true;
-        if (title.includes('oportunidade')) return true;
-        if (title.includes('pipeline')) return true;
-        if (title.includes('propriet')) return true;
+        const parsedItemDate = parseTimelineDate(item);
 
-        return false;
-      }),
-    [timelineItems],
-  );
+        if (
+          parsedUpdatedDateStart &&
+          parsedItemDate &&
+          parsedItemDate < parsedUpdatedDateStart
+        ) {
+          return false;
+        }
+
+        if (
+          parsedUpdatedDateEnd &&
+          parsedItemDate &&
+          parsedItemDate > parsedUpdatedDateEnd
+        ) {
+          return false;
+        }
+
+        if (parsedUpdatedTime !== null && parsedItemDate) {
+          const itemMinutes =
+            parsedItemDate.getHours() * 60 + parsedItemDate.getMinutes();
+          if (itemMinutes !== parsedUpdatedTime) {
+            return false;
+          }
+        }
+
+        return true;
+      },
+    );
+  }, [timelineItems, updatedDate, updatedTime]);
 
   if (!showTimeline) return null;
 
@@ -127,10 +187,48 @@ const TimelineCard = ({
       <div className={styles.cardHeader}>
         <h2 className={styles.cardTitle}>Linha do Tempo</h2>
       </div>
+      <div className={styles.timelineFilterBar}>
+        <label className={styles.timelineFilterField}>
+          <span>Data de atualização</span>
+          <input
+            type="date"
+            value={updatedDate}
+            onChange={(event) => setUpdatedDate(event.target.value)}
+            className={styles.timelineFilterInput}
+          />
+        </label>
+        <label className={styles.timelineFilterField}>
+          <span>Hora</span>
+          <input
+            type="time"
+            value={updatedTime}
+            onChange={(event) => setUpdatedTime(event.target.value)}
+            className={styles.timelineFilterInput}
+          />
+        </label>
+        <div className={styles.timelineFilterActions}>
+          <button
+            type="button"
+            className={styles.timelineFilterButton}
+            onClick={() => {
+              setUpdatedDate('');
+              setUpdatedTime('');
+            }}
+            disabled={!hasDateFilter}
+          >
+            Limpar
+          </button>
+        </div>
+      </div>
+      {hasDateFilter ? (
+        <div className={styles.timelineFilterSummary}>
+          Filtrando por data e hora de atualização.
+        </div>
+      ) : null}
       <div className={styles.timelineList}>
         {filteredTimelineItems.length === 0 ? (
           <div className={styles.timelineEmpty}>
-            Nenhuma ação registrada para BPMN, Entidade ou Oportunidade.
+            Nenhuma ação encontrada para os filtros informados.
           </div>
         ) : (
           filteredTimelineItems.map((item) => {

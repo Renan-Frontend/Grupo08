@@ -10,5 +10,8 @@
     "start": "cd Frontend && npm run preview",
     "deploy:check": "node scripts/deploy-check.mjs",
     "deploy:check:strict": "node scripts/deploy-check.mjs --strict"
+  },
+  "devDependencies": {
+    "supabase": "^2.76.16"
   }
 }

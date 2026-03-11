@@ -36,6 +36,11 @@
   cursor: pointer;
 }
 
+.openButton:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
 .openButton:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -119,6 +124,11 @@
   cursor: pointer;
 }
 
+.secondaryButton:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
 .secondaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
@@ -136,6 +146,7 @@
 
 .primaryButton:hover:not(:disabled) {
   background: #278a55;
+  border-color: #278a55;
 }
 
 .primaryButton:disabled {

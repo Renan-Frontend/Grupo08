@@ -81,7 +81,128 @@ input[type='submit'],
 input[type='reset'] {
   border-style: solid;
   border-width: 1px;
-  border-color: #27ae60 !important;
+  border-color: #d1d5db;
+  background: #fff;
+  color: #111827;
+  border-radius: 8px;
+  box-shadow: none;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    filter 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease;
+}
+
+button:not(:disabled):hover,
+input[type='button']:not(:disabled):hover,
+input[type='submit']:not(:disabled):hover,
+input[type='reset']:not(:disabled):hover {
+  background: #ecfdf3;
+  border-color: #16a34a;
+  color: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(39, 174, 96, 0.24);
+  filter: none;
+}
+
+button:not(:disabled):active,
+input[type='button']:not(:disabled):active,
+input[type='submit']:not(:disabled):active,
+input[type='reset']:not(:disabled):active {
+  background: #dcfce7;
+  border-color: #16a34a;
+  color: #166534;
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(21, 128, 61, 0.2);
+}
+
+button:not(:disabled):hover svg,
+input[type='button']:not(:disabled):hover svg,
+input[type='submit']:not(:disabled):hover svg,
+input[type='reset']:not(:disabled):hover svg {
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+/* Default icon tone */
+button svg,
+a svg,
+.icon svg,
+.actionIcon svg {
+  color: #16a34a;
+  fill: currentColor;
+  stroke: currentColor;
+}
+
+.icon,
+.actionIcon {
+  color: #16a34a;
+}
+
+/* Semantic hover colors for action intent */
+button[class*='editBtn']:not(:disabled):hover,
+button[class*='editActionButton']:not(:disabled):hover,
+button[class*='topActionButton']:not(:disabled):hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+button[class*='deleteBtn']:not(:disabled):hover,
+button[class*='deleteActionButton']:not(:disabled):hover,
+button[class*='topActionDanger']:not(:disabled):hover,
+button[class*='timelineDeleteBtn']:not(:disabled):hover {
+  background: #fef2f2;
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+/* Global override for BPMN entity delete "X" buttons */
+button[class*='stageDeleteButton'] {
+  background: #ffffff;
+  border-color: #dc2626;
+  color: #dc2626;
+  border-radius: 999px;
+}
+
+button[class*='stageDeleteButton']:not(:disabled):hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+button[class*='stageDeleteButton']:not(:disabled):active {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  color: #ffffff;
+}
+
+button[class*='opportunityActionButton']:not(:disabled):hover,
+button[class*='bpmnActionButton']:not(:disabled):hover,
+button[class*='processLink']:not(:disabled):hover,
+a[class*='nameLink']:hover,
+a[class*='processLink']:hover,
+button[class*='nameLink']:not(:disabled):hover {
+  background: #ecfdf3;
+  border-color: #16a34a;
+  color: #15803d;
+}
+
+button[class*='nameLink']:not(:disabled):hover,
+button[class*='processLink']:not(:disabled):hover,
+a[class*='nameLink']:hover,
+a[class*='processLink']:hover {
+  border-color: transparent;
+}
+
+button:focus-visible,
+input[type='button']:focus-visible,
+input[type='submit']:focus-visible,
+input[type='reset']:focus-visible {
+  outline: 2px solid rgba(39, 174, 96, 0.35);
+  outline-offset: 2px;
 }
 
 a {
@@ -199,5 +320,25 @@ main {
 
   main {
     min-height: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  input[type='button'],
+  input[type='submit'],
+  input[type='reset'] {
+    transition: none;
+  }
+
+  button:not(:disabled):hover,
+  input[type='button']:not(:disabled):hover,
+  input[type='submit']:not(:disabled):hover,
+  input[type='reset']:not(:disabled):hover,
+  button:not(:disabled):active,
+  input[type='button']:not(:disabled):active,
+  input[type='submit']:not(:disabled):active,
+  input[type='reset']:not(:disabled):active {
+    transform: none;
   }
 }

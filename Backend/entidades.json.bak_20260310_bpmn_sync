@@ -31,7 +31,7 @@
     "bpmnUsageCount": 2,
     "ativo": true,
     "created_at": "2026-03-03T12:27:11.186620",
-    "updated_at": "2026-03-11T08:09:35.837816",
+    "updated_at": "2026-03-04T15:11:52.030328",
     "criadoPor": "Renan"
   },
   {
@@ -47,7 +47,7 @@
     "bpmnUsageCount": 2,
     "ativo": true,
     "created_at": "2026-03-03T12:27:11.220799",
-    "updated_at": "2026-03-11T08:09:35.859295",
+    "updated_at": "2026-03-04T15:11:52.054859",
     "criadoPor": "Renan"
   },
   {
@@ -63,7 +63,7 @@
     "bpmnUsageCount": 2,
     "ativo": true,
     "created_at": "2026-03-03T12:27:11.320621",
-    "updated_at": "2026-03-11T08:09:35.920278",
+    "updated_at": "2026-03-04T15:11:52.173583",
     "criadoPor": "Renan"
   },
   {
@@ -79,7 +79,7 @@
     "bpmnUsageCount": 2,
     "ativo": true,
     "created_at": "2026-03-03T12:27:11.351683",
-    "updated_at": "2026-03-11T08:09:35.988097",
+    "updated_at": "2026-03-04T15:11:52.316549",
     "criadoPor": "Renan"
   },
   {
@@ -96,57 +96,5 @@
     "created_at": "2026-03-03T14:09:50.565982",
     "updated_at": "2026-03-04T10:51:42.777121",
     "criadoPor": "Renan"
-  },
-  {
-    "categoria": "asdasd",
-    "id": 17,
-    "nome": "sadasd",
-    "descricao": "asdasdas",
-    "tipoEntidade": "Apoio",
-    "isPrimaryEntity": false,
-    "atributoChave": "",
-    "campos": [
-      {
-        "id": "field-1773150669582-efzkeub6",
-        "nome": "dasdasd",
-        "tipo": "Texto",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "isUnique": false,
-        "relacionamento": null
-      }
-    ],
-    "numeroRelacionamentos": 0,
-    "bpmnUsageCount": 2,
-    "ativo": true,
-    "created_at": "",
-    "updated_at": "2026-03-10T11:37:48.440574",
-    "criadoPor": "Nome da conta"
-  },
-  {
-    "categoria": "asdasd",
-    "id": 18,
-    "nome": "qwes",
-    "descricao": "eqweqwe",
-    "tipoEntidade": "Apoio",
-    "isPrimaryEntity": false,
-    "atributoChave": "",
-    "campos": [
-      {
-        "id": "field-1773150698983-k39p3yw8",
-        "nome": "rqweqw",
-        "tipo": "Texto",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "isUnique": false,
-        "relacionamento": "weq"
-      }
-    ],
-    "numeroRelacionamentos": 0,
-    "bpmnUsageCount": 2,
-    "ativo": true,
-    "created_at": "",
-    "updated_at": "2026-03-10T11:37:48.472029",
-    "criadoPor": "Nome da conta"
   }
 ]

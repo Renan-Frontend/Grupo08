@@ -115,3 +115,14 @@ export const isReadOnlyAccessLevelOne = (user) => {
 
   return false;
 };
+
+export const isEditOnlyAccessLevelTwo = (user) => {
+  const level = getUserAccessLevel(user);
+  return level === 2;
+};
+
+export const canCreateByAccessLevel = (user) =>
+  !isReadOnlyAccessLevelOne(user) && !isEditOnlyAccessLevelTwo(user);
+
+export const canDeleteByAccessLevel = (user) =>
+  !isReadOnlyAccessLevelOne(user) && !isEditOnlyAccessLevelTwo(user);

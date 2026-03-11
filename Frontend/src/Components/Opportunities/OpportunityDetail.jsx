@@ -212,13 +212,8 @@ const OpportunityDetail = () => {
         onDeleteOpportunity={handleDeleteClick}
       />
 
-      {isReadOnlyMode ? (
-        <p className={styles.noticeText}>
-          Modo somente visualização ativo para o seu nível de acesso.
-        </p>
-      ) : null}
-
       <OpportunitySummary
+        isReadOnlyMode={isReadOnlyMode}
         title={title}
         setTitle={setTitle}
         createdDate={createdDate}
@@ -248,6 +243,7 @@ const OpportunityDetail = () => {
             </div>
           )}
           <EditablePipeline
+            isReadOnlyMode={isReadOnlyMode}
             stages={stages}
             setStages={setStages}
             pipelineTitle={pipelineTitle}
@@ -269,6 +265,7 @@ const OpportunityDetail = () => {
 
       <div className={styles.contentGrid}>
         <TopicCard
+          isReadOnlyMode={isReadOnlyMode}
           showTopico={showTopico}
           isEditing={isEditing}
           showPipeline={showPipeline}

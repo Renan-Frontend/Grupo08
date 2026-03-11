@@ -11,6 +11,13 @@ const toEntitySlug = (value) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
 
+const normalizeEntityOptionName = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
 const ConfigurarEntidadePanel = ({
   selectedNode,
   stageConfigMode,
@@ -26,6 +33,12 @@ const ConfigurarEntidadePanel = ({
   conditionalForm,
   setConditionalForm,
   newEntityFields,
+  entityFieldDraft,
+  setEntityFieldDraft,
+  onSaveEntityFieldDraft,
+  onEditEntityFieldDraft,
+  onRemoveEntityFieldDraft,
+  onSelectCreateNewEntityMode,
   onBeforeNavigateToEntityFields,
   isReadOnlyMode = false,
 }) => {
@@ -42,8 +55,54 @@ const ConfigurarEntidadePanel = ({
           )?.nome || '',
         ).trim()
       : '';
+  const entityOptionsWithDuplicateIndex = React.useMemo(() => {
+    const normalizedNames = (Array.isArray(entityOptions) ? entityOptions : [])
+      .map((entidade) => normalizeEntityOptionName(entidade?.nome || ''))
+      .filter(Boolean);
+
+    const nameCounts = normalizedNames.reduce((acc, name) => {
+      acc.set(name, (acc.get(name) || 0) + 1);
+      return acc;
+    }, new Map());
+
+    const occurrenceMap = new Map();
+    return (Array.isArray(entityOptions) ? entityOptions : []).map(
+      (entidade) => {
+        const normalizedName = normalizeEntityOptionName(entidade?.nome || '');
+        const totalCount = normalizedName
+          ? nameCounts.get(normalizedName) || 0
+          : 0;
+        const currentOccurrence = normalizedName
+          ? (occurrenceMap.get(normalizedName) || 0) + 1
+          : 1;
+
+        if (normalizedName) {
+          occurrenceMap.set(normalizedName, currentOccurrence);
+        }
+
+        const baseName = String(entidade?.nome || '').trim();
+        const displayName =
+          totalCount > 1 ? `${baseName} (${currentOccurrence})` : baseName;
+
+        return {
+          ...entidade,
+          displayName,
+        };
+      },
+    );
+  }, [entityOptions]);
   const targetEntityName =
     selectedExistingEntityName || String(newEntityForm?.nome || '').trim();
+  const lastCreatedField =
+    Array.isArray(newEntityFields) && newEntityFields.length > 0
+      ? newEntityFields[newEntityFields.length - 1]
+      : null;
+  const lastCreatedFieldType = String(
+    lastCreatedField?.tipo ||
+      lastCreatedField?.type ||
+      lastCreatedField?.tipoCampo ||
+      '',
+  ).trim();
   const targetEntitySlug = toEntitySlug(targetEntityName);
   const entityFieldsEditHref = targetEntitySlug
     ? `/entidades/${targetEntitySlug}`
@@ -51,6 +110,8 @@ const ConfigurarEntidadePanel = ({
   const [pendingEntityFieldsHref, setPendingEntityFieldsHref] =
     React.useState('');
   const [isNavigatingToEntityFields, setIsNavigatingToEntityFields] =
+    React.useState(false);
+  const [isLastFieldDetailsOpen, setIsLastFieldDetailsOpen] =
     React.useState(false);
 
   const handleNavigateToEntityFields = (event) => {
@@ -76,6 +137,30 @@ const ConfigurarEntidadePanel = ({
     }
 
     window.location.assign(pendingEntityFieldsHref);
+  };
+
+  const handleSelectCreateNewEntityMode = () => {
+    if (typeof onSelectCreateNewEntityMode === 'function') {
+      onSelectCreateNewEntityMode();
+      return;
+    }
+
+    setEntityMode('nova');
+    setSelectedExistingEntityId('');
+    setNewEntityForm((previous) => ({
+      ...previous,
+      nome: '',
+      descricao: '',
+      atributoChave: '',
+    }));
+    setEntityFieldDraft?.({
+      id: null,
+      nome: '',
+      tipo: '',
+      obrigatorio: null,
+      keyType: '',
+      referencia: '',
+    });
   };
 
   if (!selectedNode) {
@@ -183,7 +268,7 @@ const ConfigurarEntidadePanel = ({
                   type="radio"
                   name="entityMode"
                   checked={entityMode === 'nova'}
-                  onChange={() => setEntityMode('nova')}
+                  onChange={handleSelectCreateNewEntityMode}
                   disabled={isReadOnlyMode}
                 />
                 Criar nova
@@ -211,13 +296,15 @@ const ConfigurarEntidadePanel = ({
                   disabled={isReadOnlyMode}
                   title="Entidade existente"
                 >
-                  <option value="">Selecione uma entidade existente</option>
-                  {entityOptions.map((entidade) => (
+                  <option value="" disabled>
+                    Selecione uma entidade existente
+                  </option>
+                  {entityOptionsWithDuplicateIndex.map((entidade) => (
                     <option
                       key={`${entidade.id}-${entidade.nome}`}
                       value={String(entidade.id)}
                     >
-                      {entidade.nome}
+                      {entidade.displayName}
                     </option>
                   ))}
                 </select>
@@ -252,23 +339,325 @@ const ConfigurarEntidadePanel = ({
               title="Descrição"
             />
 
-            <div className={panelStyles.entityFieldsBlock}>
-              <a
-                className={panelStyles.entityFieldsLink}
-                href={isReadOnlyMode ? '#' : entityFieldsEditHref}
-                onClick={(event) => {
-                  if (isReadOnlyMode) {
-                    event.preventDefault();
-                    return;
+            <div className={panelStyles.entityFieldEditorBlock}>
+              <p className={panelStyles.entityFieldEditorTitle}>
+                Criar campo no painel
+              </p>
+              <div className={panelStyles.entityFieldEditorGrid}>
+                <input
+                  className={panelStyles.fieldInput}
+                  value={String(entityFieldDraft?.nome || '')}
+                  onChange={(event) =>
+                    setEntityFieldDraft?.((previous) => ({
+                      ...previous,
+                      nome: event.target.value,
+                    }))
                   }
-                  handleNavigateToEntityFields(event);
-                }}
-                title="Abrir página de Entidades para editar campos"
-                aria-disabled={isReadOnlyMode}
-              >
-                ✏️ Ir para campos
-              </a>
+                  disabled={isReadOnlyMode}
+                  placeholder="Nome do campo"
+                  title="Nome do campo"
+                />
+                <select
+                  className={panelStyles.fieldInput}
+                  value={String(entityFieldDraft?.tipo || '')}
+                  onChange={(event) =>
+                    setEntityFieldDraft?.((previous) => ({
+                      ...previous,
+                      tipo: event.target.value,
+                    }))
+                  }
+                  disabled={isReadOnlyMode}
+                  title="Tipo do campo"
+                >
+                  <option value="" disabled>
+                    Tipo
+                  </option>
+                  <option value="Texto">Texto</option>
+                  <option value="Número">Número</option>
+                  <option value="Data">Data</option>
+                  <option value="Email">Email</option>
+                  <option value="Telefone">Telefone</option>
+                  <option value="Booleano">Booleano</option>
+                </select>
+                <select
+                  className={panelStyles.fieldInput}
+                  value={
+                    typeof entityFieldDraft?.obrigatorio === 'boolean'
+                      ? entityFieldDraft.obrigatorio
+                        ? 'Sim'
+                        : 'Não'
+                      : ''
+                  }
+                  onChange={(event) =>
+                    setEntityFieldDraft?.((previous) => ({
+                      ...previous,
+                      obrigatorio: event.target.value === 'Sim',
+                    }))
+                  }
+                  disabled={isReadOnlyMode}
+                  title="Campo obrigatório"
+                >
+                  <option value="" disabled>
+                    Obrigatório?
+                  </option>
+                  <option value="Sim">Sim</option>
+                  <option value="Não">Não</option>
+                </select>
+                <select
+                  className={panelStyles.fieldInput}
+                  value={String(entityFieldDraft?.keyType || '')}
+                  onChange={(event) =>
+                    setEntityFieldDraft?.((previous) => ({
+                      ...previous,
+                      keyType: event.target.value,
+                    }))
+                  }
+                  disabled={isReadOnlyMode}
+                  title="Tipo de chave"
+                >
+                  <option value="" disabled>
+                    Chave:
+                  </option>
+                  <option value="NORMAL">Normal</option>
+                  <option value="PK">PK</option>
+                  <option value="FK">FK</option>
+                </select>
+                <input
+                  className={panelStyles.fieldInput}
+                  value={String(entityFieldDraft?.referencia || '')}
+                  onChange={(event) =>
+                    setEntityFieldDraft?.((previous) => ({
+                      ...previous,
+                      referencia: event.target.value,
+                    }))
+                  }
+                  disabled={isReadOnlyMode}
+                  placeholder="Referência (ex: cliente.id)"
+                  title="Referência"
+                />
+              </div>
+              <div className={panelStyles.entityFieldEditorActions}>
+                <button
+                  type="button"
+                  className={panelStyles.entityFieldsSelectionButton}
+                  onClick={() => onSaveEntityFieldDraft?.()}
+                  disabled={isReadOnlyMode}
+                >
+                  {entityFieldDraft?.id ? 'Atualizar campo' : 'Adicionar campo'}
+                </button>
+                {entityFieldDraft?.id ? (
+                  <button
+                    type="button"
+                    className={panelStyles.entityFieldsSelectionButton}
+                    onClick={() =>
+                      setEntityFieldDraft?.({
+                        id: null,
+                        nome: '',
+                        tipo: '',
+                        obrigatorio: null,
+                        keyType: '',
+                        referencia: '',
+                      })
+                    }
+                    disabled={isReadOnlyMode}
+                  >
+                    Cancelar edição
+                  </button>
+                ) : null}
+              </div>
             </div>
+
+            {lastCreatedField ? (
+              <div className={panelStyles.entityFieldsSelectionBlock}>
+                <div className={panelStyles.entityFieldsHeader}>
+                  <div className={panelStyles.entityFieldsTitleGroup}>
+                    <p className={panelStyles.entityFieldsTitle}>
+                      Ultimo Campo criado:
+                    </p>
+                    <a
+                      className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldInlineLink} ${panelStyles.entityFieldIconLink}`}
+                      href={isReadOnlyMode ? '#' : entityFieldsEditHref}
+                      onClick={(event) => {
+                        if (isReadOnlyMode) {
+                          event.preventDefault();
+                          return;
+                        }
+                        handleNavigateToEntityFields(event);
+                      }}
+                      aria-label="Ir para campos"
+                      title="Abrir página de Entidades para editar campos"
+                      aria-disabled={isReadOnlyMode}
+                    >
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M14 5H19V10"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M10 14L19 5"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M19 14V19H5V5H10"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                  <span className={panelStyles.entityFieldsCount}>
+                    {newEntityFields.length}
+                  </span>
+                </div>
+                <div
+                  className={`${panelStyles.entityFieldItem} ${panelStyles.entityFieldItemCompact}`}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setIsLastFieldDetailsOpen(true)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setIsLastFieldDetailsOpen(true);
+                    }
+                  }}
+                  title="Clique para ver o conteúdo completo"
+                >
+                  <div className={panelStyles.entityFieldMainRow}>
+                    <span
+                      className={`${panelStyles.entityFieldName} ${panelStyles.entityFieldNameTruncated}`}
+                    >
+                      {String(lastCreatedField?.nome || '').trim() ||
+                        'Campo sem nome'}
+                    </span>
+                    <div className={panelStyles.entityFieldSelectionActions}>
+                      <button
+                        type="button"
+                        className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldActionIconButton}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEditEntityFieldDraft?.(lastCreatedField);
+                        }}
+                        aria-label="Editar campo"
+                        title="Editar campo"
+                        disabled={isReadOnlyMode}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M4 20H8L19 9L15 5L4 16V20Z"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M13.5 6.5L17.5 10.5"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldActionIconButton}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRemoveEntityFieldDraft?.(lastCreatedField?.id);
+                        }}
+                        aria-label="Apagar campo"
+                        title="Apagar campo"
+                        disabled={isReadOnlyMode}
+                      >
+                        <svg
+                          width="12"
+                          height="12"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M5 7H19"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M9 7V5H15V7"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M8 7L9 19H15L16 7"
+                            stroke="currentColor"
+                            strokeWidth="1.8"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div
+                    className={`${panelStyles.entityFieldBadges} ${panelStyles.entityFieldBadgesSingleLine}`}
+                  >
+                    {lastCreatedFieldType ? (
+                      <span
+                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+                      >
+                        {lastCreatedFieldType}
+                      </span>
+                    ) : null}
+                    {typeof lastCreatedField?.obrigatorio === 'boolean' ? (
+                      <span
+                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+                      >
+                        {lastCreatedField.obrigatorio ? 'Sim' : 'Nao'}
+                      </span>
+                    ) : null}
+                    {String(lastCreatedField?.keyType || '').trim() ? (
+                      <span
+                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+                      >
+                        {String(lastCreatedField.keyType).trim()}
+                      </span>
+                    ) : null}
+                    {String(lastCreatedField?.relacionamento || '').trim() ? (
+                      <span
+                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+                      >
+                        {String(lastCreatedField.relacionamento).trim()}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </>
         ) : (
           <p className={panelStyles.empty}>
@@ -286,6 +675,17 @@ const ConfigurarEntidadePanel = ({
           confirmLabel={
             isNavigatingToEntityFields ? 'Salvando...' : 'Sair e salvar'
           }
+        />
+      ) : null}
+
+      {isLastFieldDetailsOpen && lastCreatedField ? (
+        <Close
+          title="Detalhes do campo"
+          message={`Nome: ${String(lastCreatedField?.nome || '').trim() || 'Campo sem nome'}\nTipo: ${lastCreatedFieldType || '-'}\nObrigatorio: ${lastCreatedField?.obrigatorio === true ? 'Sim' : 'Nao'}\nChave: ${String(lastCreatedField?.keyType || '').trim() || '-'}${String(lastCreatedField?.relacionamento || '').trim() ? `\nReferencia: ${String(lastCreatedField.relacionamento).trim()}` : ''}`}
+          onConfirm={() => setIsLastFieldDetailsOpen(false)}
+          onCancel={() => setIsLastFieldDetailsOpen(false)}
+          confirmLabel="Fechar"
+          hideCancel
         />
       ) : null}
     </>

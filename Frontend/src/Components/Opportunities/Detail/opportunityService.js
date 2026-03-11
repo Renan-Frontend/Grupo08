@@ -75,6 +75,22 @@ const normalizeName = (value) =>
     .trim()
     .toLowerCase();
 
+const normalizeManualPendingTarget = (value) => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+
+  if (
+    normalized === 'bpmn_entidades' ||
+    normalized === 'bpmn' ||
+    normalized === 'entidades'
+  ) {
+    return normalized;
+  }
+
+  return '';
+};
+
 const resolveNodeStageType = (node) => {
   const rawType = String(node?.nodeType || '')
     .trim()
@@ -389,6 +405,7 @@ const normalizeInfoRowsForSave = (rows = []) => {
         .toLowerCase() === 'concluido'
         ? 'concluido'
         : 'pendente',
+    pendingTarget: normalizeManualPendingTarget(row?.pendingTarget),
   }));
 
   return [titleRow, ...contentRows];

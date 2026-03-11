@@ -68,7 +68,22 @@
 
 .headerActions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 0.75rem;
+}
+
+.topReadOnlyBadge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #6b7280;
+  font-size: 0.82rem;
+  line-height: 1.2;
 }
 
 .createBtn {
@@ -176,6 +191,19 @@
 .actionsCell {
   width: 9.5rem;
   min-width: 9.5rem;
+}
+
+.viewOnlyBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.24rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #6b7280;
+  font-size: 0.76rem;
+  font-weight: 600;
 }
 
 .editBtn,

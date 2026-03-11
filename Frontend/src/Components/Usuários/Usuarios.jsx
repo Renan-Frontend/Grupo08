@@ -40,8 +40,11 @@ function Usuarios() {
 
   const { user } = React.useContext(UserContext);
   const isAdmin = user?.role === 'admin' || user?.admin === true;
+  const currentUserId = Number(user?.id);
 
-  const token = window.localStorage.getItem('token');
+  const token =
+    window.sessionStorage.getItem('token') ||
+    window.localStorage.getItem('token');
 
   const getErrorMessage = async (response) => {
     try {
@@ -55,23 +58,38 @@ function Usuarios() {
     return 'Não foi possível concluir a operação.';
   };
 
-  const fetchUsuarios = (page = 1) => {
-    const { url, options } = USER_GET(token);
-    const usersUrl = new URL(url);
-    usersUrl.searchParams.set('page', String(page));
-    usersUrl.searchParams.set('limit', '8');
+  const fetchUsuarios = React.useCallback(
+    (page = 1) => {
+      const { url, options } = USER_GET(token);
+      const usersUrl = new URL(url);
+      usersUrl.searchParams.set('page', String(page));
+      usersUrl.searchParams.set('limit', '8');
 
-    fetch(usersUrl.toString(), options)
-      .then((res) => res.json())
-      .then((data) => setUsuarios(data))
-      .catch((err) => console.error('Erro ao buscar usuários:', err));
-  };
+      fetch(usersUrl.toString(), options)
+        .then((res) => res.json())
+        .then((data) => setUsuarios(data))
+        .catch((err) => console.error('Erro ao buscar usuários:', err));
+    },
+    [token],
+  );
 
   React.useEffect(() => {
     fetchUsuarios();
-  }, []);
+  }, [fetchUsuarios]);
 
   const handleEdit = (usuario) => {
+    const targetUserId = Number(usuario.id);
+    const isPrincipalAdmin = usuario.is_principal_admin === true;
+    const isCurrentPrincipal =
+      Number.isFinite(currentUserId) && currentUserId === targetUserId;
+
+    if (isPrincipalAdmin && !isCurrentPrincipal) {
+      window.alert(
+        'O administrador principal nao pode ser editado por outro administrador.',
+      );
+      return;
+    }
+
     setEditingId(usuario.id);
     setNivelEdit(String(usuario.nivel));
     setCargoEdit(usuario.cargo || '');
@@ -106,6 +124,15 @@ function Usuarios() {
   };
 
   const handleDelete = async (id) => {
+    const target = usuarios?.data?.find(
+      (item) => Number(item.id) === Number(id),
+    );
+    if (target?.is_principal_admin === true) {
+      window.alert('O administrador principal nao pode ser excluido.');
+      setDeleteUserId(null);
+      return;
+    }
+
     try {
       const { url, options } = USER_DELETE(id, token);
       const res = await fetch(url, options);
@@ -151,6 +178,15 @@ function Usuarios() {
                     const nivel = niveis.find(
                       (n) => n.value === String(usuario.nivel),
                     );
+                    const targetUserId = Number(usuario.id);
+                    const isPrincipalAdmin =
+                      usuario.is_principal_admin === true;
+                    const isCurrentPrincipal =
+                      Number.isFinite(currentUserId) &&
+                      currentUserId === targetUserId;
+                    const canEditThisUser =
+                      !isPrincipalAdmin || isCurrentPrincipal;
+                    const canDeleteThisUser = !isPrincipalAdmin;
                     return (
                       <tr key={usuario.id}>
                         <td>{usuario.nome}</td>
@@ -222,32 +258,49 @@ function Usuarios() {
                                   <button
                                     className={styles.saveBtn}
                                     onClick={() => handleSave(usuario.id)}
+                                    title="Salvar"
+                                    aria-label="Salvar"
                                   >
-                                    Salvar
+                                    ✓
                                   </button>
                                   <button
                                     className={styles.cancelBtn}
                                     onClick={() => setEditingId(null)}
+                                    title="Cancelar"
+                                    aria-label="Cancelar"
                                   >
-                                    Cancelar
+                                    ✕
                                   </button>
                                 </>
                               ) : (
                                 <>
-                                  <button
-                                    className={styles.editBtn}
-                                    onClick={() => handleEdit(usuario)}
-                                    title="Editar"
-                                  >
-                                    ✏️
-                                  </button>
-                                  <button
-                                    className={styles.deleteBtn}
-                                    onClick={() => setDeleteUserId(usuario.id)}
-                                    title="Excluir"
-                                  >
-                                    🗑️
-                                  </button>
+                                  {canEditThisUser ? (
+                                    <button
+                                      className={styles.editBtn}
+                                      onClick={() => handleEdit(usuario)}
+                                      title="Editar"
+                                    >
+                                      ✏️
+                                    </button>
+                                  ) : (
+                                    <span
+                                      className={styles.protectedBadge}
+                                      title="Administrador principal protegido"
+                                    >
+                                      Principal
+                                    </span>
+                                  )}
+                                  {canDeleteThisUser ? (
+                                    <button
+                                      className={styles.deleteBtn}
+                                      onClick={() =>
+                                        setDeleteUserId(usuario.id)
+                                      }
+                                      title="Excluir"
+                                    >
+                                      🗑️
+                                    </button>
+                                  ) : null}
                                 </>
                               )}
                             </div>

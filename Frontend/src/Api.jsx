@@ -29,8 +29,18 @@ export const ENTIDADES_DELETE = (id, token) =>
 // Usuário autenticado
 export const USER_ME = (token) =>
   createRequest('/users/me', 'GET', null, token);
-export const API_URL =
-  import.meta.env.VITE_API_URL || 'https://grupo08.onrender.com';
+const getDevApiUrl = () => {
+  if (typeof window === 'undefined') return 'http://127.0.0.1:8000';
+  const protocol = window.location.protocol || 'http:';
+  const hostname = window.location.hostname || '127.0.0.1';
+  return `${protocol}//${hostname}:8000`;
+};
+
+const DEFAULT_API_URL = import.meta.env.DEV
+  ? getDevApiUrl()
+  : 'https://grupo08.onrender.com';
+
+export const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
 
 const createRequest = (endpoint, method, body, token) => ({
   url: API_URL + endpoint,

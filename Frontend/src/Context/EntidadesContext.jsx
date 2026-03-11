@@ -17,7 +17,10 @@ export const ENTIDADE_FIELD_TYPES = [
   'Booleano',
 ];
 
-const resolveToken = (token) => token || window.localStorage.getItem('token');
+const resolveToken = (token) =>
+  token ||
+  window.sessionStorage.getItem('token') ||
+  window.localStorage.getItem('token');
 
 const normalizeName = (value = '') =>
   String(value)
@@ -48,8 +51,14 @@ const getEntityKeys = (entidadeOrRef) => {
 
   if (typeof entidadeOrRef === 'object') {
     const idKey = getEntityKeyByValues(getEntidadeId(entidadeOrRef), null);
+    if (idKey) {
+      // When an entity has an ID, avoid name-based key matching to prevent
+      // collisions between homonymous entities in different tables.
+      return [idKey];
+    }
+
     const nameKey = getEntityKeyByValues(null, getEntidadeName(entidadeOrRef));
-    return [idKey, nameKey].filter(Boolean);
+    return [nameKey].filter(Boolean);
   }
 
   const raw = String(entidadeOrRef).trim();
@@ -241,66 +250,62 @@ const EntidadesProvider = ({ children }) => {
     [entityConfigMap],
   );
 
-  const entidades = React.useMemo(
-    () =>
-      (Array.isArray(entidadesRaw) ? entidadesRaw : []).map((entidade) => {
-        const config = getConfigForEntity(entidade) || {};
-        const campos = normalizeCampos(entidade.campos || config.campos || []);
+  const entidades = React.useMemo(() => {
+    const raw = Array.isArray(entidadesRaw) ? entidadesRaw : [];
+    return raw.map((entidade) => {
+      const config = getConfigForEntity(entidade) || {};
+      const campos = normalizeCampos(entidade.campos || config.campos || []);
 
-        return {
-          ...entidade,
-          descricao: entidade.descricao || config.descricao || '',
-          atributoChave: entidade.atributoChave ?? config.atributoChave ?? null,
-          categoria: entidade.categoria || config.categoria || 'BPMN',
-          tipoEntidade: (() => {
-            const rawTipo =
-              entidade.tipoEntidade ||
-              config.tipoEntidade ||
-              (entidade?.isPrimaryEntity === true ? 'Principal' : 'Apoio');
-            const normalizedTipo = String(rawTipo || '')
+      return {
+        ...entidade,
+        descricao: entidade.descricao || config.descricao || '',
+        atributoChave: entidade.atributoChave ?? config.atributoChave ?? null,
+        categoria: entidade.categoria || config.categoria || 'BPMN',
+        tipoEntidade: (() => {
+          const rawTipo =
+            entidade.tipoEntidade ||
+            config.tipoEntidade ||
+            (entidade?.isPrimaryEntity === true ? 'Principal' : 'Apoio');
+          const normalizedTipo = String(rawTipo || '')
+            .trim()
+            .toLowerCase();
+
+          if (normalizedTipo === 'principal') return 'Principal';
+          if (normalizedTipo === 'associativa') return 'Associativa';
+          if (normalizedTipo === 'externa') return 'Externa';
+          return 'Apoio';
+        })(),
+        isPrimaryEntity: (() => {
+          if (typeof entidade?.isPrimaryEntity === 'boolean') {
+            return entidade.isPrimaryEntity;
+          }
+
+          if (typeof config?.isPrimaryEntity === 'boolean') {
+            return config.isPrimaryEntity;
+          }
+
+          const rawTipo = entidade.tipoEntidade || config.tipoEntidade || '';
+          return (
+            String(rawTipo || '')
               .trim()
-              .toLowerCase();
-
-            if (normalizedTipo === 'principal') return 'Principal';
-            if (normalizedTipo === 'associativa') return 'Associativa';
-            if (normalizedTipo === 'externa') return 'Externa';
-            return 'Apoio';
-          })(),
-          isPrimaryEntity: (() => {
-            if (typeof entidade?.isPrimaryEntity === 'boolean') {
-              return entidade.isPrimaryEntity;
-            }
-
-            if (typeof config?.isPrimaryEntity === 'boolean') {
-              return config.isPrimaryEntity;
-            }
-
-            const rawTipo = entidade.tipoEntidade || config.tipoEntidade || '';
-            return (
-              String(rawTipo || '')
-                .trim()
-                .toLowerCase() === 'principal'
-            );
-          })(),
-          updated_at:
-            entidade.updated_at ||
-            config.updated_at ||
-            entidade.created_at ||
-            '',
-          numeroRelacionamentos:
-            Number(
-              entidade.numeroRelacionamentos ?? config.numeroRelacionamentos,
-            ) ||
-            (Array.isArray(entidade.relacionamentos)
-              ? entidade.relacionamentos.length
-              : 0),
-          bpmnUsageCount:
-            Number(entidade.bpmnUsageCount ?? config.bpmnUsageCount) || 0,
-          campos,
-        };
-      }),
-    [entidadesRaw, getConfigForEntity],
-  );
+              .toLowerCase() === 'principal'
+          );
+        })(),
+        updated_at:
+          entidade.updated_at || config.updated_at || entidade.created_at || '',
+        numeroRelacionamentos:
+          Number(
+            entidade.numeroRelacionamentos ?? config.numeroRelacionamentos,
+          ) ||
+          (Array.isArray(entidade.relacionamentos)
+            ? entidade.relacionamentos.length
+            : 0),
+        bpmnUsageCount:
+          Number(entidade.bpmnUsageCount ?? config.bpmnUsageCount) || 0,
+        campos,
+      };
+    });
+  }, [entidadesRaw, getConfigForEntity]);
 
   const campos = React.useMemo(
     () =>
@@ -316,16 +321,24 @@ const EntidadesProvider = ({ children }) => {
   );
 
   const validateUniqueEntityName = React.useCallback(
-    (nome, ignoreId = null) => {
+    (nome, ignoreId = null, categoria = null) => {
       const normalizedNewName = normalizeName(nome);
       if (!normalizedNewName) {
         throw new Error('Nome da entidade é obrigatório');
       }
 
+      const normalizedCategoria = normalizeName(categoria || '');
+
       const duplicated = entidades.some((entidade) => {
         const entidadeName = normalizeName(getEntidadeName(entidade));
         if (!entidadeName) return false;
         if (entidadeName !== normalizedNewName) return false;
+
+        if (normalizedCategoria) {
+          const entidadeCategoria = normalizeName(entidade?.categoria || '');
+          if (entidadeCategoria !== normalizedCategoria) return false;
+        }
+
         if (ignoreId === null || ignoreId === undefined) return true;
         return String(getEntidadeId(entidade)) !== String(ignoreId);
       });
@@ -405,7 +418,7 @@ const EntidadesProvider = ({ children }) => {
     }
 
     const payload = buildEntidadePayload(novaEntidade);
-    validateUniqueEntityName(payload.nome);
+    validateUniqueEntityName(payload.nome, null, payload.categoria);
     throwIfDuplicateFieldNames(payload.campos);
 
     const { url, options } = ENTIDADES_POST(payload, currentToken);
@@ -442,7 +455,7 @@ const EntidadesProvider = ({ children }) => {
         entidadeAtualizada,
         entidadeAnterior,
       );
-      validateUniqueEntityName(payload.nome, id);
+      validateUniqueEntityName(payload.nome, id, payload.categoria);
       throwIfDuplicateFieldNames(payload.campos);
 
       const { url, options } = ENTIDADES_PUT(id, payload, currentToken);
@@ -600,54 +613,83 @@ const EntidadesProvider = ({ children }) => {
   );
 
   // Carregar entidades e campos ao inicializar
-  React.useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const token = window.localStorage.getItem('token');
-        if (token) {
-          const entidadesData = await getEntidades(token);
-          setEntidadesRaw(entidadesData);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+  const refetchEntidades = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token =
+        window.sessionStorage.getItem('token') ||
+        window.localStorage.getItem('token');
+      const entidadesData = await getEntidades(token || undefined);
+      setEntidadesRaw(entidadesData);
+    } catch (err) {
+      console.error('[EntidadesContext] refetch error:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  React.useEffect(() => {
+    refetchEntidades();
+  }, [refetchEntidades]);
+
+  const validarNomeEntidadeDuplicado = React.useCallback(
+    (nome, ignoreId, categoria) => {
+      try {
+        validateUniqueEntityName(nome, ignoreId, categoria);
+        return false;
+      } catch {
+        return true;
+      }
+    },
+    [validateUniqueEntityName],
+  );
+
+  const contextValue = React.useMemo(
+    () => ({
+      entidades,
+      campos,
+      loading,
+      error,
+      getEntidades,
+      refetchEntidades,
+      adicionarEntidade,
+      editarEntidade,
+      deletarEntidade,
+      setEntidades: setEntidadesRaw,
+      getCamposEntidade,
+      adicionarCampoEntidade,
+      editarCampoEntidade,
+      removerCampoEntidade,
+      deletarCampo,
+      findEntidade,
+      validarNomeEntidadeDuplicado,
+      validarNomeCampoDuplicado,
+    }),
+    [
+      entidades,
+      campos,
+      loading,
+      error,
+      getEntidades,
+      refetchEntidades,
+      adicionarEntidade,
+      editarEntidade,
+      deletarEntidade,
+      getCamposEntidade,
+      adicionarCampoEntidade,
+      editarCampoEntidade,
+      removerCampoEntidade,
+      deletarCampo,
+      findEntidade,
+      validarNomeEntidadeDuplicado,
+      validarNomeCampoDuplicado,
+    ],
+  );
+
   return (
-    <EntidadesContext.Provider
-      value={{
-        entidades,
-        campos,
-        loading,
-        error,
-        getEntidades,
-        adicionarEntidade,
-        editarEntidade,
-        deletarEntidade,
-        setEntidades: setEntidadesRaw,
-        getCamposEntidade,
-        adicionarCampoEntidade,
-        editarCampoEntidade,
-        removerCampoEntidade,
-        deletarCampo,
-        findEntidade,
-        validarNomeEntidadeDuplicado: (nome, ignoreId) => {
-          try {
-            validateUniqueEntityName(nome, ignoreId);
-            return false;
-          } catch {
-            return true;
-          }
-        },
-        validarNomeCampoDuplicado,
-      }}
-    >
+    <EntidadesContext.Provider value={contextValue}>
       {children}
     </EntidadesContext.Provider>
   );

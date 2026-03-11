@@ -3,6 +3,7 @@ import Close from '../../Helper/Close';
 import styles from '../OpportunityDetail.module.css';
 
 const TopicCard = ({
+  isReadOnlyMode,
   showTopico,
   isEditing,
   showPipeline,
@@ -11,6 +12,9 @@ const TopicCard = ({
   isBpmnDrivenPipeline,
   toggleTopico,
 }) => {
+  const DEFAULT_PENDING_TOPIC_MESSAGE =
+    'Pendência: concluir no BPMN ou em Entidades.';
+
   const [expandedContent, setExpandedContent] = React.useState({
     rowIndex: null,
     value: '',
@@ -291,16 +295,23 @@ const TopicCard = ({
     return normalized === 'concluido' ? 'concluido' : 'pendente';
   };
 
+  const isBpmnOrEntidadesPending = (row) =>
+    String(row?.pendingTarget || '')
+      .trim()
+      .toLowerCase() === 'bpmn_entidades';
+
   const handleAddTopic = () => {
+    if (isReadOnlyMode) return;
     const nextRowIndex = infoRows.length;
     setInfoRows([
       ...infoRows,
       {
-        label: '',
-        value: '',
+        label: 'Nova pendência',
+        value: DEFAULT_PENDING_TOPIC_MESSAGE,
         topicType: 'dados',
         isPrimaryEntity: false,
         manualStatus: 'pendente',
+        pendingTarget: 'bpmn_entidades',
       },
     ]);
 
@@ -355,6 +366,7 @@ const TopicCard = ({
             }}
             maxLength={50}
             onChange={(e) => {
+              if (isReadOnlyMode) return;
               const input = e.target;
               const text = input.value;
               updateTextIfFits(input, text, () => {
@@ -365,6 +377,7 @@ const TopicCard = ({
             }}
             name="topicoLabel"
             autoComplete="off"
+            readOnly={isReadOnlyMode}
           />
         </div>
       </div>
@@ -396,6 +409,7 @@ const TopicCard = ({
                     fontWeight: 600,
                   }}
                   onChange={(e) => {
+                    if (isReadOnlyMode) return;
                     const input = e.target;
                     const text = input.value;
                     updateTextIfFits(input, text, () => {
@@ -406,6 +420,7 @@ const TopicCard = ({
                   }}
                   name={`campoExtraLabel${idx}`}
                   autoComplete="off"
+                  readOnly={isReadOnlyMode}
                 />
                 <span className={styles.topicPrimarySlot}>
                   {!isBpmnDrivenPipeline && row?.isPrimaryEntity === true ? (
@@ -441,7 +456,7 @@ const TopicCard = ({
                             draftValue: row.value || '',
                             fieldKey: 'conteudo',
                             fieldLabel: 'Conteúdo',
-                            isEditable: !isImportedFromBpmn,
+                            isEditable: !isImportedFromBpmn && !isReadOnlyMode,
                           })
                         }
                       >
@@ -478,6 +493,7 @@ const TopicCard = ({
                       }`}
                       title="Alterar status do tópico manual"
                       onClick={() => {
+                        if (isReadOnlyMode) return;
                         const newRows = [...infoRows];
                         const currentStatus = getManualStatus(row);
                         newRows[idx + 1] = {
@@ -492,17 +508,21 @@ const TopicCard = ({
                     >
                       {getManualStatus(row) === 'concluido'
                         ? 'Concluído'
-                        : 'Pendente'}
+                        : isBpmnOrEntidadesPending(row)
+                          ? 'Pendente (BPMN/Entidades)'
+                          : 'Pendente'}
                     </button>
                     <button
                       type="button"
                       className={styles.removeTopicButton}
                       aria-label="Remover campo extra"
                       onClick={() => {
+                        if (isReadOnlyMode) return;
                         const newRows = [...infoRows];
                         newRows.splice(idx + 1, 1);
                         setInfoRows(newRows);
                       }}
+                      disabled={isReadOnlyMode}
                     >
                       <span className={styles.removeTopicIcon}>×</span>
                     </button>
@@ -513,14 +533,16 @@ const TopicCard = ({
           );
         })}
         <div className={styles.addExtraBtnContainer}>
-          <button
-            type="button"
-            className={styles.addButton}
-            onClick={handleAddTopic}
-            aria-label="Adicionar campo extra"
-          >
-            +
-          </button>
+          {!isReadOnlyMode ? (
+            <button
+              type="button"
+              className={styles.addButton}
+              onClick={handleAddTopic}
+              aria-label="Adicionar campo extra"
+            >
+              +
+            </button>
+          ) : null}
         </div>
       </div>
 

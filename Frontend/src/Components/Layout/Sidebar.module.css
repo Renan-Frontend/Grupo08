@@ -56,9 +56,11 @@
   cursor: pointer;
 }
 
-.menuItem:hover .menuItemContent {
-  background: rgba(255, 255, 255, 0.1);
+.menuItemContent:hover {
+  background: #dff4ea;
+  border: 1px solid #9fcfb5;
   border-radius: 6px;
+  box-shadow: 2px 0 8px rgba(31, 155, 85, 0.12);
 }
 
 .menuItem.active {
@@ -74,14 +76,19 @@
   box-shadow: 2px 0 8px rgba(31, 155, 85, 0.12);
 }
 
+.menuItem button:not(:disabled):hover,
+.menuItem button:not(:disabled):active {
+  transform: none;
+}
+
 .menuItem.active:hover .menuItemContent {
   background: #d7f0e4;
 }
 
 .addButton {
-  background: #f8fafc;
-  border: 1px solid #cbd5e1;
-  color: #27ae60;
+  background: #ffffff !important;
+  border: 1px solid #27ae60 !important;
+  color: #27ae60 !important;
   border-radius: 50%;
   width: 1.5rem;
   height: 1.5rem;
@@ -97,22 +104,24 @@
   flex-shrink: 0;
 }
 
-.addButton:hover {
-  background: #27ae60;
-  color: white;
+.addButtonWrapper:hover button.addButton,
+button.addButton:hover {
+  background: #27ae60 !important;
+  border-color: #27ae60 !important;
+  color: #ffffff !important;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
 }
 
 .addButton.active {
-  background: #27ae60;
-  border-color: #27ae60;
-  color: white;
+  background: #27ae60 !important;
+  border-color: #27ae60 !important;
+  color: #ffffff !important;
 }
 
 .addButton.active:hover {
-  background: white;
-  border-color: #27ae60;
-  color: #27ae60;
+  background: #27ae60 !important;
+  border-color: #27ae60 !important;
+  color: #ffffff !important;
 }
 
 .addButton.disabled {
@@ -130,27 +139,33 @@
 }
 
 .menuItem.active .addButton {
-  border-color: #27ae60;
-  color: #27ae60;
-  background: transparent;
+  border-color: #27ae60 !important;
+  color: #27ae60 !important;
+  background: #ffffff !important;
 }
 
-.menuItem.active .addButton:hover {
-  background: #27ae60;
-  color: white;
-  border-color: #27ae60;
+.menuItem.active .addButtonWrapper:hover button.addButton,
+.menuItem.active button.addButton:hover {
+  background: #27ae60 !important;
+  color: #ffffff !important;
+  border-color: #27ae60 !important;
 }
 
 .menuItem.active .addButton.active {
-  background: #27ae60;
-  border-color: #27ae60;
-  color: white;
+  background: #27ae60 !important;
+  border-color: #27ae60 !important;
+  color: #ffffff !important;
 }
 
 .menuItem.active .addButton.active:hover {
-  background: white;
-  border-color: #27ae60;
-  color: #27ae60;
+  background: #27ae60 !important;
+  border-color: #27ae60 !important;
+  color: #ffffff !important;
+}
+
+.addButton:focus-visible {
+  outline: 2px solid rgba(39, 174, 96, 0.35);
+  outline-offset: 2px;
 }
 
 .addButtonWrapper {
@@ -299,15 +314,16 @@
   }
 
   .menuItemContent {
-    padding: 0.28rem clamp(0.28rem, 1.7vw, 0.45rem);
+    padding: 0.42rem clamp(0.35rem, 2vw, 0.55rem);
     border: 1px solid #e5e7eb;
     border-radius: 7px;
     background: #f8fafc;
-    min-height: 1.7rem;
+    min-height: 2.4rem;
   }
 
-  .menuItem:hover .menuItemContent {
-    background: #f1f5f9;
+  .menuItemContent:hover {
+    background: #eaf8ef;
+    border-color: #9fd7b6;
     border-radius: 8px;
   }
 
@@ -353,9 +369,9 @@
   .logoutButton.logoutButton {
     width: 2.5rem;
     min-width: 2.5rem;
-    height: 1rem;
+    height: 1.5rem;
     border-radius: 999px;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 }
 

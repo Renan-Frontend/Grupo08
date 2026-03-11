@@ -13,12 +13,6 @@
   }
 }
 
-@media (max-width: 1024px) {
-  .header {
-    display: none;
-  }
-}
-
 .nav {
   display: flex;
   justify-content: space-between;

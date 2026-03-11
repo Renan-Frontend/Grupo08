@@ -12,19 +12,23 @@ const OpportunityTopBar = ({
   return (
     <div className={styles.topBar}>
       <div className={styles.headerActions}>
-        {!isReadOnlyMode ? (
+        {isReadOnlyMode ? (
+          <span className={styles.topReadOnlyBadge}>
+            Modo somente visualizacao ativo para o seu nivel de acesso.
+          </span>
+        ) : (
           <button
             type="button"
-            className={`${styles.topActionButton} ${styles.topIconButton}`}
+            className={`${styles.topActionPrimary} ${styles.topIconButton}`}
             onClick={onSaveOpportunity}
             title={isCreating ? 'Atribuir Oportunidade' : 'Editar Oportunidade'}
             aria-label={
               isCreating ? 'Atribuir Oportunidade' : 'Editar Oportunidade'
             }
           >
-            💼
+            <span className={styles.topCheckIcon}>✓</span>
           </button>
-        ) : null}
+        )}
       </div>
 
       {!isReadOnlyMode ? (
@@ -38,7 +42,7 @@ const OpportunityTopBar = ({
             title={isEditing ? 'Salvar Layout' : 'Editar Layout'}
             aria-label={isEditing ? 'Salvar Layout' : 'Editar Layout'}
           >
-            {isEditing ? '💾' : '✏️'}
+            {isEditing ? <span className={styles.topCheckIcon}>✓</span> : '✏️'}
           </button>
           <button
             type="button"

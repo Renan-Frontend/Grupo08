@@ -10,9 +10,27 @@ export const createNode = (id, label, x = 0, y = 0) => ({
   condicionalDescricao: '',
   taskNome: '',
   taskDescricao: '',
+  selectedEntityFieldIds: [],
+  selectedEntityFieldNames: [],
+  selectedEntityFields: [],
   x,
   y,
 });
+
+const normalizeSelectedEntityFields = (fields = []) =>
+  (Array.isArray(fields) ? fields : [])
+    .map((field) => ({
+      id: String(field?.id || '').trim(),
+      nome: String(field?.nome || '').trim(),
+      tipo: String(field?.tipo || '').trim(),
+      obrigatorio:
+        field?.obrigatorio === true || String(field?.obrigatorio) === 'Sim',
+      keyType: String(field?.keyType || field?.chave || 'NORMAL')
+        .trim()
+        .toUpperCase(),
+      relacionamento: String(field?.relacionamento || '').trim() || null,
+    }))
+    .filter((field) => field.id || field.nome);
 
 export const GATEWAY_TYPE_OPTIONS = [
   { value: 'xor', label: 'XOR (Exclusivo)' },
@@ -99,6 +117,19 @@ export const sanitizeNodeForPersistence = (node) => ({
   condicionalDescricao: String(node?.condicionalDescricao || '').trim(),
   taskNome: String(node?.taskNome || '').trim(),
   taskDescricao: String(node?.taskDescricao || '').trim(),
+  selectedEntityFieldIds: Array.isArray(node?.selectedEntityFieldIds)
+    ? node.selectedEntityFieldIds
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    : [],
+  selectedEntityFieldNames: Array.isArray(node?.selectedEntityFieldNames)
+    ? node.selectedEntityFieldNames
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    : [],
+  selectedEntityFields: normalizeSelectedEntityFields(
+    node?.selectedEntityFields,
+  ),
   label: String(node?.label || '').trim(),
   subtitle: String(node?.subtitle || '').trim(),
   info: String(node?.info || '').trim(),
@@ -139,6 +170,19 @@ export const normalizeEditorNode = (node, index = 0) => ({
   condicionalDescricao: String(node?.condicionalDescricao || '').trim(),
   taskNome: String(node?.taskNome || '').trim(),
   taskDescricao: String(node?.taskDescricao || '').trim(),
+  selectedEntityFieldIds: Array.isArray(node?.selectedEntityFieldIds)
+    ? node.selectedEntityFieldIds
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    : [],
+  selectedEntityFieldNames: Array.isArray(node?.selectedEntityFieldNames)
+    ? node.selectedEntityFieldNames
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    : [],
+  selectedEntityFields: normalizeSelectedEntityFields(
+    node?.selectedEntityFields,
+  ),
   label: String(node?.label || '').trim(),
   subtitle: String(node?.subtitle || '').trim(),
   info: String(node?.info || '').trim(),

@@ -48,6 +48,10 @@ const GerarBPMNContextSidebar = ({
   entityFieldDraft,
   setEntityFieldDraft,
   newEntityFields,
+  onSaveEntityFieldDraft,
+  onEditEntityFieldDraft,
+  onRemoveEntityFieldDraft,
+  onSelectCreateNewEntityMode,
   entityError,
   shouldShowSidebarPrimaryAction,
   handleSidebarPrimaryAction,
@@ -402,6 +406,12 @@ const GerarBPMNContextSidebar = ({
                 conditionalForm={conditionalForm}
                 setConditionalForm={setConditionalForm}
                 newEntityFields={newEntityFields}
+                entityFieldDraft={entityFieldDraft}
+                setEntityFieldDraft={setEntityFieldDraft}
+                onSaveEntityFieldDraft={onSaveEntityFieldDraft}
+                onEditEntityFieldDraft={onEditEntityFieldDraft}
+                onRemoveEntityFieldDraft={onRemoveEntityFieldDraft}
+                onSelectCreateNewEntityMode={onSelectCreateNewEntityMode}
                 onBeforeNavigateToEntityFields={handleSidebarPrimaryAction}
                 isReadOnlyMode={isReadOnlyMode}
               />
@@ -423,6 +433,12 @@ const GerarBPMNContextSidebar = ({
                 conditionalForm={conditionalForm}
                 setConditionalForm={setConditionalForm}
                 newEntityFields={newEntityFields}
+                entityFieldDraft={entityFieldDraft}
+                setEntityFieldDraft={setEntityFieldDraft}
+                onSaveEntityFieldDraft={onSaveEntityFieldDraft}
+                onEditEntityFieldDraft={onEditEntityFieldDraft}
+                onRemoveEntityFieldDraft={onRemoveEntityFieldDraft}
+                onSelectCreateNewEntityMode={onSelectCreateNewEntityMode}
                 onBeforeNavigateToEntityFields={handleSidebarPrimaryAction}
                 isReadOnlyMode={isReadOnlyMode}
               />
@@ -455,7 +471,9 @@ const GerarBPMNContextSidebar = ({
           {shouldShowSidebarPrimaryAction && entityError ? (
             <p className={styles.entityErrorMessage}>{entityError}</p>
           ) : null}
-          {shouldShowSidebarPrimaryAction && suggestedEntity ? (
+          {shouldShowSidebarPrimaryAction &&
+          suggestedEntity &&
+          entityMode !== 'existente' ? (
             <div className={styles.entitySuggestionCard}>
               <p className={styles.entitySuggestionTitle}>
                 {isDuplicateSuggestion

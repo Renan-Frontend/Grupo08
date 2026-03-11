@@ -373,6 +373,20 @@ const normalizeManualTopicStatus = (value) => {
   return 'pendente';
 };
 
+const normalizeManualPendingTarget = (value) => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
+  if (
+    normalized === 'bpmn_entidades' ||
+    normalized === 'bpmn' ||
+    normalized === 'entidades'
+  ) {
+    return normalized;
+  }
+  return '';
+};
+
 const getTopicTypeFromStageType = (stageType) => {
   const normalized = String(stageType || '')
     .trim()
@@ -916,6 +930,7 @@ const mergeInfoRowsWithBpmnEntities = (
     topicType: normalizeTopicType(row?.topicType),
     isPrimaryEntity: row?.isPrimaryEntity === true,
     manualStatus: normalizeManualTopicStatus(row?.manualStatus),
+    pendingTarget: normalizeManualPendingTarget(row?.pendingTarget),
   }));
 
   const bpmnEntityRows = buildTopicRowsFromBpmnEntities(
@@ -953,6 +968,7 @@ const mergeInfoRowsWithBpmnEntities = (
       topicType: normalizeTopicType(row.topicType),
       isPrimaryEntity: row?.isPrimaryEntity === true,
       manualStatus: 'pendente',
+      pendingTarget: normalizeManualPendingTarget(existing?.pendingTarget),
     };
   });
 
@@ -973,6 +989,7 @@ const mergeInfoRowsWithBpmnEntities = (
     .map((row) => ({
       ...row,
       manualStatus: normalizeManualTopicStatus(row?.manualStatus),
+      pendingTarget: normalizeManualPendingTarget(row?.pendingTarget),
     }));
 
   return [titleRow, ...mergedBpmnRows, ...extraManualRows];

@@ -52,11 +52,198 @@
   min-height: auto;
 }
 
+.entityFieldsSelectionBlock {
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 0.38rem 0.42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.entityFieldEditorBlock {
+  border: 1px solid #dbe1ea;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 0.38rem 0.42rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.entityFieldEditorTitle {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.entityFieldEditorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.28rem;
+}
+
+.entityFieldEditorActions {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.entityFieldsSelectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.entityFieldsSelectionTitle {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.entityFieldsSelectionCount {
+  font-size: 0.7rem;
+  color: #475569;
+  font-weight: 600;
+}
+
+.entityFieldsSelectionActions {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.entityFieldsSelectionButton {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.14rem 0.46rem;
+  cursor: pointer;
+}
+
+.entityFieldsSelectionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.entityFieldsSelectionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  max-height: 142px;
+  overflow-y: auto;
+}
+
+.entityFieldSelectionItem {
+  margin: 0;
+}
+
+.entityFieldSelectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.32rem;
+}
+
+.entityFieldSelectionLabel {
+  display: flex;
+  gap: 0.42rem;
+  align-items: flex-start;
+  font-size: 0.74rem;
+  color: #1f2937;
+}
+
+.entityFieldSelectionLabel input {
+  margin: 0.08rem 0 0;
+}
+
+.entityFieldSelectionText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.entityFieldSelectionText strong {
+  font-size: 0.74rem;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.entityFieldSelectionText small {
+  font-size: 0.67rem;
+  color: #64748b;
+}
+
+.entityFieldSelectionActions {
+  display: flex;
+  gap: 0.22rem;
+}
+
+.entityFieldSelectionMiniButton {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  border-radius: 999px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  padding: 0.1rem 0.38rem;
+  cursor: pointer;
+}
+
+.entityFieldActionIconButton {
+  width: 1.45rem;
+  height: 1.45rem;
+  min-width: 1.45rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.entityFieldInlineLink {
+  text-decoration: none;
+}
+
+.entityFieldIconLink {
+  width: 1.55rem;
+  height: 1.55rem;
+  min-width: 1.55rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.entityFieldInlineLink[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.entityFieldSelectionMiniButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .entityFieldsHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.4rem;
+}
+
+.entityFieldsTitleGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
 }
 
 .entityFieldsTitle {
@@ -109,10 +296,35 @@
   font-weight: 600;
 }
 
+.entityFieldMainRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+}
+
+.entityFieldItemCompact {
+  cursor: pointer;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.entityFieldNameTruncated {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .entityFieldBadges {
   display: flex;
   flex-wrap: wrap;
   gap: 0.3rem;
+}
+
+.entityFieldBadgesSingleLine {
+  flex-wrap: nowrap;
+  overflow: hidden;
 }
 
 .entityFieldBadge,
@@ -135,6 +347,13 @@
   border: 1px solid #e2e8f0;
   background: #f1f5f9;
   color: #475569;
+}
+
+.entityFieldBadgeTruncated {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .entityFieldsLink {
@@ -212,6 +431,11 @@
   cursor: pointer;
 }
 
+.primaryButton:hover:not(:disabled) {
+  background: #229954;
+  border-color: #229954;
+}
+
 .secondaryButton {
   border: 1px solid #27ae60;
   background: #fff;
@@ -220,6 +444,11 @@
   padding: 0.38rem 0.6rem;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+.secondaryButton:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #9ca3af;
 }
 
 .primaryButton:disabled,

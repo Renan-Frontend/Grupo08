@@ -14,8 +14,8 @@
   left: 0.42rem;
   right: auto;
   z-index: 9999;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2.5rem;
+  height: 2.5rem;
   border: 1px solid #d1d5db;
   background: #ffffff;
   color: #1f2937;
@@ -35,7 +35,9 @@
 }
 
 .mobileMenuToggle:hover {
-  background: #f9fafb;
+  background: #ecfdf3 !important;
+  border-color: #27ae60 !important;
+  color: #27ae60 !important;
   transform: translateY(-1px);
 }
 
@@ -113,9 +115,9 @@
     left: calc(250px - 0.95rem);
     transform: translateY(-50%);
     z-index: 1250;
-    border: 1px solid #cbd5e1;
-    background: #f8fafc;
-    color: #27ae60;
+    border: 1px solid #27ae60 !important;
+    background: #ffffff !important;
+    color: #27ae60 !important;
     border-radius: 999px;
     width: 1.9rem;
     height: 1.9rem;
@@ -130,6 +132,12 @@
     transition: all 0.2s ease;
   }
 
+  .desktopSidebarToggle:not(.desktopSidebarToggleHidden) {
+    background: #ffffff !important;
+    border-color: #27ae60 !important;
+    color: #27ae60 !important;
+  }
+
   :global(body[data-bpmn-tutorial-open='true']) .desktopSidebarToggle {
     opacity: 0.38;
     filter: saturate(0.25) brightness(0.75);
@@ -141,14 +149,36 @@
     filter: none;
   }
 
-  .desktopSidebarToggle:hover {
-    background: #27ae60;
-    border-color: #27ae60;
-    color: #fff;
+  button.desktopSidebarToggle:hover {
+    background: #27ae60 !important;
+    border-color: #27ae60 !important;
+    color: #ffffff !important;
+    transform: translate(-2px, -50%) !important;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.35) !important;
   }
 
   .desktopSidebarToggleHidden {
     left: 0.15rem;
+    background: #27ae60 !important;
+    border-color: #27ae60 !important;
+    color: #ffffff !important;
+  }
+
+  button.desktopSidebarToggleHidden:hover {
+    background: #27ae60 !important;
+    border-color: #27ae60 !important;
+    color: #ffffff !important;
+    transform: translate(2px, -50%) !important;
+    box-shadow: 0 4px 10px rgba(39, 174, 96, 0.35) !important;
+  }
+
+  .desktopSidebarToggle:active {
+    transform: translate(0, -50%) !important;
+  }
+
+  .desktopSidebarToggle:focus-visible {
+    outline: 2px solid rgba(39, 174, 96, 0.35);
+    outline-offset: 2px;
   }
 
   .mobileMenuToggle,

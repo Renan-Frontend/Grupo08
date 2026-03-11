@@ -110,6 +110,7 @@ const PipelineRemoveButtonIcon = () => (
 );
 
 const EditablePipeline = ({
+  isReadOnlyMode = false,
   stages,
   setStages,
   pipelineTitle: controlledPipelineTitle,
@@ -218,6 +219,7 @@ const EditablePipeline = ({
   }, [pipelineSubtitle]);
 
   const addStage = () => {
+    if (isReadOnlyMode) return;
     if (isBpmnDrivenPipeline) return;
     if (stages.length >= 7) return;
     const newId =
@@ -226,6 +228,7 @@ const EditablePipeline = ({
   };
 
   const resetToDefault = () => {
+    if (isReadOnlyMode) return;
     if (isBpmnDrivenPipeline) return;
     setStages([
       { id: 1, label: '', done: false },
@@ -237,6 +240,7 @@ const EditablePipeline = ({
   };
 
   const handleAddOrReset = () => {
+    if (isReadOnlyMode) return;
     if (isBpmnDrivenPipeline) return;
     if (stages.length >= 7) {
       setResetConfirm(true);
@@ -246,11 +250,16 @@ const EditablePipeline = ({
   };
 
   const removeStage = (id) => {
+    if (isReadOnlyMode) return;
     if (isBpmnDrivenPipeline) return;
     stages.length > 1 && setDeleteConfirm(id);
   };
 
   const confirmRemove = () => {
+    if (isReadOnlyMode) {
+      setDeleteConfirm(null);
+      return;
+    }
     const newStages = stages.filter((stage) => stage.id !== deleteConfirm);
     setStages(newStages);
     if (activeStage >= newStages.length) {
@@ -260,6 +269,7 @@ const EditablePipeline = ({
   };
 
   const updateStage = (id, updates) => {
+    if (isReadOnlyMode) return;
     if (
       isBpmnDrivenPipeline &&
       Object.prototype.hasOwnProperty.call(updates, 'label')
@@ -294,6 +304,7 @@ const EditablePipeline = ({
   };
 
   const handleStageClick = (index, stage) => {
+    if (isReadOnlyMode) return;
     if (stage.done) {
       // Desativa esta e todas as seguintes
       setStages(stages.map((s, i) => (i >= index ? { ...s, done: false } : s)));
@@ -328,11 +339,15 @@ const EditablePipeline = ({
             <textarea
               className={styles.leftTitle}
               value={pipelineTitle}
-              onChange={(e) => setPipelineTitleValue(e.target.value)}
+              onChange={(e) => {
+                if (isReadOnlyMode) return;
+                setPipelineTitleValue(e.target.value);
+              }}
               onInput={handleTextareaInput}
               placeholder="Título da pipeline..."
               maxLength={50}
               rows={1}
+              readOnly={isReadOnlyMode}
             />
             <svg
               className={styles.editIcon}
@@ -351,11 +366,15 @@ const EditablePipeline = ({
             <textarea
               className={styles.leftSubtitle}
               value={pipelineSubtitle}
-              onChange={(e) => setPipelineSubtitleValue(e.target.value)}
+              onChange={(e) => {
+                if (isReadOnlyMode) return;
+                setPipelineSubtitleValue(e.target.value);
+              }}
               onInput={handleTextareaInput}
               placeholder="Subtítulo..."
               maxLength={50}
               rows={1}
+              readOnly={isReadOnlyMode}
             />
             <svg
               className={styles.editIcon}
@@ -395,6 +414,7 @@ const EditablePipeline = ({
                     <button
                       className={styles.completeButton}
                       onClick={() => handleStageClick(index, stage)}
+                      disabled={isReadOnlyMode}
                       style={
                         isBpmnDrivenPipeline
                           ? stage.done
@@ -434,6 +454,7 @@ const EditablePipeline = ({
                       <button
                         className={styles.removeButton}
                         onClick={() => removeStage(stage.id)}
+                        disabled={isReadOnlyMode}
                         title="Remover etapa"
                       >
                         ×
@@ -452,7 +473,7 @@ const EditablePipeline = ({
                     }
                     rows={2}
                     maxLength={20}
-                    readOnly={isBpmnDrivenPipeline}
+                    readOnly={isBpmnDrivenPipeline || isReadOnlyMode}
                   />
                 </div>
               );
@@ -462,6 +483,7 @@ const EditablePipeline = ({
             <button
               className={`${styles.addButton} ${stages.length >= 7 ? styles.resetButton : ''}`}
               onClick={handleAddOrReset}
+              disabled={isReadOnlyMode}
               title={
                 stages.length >= 7
                   ? 'Resetar para padrão (3 etapas)'

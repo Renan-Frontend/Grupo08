@@ -8,7 +8,13 @@ import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
 import { getOpportunityName, getOpportunityStage } from './opportunityHelpers';
 import { toOpportunitySlug } from '../Opportunities/opportunityFormatters';
 import {
+  buildAssignmentPayloadFields,
+  canManageOpportunity,
+  getOpportunityAssignedName,
+} from '../Opportunities/opportunityOwnershipRules';
+import {
   deleteOpportunityById,
+  fetchOpportunityUsers,
   getAuthToken,
 } from '../Opportunities/opportunityApi';
 
@@ -78,12 +84,53 @@ const GerarBPMNStart = () => {
   const navigate = useNavigate();
   const { user } = React.useContext(UserContext);
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
-  const { loading, opportunities, removeOpportunity, addOpportunity } =
-    useBpmnOpportunities();
+  const {
+    loading,
+    opportunities,
+    removeOpportunity,
+    addOpportunity,
+    updateOpportunityData,
+  } = useBpmnOpportunities();
   const [deleteConfirmItem, setDeleteConfirmItem] = React.useState(null);
   const [noticeMessage, setNoticeMessage] = React.useState('');
+  const [userOptions, setUserOptions] = React.useState([]);
 
   const createdBpmns = React.useMemo(() => opportunities, [opportunities]);
+
+  React.useEffect(() => {
+    async function loadUsers() {
+      try {
+        const users = await fetchOpportunityUsers({ token: getAuthToken() });
+        setUserOptions(users);
+      } catch {
+        setUserOptions([]);
+      }
+    }
+
+    loadUsers();
+  }, []);
+
+  const handleAssignedChange = async (item, assignedValue) => {
+    if (!item || !item.id) return;
+
+    if (isReadOnlyMode || !canManageOpportunity(user, item)) {
+      setNoticeMessage(
+        'Seu nível de acesso não permite alterar o responsável desta oportunidade.',
+      );
+      return;
+    }
+
+    try {
+      await updateOpportunityData({
+        selectedOpportunity: item,
+        patch: {
+          ...buildAssignmentPayloadFields(assignedValue),
+        },
+      });
+    } catch {
+      setNoticeMessage('Não foi possível alterar o responsável.');
+    }
+  };
 
   const handleOpenBpmnFromTable = (item) => {
     if (!item?.id) return;
@@ -256,6 +303,7 @@ const GerarBPMNStart = () => {
                 <thead>
                   <tr>
                     <th>Nome do Processo</th>
+                    <th>Atribuído à</th>
                     <th>Status</th>
                     <th>Etapas do Fluxo</th>
                     <th>Estrutura BPMN</th>
@@ -275,6 +323,30 @@ const GerarBPMNStart = () => {
                           {getOpportunityName(item)}
                         </button>
                       </td>
+                      <td>
+                        <select
+                          className={styles.assignedSelect}
+                          value={getOpportunityAssignedName(item)}
+                          disabled={
+                            isReadOnlyMode || !canManageOpportunity(user, item)
+                          }
+                          onChange={(event) =>
+                            handleAssignedChange(item, event.target.value)
+                          }
+                        >
+                          {[getOpportunityAssignedName(item), ...userOptions]
+                            .filter(Boolean)
+                            .filter(
+                              (value, index, arr) =>
+                                arr.indexOf(value) === index,
+                            )
+                            .map((option) => (
+                              <option key={option} value={option}>
+                                {option}
+                              </option>
+                            ))}
+                        </select>
+                      </td>
                       <td>{getOpportunityStage(item)}</td>
                       <td>{getBpmnFlowStepsSummary(item)}</td>
                       <td>{getBpmnStructureSummary(item)}</td>
@@ -282,7 +354,7 @@ const GerarBPMNStart = () => {
                       <td className={styles.tableActions}>
                         <button
                           type="button"
-                          className={`${styles.actionButton} ${styles.iconActionButton}`}
+                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
                           onClick={() => handleOpenBpmnFromTable(item)}
                           title={
                             isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
@@ -306,7 +378,7 @@ const GerarBPMNStart = () => {
                         ) : null}
                         <button
                           type="button"
-                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.opportunityActionButton}`}
+                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.folderActionButton}`}
                           onClick={() => handleOpenOpportunityFromTable(item)}
                           title="Ir para oportunidade"
                           aria-label="Ir para oportunidade"
