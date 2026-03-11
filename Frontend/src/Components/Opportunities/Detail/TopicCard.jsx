@@ -367,13 +367,10 @@ const TopicCard = ({
             maxLength={50}
             onChange={(e) => {
               if (isReadOnlyMode) return;
-              const input = e.target;
-              const text = input.value;
-              updateTextIfFits(input, text, () => {
-                const newRows = [...infoRows];
-                newRows[0] = { ...newRows[0], label: text };
-                setInfoRows(newRows);
-              });
+              const text = e.target.value;
+              const newRows = [...infoRows];
+              newRows[0] = { ...newRows[0], label: text };
+              setInfoRows(newRows);
             }}
             name="topicoLabel"
             autoComplete="off"
@@ -410,13 +407,10 @@ const TopicCard = ({
                   }}
                   onChange={(e) => {
                     if (isReadOnlyMode) return;
-                    const input = e.target;
-                    const text = input.value;
-                    updateTextIfFits(input, text, () => {
-                      const newRows = [...infoRows];
-                      newRows[idx + 1] = { ...row, label: text };
-                      setInfoRows(newRows);
-                    });
+                    const text = e.target.value;
+                    const newRows = [...infoRows];
+                    newRows[idx + 1] = { ...row, label: text };
+                    setInfoRows(newRows);
                   }}
                   name={`campoExtraLabel${idx}`}
                   autoComplete="off"
@@ -431,6 +425,7 @@ const TopicCard = ({
                     />
                   ) : null}
                 </span>
+
                 {(() => {
                   const { items: summaryItems, isImportedFromBpmn } =
                     parsedSummary;
@@ -444,7 +439,7 @@ const TopicCard = ({
                       : 'Adicionar';
 
                   return (
-                    <div className={styles.summaryContent}>
+                    <div className={styles.summaryActionSlot}>
                       <button
                         type="button"
                         className={styles.summaryPreviewButton}
@@ -455,7 +450,8 @@ const TopicCard = ({
                             value: row.value || '',
                             draftValue: row.value || '',
                             fieldKey: 'conteudo',
-                            fieldLabel: 'Conteúdo',
+                            fieldLabel:
+                              String(row.label || '').trim() || 'Conteúdo',
                             isEditable: !isImportedFromBpmn && !isReadOnlyMode,
                           })
                         }

@@ -83,3 +83,17 @@ export const BPMN_EDITOR_STATE_GET = (token) =>
 
 export const BPMN_EDITOR_STATE_PUT = (body, token) =>
   createRequest('/bpmn-editor/state', 'PUT', body, token);
+
+export const AI_PLAN_POST = (body, token) =>
+  createRequest('/ai/plan', 'POST', body, token);
+
+export const AI_EXECUTE_POST = (body, token) =>
+  createRequest('/ai/execute', 'POST', body, token);
+
+export const AI_AUDIT_GET = (token, limit = 20) =>
+  createRequest(
+    `/ai/audit?limit=${encodeURIComponent(limit)}`,
+    'GET',
+    null,
+    token,
+  );

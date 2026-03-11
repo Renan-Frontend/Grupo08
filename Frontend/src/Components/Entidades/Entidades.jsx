@@ -132,6 +132,7 @@ const Entidades = () => {
   });
   const [camposConfigError, setCamposConfigError] = React.useState('');
   const [tabelaPaginaAtual, setTabelaPaginaAtual] = React.useState(1);
+  const [paginasPorTabela, setPaginasPorTabela] = React.useState({});
   const itemsPorPagina = 11;
   const { opportunities: bpmnOpportunities } = useBpmnOpportunities();
   const entityIdFromQuery = React.useMemo(() => {
@@ -464,12 +465,37 @@ const Entidades = () => {
     navigate(`/entidades/criar?${query.toString()}`);
   };
 
+  const handleViewEntityFields = (item) => {
+    const entidadeId = getEntidadeId(item);
+    const entidadeNome = String(
+      item?.nome || item?.name || item?.titulo || '',
+    ).trim();
+
+    if (
+      entidadeId !== null &&
+      entidadeId !== undefined &&
+      String(entidadeId).trim()
+    ) {
+      navigate(
+        `/entidades?entidadeId=${encodeURIComponent(String(entidadeId).trim())}`,
+      );
+      return;
+    }
+
+    if (entidadeNome) {
+      setFiltro(normalizeText(entidadeNome));
+      setTabelaPaginaAtual(1);
+    }
+  };
+
   const handleFiltroChange = (valor) => {
     if (valor === 'todas') {
       navigate('/entidades');
     } else {
       setFiltro(valor);
+      setTabelaPaginaAtual(1);
     }
+    setPaginasPorTabela({});
   };
 
   const confirmDelete = () => {
@@ -775,17 +801,21 @@ const Entidades = () => {
     const entidadesCategoria = Array.isArray(section?.entities)
       ? section.entities
       : [];
-    // Se está visualizando uma categoria específica, mostra com paginação. Se está em "todas", mostra apenas 4
-    const ehVisualizacaoCompleta = filtro === section.key;
+    // Pagina tanto na visão geral quanto na visão de tabela específica.
+    const usaPaginacao = filtro === 'todas' || filtro === section.key;
 
     let dadosExibidos, temProxima, temAnterior, paginaAtual;
 
-    if (ehVisualizacaoCompleta) {
-      // Visualização completa com paginação
-      const totalPaginas = Math.ceil(
-        entidadesCategoria.length / itemsPorPagina,
+    if (usaPaginacao) {
+      const totalPaginas = Math.max(
+        1,
+        Math.ceil(entidadesCategoria.length / itemsPorPagina),
       );
-      paginaAtual = Math.min(tabelaPaginaAtual, totalPaginas);
+      const paginaBase =
+        filtro === 'todas'
+          ? Number(paginasPorTabela[section.key] || 1)
+          : tabelaPaginaAtual;
+      paginaAtual = Math.min(Math.max(1, paginaBase), totalPaginas);
       const inicio = (paginaAtual - 1) * itemsPorPagina;
       dadosExibidos = entidadesCategoria.slice(inicio, inicio + itemsPorPagina);
       temProxima = paginaAtual < totalPaginas;
@@ -822,14 +852,10 @@ const Entidades = () => {
                   <td
                     className={styles.nameCell}
                     onClick={() => {
-                      handleEdit(item, section);
+                      handleViewEntityFields(item);
                     }}
-                    style={{ cursor: isReadOnlyMode ? 'default' : 'pointer' }}
-                    title={
-                      isReadOnlyMode
-                        ? undefined
-                        : 'Clique para editar na tela de criação'
-                    }
+                    style={{ cursor: 'pointer' }}
+                    title="Clique para visualizar os campos da entidade"
                   >
                     {item.nome}
                   </td>
@@ -871,17 +897,36 @@ const Entidades = () => {
             </tbody>
           </table>
         </div>
-        {ehVisualizacaoCompleta && (
+        {usaPaginacao && (
           <Pagination
             currentPage={paginaAtual}
             totalPages={Math.ceil(entidadesCategoria.length / itemsPorPagina)}
-            onPrevious={() =>
-              setTabelaPaginaAtual((prev) => Math.max(1, prev - 1))
-            }
-            onNext={() => setTabelaPaginaAtual((prev) => prev + 1)}
+            onPrevious={() => {
+              if (filtro === 'todas') {
+                setPaginasPorTabela((prev) => ({
+                  ...prev,
+                  [section.key]: Math.max(
+                    1,
+                    Number(prev[section.key] || 1) - 1,
+                  ),
+                }));
+                return;
+              }
+              setTabelaPaginaAtual((prev) => Math.max(1, prev - 1));
+            }}
+            onNext={() => {
+              if (filtro === 'todas') {
+                setPaginasPorTabela((prev) => ({
+                  ...prev,
+                  [section.key]: Number(prev[section.key] || 1) + 1,
+                }));
+                return;
+              }
+              setTabelaPaginaAtual((prev) => prev + 1);
+            }}
           />
         )}
-        {temMuitos && !ehVisualizacaoCompleta && (
+        {temMuitos && !usaPaginacao && (
           <button
             className={styles.viewMoreBtn}
             onClick={() => setFiltro(section.key)}

@@ -1,5 +1,9 @@
 import React from 'react';
 import Close from '../../Helper/Close';
+import {
+  CONDITIONAL_NAME_MAX_LENGTH,
+  ENTITY_NAME_MAX_LENGTH,
+} from '../gerarBpmnCreate.shared';
 import panelStyles from './ConfigurarEntidadePanel.module.css';
 
 const toEntitySlug = (value) =>
@@ -244,6 +248,7 @@ const ConfigurarEntidadePanel = ({
               disabled={isReadOnlyMode}
               placeholder="Nome da Condicional"
               title="Nome da Condicional"
+              maxLength={CONDITIONAL_NAME_MAX_LENGTH}
             />
 
             <textarea
@@ -323,6 +328,7 @@ const ConfigurarEntidadePanel = ({
               disabled={isReadOnlyMode}
               placeholder="Nome da Entidade"
               title="Nome da Entidade"
+              maxLength={ENTITY_NAME_MAX_LENGTH}
             />
 
             <textarea

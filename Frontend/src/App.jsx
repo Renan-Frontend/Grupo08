@@ -21,6 +21,7 @@ const CriarEntidades = React.lazy(
   () => import('./Components/Entidades/CriarEntidades'),
 );
 const Usuarios = React.lazy(() => import('./Components/Usuários/Usuarios'));
+const IA = React.lazy(() => import('./Components/IA/Ia'));
 
 const LazyFallback = () => (
   <div
@@ -130,15 +131,10 @@ function AppContent() {
               path="/gerarbpmn/*"
               element={<Navigate to="/gerar-bpmn" replace />}
             />
+            <Route path="/ia" element={<IA />} />
             <Route
               path="/recomendacoes"
-              element={
-                <PagePlaceholder
-                  title="Recomendações da inteligência artificial"
-                  icon="💡"
-                  description="Recomendações geradas pela IA"
-                />
-              }
+              element={<Navigate to="/ia" replace />}
             />
             <Route path="*" element={<Navigate to="/gerar-bpmn" replace />} />
           </Route>

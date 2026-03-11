@@ -276,6 +276,19 @@
   border: 1px solid #ccc;
 }
 
+.circleLabelCompact {
+  display: inline-block;
+  margin-top: 0.2rem;
+  max-width: 6.8rem;
+  font-size: 0.74rem;
+  line-height: 1.1;
+  color: #66707a;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .pipelineBody {
   width: 100%;
   min-height: 5rem;
@@ -729,6 +742,12 @@
     text-align: left;
     width: 100%;
     max-width: 100%;
+  }
+
+  .circleLabelCompact {
+    text-align: left;
+    max-width: 11rem;
+    font-size: 0.78rem;
   }
 
   .addButton {

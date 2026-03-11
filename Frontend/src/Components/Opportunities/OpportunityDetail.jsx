@@ -246,6 +246,7 @@ const OpportunityDetail = () => {
             isReadOnlyMode={isReadOnlyMode}
             stages={stages}
             setStages={setStages}
+            infoRows={infoRows}
             pipelineTitle={pipelineTitle}
             setPipelineTitle={setPipelineTitle}
             pipelineSubtitle={pipelineSubtitle}

@@ -72,6 +72,43 @@ const getHandlePointFromRect = (
   };
 };
 
+const normalizeDecisionValue = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  const normalized = raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+  if (
+    normalized === 'sim' ||
+    normalized === 'yes' ||
+    normalized === 'true' ||
+    normalized === 'ok' ||
+    normalized === 'aprovado' ||
+    raw === '✓' ||
+    raw === '✔'
+  ) {
+    return 'sim';
+  }
+
+  if (
+    normalized === 'nao' ||
+    normalized === 'no' ||
+    normalized === 'false' ||
+    normalized === 'reprovado' ||
+    raw === '✕' ||
+    raw === '✖' ||
+    raw === 'x' ||
+    raw === 'X'
+  ) {
+    return 'nao';
+  }
+
+  return raw;
+};
+
 const BpmnFlow = ({
   nodes = [],
   connections = [],
@@ -170,7 +207,7 @@ const BpmnFlow = ({
     );
 
     connections.forEach((connection) => {
-      const normalizedDecision = String(connection.decision || '').trim();
+      const normalizedDecision = normalizeDecisionValue(connection.decision);
       if (normalizedDecision === 'sim' || normalizedDecision === 'nao') {
         map[connection.id] = normalizedDecision;
       } else if (normalizedDecision) {
@@ -188,7 +225,7 @@ const BpmnFlow = ({
       if (outgoing.length < 2) return;
 
       const undecided = outgoing.filter(
-        (connection) => !String(connection.decision || '').trim(),
+        (connection) => !normalizeDecisionValue(connection.decision),
       );
 
       if (undecided[0]) map[undecided[0].id] = 'sim';
@@ -737,7 +774,7 @@ const BpmnFlow = ({
               ? 'Atividade'
               : node.nodeType === 'condicional'
                 ? 'Decisão'
-                : 'Dados';
+                : 'Entidade';
           const isConditionalNode = node.nodeType === 'condicional';
           const connectionBandLabel =
             nodeConnectionCount > 0

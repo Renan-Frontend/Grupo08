@@ -84,6 +84,16 @@ const Sidebar = ({ onNavigateItem }) => {
             </div>
             <div className={styles.addButtonWrapper}></div>
           </li>
+          <li className={`${styles.menuItem} ${isActive('/ia')}`}>
+            <div
+              className={styles.menuItemContent}
+              onClick={() => handleNavigation('/ia')}
+            >
+              <span className={styles.icon}>✨</span>
+              IA BPMN
+            </div>
+            <div className={styles.addButtonWrapper}></div>
+          </li>
           <li className={`${styles.menuItem} ${isActive('/usuarios')}`}>
             <div
               className={styles.menuItemContent}

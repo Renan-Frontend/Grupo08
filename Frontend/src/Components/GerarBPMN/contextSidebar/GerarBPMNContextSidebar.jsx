@@ -1,6 +1,7 @@
 import React from 'react';
 import ConfigurarEntidadePanel from '../configurar/ConfigurarEntidadePanel';
 import {
+  TASK_NAME_MAX_LENGTH,
   GATEWAY_TYPE_OPTIONS,
   getEntidadeNome,
 } from '../gerarBpmnCreate.shared';
@@ -167,7 +168,7 @@ const GerarBPMNContextSidebar = ({
                       disabled={isReadOnlyMode}
                       title="Categoria da etapa"
                     >
-                      <option value="entidade">Dados</option>
+                      <option value="entidade">Entidade</option>
                       <option value="task">Atividade</option>
                       <option value="condicional">Decisão</option>
                     </select>
@@ -204,7 +205,7 @@ const GerarBPMNContextSidebar = ({
                     disabled={isReadOnlyMode}
                     title="Categoria da etapa"
                   >
-                    <option value="entidade">Dados</option>
+                    <option value="entidade">Entidade</option>
                     <option value="task">Atividade</option>
                     <option value="condicional">Decisão</option>
                   </select>
@@ -350,6 +351,7 @@ const GerarBPMNContextSidebar = ({
                 disabled={isReadOnlyMode}
                 placeholder="Nome da atividade"
                 title="Nome da atividade"
+                maxLength={TASK_NAME_MAX_LENGTH}
               />
               <textarea
                 className={styles.contextPanelTextarea}

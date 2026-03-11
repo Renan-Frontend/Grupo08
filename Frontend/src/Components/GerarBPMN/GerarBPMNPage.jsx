@@ -25,6 +25,7 @@ import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
 import OpportunityListPanel from './OpportunityListPanel';
 import BpmnBoard from './BpmnBoard';
 import Close from '../Helper/Close';
+import { ENTITY_NAME_MAX_LENGTH } from './gerarBpmnCreate.shared';
 
 const getEntidadeName = (entidade) =>
   entidade?.nome || entidade?.name || entidade?.titulo || '';
@@ -226,7 +227,7 @@ const GerarBPMNPage = () => {
         : [];
 
       if (!entityName) {
-        entityName = `Entidade - ${processName}`;
+        entityName = processName;
       }
 
       if (!existingEntityNames.includes(entityName)) {
@@ -475,6 +476,7 @@ const GerarBPMNPage = () => {
               value={entityNameDraft}
               onChange={(event) => setEntityNameDraft(event.target.value)}
               placeholder="Nome da entidade"
+              maxLength={ENTITY_NAME_MAX_LENGTH}
               autoFocus
             />
           </Close>

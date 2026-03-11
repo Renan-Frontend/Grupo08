@@ -42,6 +42,9 @@ export const BPMN_EDITOR_LOCAL_STORAGE_KEY = 'bpmn_editor_create_draft_v1';
 export const BPMN_EDITOR_SAVED_OPPORTUNITY_MAP_KEY =
   'bpmn_editor_saved_opportunity_by_slug_v1';
 export const DEFAULT_BPMN_NAME = 'NOVO BPMN';
+export const ENTITY_NAME_MAX_LENGTH = 48;
+export const TASK_NAME_MAX_LENGTH = 56;
+export const CONDITIONAL_NAME_MAX_LENGTH = 56;
 
 export const slugifyBpmnName = (value = '') =>
   String(value)
@@ -93,49 +96,233 @@ export const getEntidadeDescricao = (entidade) =>
 export const getEntidadeAtributoChave = (entidade) =>
   String(entidade?.atributoChave || '').trim();
 
-export const sanitizeNodeForPersistence = (node) => ({
-  id: node.id,
-  active: node.active !== false,
-  isPrimaryEntity: node?.isPrimaryEntity === true,
-  tipoEntidade: String(node?.tipoEntidade || '').trim(),
-  nodeType:
+const fitWordsWithLimit = (words, maxLength) => {
+  const selected = [];
+  let currentSize = 0;
+
+  for (const item of Array.isArray(words) ? words : []) {
+    const token = String(item || '').trim();
+    if (!token) continue;
+
+    const nextSize = currentSize + (selected.length ? 1 : 0) + token.length;
+    if (nextSize > maxLength) break;
+
+    selected.push(token);
+    currentSize = nextSize;
+  }
+
+  return selected.join(' ').trim();
+};
+
+const normalizeStageLabelText = (value) => {
+  let text = String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!text) return '';
+
+  text = text.replace(/\b(?:o\s+)?bpmn\s+deve\s+incluir\b.*$/i, '');
+  text = text.replace(/\bdeve\s+incluir\b.*$/i, '');
+  text = text.replace(/\bfluxos?\s+de\b.*$/i, '');
+
+  const clauses = text
+    .split(/[.;:]+/)
+    .map((item) => item.replace(/^[-*\u2022]+\s*/, '').trim())
+    .filter(Boolean);
+
+  if (clauses.length) {
+    const preferred = clauses.find(
+      (item) => !item.toLowerCase().includes('bpmn'),
+    );
+    text = preferred || clauses[0];
+  }
+
+  return text.replace(/^[\s.;,-]+|[\s.;,-]+$/g, '');
+};
+
+const summarizeStageName = (value, maxLength, fallback = '') => {
+  const text = normalizeStageLabelText(value);
+
+  if (!text) return String(fallback || '').trim();
+  if (text.length <= maxLength) return text;
+
+  const words = text.split(/\s+/).filter(Boolean);
+  const stopwords = new Set([
+    'de',
+    'da',
+    'do',
+    'das',
+    'dos',
+    'e',
+    'em',
+    'para',
+    'com',
+    'por',
+    'na',
+    'no',
+    'nas',
+    'nos',
+    'a',
+    'o',
+    'as',
+    'os',
+    'the',
+    'of',
+    'to',
+    'for',
+    'and',
+  ]);
+
+  const keyWords = words.filter((word) => {
+    const normalizedWord = String(word)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toLowerCase();
+    return normalizedWord && !stopwords.has(normalizedWord);
+  });
+
+  const summaryFromKeyWords = fitWordsWithLimit(keyWords, maxLength);
+  if (summaryFromKeyWords) return summaryFromKeyWords;
+
+  const summaryFromOriginal = fitWordsWithLimit(words, maxLength);
+  if (summaryFromOriginal) return summaryFromOriginal;
+
+  return words.length
+    ? words[0].slice(0, maxLength).trim()
+    : String(fallback || '').trim();
+};
+
+export const sanitizeStageNameByNodeType = (value, nodeType, fallback = '') => {
+  if (nodeType === 'condicional') {
+    return summarizeStageName(
+      value,
+      CONDITIONAL_NAME_MAX_LENGTH,
+      fallback || 'Condicional',
+    );
+  }
+  if (nodeType === 'task') {
+    return summarizeStageName(
+      value,
+      TASK_NAME_MAX_LENGTH,
+      fallback || 'Atividade',
+    );
+  }
+  return summarizeStageName(
+    value,
+    ENTITY_NAME_MAX_LENGTH,
+    fallback || 'Entidade',
+  );
+};
+
+const normalizeDecisionValue = (value) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+
+  const normalized = raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+
+  if (
+    normalized === 'sim' ||
+    normalized === 'yes' ||
+    normalized === 'true' ||
+    normalized === 'ok' ||
+    normalized === 'aprovado' ||
+    raw === '✓' ||
+    raw === '✔'
+  ) {
+    return 'sim';
+  }
+
+  if (
+    normalized === 'nao' ||
+    normalized === 'no' ||
+    normalized === 'false' ||
+    normalized === 'reprovado' ||
+    raw === '✕' ||
+    raw === '✖' ||
+    raw === 'x' ||
+    raw === 'X'
+  ) {
+    return 'nao';
+  }
+
+  return raw;
+};
+
+export const sanitizeNodeForPersistence = (node) => {
+  const nodeType =
     node.nodeType === 'task'
       ? 'task'
       : node.nodeType === 'condicional'
         ? 'condicional'
-        : 'entidade',
-  gatewayType:
-    node?.gatewayType === 'and' || node?.gatewayType === 'or'
-      ? node.gatewayType
-      : 'xor',
-  entidadeId:
-    node.entidadeId !== null && node.entidadeId !== undefined
-      ? node.entidadeId
-      : null,
-  entidadeNome: String(node?.entidadeNome || '').trim(),
-  condicionalNome: String(node?.condicionalNome || '').trim(),
-  condicionalDescricao: String(node?.condicionalDescricao || '').trim(),
-  taskNome: String(node?.taskNome || '').trim(),
-  taskDescricao: String(node?.taskDescricao || '').trim(),
-  selectedEntityFieldIds: Array.isArray(node?.selectedEntityFieldIds)
-    ? node.selectedEntityFieldIds
-        .map((value) => String(value || '').trim())
-        .filter(Boolean)
-    : [],
-  selectedEntityFieldNames: Array.isArray(node?.selectedEntityFieldNames)
-    ? node.selectedEntityFieldNames
-        .map((value) => String(value || '').trim())
-        .filter(Boolean)
-    : [],
-  selectedEntityFields: normalizeSelectedEntityFields(
-    node?.selectedEntityFields,
-  ),
-  label: String(node?.label || '').trim(),
-  subtitle: String(node?.subtitle || '').trim(),
-  info: String(node?.info || '').trim(),
-  x: Number.isFinite(node?.x) ? node.x : 0,
-  y: Number.isFinite(node?.y) ? node.y : 0,
-});
+        : 'entidade';
+  const taskNome = sanitizeStageNameByNodeType(
+    node?.taskNome,
+    'task',
+    'Atividade',
+  );
+  const condicionalNome = sanitizeStageNameByNodeType(
+    node?.condicionalNome,
+    'condicional',
+    'Condicional',
+  );
+  const entidadeNome = sanitizeStageNameByNodeType(
+    node?.entidadeNome,
+    'entidade',
+    'Entidade',
+  );
+  const fallbackLabel =
+    nodeType === 'task'
+      ? taskNome
+      : nodeType === 'condicional'
+        ? condicionalNome
+        : entidadeNome;
+
+  return {
+    id: node.id,
+    active: node.active !== false,
+    isPrimaryEntity: node?.isPrimaryEntity === true,
+    tipoEntidade: String(node?.tipoEntidade || '').trim(),
+    nodeType,
+    gatewayType:
+      node?.gatewayType === 'and' || node?.gatewayType === 'or'
+        ? node.gatewayType
+        : 'xor',
+    entidadeId:
+      node.entidadeId !== null && node.entidadeId !== undefined
+        ? node.entidadeId
+        : null,
+    entidadeNome,
+    condicionalNome,
+    condicionalDescricao: String(node?.condicionalDescricao || '').trim(),
+    taskNome,
+    taskDescricao: String(node?.taskDescricao || '').trim(),
+    selectedEntityFieldIds: Array.isArray(node?.selectedEntityFieldIds)
+      ? node.selectedEntityFieldIds
+          .map((value) => String(value || '').trim())
+          .filter(Boolean)
+      : [],
+    selectedEntityFieldNames: Array.isArray(node?.selectedEntityFieldNames)
+      ? node.selectedEntityFieldNames
+          .map((value) => String(value || '').trim())
+          .filter(Boolean)
+      : [],
+    selectedEntityFields: normalizeSelectedEntityFields(
+      node?.selectedEntityFields,
+    ),
+    label: sanitizeStageNameByNodeType(
+      node?.label || fallbackLabel,
+      nodeType,
+      fallbackLabel,
+    ),
+    subtitle: String(node?.subtitle || '').trim(),
+    info: String(node?.info || '').trim(),
+    x: Number.isFinite(node?.x) ? node.x : 0,
+    y: Number.isFinite(node?.y) ? node.y : 0,
+  };
+};
 
 export const sanitizeConnectionForPersistence = (connection) => ({
   id: connection.id,
@@ -143,52 +330,81 @@ export const sanitizeConnectionForPersistence = (connection) => ({
   to: connection.to,
   fromHandle: connection.fromHandle || 'right',
   toHandle: connection.toHandle || 'left',
-  decision: connection.decision || '',
+  decision: normalizeDecisionValue(connection?.decision),
 });
 
-export const normalizeEditorNode = (node, index = 0) => ({
-  id: String(node?.id || `node-${Date.now()}-${index}`),
-  active: node?.active !== false,
-  isPrimaryEntity: node?.isPrimaryEntity === true,
-  tipoEntidade: String(node?.tipoEntidade || '').trim(),
-  nodeType:
+export const normalizeEditorNode = (node, index = 0) => {
+  const nodeType =
     node?.nodeType === 'task'
       ? 'task'
       : node?.nodeType === 'condicional'
         ? 'condicional'
-        : 'entidade',
-  gatewayType:
-    node?.gatewayType === 'and' || node?.gatewayType === 'or'
-      ? node.gatewayType
-      : 'xor',
-  entidadeId:
-    node?.entidadeId !== null && node?.entidadeId !== undefined
-      ? node.entidadeId
-      : null,
-  entidadeNome: String(node?.entidadeNome || '').trim(),
-  condicionalNome: String(node?.condicionalNome || '').trim(),
-  condicionalDescricao: String(node?.condicionalDescricao || '').trim(),
-  taskNome: String(node?.taskNome || '').trim(),
-  taskDescricao: String(node?.taskDescricao || '').trim(),
-  selectedEntityFieldIds: Array.isArray(node?.selectedEntityFieldIds)
-    ? node.selectedEntityFieldIds
-        .map((value) => String(value || '').trim())
-        .filter(Boolean)
-    : [],
-  selectedEntityFieldNames: Array.isArray(node?.selectedEntityFieldNames)
-    ? node.selectedEntityFieldNames
-        .map((value) => String(value || '').trim())
-        .filter(Boolean)
-    : [],
-  selectedEntityFields: normalizeSelectedEntityFields(
-    node?.selectedEntityFields,
-  ),
-  label: String(node?.label || '').trim(),
-  subtitle: String(node?.subtitle || '').trim(),
-  info: String(node?.info || '').trim(),
-  x: Number.isFinite(node?.x) ? node.x : 0,
-  y: Number.isFinite(node?.y) ? node.y : 0,
-});
+        : 'entidade';
+  const taskNome = sanitizeStageNameByNodeType(
+    node?.taskNome,
+    'task',
+    `Atividade ${index + 1}`,
+  );
+  const condicionalNome = sanitizeStageNameByNodeType(
+    node?.condicionalNome,
+    'condicional',
+    `Condicional ${index + 1}`,
+  );
+  const entidadeNome = sanitizeStageNameByNodeType(
+    node?.entidadeNome,
+    'entidade',
+    `Entidade ${index + 1}`,
+  );
+  const fallbackLabel =
+    nodeType === 'task'
+      ? taskNome
+      : nodeType === 'condicional'
+        ? condicionalNome
+        : entidadeNome;
+
+  return {
+    id: String(node?.id || `node-${Date.now()}-${index}`),
+    active: node?.active !== false,
+    isPrimaryEntity: node?.isPrimaryEntity === true,
+    tipoEntidade: String(node?.tipoEntidade || '').trim(),
+    nodeType,
+    gatewayType:
+      node?.gatewayType === 'and' || node?.gatewayType === 'or'
+        ? node.gatewayType
+        : 'xor',
+    entidadeId:
+      node?.entidadeId !== null && node?.entidadeId !== undefined
+        ? node.entidadeId
+        : null,
+    entidadeNome,
+    condicionalNome,
+    condicionalDescricao: String(node?.condicionalDescricao || '').trim(),
+    taskNome,
+    taskDescricao: String(node?.taskDescricao || '').trim(),
+    selectedEntityFieldIds: Array.isArray(node?.selectedEntityFieldIds)
+      ? node.selectedEntityFieldIds
+          .map((value) => String(value || '').trim())
+          .filter(Boolean)
+      : [],
+    selectedEntityFieldNames: Array.isArray(node?.selectedEntityFieldNames)
+      ? node.selectedEntityFieldNames
+          .map((value) => String(value || '').trim())
+          .filter(Boolean)
+      : [],
+    selectedEntityFields: normalizeSelectedEntityFields(
+      node?.selectedEntityFields,
+    ),
+    label: sanitizeStageNameByNodeType(
+      node?.label || fallbackLabel,
+      nodeType,
+      fallbackLabel,
+    ),
+    subtitle: String(node?.subtitle || '').trim(),
+    info: String(node?.info || '').trim(),
+    x: Number.isFinite(node?.x) ? node.x : 0,
+    y: Number.isFinite(node?.y) ? node.y : 0,
+  };
+};
 
 export const normalizeEditorConnection = (connection, index = 0) => ({
   id: String(connection?.id || `conn-${Date.now()}-${index}`),
@@ -196,7 +412,7 @@ export const normalizeEditorConnection = (connection, index = 0) => ({
   to: String(connection?.to || ''),
   fromHandle: connection?.fromHandle || 'right',
   toHandle: connection?.toHandle || 'left',
-  decision: connection?.decision || '',
+  decision: normalizeDecisionValue(connection?.decision),
 });
 
 export const toRequiredLabel = (value) => (value ? 'Sim' : 'Não');

@@ -1,6 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import Close from '../../Helper/Close';
 import styles from './EditablePipeline.module.css';
+
+const compactLabel = (value, maxLength = 26) => {
+  const text = String(value || '').trim();
+  if (!text) return '';
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1).trim()}…`;
+};
+
+const normalizeLabelKey = (value) =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+
+const getStageTypeLabel = (stageType) => {
+  const normalized = String(stageType || '')
+    .trim()
+    .toLowerCase();
+  if (normalized === 'task') return 'Atividade';
+  if (normalized === 'condicional') return 'Condição';
+  return 'Entidade';
+};
+
 const PipelineCircleIcon = () => (
   <span
     style={{
@@ -113,6 +137,7 @@ const EditablePipeline = ({
   isReadOnlyMode = false,
   stages,
   setStages,
+  infoRows = [],
   pipelineTitle: controlledPipelineTitle,
   setPipelineTitle: setControlledPipelineTitle,
   pipelineSubtitle: controlledPipelineSubtitle,
@@ -124,6 +149,7 @@ const EditablePipeline = ({
     return saved ? JSON.parse(saved) : -1;
   });
   const [resetConfirm, setResetConfirm] = useState(false);
+  const [stageDetailModal, setStageDetailModal] = useState(null);
   const [localPipelineTitle, setLocalPipelineTitle] = useState(() => {
     const saved = localStorage.getItem('pipelineTitle');
     return saved || '';
@@ -331,6 +357,31 @@ const EditablePipeline = ({
       : Math.min((completedCount / (stages.length + 1)) * 100, 100)
     : 0;
 
+  const stageDetailsByLabel = React.useMemo(() => {
+    const map = new Map();
+    (Array.isArray(infoRows) ? infoRows : []).forEach((row) => {
+      const key = normalizeLabelKey(row?.label);
+      if (!key) return;
+      if (map.has(key)) return;
+      map.set(key, String(row?.value || '').trim());
+    });
+    return map;
+  }, [infoRows]);
+
+  const handleOpenStageDetails = (stage) => {
+    if (!isBpmnDrivenPipeline || !stage) return;
+
+    const stageName = String(stage?.label || '').trim() || 'Etapa';
+    const details =
+      stageDetailsByLabel.get(normalizeLabelKey(stageName)) ||
+      'Sem detalhes adicionais para esta etapa.';
+
+    setStageDetailModal({
+      title: `${getStageTypeLabel(stage?.stageType)}: ${stageName}`,
+      message: details,
+    });
+  };
+
   return (
     <div className={styles.pipelineShell}>
       <div className={styles.pipelineFrame}>
@@ -398,6 +449,8 @@ const EditablePipeline = ({
             />
             {stages.map((stage, index) => {
               const palette = getStagePalette(stage);
+              const stageLabelRaw = String(stage?.label || '').trim();
+              const stageLabelCompact = compactLabel(stageLabelRaw, 24);
 
               return (
                 <div key={stage.id} className={styles.circleWrapper}>
@@ -461,20 +514,37 @@ const EditablePipeline = ({
                       </button>
                     )}
                   </div>
-                  <textarea
-                    className={styles.circleLabel}
-                    value={stage.label}
-                    onChange={(e) =>
-                      updateStage(stage.id, { label: e.target.value })
-                    }
-                    onInput={handleTextareaInput}
-                    placeholder={
-                      isBpmnDrivenPipeline ? 'Entidade da etapa' : 'Digite...'
-                    }
-                    rows={2}
-                    maxLength={20}
-                    readOnly={isBpmnDrivenPipeline || isReadOnlyMode}
-                  />
+                  {isBpmnDrivenPipeline ? (
+                    <span
+                      className={styles.circleLabelCompact}
+                      onClick={() => handleOpenStageDetails(stage)}
+                      title={stageLabelRaw || 'Entidade da etapa'}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handleOpenStageDetails(stage);
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {stageLabelCompact || 'Entidade da etapa'}
+                    </span>
+                  ) : (
+                    <textarea
+                      className={styles.circleLabel}
+                      value={stage.label}
+                      onChange={(e) =>
+                        updateStage(stage.id, { label: e.target.value })
+                      }
+                      onInput={handleTextareaInput}
+                      placeholder="Digite..."
+                      rows={2}
+                      maxLength={20}
+                      readOnly={isReadOnlyMode}
+                    />
+                  )}
                 </div>
               );
             })}
@@ -497,7 +567,7 @@ const EditablePipeline = ({
       </div>
       <p className={styles.pipelineNote}>
         {isBpmnDrivenPipeline ? (
-          '* Pipeline sincronizada com o BPMN: os nomes abaixo das bolinhas seguem as entidades do fluxo. *'
+          '* Pipeline sincronizada com o BPMN. *'
         ) : (
           <>
             {'* '}Clique no <PipelineAddButtonIcon /> para adicionar etapas, no
@@ -520,6 +590,16 @@ const EditablePipeline = ({
           message="Resetar para 3 etapas? Todas as etapas atuais serão perdidas."
           onConfirm={resetToDefault}
           onCancel={() => setResetConfirm(false)}
+        />
+      )}
+      {stageDetailModal && (
+        <Close
+          title={stageDetailModal.title}
+          message={stageDetailModal.message}
+          onConfirm={() => setStageDetailModal(null)}
+          onCancel={() => setStageDetailModal(null)}
+          confirmLabel="Fechar"
+          hideCancel
         />
       )}
     </div>

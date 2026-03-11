@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { BPMN_EDITOR_STATE_GET, BPMN_EDITOR_STATE_PUT } from '../../Api';
 import {
   batchSyncEntidades,
@@ -34,6 +34,7 @@ import {
   normalizeEntityName,
   sanitizeConnectionForPersistence,
   sanitizeNodeForPersistence,
+  sanitizeStageNameByNodeType,
   slugifyBpmnName,
   toRequiredLabel,
 } from './gerarBpmnCreate.shared';
@@ -101,8 +102,223 @@ const mergeEntityFieldEntries = (baseFields = [], extraFields = []) => {
   return merged;
 };
 
+const extractNodeParticipant = (node) => {
+  const directParticipant = String(
+    node?.participant || node?.lane || node?.pool || '',
+  ).trim();
+  if (directParticipant) return directParticipant;
+
+  const info = String(node?.info || '').trim();
+  const infoMatch = info.match(/Raia:\s*([^|]+)/i);
+  if (infoMatch) {
+    return String(infoMatch[1] || '').trim();
+  }
+
+  const subtitle = String(node?.subtitle || '').trim();
+  const subtitleMatch = subtitle.match(/Participante:\s*(.+)$/i);
+  if (subtitleMatch) {
+    return String(subtitleMatch[1] || '').trim();
+  }
+
+  return '';
+};
+
+const normalizeDecisionBranchKey = (decisionValue, fallbackIndex = 0) => {
+  const normalizedDecision = String(decisionValue || '')
+    .trim()
+    .toLowerCase();
+
+  if (!normalizedDecision) {
+    return fallbackIndex <= 0 ? 'main' : `branch:${fallbackIndex}`;
+  }
+
+  if (
+    normalizedDecision === 'sim' ||
+    normalizedDecision === 'yes' ||
+    normalizedDecision === 'true' ||
+    normalizedDecision === 'ok' ||
+    normalizedDecision === 'aprovado'
+  ) {
+    return 'main';
+  }
+
+  if (
+    normalizedDecision === 'nao' ||
+    normalizedDecision === 'não' ||
+    normalizedDecision === 'no' ||
+    normalizedDecision === 'false' ||
+    normalizedDecision === 'reprovado'
+  ) {
+    return 'alternate';
+  }
+
+  return `branch:${normalizedDecision}`;
+};
+
+const normalizeAiCanvasDraft = (rawDraft) => {
+  if (!rawDraft || typeof rawDraft !== 'object') return null;
+
+  const draftName = String(rawDraft.name || '').trim();
+
+  const stageEntries = Array.isArray(rawDraft.stages)
+    ? rawDraft.stages
+        .map((stage, index) => {
+          if (!stage || typeof stage !== 'object') return null;
+
+          const label = String(
+            stage.nome || stage.name || stage.label || '',
+          ).trim();
+          if (!label) return null;
+
+          const stageTypeRaw = String(stage.tipo || stage.type || 'task')
+            .trim()
+            .toLowerCase();
+          const nodeType =
+            stageTypeRaw === 'condicional'
+              ? 'condicional'
+              : stageTypeRaw === 'entidade' || stageTypeRaw === 'dados'
+                ? 'entidade'
+                : 'task';
+
+          const participant = String(
+            stage.participante ||
+              stage.participant ||
+              stage.lane ||
+              stage.pool ||
+              stage.responsavel ||
+              '',
+          ).trim();
+
+          return {
+            id: String(stage.id || `ai-stage-${index + 1}`).trim(),
+            label,
+            nodeType,
+            participant,
+          };
+        })
+        .filter(Boolean)
+    : [];
+
+  const stageById = new Map(
+    stageEntries
+      .filter((stage) => stage.id)
+      .map((stage) => [String(stage.id).toLowerCase(), stage]),
+  );
+  const stageByLabel = new Map(
+    stageEntries.map((stage) => [String(stage.label).toLowerCase(), stage]),
+  );
+
+  let normalizedNodes = Array.isArray(rawDraft.nodes)
+    ? rawDraft.nodes
+        .filter((node) => node && typeof node === 'object')
+        .map((node, index) => normalizeEditorNode(node, index))
+    : [];
+
+  if (!normalizedNodes.length && stageEntries.length) {
+    normalizedNodes = stageEntries.map((stage, index) =>
+      normalizeEditorNode(
+        {
+          id: stage.id || `ai-stage-${index + 1}`,
+          label: stage.label,
+          nodeType: stage.nodeType,
+          taskNome: stage.nodeType === 'task' ? stage.label : '',
+          condicionalNome: stage.nodeType === 'condicional' ? stage.label : '',
+          entidadeNome: stage.nodeType === 'entidade' ? stage.label : '',
+          info: stage.participant ? `Raia: ${stage.participant}` : '',
+          x: 140 + index * 230,
+          y: 140,
+        },
+        index,
+      ),
+    );
+  }
+
+  normalizedNodes = normalizedNodes.map((node, index) => {
+    const nodeId = String(node?.id || '')
+      .trim()
+      .toLowerCase();
+    const label = String(node?.label || '')
+      .trim()
+      .toLowerCase();
+    const matchedStage =
+      stageById.get(nodeId) ||
+      stageByLabel.get(label) ||
+      stageEntries[index] ||
+      null;
+
+    if (!matchedStage || !matchedStage.participant) {
+      return node;
+      // For entity nodes, info = atributoChave and subtitle = description.
+      // don't override them with participant lane data.
+      if (node?.nodeType === 'entidade') {
+        return node;
+      }
+    }
+
+    const participantTag = `Raia: ${matchedStage.participant}`;
+    const currentInfo = String(node?.info || '').trim();
+    const nextInfo = currentInfo
+      ? currentInfo.includes(participantTag)
+        ? currentInfo
+        : `${currentInfo} | ${participantTag}`
+      : participantTag;
+
+    return {
+      ...node,
+      info: nextInfo,
+      subtitle:
+        String(node?.subtitle || '').trim() ||
+        `Participante: ${matchedStage.participant}`,
+    };
+  });
+
+  const nodeIds = new Set(
+    normalizedNodes
+      .map((node) => String(node?.id || '').trim())
+      .filter(Boolean),
+  );
+
+  let normalizedConnections = Array.isArray(rawDraft.connections)
+    ? rawDraft.connections
+        .filter((connection) => connection && typeof connection === 'object')
+        .map((connection, index) =>
+          normalizeEditorConnection(connection, index),
+        )
+        .filter(
+          (connection) =>
+            nodeIds.has(String(connection?.from || '').trim()) &&
+            nodeIds.has(String(connection?.to || '').trim()),
+        )
+    : [];
+
+  if (!normalizedConnections.length && normalizedNodes.length > 1) {
+    normalizedConnections = normalizedNodes.slice(1).map((node, index) =>
+      normalizeEditorConnection(
+        {
+          id: `ai-conn-${index + 1}`,
+          from: normalizedNodes[index].id,
+          to: node.id,
+        },
+        index,
+      ),
+    );
+  }
+
+  if (!draftName && !normalizedNodes.length && !normalizedConnections.length) {
+    return null;
+  }
+
+  return {
+    name: draftName,
+    nodes: normalizedNodes,
+    connections: normalizedConnections,
+    stages: stageEntries,
+  };
+};
+
 const GerarBPMNCreate = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { bpmnSlug = '' } = useParams();
   const BPMN_EDITOR_NAME_DRAFT_KEY = React.useMemo(
     () => `bpmn_editor_name_draft:${String(bpmnSlug || '').trim() || 'create'}`,
@@ -238,7 +454,7 @@ const GerarBPMNCreate = () => {
   const [isMobileLandscape, setIsMobileLandscape] = React.useState(false);
   const [viewportGridWidth, setViewportGridWidth] = React.useState(1200);
   const minimapRef = React.useRef(null);
-  const MIN_ZOOM = 0.85;
+  const MIN_ZOOM = 0.45;
   const MAX_ZOOM = 1;
   const ZOOM_STEP = 0.05;
   const [zoomButtonDirection, setZoomButtonDirection] = React.useState(-1);
@@ -312,6 +528,17 @@ const GerarBPMNCreate = () => {
   const [linkedEntityFieldsDraft, setLinkedEntityFieldsDraft] =
     React.useState(null);
   const [activeSidebarTab, setActiveSidebarTab] = React.useState('entidade');
+  const [pendingAiContextPanel, setPendingAiContextPanel] = React.useState(
+    () => {
+      const raw = location?.state?.aiContextPanel;
+      return raw && typeof raw === 'object' ? raw : null;
+    },
+  );
+  const [pendingAiCanvasDraft, setPendingAiCanvasDraft] = React.useState(() =>
+    normalizeAiCanvasDraft(location?.state?.aiCanvasDraft),
+  );
+  const aiContextAppliedRef = React.useRef(false);
+  const aiCanvasAppliedRef = React.useRef(false);
 
   const confirmLeavePage = React.useCallback(() => {
     if (skipNavigationPromptRef.current) return true;
@@ -366,7 +593,7 @@ const GerarBPMNCreate = () => {
         id: 'add-node',
         title: '▭+ Adicionar retângulo',
         description:
-          'Cria uma nova etapa no fluxo. Depois, escolha a categoria da etapa: Dados, Atividade ou Decisão.',
+          'Cria uma nova etapa no fluxo. Depois, escolha a categoria da etapa: Entidade, Atividade ou Decisão.',
         hint: 'Dica: adicione as etapas principais primeiro e depois refine detalhes e conexões.',
         selector: '[data-tutorial-id="add-node"]',
       },
@@ -406,7 +633,7 @@ const GerarBPMNCreate = () => {
         id: 'canvas-bands',
         title: 'Faixas coloridas dos cards',
         description:
-          'A faixa no topo do retângulo indica o tipo da etapa: Dados (verde), Decisão (azul), Atividade (amarelo); cinza quando sem ligação.',
+          'A faixa no topo do retângulo indica o tipo da etapa: Entidade (verde), Decisão (azul), Atividade (amarelo); cinza quando sem ligação.',
         hint: 'Dica: use as faixas para bater o olho e validar rapidamente se os tipos do fluxo estão corretos.',
         selector: '[data-tutorial-id="canvas-color-band"]',
       },
@@ -432,7 +659,7 @@ const GerarBPMNCreate = () => {
         id: 'sidebar-category',
         title: 'Categoria da etapa',
         description:
-          'Aqui você define o tipo da etapa: Dados, Atividade ou Decisão. Ao trocar a categoria, os campos de configuração do painel são ajustados automaticamente.',
+          'Aqui você define o tipo da etapa: Entidade, Atividade ou Decisão. Ao trocar a categoria, os campos de configuração do painel são ajustados automaticamente.',
         hint: 'Dica: escolha a categoria primeiro; isso evita preencher campos que não serão usados.',
         selector: '[data-tutorial-id="sidebar-stage-category"]',
         popoverPlacement: 'left',
@@ -442,7 +669,7 @@ const GerarBPMNCreate = () => {
         title: 'Área de configuração',
         description:
           'Nesta área você preenche os detalhes da etapa selecionada: dados da entidade, campos, informações da atividade ou definição da decisão.',
-        hint: 'Dica: edite um bloco por vez (categoria → dados → salvar) para reduzir erros de validação.',
+        hint: 'Dica: edite um bloco por vez (categoria → entidade → salvar) para reduzir erros de validação.',
         selector: '[data-tutorial-id="sidebar-config-area"]',
         popoverPlacement: 'left',
       },
@@ -1165,6 +1392,235 @@ const GerarBPMNCreate = () => {
       shouldHideProperties,
       viewportGridWidth,
     ],
+  );
+
+  const getCompactLayoutedNodes = React.useCallback(
+    (nodeList, connectionList) => {
+      if (!Array.isArray(nodeList) || nodeList.length === 0) {
+        return [];
+      }
+
+      const viewport = viewportRef.current;
+      const viewportLeft = viewport?.scrollLeft || 0;
+      const {
+        nodeWidth,
+        nodeHeight,
+        rowStep,
+        sidePadding,
+        minimumHorizontalGap,
+      } = nodeLayoutMetrics;
+      const topPadding = 30;
+      const horizontalStep = Math.max(
+        nodeWidth + minimumHorizontalGap + 18,
+        Math.round(nodeWidth * 1.14),
+      );
+      const stackStep = Math.max(
+        viewportGridWidth <= 768 ? 54 : 72,
+        Math.round(nodeHeight * 0.66),
+      );
+      const branchStepUnits = 2;
+      const laneGap = Math.max(20, Math.round(rowStep * 0.24));
+
+      const nodeOrder = new Map(
+        nodeList.map((node, index) => [String(node?.id || ''), index]),
+      );
+      const outgoingById = new Map();
+      const incomingById = new Map();
+
+      nodeList.forEach((node) => {
+        outgoingById.set(String(node?.id || ''), []);
+        incomingById.set(String(node?.id || ''), []);
+      });
+
+      (Array.isArray(connectionList) ? connectionList : []).forEach(
+        (connection) => {
+          const fromId = String(connection?.from || '').trim();
+          const toId = String(connection?.to || '').trim();
+          if (!nodeOrder.has(fromId) || !nodeOrder.has(toId)) return;
+
+          outgoingById.get(fromId)?.push(connection);
+          incomingById.get(toId)?.push(connection);
+        },
+      );
+
+      outgoingById.forEach((items) => {
+        items.sort((left, right) => {
+          const leftDecision = String(left?.decision || '')
+            .trim()
+            .toLowerCase();
+          const rightDecision = String(right?.decision || '')
+            .trim()
+            .toLowerCase();
+          if (leftDecision === rightDecision) {
+            return (
+              (nodeOrder.get(String(left?.to || '').trim()) ?? 0) -
+              (nodeOrder.get(String(right?.to || '').trim()) ?? 0)
+            );
+          }
+
+          if (leftDecision === 'sim' || leftDecision === 'yes') return -1;
+          if (rightDecision === 'sim' || rightDecision === 'yes') return 1;
+          if (
+            leftDecision === 'nao' ||
+            leftDecision === 'não' ||
+            leftDecision === 'no'
+          ) {
+            return 1;
+          }
+          if (
+            rightDecision === 'nao' ||
+            rightDecision === 'não' ||
+            rightDecision === 'no'
+          ) {
+            return -1;
+          }
+
+          return leftDecision.localeCompare(rightDecision);
+        });
+      });
+
+      const depthById = new Map();
+      const rootNodes = nodeList.filter(
+        (node) => (incomingById.get(String(node?.id || '')) || []).length === 0,
+      );
+      const traversalQueue = rootNodes.length ? [...rootNodes] : [...nodeList];
+
+      traversalQueue.forEach((node) => {
+        depthById.set(String(node?.id || ''), 0);
+      });
+
+      for (let index = 0; index < traversalQueue.length; index += 1) {
+        const currentNode = traversalQueue[index];
+        const currentId = String(currentNode?.id || '').trim();
+        const currentDepth = depthById.get(currentId) ?? 0;
+        const outgoing = outgoingById.get(currentId) || [];
+
+        outgoing.forEach((connection) => {
+          const targetId = String(connection?.to || '').trim();
+          const nextDepth = currentDepth + 1;
+          if (!depthById.has(targetId)) {
+            depthById.set(targetId, nextDepth);
+            const targetNode = nodeList[nodeOrder.get(targetId) ?? -1];
+            if (targetNode) traversalQueue.push(targetNode);
+            return;
+          }
+
+          if ((depthById.get(targetId) ?? 0) < nextDepth) {
+            depthById.set(targetId, nextDepth);
+          }
+        });
+      }
+
+      let fallbackDepth = 0;
+      nodeList.forEach((node) => {
+        const nodeId = String(node?.id || '').trim();
+        if (depthById.has(nodeId)) {
+          fallbackDepth = Math.max(fallbackDepth, depthById.get(nodeId) ?? 0);
+          return;
+        }
+
+        fallbackDepth += 1;
+        depthById.set(nodeId, fallbackDepth);
+      });
+
+      const laneOrder = [];
+      const laneIndexByKey = new Map();
+      nodeList.forEach((node) => {
+        const laneKey = extractNodeParticipant(node) || '__default__';
+        if (laneIndexByKey.has(laneKey)) return;
+        laneIndexByKey.set(laneKey, laneOrder.length);
+        laneOrder.push(laneKey);
+      });
+
+      const branchRowByLane = new Map();
+      const placementCounter = new Map();
+      const laneSpanByKey = new Map();
+      const placementByNodeId = new Map();
+
+      nodeList.forEach((node, index) => {
+        const nodeId = String(node?.id || '').trim();
+        const laneKey = extractNodeParticipant(node) || '__default__';
+        const incoming = incomingById.get(nodeId) || [];
+        let branchKey = 'main';
+
+        if (incoming.length > 0) {
+          const prioritizedIncoming = [...incoming].sort((left, right) => {
+            const leftSourceOrder =
+              nodeOrder.get(String(left?.from || '').trim()) ??
+              Number.MAX_SAFE_INTEGER;
+            const rightSourceOrder =
+              nodeOrder.get(String(right?.from || '').trim()) ??
+              Number.MAX_SAFE_INTEGER;
+            return leftSourceOrder - rightSourceOrder;
+          });
+          const selectedIncoming = prioritizedIncoming[0];
+          const selectedSourceId = String(selectedIncoming?.from || '').trim();
+          const siblingConnections = outgoingById.get(selectedSourceId) || [];
+          const siblingIndex = siblingConnections.findIndex(
+            (connection) => String(connection?.to || '').trim() === nodeId,
+          );
+          branchKey = normalizeDecisionBranchKey(
+            selectedIncoming?.decision,
+            siblingIndex,
+          );
+        }
+
+        const laneBranchKey = `${laneKey}:${branchKey}`;
+        if (!branchRowByLane.has(laneBranchKey)) {
+          const laneBranches = Array.from(branchRowByLane.keys()).filter(
+            (key) => key.startsWith(`${laneKey}:`),
+          );
+          let nextBranchIndex = laneBranches.length;
+          if (branchKey === 'main') nextBranchIndex = 0;
+          if (branchKey === 'alternate')
+            nextBranchIndex = Math.max(1, laneBranches.length);
+          branchRowByLane.set(laneBranchKey, nextBranchIndex);
+        }
+
+        const branchRow = branchRowByLane.get(laneBranchKey) ?? 0;
+        const depth = depthById.get(nodeId) ?? index;
+        const bucketKey = `${laneKey}|${depth}|${branchRow}`;
+        const bucketIndex = placementCounter.get(bucketKey) ?? 0;
+        placementCounter.set(bucketKey, bucketIndex + 1);
+
+        const rowUnit = branchRow * branchStepUnits + bucketIndex;
+        const currentLaneSpan = laneSpanByKey.get(laneKey) ?? 0;
+        laneSpanByKey.set(laneKey, Math.max(currentLaneSpan, rowUnit + 1));
+        placementByNodeId.set(nodeId, { laneKey, depth, rowUnit });
+      });
+
+      let accumulatedLaneOffset = 0;
+      const laneOffsetByKey = new Map();
+      laneOrder.forEach((laneKey) => {
+        laneOffsetByKey.set(laneKey, accumulatedLaneOffset);
+        const laneSpan = laneSpanByKey.get(laneKey) ?? 1;
+        accumulatedLaneOffset += laneSpan * stackStep + laneGap;
+      });
+
+      return nodeList.map((node, index) => {
+        const nodeId = String(node?.id || '').trim();
+        const placement = placementByNodeId.get(nodeId);
+
+        if (!placement) {
+          const fallbackPosition = getGridSlotPosition(index);
+          return {
+            ...node,
+            x: fallbackPosition.x,
+            y: fallbackPosition.y,
+          };
+        }
+
+        return {
+          ...node,
+          x: viewportLeft + sidePadding + placement.depth * horizontalStep,
+          y:
+            topPadding +
+            (laneOffsetByKey.get(placement.laneKey) ?? 0) +
+            placement.rowUnit * stackStep,
+        };
+      });
+    },
+    [getGridSlotPosition, nodeLayoutMetrics, viewportGridWidth],
   );
 
   React.useEffect(() => {
@@ -2268,7 +2724,7 @@ const GerarBPMNCreate = () => {
         if (!Array.isArray(effectiveFields) || effectiveFields.length === 0) {
           setActiveSidebarTab('entidade');
           setEntityError(
-            'Adicione pelo menos um campo na seção Campos para salvar Dados.',
+            'Adicione pelo menos um campo na seção Campos para salvar a Entidade.',
           );
           return;
         }
@@ -2319,7 +2775,11 @@ const GerarBPMNCreate = () => {
     setEntitySavedNotice('');
     setEntitySavedNoticeNodeId('');
 
-    const nome = String(conditionalForm.nome || '').trim();
+    const nome = sanitizeStageNameByNodeType(
+      conditionalForm.nome,
+      'condicional',
+      'Condicional',
+    );
     const descricao = String(conditionalForm.descricao || '').trim();
     const previousNome =
       String(selectedNode?.condicionalNome || '').trim() ||
@@ -2373,7 +2833,11 @@ const GerarBPMNCreate = () => {
   const handleSaveTaskStage = React.useCallback(() => {
     if (!selectedNode) return;
 
-    const nome = String(taskForm.nome || '').trim();
+    const nome = sanitizeStageNameByNodeType(
+      taskForm.nome,
+      'task',
+      'Atividade',
+    );
     const descricao = String(taskForm.descricao || '').trim();
     const previousNome =
       String(selectedNode?.taskNome || '').trim() ||
@@ -2425,7 +2889,11 @@ const GerarBPMNCreate = () => {
     setEntitySavedNotice('');
     setEntitySavedNoticeNodeId('');
 
-    const nome = String(newEntityForm.nome || '').trim();
+    const nome = sanitizeStageNameByNodeType(
+      newEntityForm.nome,
+      'entidade',
+      'Entidade',
+    );
     const descricao = String(newEntityForm.descricao || '').trim();
     const atributoChave = String(newEntityForm.atributoChave || '').trim();
     const previousNome =
@@ -2481,7 +2949,7 @@ const GerarBPMNCreate = () => {
     });
 
     setEntityError('');
-    setEntitySavedNotice('Dados da entidade salvos no BPMN.');
+    setEntitySavedNotice('Entidade salva no BPMN.');
     setEntitySavedNoticeNodeId(selectedNode.id);
   }, [
     appendPendingSidebarTimelineItem,
@@ -2631,6 +3099,197 @@ const GerarBPMNCreate = () => {
     },
     [selectedNodeId],
   );
+
+  React.useEffect(() => {
+    if (aiContextAppliedRef.current) return;
+    if (!pendingAiContextPanel) return;
+
+    if (!selectedNode) {
+      if (Array.isArray(nodes) && nodes.length > 0) {
+        setSelectedNodeId(String(nodes[0].id || ''));
+      }
+      return;
+    }
+
+    const suggestion =
+      pendingAiContextPanel && typeof pendingAiContextPanel === 'object'
+        ? pendingAiContextPanel
+        : {};
+    const stageCategory = String(suggestion.stageCategory || 'dados')
+      .trim()
+      .toLowerCase();
+    const stageNodeType =
+      stageCategory === 'task'
+        ? 'task'
+        : stageCategory === 'condicional'
+          ? 'condicional'
+          : 'entidade';
+
+    const entityTypeCandidate = String(suggestion.entityType || 'apoio')
+      .trim()
+      .toLowerCase();
+    const entityType =
+      entityTypeCandidate === 'principal' ||
+      entityTypeCandidate === 'apoio' ||
+      entityTypeCandidate === 'associativa' ||
+      entityTypeCandidate === 'externa'
+        ? entityTypeCandidate
+        : 'apoio';
+
+    const entityModeCandidate = String(suggestion.entityMode || 'nova')
+      .trim()
+      .toLowerCase();
+    const entityModeNext =
+      entityModeCandidate === 'existente' ? 'existente' : 'nova';
+
+    const newEntity =
+      suggestion.newEntity && typeof suggestion.newEntity === 'object'
+        ? suggestion.newEntity
+        : {};
+    const task =
+      suggestion.task && typeof suggestion.task === 'object'
+        ? suggestion.task
+        : {};
+    const conditional =
+      suggestion.conditional && typeof suggestion.conditional === 'object'
+        ? suggestion.conditional
+        : {};
+    const rawFields = Array.isArray(suggestion.fields) ? suggestion.fields : [];
+
+    const mappedFields = rawFields
+      .map((field) => {
+        if (!field || typeof field !== 'object') return null;
+        const nome = String(field.nome || '').trim();
+        if (!nome) return null;
+        const tipo = String(field.tipo || 'Texto').trim() || 'Texto';
+        const keyTypeRaw = String(field.keyType || 'NORMAL')
+          .trim()
+          .toUpperCase();
+        const keyType = ['PK', 'FK', 'NORMAL'].includes(keyTypeRaw)
+          ? keyTypeRaw
+          : 'NORMAL';
+        return {
+          id: generateUniqueId('field'),
+          nome,
+          tipo,
+          obrigatorio: field.obrigatorio === true,
+          keyType,
+          relacionamento: String(field.referencia || '').trim() || null,
+        };
+      })
+      .filter(Boolean);
+
+    setActiveSidebarTab('entidade');
+    setStageConfigMode(
+      stageNodeType === 'condicional' ? 'condicional' : 'entidade',
+    );
+    setEntityMode(entityModeNext);
+    setConditionalForm({
+      nome: String(conditional.nome || '').trim(),
+      descricao: String(conditional.descricao || '').trim(),
+    });
+    setTaskForm({
+      nome: String(task.nome || '').trim(),
+      descricao: String(task.descricao || '').trim(),
+    });
+    setNewEntityForm({
+      nome: String(newEntity.nome || '').trim(),
+      descricao: String(newEntity.descricao || '').trim(),
+      atributoChave: String(newEntity.atributoChave || '').trim(),
+    });
+    setNewEntityFields(mappedFields);
+    setSelectedDataFieldIds(
+      mappedFields
+        .map((field) => String(field?.id || '').trim())
+        .filter(Boolean),
+    );
+    setEntityFieldDraft(createEmptyEntityFieldDraft());
+
+    const selectedEntityByName =
+      entityModeNext === 'existente'
+        ? (Array.isArray(entityOptions) ? entityOptions : []).find(
+            (item) =>
+              normalizeEntityName(item?.nome || '') ===
+              normalizeEntityName(newEntity.nome || ''),
+          )
+        : null;
+
+    setSelectedExistingEntityId(
+      selectedEntityByName ? String(selectedEntityByName.id || '') : '',
+    );
+
+    updateSelectedNode({
+      nodeType: stageNodeType,
+      isPrimaryEntity: entityType === 'principal',
+      tipoEntidade: stageNodeType === 'entidade' ? entityType : '',
+      condicionalNome:
+        stageNodeType === 'condicional'
+          ? String(conditional.nome || '').trim()
+          : '',
+      condicionalDescricao:
+        stageNodeType === 'condicional'
+          ? String(conditional.descricao || '').trim()
+          : '',
+      taskNome: stageNodeType === 'task' ? String(task.nome || '').trim() : '',
+      taskDescricao:
+        stageNodeType === 'task' ? String(task.descricao || '').trim() : '',
+      entidadeId: null,
+      entidadeNome:
+        stageNodeType === 'entidade' ? String(newEntity.nome || '').trim() : '',
+      label:
+        stageNodeType === 'entidade'
+          ? String(newEntity.nome || '').trim()
+          : stageNodeType === 'task'
+            ? String(task.nome || '').trim()
+            : String(conditional.nome || '').trim(),
+      subtitle:
+        stageNodeType === 'entidade'
+          ? String(newEntity.descricao || '').trim()
+          : stageNodeType === 'task'
+            ? String(task.descricao || '').trim()
+            : String(conditional.descricao || '').trim(),
+      selectedEntityFieldIds:
+        stageNodeType === 'entidade'
+          ? mappedFields
+              .map((field) => String(field?.id || '').trim())
+              .filter(Boolean)
+          : [],
+      selectedEntityFieldNames:
+        stageNodeType === 'entidade'
+          ? mappedFields
+              .map((field) => String(field?.nome || '').trim())
+              .filter(Boolean)
+          : [],
+      selectedEntityFields:
+        stageNodeType === 'entidade'
+          ? mappedFields.map((field) => ({
+              id: String(field?.id || '').trim(),
+              nome: String(field?.nome || '').trim(),
+              tipo: String(field?.tipo || '').trim(),
+              obrigatorio: field?.obrigatorio === true,
+              keyType: String(field?.keyType || 'NORMAL')
+                .trim()
+                .toUpperCase(),
+              relacionamento:
+                String(field?.relacionamento || '').trim() || null,
+            }))
+          : [],
+    });
+
+    setEntityError('');
+    setEntitySavedNotice(
+      'Configuração sugerida pela IA aplicada no painel contextual.',
+    );
+    setEntitySavedNoticeNodeId(String(selectedNode.id || '').trim());
+    aiContextAppliedRef.current = true;
+    setPendingAiContextPanel(null);
+  }, [
+    entityOptions,
+    nodes,
+    pendingAiContextPanel,
+    selectedNode,
+    updateSelectedNode,
+  ]);
 
   const handleEditSuggestedEntity = React.useCallback(() => {
     if (!suggestedEntity) return;
@@ -3352,20 +4011,11 @@ const GerarBPMNCreate = () => {
 
   const handleResetToDefault = React.useCallback(() => {
     if (isReadOnlyMode) return;
-    setNodes((previous) =>
-      previous.map((node, index) => {
-        const nextPosition = getGridSlotPosition(index);
-        return {
-          ...node,
-          x: nextPosition.x,
-          y: nextPosition.y,
-        };
-      }),
-    );
+    setNodes((previous) => getCompactLayoutedNodes(previous, connections));
 
     setConnectorRevealMode('hover-side');
     setSelectedConnectionId('');
-  }, [getGridSlotPosition, isReadOnlyMode]);
+  }, [connections, getCompactLayoutedNodes, isReadOnlyMode]);
 
   React.useEffect(() => {
     if (hasNormalizedInitialLayoutRef.current) return;
@@ -3373,17 +4023,8 @@ const GerarBPMNCreate = () => {
     if (nodes.length === 0) return;
 
     hasNormalizedInitialLayoutRef.current = true;
-    setNodes((previous) =>
-      previous.map((node, index) => {
-        const nextPosition = getGridSlotPosition(index);
-        return {
-          ...node,
-          x: nextPosition.x,
-          y: nextPosition.y,
-        };
-      }),
-    );
-  }, [getGridSlotPosition, nodes.length]);
+    setNodes((previous) => getCompactLayoutedNodes(previous, connections));
+  }, [connections, getCompactLayoutedNodes, nodes.length]);
 
   React.useEffect(() => {
     const viewport = viewportRef.current;
@@ -3428,6 +4069,53 @@ const GerarBPMNCreate = () => {
       viewport.scrollTop = Math.max(0, (minY - padding) * zoom);
     }
   }, [nodes, zoom]);
+
+  const fitNodesToViewport = React.useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport || nodes.length === 0) return;
+
+    const minX = Math.min(...nodes.map((node) => node.x || 0));
+    const minY = Math.min(...nodes.map((node) => node.y || 0));
+    const maxX = Math.max(...nodes.map((node) => (node.x || 0) + 220));
+    const maxY = Math.max(...nodes.map((node) => (node.y || 0) + 110));
+
+    const horizontalPadding = 220;
+    const verticalPadding = 180;
+    const contentWidth = Math.max(320, maxX - minX + horizontalPadding);
+    const contentHeight = Math.max(180, maxY - minY + verticalPadding);
+
+    const availableWidth = Math.max(260, viewport.clientWidth - 56);
+    const availableHeight = Math.max(220, viewport.clientHeight - 56);
+    const fittedZoom = Number(
+      Math.max(
+        MIN_ZOOM,
+        Math.min(
+          MAX_ZOOM,
+          Math.min(
+            availableWidth / contentWidth,
+            availableHeight / contentHeight,
+          ),
+        ),
+      ).toFixed(2),
+    );
+
+    setZoom(fittedZoom);
+    setZoomButtonDirection(fittedZoom <= MIN_ZOOM ? 1 : -1);
+
+    requestAnimationFrame(() => {
+      const centeredWorldX = minX + (maxX - minX) / 2;
+      const centeredWorldY = minY + (maxY - minY) / 2;
+
+      viewport.scrollLeft = Math.max(
+        0,
+        centeredWorldX * fittedZoom - viewport.clientWidth / 2,
+      );
+      viewport.scrollTop = Math.max(
+        0,
+        centeredWorldY * fittedZoom - viewport.clientHeight / 2,
+      );
+    });
+  }, [MAX_ZOOM, MIN_ZOOM, nodes]);
 
   const updateViewportMetrics = React.useCallback(() => {
     const viewport = viewportRef.current;
@@ -4379,10 +5067,52 @@ const GerarBPMNCreate = () => {
       }
 
       const opportunityPayload = {
+        // Keep table metadata synchronized with the diagram structure.
+        stages: orderedActiveNodeEntries.map((entry, index) => {
+          const baseNode = orderedActiveNodes[index] || {};
+          const infoText = String(baseNode?.info || '').trim();
+          const participant = infoText.includes('Raia:')
+            ? infoText.split('Raia:')[1].split('|')[0].trim()
+            : '';
+          const rawType = String(baseNode?.nodeType || 'entidade')
+            .trim()
+            .toLowerCase();
+          const stageType =
+            rawType === 'task'
+              ? 'task'
+              : rawType === 'condicional'
+                ? 'condicional'
+                : 'entidade';
+
+          return {
+            id: String(entry?.id || '').trim() || `stage-${index + 1}`,
+            index,
+            nome: String(entry?.label || '').trim() || `Etapa ${index + 1}`,
+            tipo: stageType,
+            participante: participant,
+          };
+        }),
         nome: name || DEFAULT_BPMN_NAME,
         name: name || DEFAULT_BPMN_NAME,
         status: 'Prospecção',
         stageIndex: 0,
+        currentNodeId:
+          String(selectedNodeId || '').trim() ||
+          String(orderedActiveNodes[0]?.id || '').trim() ||
+          null,
+        activeNodeId:
+          String(selectedNodeId || '').trim() ||
+          String(orderedActiveNodes[0]?.id || '').trim() ||
+          null,
+        bpmnNodeId:
+          String(selectedNodeId || '').trim() ||
+          String(orderedActiveNodes[0]?.id || '').trim() ||
+          null,
+        bpmnCurrentNodeId:
+          String(selectedNodeId || '').trim() ||
+          String(orderedActiveNodes[0]?.id || '').trim() ||
+          null,
+        sourceNodeId: String(orderedActiveNodes[0]?.id || '').trim() || null,
         timelineItems: mergeUniqueTimelineItems(
           timelineGeneratedItems,
           pendingDraftTimelineItems,
@@ -4399,6 +5129,30 @@ const GerarBPMNCreate = () => {
         bpmn: {
           nodes: persistedNodes,
           connections: persistedConnections,
+          stages: orderedActiveNodeEntries.map((entry, index) => {
+            const baseNode = orderedActiveNodes[index] || {};
+            const infoText = String(baseNode?.info || '').trim();
+            const participant = infoText.includes('Raia:')
+              ? infoText.split('Raia:')[1].split('|')[0].trim()
+              : '';
+            const rawType = String(baseNode?.nodeType || 'entidade')
+              .trim()
+              .toLowerCase();
+            const stageType =
+              rawType === 'task'
+                ? 'task'
+                : rawType === 'condicional'
+                  ? 'condicional'
+                  : 'entidade';
+
+            return {
+              id: String(entry?.id || '').trim() || `stage-${index + 1}`,
+              index,
+              nome: String(entry?.label || '').trim() || `Etapa ${index + 1}`,
+              tipo: stageType,
+              participante: participant,
+            };
+          }),
           ...(primaryEntityName
             ? {
                 primaryEntityName,
@@ -4500,6 +5254,41 @@ const GerarBPMNCreate = () => {
 
     const loadSavedBpmn = async () => {
       let loadedFromLocalStorage = false;
+
+      if (isCreateMode && pendingAiCanvasDraft && !aiCanvasAppliedRef.current) {
+        if (typeof pendingAiCanvasDraft.name === 'string') {
+          const nextName = String(pendingAiCanvasDraft.name || '').trim();
+          if (nextName) {
+            setName(nextName);
+          }
+        }
+
+        if (Array.isArray(pendingAiCanvasDraft.nodes)) {
+          setNodes(pendingAiCanvasDraft.nodes.map(normalizeEditorNode));
+          const firstNodeId = String(
+            pendingAiCanvasDraft.nodes[0]?.id || '',
+          ).trim();
+          if (firstNodeId) {
+            setSelectedNodeId(firstNodeId);
+          }
+        }
+
+        if (Array.isArray(pendingAiCanvasDraft.connections)) {
+          setConnections(
+            pendingAiCanvasDraft.connections.map(normalizeEditorConnection),
+          );
+        }
+
+        pendingTimelineItemsRef.current = [];
+        aiCanvasAppliedRef.current = true;
+        setPendingAiCanvasDraft(null);
+
+        if (isMounted) {
+          hasHydratedBpmnRef.current = true;
+          setIsLoadingBpmn(false);
+        }
+        return;
+      }
 
       if (isCreateMode) {
         try {
@@ -4629,7 +5418,7 @@ const GerarBPMNCreate = () => {
     return () => {
       isMounted = false;
     };
-  }, [bpmnSlug]);
+  }, [bpmnSlug, pendingAiCanvasDraft]);
 
   React.useEffect(() => {
     currentDraftRef.current = {
@@ -4863,10 +5652,10 @@ const GerarBPMNCreate = () => {
     hasAutoFocusedRef.current = true;
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        centerOnNodes();
+        fitNodesToViewport();
       });
     });
-  }, [centerOnNodes, nodes.length]);
+  }, [fitNodesToViewport, nodes.length]);
 
   const applyZoomStep = React.useCallback(
     (direction) => {
