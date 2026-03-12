@@ -2845,9 +2845,8 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
     )
     if bpmn_action is not None:
         bpmn_payload = bpmn_action.get("payload")
-        bpmn_action["payload"] = _ensure_bpmn_entity_nodes(
+        bpmn_action["payload"] = _sanitize_bpmn_payload(
             bpmn_payload if isinstance(bpmn_payload, dict) else {},
-            _dedupe_preserve_order([*goal_entity_names, *fallback_entities]),
             3,
         )
 
@@ -3048,9 +3047,8 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
     )
     if bpmn_action is not None:
         bpmn_payload = bpmn_action.get("payload")
-        bpmn_action["payload"] = _ensure_bpmn_entity_nodes(
+        bpmn_action["payload"] = _sanitize_bpmn_payload(
             bpmn_payload if isinstance(bpmn_payload, dict) else {},
-            _dedupe_preserve_order([*goal_entity_names, *fallback_entities]),
             3,
         )
 
