@@ -3008,6 +3008,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
     first = choices[0] if isinstance(choices[0], dict) else {}
     message = first.get("message") if isinstance(first, dict) else {}
     content = message.get("content") if isinstance(message, dict) else ""
+    print(f"[DEBUG][GROQ] Raw response content: {str(content or '')[:2000]}")
     parsed = _extract_json_object(str(content or ""))
     if not parsed:
         raise RuntimeError("Resposta Groq sem JSON valido")
