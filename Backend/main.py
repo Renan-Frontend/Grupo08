@@ -1,4 +1,11 @@
 import os
+try:
+    dotenv_module = __import__("dotenv", fromlist=["load_dotenv"])
+    load_dotenv = getattr(dotenv_module, "load_dotenv", None)
+    if callable(load_dotenv):
+        load_dotenv()
+except Exception:
+    pass
 import json
 import re
 import uuid
@@ -7,7 +14,7 @@ import time
 import requests
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
-from typing import Any
+from typing import Any, cast
 try:
     import psycopg2  # type: ignore[reportMissingModuleSource]
     from psycopg2.extras import Json  # type: ignore[reportMissingModuleSource]
@@ -35,10 +42,14 @@ ENTIDADES_TABLE = "entidades_store"
 OPORTUNIDADES_TABLE = "oportunidades_store"
 AI_AUDIT_TABLE = "ai_audit_store"
 AI_MAX_ACTIONS_PER_MINUTE = int(os.getenv("AI_MAX_ACTIONS_PER_MINUTE", "20"))
-AI_PROVIDER = os.getenv("AI_PROVIDER", "local").strip().lower() or "local"
+AI_PROVIDER = os.getenv("AI_PROVIDER", "bpmn_ia").strip().lower() or "bpmn_ia"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile").strip() or "llama-3.3-70b-versatile"
 AI_LLM_TIMEOUT_SECONDS = int(os.getenv("AI_LLM_TIMEOUT_SECONDS", "20"))
+BPMN_IA_BASE_URL = os.getenv("BPMN_IA_BASE_URL", "http://127.0.0.1:8080").strip().rstrip("/")
+BPMN_IA_MODEL = os.getenv("BPMN_IA_MODEL", "gpt-4.1").strip() or "gpt-4.1"
 AI_ENTITY_NAME_MAX_LENGTH = 48
 AI_ACTIVITY_NAME_MAX_LENGTH = 56
 AI_CONDITIONAL_NAME_MAX_LENGTH = 56
@@ -414,6 +425,97 @@ def _looks_like_activity_stage(stage_name: str) -> bool:
     return any(hint in normalized for hint in action_hints)
 
 
+def _extract_participant_activity_pairs(goal: str) -> list[dict[str, str]]:
+    text = str(goal or "")
+    if not text:
+        return []
+
+    pairs: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    for match in re.finditer(
+        r"(?:^|\n)\s*[-•*]?\s*([A-Za-zÀ-ÿ][^:\n\r]{1,40})\s*:\s*([^\n\r]+)",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        participante = " ".join(str(match.group(1) or "").strip().split())
+        descricao = " ".join(str(match.group(2) or "").strip().split())
+        if not participante or not descricao:
+            continue
+
+        normalized_participant = _normalize_ai_text(participante)
+        if normalized_participant in {"sim", "nao", "não", "yes", "no"}:
+            continue
+
+        key = f"{_normalize_ai_text(participante)}::{_normalize_ai_text(descricao)}"
+        if key in seen:
+            continue
+        seen.add(key)
+
+        pairs.append({"participante": participante, "descricao": descricao})
+
+    return pairs
+
+
+def _split_stage_participant_activity(stage_text: str) -> tuple[str, str]:
+    text = " ".join(str(stage_text or "").strip().split())
+    if not text:
+        return "", ""
+
+    match = re.match(r"^([A-Za-zÀ-ÿ][^:]{1,40})\s*:\s*(.+)$", text)
+    if not match:
+        return "", ""
+
+    participante = " ".join(str(match.group(1) or "").strip().split())
+    descricao = " ".join(str(match.group(2) or "").strip().split())
+
+    normalized_participant = _normalize_ai_text(participante)
+    if normalized_participant in {"sim", "nao", "não", "yes", "no"}:
+        return "", text
+
+    return participante, descricao
+
+
+def _activity_name_from_description(description: str, index: int) -> str:
+    text = _normalize_stage_label_text(description)
+    if not text:
+        return f"Atividade {index}"
+
+    first_token_match = re.match(r"^([A-Za-zÀ-ÿ]+)", text)
+    first_token = str(first_token_match.group(1) or "").strip() if first_token_match else ""
+    normalized_token = _normalize_ai_text(first_token)
+
+    verb_map = {
+        "cria": "Criar",
+        "registra": "Registrar",
+        "analisa": "Analisar",
+        "decide": "Decidir",
+        "valida": "Validar",
+        "recebe": "Receber",
+        "envia": "Enviar",
+        "gera": "Gerar",
+        "solicita": "Solicitar",
+        "aprova": "Aprovar",
+        "rejeita": "Rejeitar",
+        "cancela": "Cancelar",
+        "verifica": "Verificar",
+        "processa": "Processar",
+    }
+
+    if normalized_token in verb_map:
+        return verb_map[normalized_token]
+
+    summarized = _summarize_name(text, 28, f"Atividade {index}")
+    return summarized[:1].upper() + summarized[1:] if summarized else f"Atividade {index}"
+
+
+def _activity_description_from_text(description: str, index: int) -> str:
+    text = _normalize_stage_label_text(description)
+    if not text:
+        return f"Executa a atividade {index}."
+    return text[:1].upper() + text[1:]
+
+
 def _looks_like_decision_stage(stage_name: str) -> bool:
     normalized = str(stage_name or "").strip().lower()
     if not normalized:
@@ -552,6 +654,92 @@ def _is_generic_conditional_label(value: Any) -> bool:
     return not normalized or normalized in generic_names
 
 
+def _normalize_gateway_type(value: Any, default: str = "xor") -> str:
+    normalized = _normalize_ai_text(value)
+    if not normalized:
+        return default
+
+    xor_aliases = {
+        "xor",
+        "exclusive",
+        "exclusivo",
+        "decisao exclusiva",
+        "gateway exclusivo",
+    }
+    and_aliases = {
+        "and",
+        "paralelo",
+        "parallel",
+        "gateway paralelo",
+        "conjuntivo",
+        "todos",
+    }
+    or_aliases = {
+        "or",
+        "inclusivo",
+        "inclusive",
+        "gateway inclusivo",
+        "alternativo",
+        "qualquer",
+    }
+
+    if normalized in xor_aliases:
+        return "xor"
+    if normalized in and_aliases:
+        return "and"
+    if normalized in or_aliases:
+        return "or"
+    return default
+
+
+def _conditional_description_from_name(name: str) -> str:
+    clean_name = " ".join(str(name or "").strip().strip("?").split())
+    if not clean_name:
+        return "Avalia a condicao para decidir o proximo caminho do fluxo."
+
+    first = clean_name[:1].lower()
+    remainder = clean_name[1:] if len(clean_name) > 1 else ""
+    return f"Verifica se {first}{remainder}."
+
+
+def _infer_gateway_type_from_text(
+    conditional_name: str,
+    conditional_description: str,
+    outgoing_count: int,
+    explicit_gateway: Any = "",
+) -> str:
+    explicit = _normalize_gateway_type(explicit_gateway, default="")
+    if explicit in {"xor", "and", "or"}:
+        return explicit
+
+    text = _normalize_ai_text(f"{conditional_name} {conditional_description}")
+
+    and_hints = (
+        "paralel",
+        "simultane",
+        "ao mesmo tempo",
+        "todos",
+        "ambos",
+        "conjunt",
+    )
+    or_hints = (
+        " ou ",
+        "qualquer",
+        "uma das",
+        "pelo menos",
+        "alternativ",
+        "inclusiv",
+    )
+
+    if any(hint in text for hint in and_hints):
+        return "and"
+    if any(hint in text for hint in or_hints):
+        return "or"
+    if outgoing_count >= 3:
+        return "or"
+    return "xor"
+
+
 def _summarize_name(value: Any, max_length: int, fallback: str) -> str:
     text = _normalize_stage_label_text(value)
     if not text:
@@ -612,9 +800,9 @@ def _sanitize_node_name_by_type(value: Any, node_type: str, index: int) -> str:
     value = _normalize_stage_label_text(value)
     normalized_node_type = str(node_type or "").strip().lower()
     if normalized_node_type == "condicional":
-        summarized = _summarize_name(value, AI_CONDITIONAL_NAME_MAX_LENGTH, "Caminho do fluxo")
+        summarized = _summarize_name(value, AI_CONDITIONAL_NAME_MAX_LENGTH, "Validar condicao?")
         if _is_generic_conditional_label(summarized):
-            return "Caminho do fluxo"
+            return "Validar condicao?"
         return summarized
     if normalized_node_type == "task":
         return _summarize_name(value, AI_ACTIVITY_NAME_MAX_LENGTH, f"Atividade {index}")
@@ -731,6 +919,128 @@ def _build_default_entity_fields_with_references(
     return fields
 
 
+def _sanitize_entity_fields(
+    fields_raw: Any,
+    entity_name: str,
+    fallback_fields: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    raw_fields: list[Any] = fields_raw if isinstance(fields_raw, list) else []
+    safe_fields: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    for field in raw_fields:
+        if not isinstance(field, dict):
+            continue
+
+        nome = " ".join(str(field.get("nome") or "").strip().split())
+        if not nome:
+            continue
+
+        key = _normalize_ai_text(nome)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+
+        key_type = str(field.get("keyType") or "NORMAL").strip().upper()
+        if key_type not in {"PK", "FK", "NORMAL"}:
+            key_type = "NORMAL"
+
+        safe_fields.append(
+            {
+                "nome": nome,
+                "tipo": str(field.get("tipo") or "TEXT").strip() or "TEXT",
+                "obrigatorio": bool(field.get("obrigatorio") is True),
+                "keyType": key_type,
+                "referencia": str(field.get("referencia") or "").strip(),
+            }
+        )
+
+    if safe_fields:
+        return safe_fields
+
+    defaults = fallback_fields if isinstance(fallback_fields, list) and fallback_fields else _build_default_entity_fields(entity_name)
+    return [
+        {
+            "nome": str(item.get("nome") or "campo").strip(),
+            "tipo": str(item.get("tipo") or "TEXT").strip() or "TEXT",
+            "obrigatorio": bool(item.get("obrigatorio") is True),
+            "keyType": str(item.get("keyType") or "NORMAL").strip().upper(),
+            "referencia": str(item.get("referencia") or "").strip(),
+        }
+        for item in defaults
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    ]
+
+
+def _ensure_bpmn_entity_nodes(
+    payload: dict[str, Any],
+    entity_names: list[str],
+    fallback_id: int,
+) -> dict[str, Any]:
+    base_payload = payload if isinstance(payload, dict) else {}
+    raw_nodes_value = base_payload.get("nodes")
+    raw_stages_value = base_payload.get("stages")
+    nodes_raw: list[Any] = cast(list[Any], raw_nodes_value) if isinstance(raw_nodes_value, list) else []
+    stages_raw: list[Any] = cast(list[Any], raw_stages_value) if isinstance(raw_stages_value, list) else []
+
+    nodes = [dict(item) for item in nodes_raw if isinstance(item, dict)]
+    stages = [dict(item) for item in stages_raw if isinstance(item, dict)]
+
+    existing_entity_names = {
+        _normalize_ai_text(
+            str(node.get("entidadeNome") or node.get("label") or "")
+        )
+        for node in nodes
+        if _stage_type_to_node_type(node.get("nodeType") or "") == "entidade"
+    }
+
+    max_x = 120.0
+    if nodes:
+        try:
+            max_x = max(float(node.get("x") or 120.0) for node in nodes)
+        except Exception:
+            max_x = 120.0
+
+    added_count = 0
+    for entity_name in entity_names:
+        normalized = _normalize_ai_text(entity_name)
+        if not normalized or normalized in existing_entity_names:
+            continue
+
+        added_count += 1
+        node_index = len(nodes) + 1
+        node_id = f"ai-entity-{fallback_id}-{node_index}"
+        nodes.append(
+            {
+                "id": node_id,
+                "label": entity_name,
+                "nodeType": "entidade",
+                "entidadeNome": entity_name,
+                "tipoEntidade": "apoio",
+                "x": max_x + (added_count * 240),
+                "y": 120,
+                "info": "id",
+                "subtitle": "Entidade de dados",
+            }
+        )
+        stages.append(
+            {
+                "id": node_id,
+                "nome": entity_name,
+                "tipo": "dados",
+                "participante": "Sistema",
+            }
+        )
+        existing_entity_names.add(normalized)
+
+    merged_payload = {
+        **base_payload,
+        "nodes": nodes,
+        "stages": stages,
+    }
+    return _sanitize_bpmn_payload(merged_payload, fallback_id)
+
+
 def _infer_data_entity_type(stage_name: str, participant: str = "", default: str = "apoio") -> str:
     text = _normalize_ai_text(f"{stage_name} {participant}")
     if not text:
@@ -830,6 +1140,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
         raw_label = str(
             raw_node.get("label") or raw_node.get("nome") or raw_node.get("name") or ""
         ).strip()
+
         label = _sanitize_node_name_by_type(raw_label, node_type, index)
 
         x_raw = raw_node.get("x")
@@ -861,22 +1172,46 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             node_payload["info"] = node_info
 
         if node_type == "task":
-            node_payload["taskNome"] = label
-            task_descricao = str(raw_node.get("taskDescricao") or "").strip()
-            if task_descricao:
-                node_payload["taskDescricao"] = task_descricao
+            task_name_source = str(raw_node.get("taskNome") or raw_label or label).strip()
+            task_desc_source = str(raw_node.get("taskDescricao") or raw_label or label).strip()
+            task_name = _sanitize_node_name_by_type(
+                _activity_name_from_description(task_name_source, index),
+                "task",
+                index,
+            )
+            task_description = _activity_description_from_text(task_desc_source, index)
+            node_payload["label"] = task_name
+            node_payload["taskNome"] = task_name
+            node_payload["taskDescricao"] = task_description
         elif node_type == "condicional":
-            cond_descricao = str(raw_node.get("condicionalDescricao") or "").strip()
-            if _is_generic_conditional_label(label):
-                label = _sanitize_node_name_by_type(
-                    cond_descricao or raw_label or "Caminho do fluxo",
+            raw_cond_name = str(raw_node.get("condicionalNome") or raw_label or label).strip()
+            cond_name = _sanitize_node_name_by_type(raw_cond_name, "condicional", index)
+            cond_descricao = str(raw_node.get("condicionalDescricao") or raw_node.get("subtitle") or "").strip()
+
+            if _is_generic_conditional_label(cond_name):
+                cond_name = _sanitize_node_name_by_type(
+                    cond_descricao or raw_cond_name or "Caminho do fluxo",
                     "condicional",
                     index,
                 )
-            node_payload["label"] = label
-            node_payload["condicionalNome"] = label
-            if cond_descricao:
-                node_payload["condicionalDescricao"] = cond_descricao
+
+            if "?" not in cond_name and _looks_like_decision_stage(raw_cond_name or cond_name):
+                cond_name = _sanitize_node_name_by_type(f"{cond_name}?", "condicional", index)
+
+            if not cond_descricao:
+                cond_descricao = _conditional_description_from_name(cond_name)
+
+            gateway_type = _infer_gateway_type_from_text(
+                cond_name,
+                cond_descricao,
+                outgoing_count=2,
+                explicit_gateway=raw_node.get("gatewayType"),
+            )
+
+            node_payload["label"] = cond_name
+            node_payload["condicionalNome"] = cond_name
+            node_payload["condicionalDescricao"] = cond_descricao
+            node_payload["gatewayType"] = gateway_type
         else:
             node_payload["entidadeNome"] = label
             inferred_type = _infer_data_entity_type(label, stage_participant)
@@ -932,6 +1267,11 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 node_payload["subtitle"] = desc
                 node_payload["condicionalNome"] = cond_name
                 node_payload["condicionalDescricao"] = desc
+                node_payload["gatewayType"] = _infer_gateway_type_from_text(
+                    cond_name,
+                    desc,
+                    outgoing_count=2,
+                )
             else:
                 if stage_participant:
                     node_payload["info"] = f"Raia: {stage_participant}"
@@ -1025,6 +1365,49 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
         if not conditional_outgoing:
             continue
 
+        unique_targets = {
+            str(connection.get("to") or "").strip()
+            for connection in conditional_outgoing
+            if str(connection.get("to") or "").strip()
+        }
+
+        conditional_node = node_lookup.get(conditional_node_id)
+        gateway_type = _infer_gateway_type_from_text(
+            str((conditional_node or {}).get("condicionalNome") or (conditional_node or {}).get("label") or ""),
+            str((conditional_node or {}).get("condicionalDescricao") or (conditional_node or {}).get("subtitle") or ""),
+            outgoing_count=len(unique_targets),
+            explicit_gateway=(conditional_node or {}).get("gatewayType") if conditional_node else "",
+        )
+        if conditional_node is not None:
+            conditional_node["gatewayType"] = gateway_type
+
+        if len(unique_targets) <= 1:
+            collapsed_conditional_ids.add(conditional_node_id)
+            for connection in conditional_outgoing:
+                connection["decision"] = ""
+                connection["fromHandle"] = "right"
+                connection["toHandle"] = str(connection.get("toHandle") or "left").strip() or "left"
+            continue
+
+        if gateway_type in {"and", "or"}:
+            for branch_index, connection in enumerate(conditional_outgoing, start=1):
+                source_node = node_lookup.get(str(connection.get("from") or "").strip())
+                target_node = node_lookup.get(str(connection.get("to") or "").strip())
+                source_y = safe_float(source_node.get("y") if source_node else 0.0)
+                target_y = safe_float(target_node.get("y") if target_node else 0.0)
+
+                decision_label = str(connection.get("decision") or "").strip()
+                if not decision_label:
+                    decision_label = f"Paralelo {branch_index}" if gateway_type == "and" else f"Ramo {branch_index}"
+
+                connection["decision"] = decision_label
+                connection["fromHandle"] = "right" if branch_index % 2 == 1 else "bottom"
+                if target_node and target_y >= source_y - 10:
+                    connection["toHandle"] = "top"
+                else:
+                    connection["toHandle"] = str(connection.get("toHandle") or "left").strip() or "left"
+            continue
+
         for connection in conditional_outgoing:
             canonical_decision = normalize_decision_value(connection.get("decision"))
             if not canonical_decision:
@@ -1034,20 +1417,6 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 elif inferred_by_handle == "bottom":
                     canonical_decision = "nao"
             connection["decision"] = canonical_decision
-
-        unique_targets = {
-            str(connection.get("to") or "").strip()
-            for connection in conditional_outgoing
-            if str(connection.get("to") or "").strip()
-        }
-
-        if len(unique_targets) <= 1:
-            collapsed_conditional_ids.add(conditional_node_id)
-            for connection in conditional_outgoing:
-                connection["decision"] = ""
-                connection["fromHandle"] = "right"
-                connection["toHandle"] = str(connection.get("toHandle") or "left").strip() or "left"
-            continue
 
         yes_connection = next(
             (conn for conn in conditional_outgoing if str(conn.get("decision") or "") == "sim"),
@@ -1127,6 +1496,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 node["taskDescricao"] = task_description
             node.pop("condicionalNome", None)
             node.pop("condicionalDescricao", None)
+            node.pop("gatewayType", None)
 
         for stage in stages:
             stage_id = str(stage.get("id") or "").strip()
@@ -1314,16 +1684,21 @@ def _sanitize_llm_action(raw_action: Any, fallback_id: int, current_user: dict[s
     payload = payload_raw if isinstance(payload_raw, dict) else {}
 
     if action_type == "create_entidade":
+        entity_name = _sanitize_node_name_by_type(
+            payload.get("nome") or f"Entidade IA {fallback_id}",
+            "entidade",
+            fallback_id,
+        )
+        sanitized_fields = _sanitize_entity_fields(
+            payload.get("campos"),
+            entity_name,
+        )
         payload = {
             "categoria": str(payload.get("categoria") or "IA"),
-            "nome": _sanitize_node_name_by_type(
-                payload.get("nome") or f"Entidade IA {fallback_id}",
-                "entidade",
-                fallback_id,
-            ),
+            "nome": entity_name,
             "descricao": str(payload.get("descricao") or "Entidade sugerida por IA").strip(),
-            "tipoEntidade": str(payload.get("tipoEntidade") or "Processo"),
-            "campos": payload.get("campos") if isinstance(payload.get("campos"), list) else [],
+            "tipoEntidade": _entity_type_label(str(payload.get("tipoEntidade") or ""), fallback_id),
+            "campos": sanitized_fields,
         }
     elif action_type == "create_oportunidade":
         payload = {
@@ -1461,6 +1836,65 @@ def _normalize_entity_type(value: Any, default: str = "apoio") -> str:
         return "externa"
 
     return default
+
+
+def _entity_type_label(normalized_type: str, fallback_index: int) -> str:
+    normalized = _normalize_entity_type(normalized_type, default="")
+    if normalized == "principal":
+        return "Principal"
+    if normalized == "associativa":
+        return "Associativa"
+    if normalized == "externa":
+        return "Externa"
+    if normalized == "apoio":
+        return "Apoio"
+    return "Principal" if fallback_index == 1 else "Apoio"
+
+
+def _extract_goal_data_entities(goal: str) -> list[dict[str, str]]:
+    text = str(goal or "")
+    if not text:
+        return []
+
+    parsed: list[dict[str, str]] = []
+    seen: set[str] = set()
+
+    def add_entity(name_raw: Any, type_raw: Any = ""):
+        name = " ".join(str(name_raw or "").strip().split())
+        if not name:
+            return
+        if len(name) < 2:
+            return
+        key = _normalize_ai_text(name)
+        if not key or key in seen:
+            return
+        seen.add(key)
+        parsed.append(
+            {
+                "nome": name,
+                "tipo": _normalize_entity_type(type_raw, default=""),
+            }
+        )
+
+    # Preferred format: "- Nome da Entidade (Tipo)"
+    for match in re.finditer(
+        r"[-•*]\s*([^\n\r\-\(\)]+?)\s*\((principal|apoio|associativa|externa|primaria|secundaria|auxiliar|externo)\)",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        add_entity(match.group(1), match.group(2))
+
+    # In-text format: "entidade externa Fornecedor" / "entidade Aprovação"
+    for match in re.finditer(
+        r"entidade\s+(principal|associativa|apoio|externa)?\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ0-9\s\-_/]{1,80})",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        entity_type = match.group(1) or ""
+        entity_name = str(match.group(2) or "").split(",", 1)[0].split(".", 1)[0].strip()
+        add_entity(entity_name, entity_type)
+
+    return parsed
 
 
 def _infer_entity_type(
@@ -1640,6 +2074,7 @@ def _ensure_entity_actions(
     process_name: str,
     suggested_entities: list[str],
     existing_entities: list[dict[str, Any]],
+    entity_type_by_name: dict[str, str] | None = None,
 ) -> list[dict[str, Any]]:
     sanitized_actions = [item for item in actions if isinstance(item, dict)]
     existing_create_entities: list[str] = []
@@ -1682,7 +2117,13 @@ def _ensure_entity_actions(
             continue
 
         entity_index = len(existing_create_entities) + len(entity_actions_to_add) + 1
-        entity_kind = "Principal" if entity_index == 1 else "Apoio"
+        normalized_candidate = _normalize_ai_text(candidate_name)
+        preferred_type = (
+            str((entity_type_by_name or {}).get(normalized_candidate) or "").strip()
+            if normalized_candidate
+            else ""
+        )
+        entity_kind = _entity_type_label(preferred_type, entity_index)
         entity_actions_to_add.append(
             {
                 "type": "create_entidade",
@@ -1694,10 +2135,14 @@ def _ensure_entity_actions(
                     "descricao": f"Representa a etapa de entidade do processo: {process_name}",
                     "categoria": "IA",
                     "tipoEntidade": entity_kind,
-                    "campos": _build_default_entity_fields_with_references(
+                    "campos": _sanitize_entity_fields(
+                        [],
                         candidate_name,
-                        entity_index,
-                        full_reference_list,
+                        _build_default_entity_fields_with_references(
+                            candidate_name,
+                            entity_index,
+                            full_reference_list,
+                        ),
                     ),
                 },
             }
@@ -1886,18 +2331,392 @@ def _build_context_panel_suggestion_from_actions(
     }
 
 
+def _normalize_bpmn_ia_decision_label(value: Any, fallback_index: int) -> str:
+    raw = " ".join(str(value or "").strip().split())
+    normalized = _normalize_ai_text(raw)
+    if normalized in {"yes", "sim", "true", "aprovado", "deferido"}:
+        return "sim"
+    if normalized in {"no", "nao", "não", "false", "reprovado", "indeferido"}:
+        return "nao"
+    if raw:
+        return raw[:28]
+    return "sim" if fallback_index == 1 else "nao"
+
+
+def _normalize_bpmn_ia_node_type(raw_type: Any) -> str:
+    normalized = str(raw_type or "").strip().lower()
+    if normalized in {"exclusivegateway", "inclusivegateway", "parallelgateway"}:
+        return "condicional"
+    return "task"
+
+
+def _gateway_type_from_bpmn_ia_type(raw_type: Any) -> str:
+    normalized = str(raw_type or "").strip().lower()
+    if normalized == "parallelgateway":
+        return "and"
+    if normalized == "inclusivegateway":
+        return "or"
+    return "xor"
+
+
+def _build_bpmn_payload_from_bpmn_ia_process(process_name: str, process_elements: list[dict[str, Any]]) -> dict[str, Any]:
+    nodes: list[dict[str, Any]] = []
+    connections: list[dict[str, Any]] = []
+    stages: list[dict[str, Any]] = []
+    seen_nodes: set[str] = set()
+    connection_keys: set[tuple[str, str, str]] = set()
+
+    lane_counter = 0
+
+    def ensure_node(element: dict[str, Any], depth: int, lane: int) -> str:
+        nonlocal lane_counter
+        element_id = str(element.get("id") or f"bpmn-ia-node-{len(nodes) + 1}").strip()
+        if not element_id:
+            element_id = f"bpmn-ia-node-{len(nodes) + 1}"
+
+        if element_id in seen_nodes:
+            return element_id
+
+        raw_type = str(element.get("type") or "task").strip()
+        node_type = _normalize_bpmn_ia_node_type(raw_type)
+
+        raw_label = str(element.get("label") or "").strip()
+        if not raw_label and raw_type == "startEvent":
+            raw_label = "Inicio"
+        if not raw_label and raw_type == "endEvent":
+            raw_label = "Fim do processo"
+        if not raw_label and node_type == "condicional":
+            raw_label = "Decisao"
+        if not raw_label:
+            raw_label = "Atividade"
+
+        label = _sanitize_node_name_by_type(raw_label, node_type, len(nodes) + 1)
+        x = 140 + (depth * 240)
+        y = 120 + (lane * 170)
+
+        node_payload: dict[str, Any] = {
+            "id": element_id,
+            "label": label,
+            "nodeType": node_type,
+            "x": x,
+            "y": y,
+        }
+
+        if node_type == "condicional":
+            cond_desc = _conditional_description_from_name(label)
+            node_payload["condicionalNome"] = label
+            node_payload["condicionalDescricao"] = cond_desc
+            node_payload["gatewayType"] = _gateway_type_from_bpmn_ia_type(raw_type)
+            node_payload["subtitle"] = cond_desc
+        else:
+            task_desc = _activity_description_from_text(raw_label, len(nodes) + 1)
+            node_payload["taskNome"] = label
+            node_payload["taskDescricao"] = task_desc
+            node_payload["subtitle"] = task_desc
+
+        nodes.append(node_payload)
+        stages.append(
+            {
+                "id": element_id,
+                "nome": label,
+                "tipo": "condicional" if node_type == "condicional" else "task",
+                "participante": "",
+            }
+        )
+        seen_nodes.add(element_id)
+        lane_counter = max(lane_counter, lane)
+        return element_id
+
+    def add_connection(from_id: str, to_id: str, decision: str = "") -> None:
+        if not from_id or not to_id or from_id == to_id:
+            return
+        normalized_decision = str(decision or "").strip()
+        key = (from_id, to_id, normalized_decision.lower())
+        if key in connection_keys:
+            return
+        connection_keys.add(key)
+
+        decision_lower = normalized_decision.lower()
+        from_handle = "right"
+        if decision_lower == "nao":
+            from_handle = "bottom"
+
+        connections.append(
+            {
+                "id": f"bpmn-ia-conn-{len(connections) + 1}",
+                "from": from_id,
+                "to": to_id,
+                "fromHandle": from_handle,
+                "toHandle": "left",
+                "decision": normalized_decision,
+            }
+        )
+
+    def walk_sequence(
+        elements: list[dict[str, Any]],
+        previous_ids: list[str],
+        depth: int,
+        lane: int,
+        first_decision: str = "",
+    ) -> list[str]:
+        current_previous = [item for item in previous_ids if item]
+        first_link = True
+
+        for element in elements:
+            if not isinstance(element, dict):
+                continue
+
+            node_id = ensure_node(element, depth, lane)
+            for previous_id in current_previous:
+                add_connection(previous_id, node_id, first_decision if first_link else "")
+
+            first_link = False
+
+            element_type = str(element.get("type") or "").strip().lower()
+            if element_type in {"exclusivegateway", "inclusivegateway", "parallelgateway"}:
+                branches_raw = element.get("branches")
+                branch_elements: list[Any]
+                if isinstance(branches_raw, list):
+                    branch_elements = branches_raw
+                else:
+                    branch_elements = []
+
+                branch_endpoints: list[str] = []
+                for branch_index, branch in enumerate(branch_elements, start=1):
+                    if element_type == "parallelgateway" and isinstance(branch, list):
+                        path = [item for item in branch if isinstance(item, dict)]
+                        decision_label = f"Ramo {branch_index}"
+                    elif isinstance(branch, dict):
+                        path_raw = branch.get("path")
+                        path = [item for item in path_raw if isinstance(item, dict)] if isinstance(path_raw, list) else []
+                        decision_label = _normalize_bpmn_ia_decision_label(branch.get("condition"), branch_index)
+                    else:
+                        continue
+
+                    branch_lane = lane + branch_index
+                    branch_end_ids = walk_sequence(
+                        path,
+                        [node_id],
+                        depth + 1,
+                        branch_lane,
+                        first_decision=decision_label,
+                    )
+                    branch_endpoints.extend(branch_end_ids)
+
+                current_previous = _dedupe_preserve_order(branch_endpoints) if branch_endpoints else [node_id]
+                continue
+
+            current_previous = [node_id]
+
+        return current_previous
+
+    walk_sequence(process_elements, [], depth=0, lane=0)
+
+    payload = {
+        "name": str(process_name or "").strip() or "BPMN gerado por BPMN-IA",
+        "nodes": nodes,
+        "connections": connections,
+        "stages": stages,
+    }
+    return _sanitize_bpmn_payload(payload, 3)
+
+
+def _extract_bpmn_ia_process(raw_bpmn_json: Any) -> list[dict[str, Any]]:
+    if isinstance(raw_bpmn_json, list):
+        return [item for item in raw_bpmn_json if isinstance(item, dict)]
+
+    if isinstance(raw_bpmn_json, dict):
+        raw_process = raw_bpmn_json.get("process")
+        if isinstance(raw_process, list):
+            return [item for item in raw_process if isinstance(item, dict)]
+
+    return []
+
+
+def _build_bpmn_ia_api_keys() -> dict[str, str]:
+    keys: dict[str, str] = {}
+
+    openai_key = str(os.getenv("OPENAI_API_KEY") or "").strip()
+    anthropic_key = str(os.getenv("ANTHROPIC_API_KEY") or "").strip()
+    google_key = str(os.getenv("GEMINI_API_KEY") or "").strip()
+    fireworks_key = str(os.getenv("FIREWORKS_AI_API_KEY") or "").strip()
+
+    if openai_key:
+        keys["openai_api_key"] = openai_key
+    if anthropic_key:
+        keys["anthropic_api_key"] = anthropic_key
+    if google_key:
+        keys["google_api_key"] = google_key
+    if fireworks_key:
+        keys["fireworks_api_key"] = fireworks_key
+
+    return keys
+
+
+def _build_ai_plan_via_bpmn_ia(
+    goal: str,
+    current_user: dict[str, Any],
+    context: dict[str, Any],
+) -> dict[str, Any] | None:
+    if AI_PROVIDER not in {"bpmn_ia", "auto", "hybrid"}:
+        return None
+
+    process_name = str(context.get("processName") or "Processo sugerido pela IA").strip()
+    goal_entities = _extract_goal_data_entities(goal)
+    goal_entity_names = [
+        str(item.get("nome") or "").strip()
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    ]
+    goal_entity_type_by_name = {
+        _normalize_ai_text(item.get("nome")): str(item.get("tipo") or "")
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    }
+
+    suggested_entities = _dedupe_preserve_order([
+        *_extract_suggested_entity_names(context),
+        *[str(name or "").strip() for name in goal_entity_names],
+    ])
+    entity_name = str((suggested_entities[0] if suggested_entities else process_name) or "Entidade IA").strip()
+    general_analysis = _build_general_process_analysis(goal, process_name, entity_name)
+    existing_entities = _extract_existing_entities_context(context)
+
+    message_history = [
+        {
+            "role": "user",
+            "content": goal,
+        }
+    ]
+
+    request_payload = {
+        "message_history": message_history,
+        "process": None,
+        "model": BPMN_IA_MODEL,
+    }
+
+    bpmn_ia_api_keys = _build_bpmn_ia_api_keys()
+    if bpmn_ia_api_keys:
+        request_payload["api_keys"] = bpmn_ia_api_keys
+
+    response = requests.post(
+        f"{BPMN_IA_BASE_URL}/modify",
+        json=request_payload,
+        timeout=AI_LLM_TIMEOUT_SECONDS,
+    )
+    if not response.ok:
+        raise RuntimeError(f"Falha BPMN-IA: HTTP {response.status_code}")
+
+    response_payload = response.json()
+    process_elements = _extract_bpmn_ia_process(response_payload.get("bpmn_json") if isinstance(response_payload, dict) else None)
+    if not process_elements:
+        return None
+
+    bpmn_payload = _build_bpmn_payload_from_bpmn_ia_process(process_name, process_elements)
+    bpmn_payload = _ensure_bpmn_entity_nodes(
+        bpmn_payload,
+        _dedupe_preserve_order([*goal_entity_names]),
+        3,
+    )
+
+    actions: list[dict[str, Any]] = [
+        {
+            "id": "a1",
+            "type": "create_oportunidade",
+            "label": "Criar oportunidade inicial para o fluxo",
+            "risk": "medium",
+            "requiresApproval": True,
+            "payload": _build_default_opportunity_payload(goal, process_name, current_user),
+        },
+        {
+            "id": "a2",
+            "type": "update_bpmn_state",
+            "label": "Atualizar rascunho completo do editor BPMN",
+            "risk": "low",
+            "requiresApproval": True,
+            "payload": bpmn_payload,
+        },
+    ]
+
+    actions = _ensure_entity_actions(
+        actions,
+        process_name,
+        _dedupe_preserve_order([*suggested_entities, *goal_entity_names]),
+        existing_entities,
+        goal_entity_type_by_name,
+    )
+
+    actions = _ensure_core_plan_actions(
+        actions,
+        goal,
+        process_name,
+        current_user,
+        bpmn_payload,
+    )
+
+    matched_existing_entity = _find_matching_existing_entity(
+        [entity_name, process_name, goal],
+        existing_entities,
+    )
+    context_panel = _build_context_panel_suggestion_from_actions(
+        actions,
+        process_name,
+        entity_name,
+        goal,
+        matched_existing_entity,
+    )
+
+    return {
+        "goal": goal,
+        "mode": "supervised",
+        "requiresHumanApproval": True,
+        "generatedAt": now_iso(),
+        "provider": "bpmn_ia",
+        "model": BPMN_IA_MODEL,
+        "generalAnalysis": general_analysis,
+        "actions": actions,
+        "contextPanelSuggestion": context_panel,
+    }
+
+
 def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: dict[str, Any]) -> dict[str, Any] | None:
     if AI_PROVIDER != "openai" or not OPENAI_API_KEY:
         return None
 
     process_name = str(context.get("processName") or "Processo sugerido pela IA").strip()
-    suggested_entities = _extract_suggested_entity_names(context)
+    goal_entities = _extract_goal_data_entities(goal)
+    goal_entity_names = [
+        str(item.get("nome") or "").strip()
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    ]
+    goal_entity_type_by_name = {
+        _normalize_ai_text(item.get("nome")): str(item.get("tipo") or "")
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    }
+    suggested_entities = _dedupe_preserve_order([
+        *_extract_suggested_entity_names(context),
+        *[str(name or "").strip() for name in goal_entity_names],
+    ])
     entity_name = str((suggested_entities[0] if suggested_entities else process_name) or "Entidade IA").strip()
+    general_analysis = _build_general_process_analysis(goal, process_name, entity_name)
     existing_entities = _extract_existing_entities_context(context)
-    fallback_bpmn_payload, fallback_entities = _build_local_bpmn_payload(goal, process_name, entity_name)
+    fallback_bpmn_payload, fallback_entities = _build_local_bpmn_payload(
+        goal,
+        process_name,
+        entity_name,
+        general_analysis,
+    )
 
     system_prompt = (
         "Voce e um planejador operacional para um CRM/BPMN. "
+        "Antes de gerar o diagrama, execute uma analise geral do processo e use essa analise para definir o melhor modelo BPMN. "
+        "Modele com regras estritas: atividade=task (amarelo), decisao=condicional XOR (azul), dados=entidade (verde). "
+        "Todo elemento de fluxo deve estar conectado por setas de fluxo, sem blocos isolados. "
+        "Entidades de dados nao entram na sequencia principal do fluxo; elas devem ser associadas as atividades que usam ou produzem os dados. "
+        "Nao crie entidades soltas sem associacao. "
+        "Cada gateway XOR deve ter exatamente dois ramos principais com semantica Sim/Nao e destinos coerentes. "
         "Retorne SOMENTE JSON valido com este formato: "
         "{\"actions\":[{\"id\":\"a1\",\"type\":\"create_entidade|create_oportunidade|update_bpmn_state\","
         "\"label\":\"...\",\"risk\":\"low|medium|high\",\"payload\":{...}}]}. "
@@ -1925,6 +2744,14 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
                 }
                 for item in existing_entities[:20]
             ],
+            "goalDataEntities": [
+                {
+                    "nome": item.get("nome"),
+                    "tipoEntidade": item.get("tipo"),
+                }
+                for item in goal_entities[:20]
+            ],
+            "generalAnalysis": general_analysis,
             "allowedActionTypes": [
                 "create_entidade",
                 "create_oportunidade",
@@ -1996,6 +2823,7 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         process_name,
         _dedupe_preserve_order([*suggested_entities, *fallback_entities]),
         existing_entities,
+        goal_entity_type_by_name,
     )
 
     sanitized_actions = _ensure_core_plan_actions(
@@ -2005,6 +2833,23 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         current_user,
         fallback_bpmn_payload,
     )
+
+    bpmn_action = next(
+        (
+            action
+            for action in sanitized_actions
+            if str(action.get("type") or "").strip() == "update_bpmn_state"
+            and isinstance(action.get("payload"), dict)
+        ),
+        None,
+    )
+    if bpmn_action is not None:
+        bpmn_payload = bpmn_action.get("payload")
+        bpmn_action["payload"] = _ensure_bpmn_entity_nodes(
+            bpmn_payload if isinstance(bpmn_payload, dict) else {},
+            _dedupe_preserve_order([*goal_entity_names, *fallback_entities]),
+            3,
+        )
 
     if not sanitized_actions:
         return None
@@ -2031,6 +2876,210 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "generatedAt": now_iso(),
         "provider": "openai",
         "model": OPENAI_MODEL,
+        "generalAnalysis": general_analysis,
+        "actions": sanitized_actions,
+        "contextPanelSuggestion": context_panel,
+    }
+
+
+def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: dict[str, Any]) -> dict[str, Any] | None:
+    if AI_PROVIDER != "groq" or not GROQ_API_KEY:
+        return None
+
+    process_name = str(context.get("processName") or "Processo sugerido pela IA").strip()
+    goal_entities = _extract_goal_data_entities(goal)
+    goal_entity_names = [
+        str(item.get("nome") or "").strip()
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    ]
+    goal_entity_type_by_name = {
+        _normalize_ai_text(item.get("nome")): str(item.get("tipo") or "")
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    }
+    suggested_entities = _dedupe_preserve_order([
+        *_extract_suggested_entity_names(context),
+        *[str(name or "").strip() for name in goal_entity_names],
+    ])
+    entity_name = str((suggested_entities[0] if suggested_entities else process_name) or "Entidade IA").strip()
+    general_analysis = _build_general_process_analysis(goal, process_name, entity_name)
+    existing_entities = _extract_existing_entities_context(context)
+    fallback_bpmn_payload, fallback_entities = _build_local_bpmn_payload(
+        goal,
+        process_name,
+        entity_name,
+        general_analysis,
+    )
+
+    system_prompt = (
+        "Voce e um planejador operacional para um CRM/BPMN. "
+        "Antes de gerar o diagrama, execute uma analise geral do processo e use essa analise para definir o melhor modelo BPMN. "
+        "Modele com regras estritas: atividade=task (amarelo), decisao=condicional XOR (azul), dados=entidade (verde). "
+        "Todo elemento de fluxo deve estar conectado por setas de fluxo, sem blocos isolados. "
+        "Entidades de dados nao entram na sequencia principal do fluxo; elas devem ser associadas as atividades que usam ou produzem os dados. "
+        "Nao crie entidades soltas sem associacao. "
+        "Cada gateway XOR deve ter exatamente dois ramos principais com semantica Sim/Nao e destinos coerentes. "
+        "Retorne SOMENTE JSON valido com este formato: "
+        "{\"actions\":[{\"id\":\"a1\",\"type\":\"create_entidade|create_oportunidade|update_bpmn_state\","
+        "\"label\":\"...\",\"risk\":\"low|medium|high\",\"payload\":{...}}]}. "
+        "Nao inclua markdown, comentarios ou texto fora do JSON. "
+        "As acoes devem ser concretas, curtas e executaveis no sistema. "
+        "Nomes de atividade, condicional e entidade devem ser resumidos e completos, sem reticencias. "
+        "Quando houver condicional (XOR), gere ramos com sentido de negocio (sim/nao) e evite decisao sem bifurcacao real. "
+        "Sempre inclua acoes para oportunidade e update_bpmn_state com payload completo (nodes, connections, stages). "
+        "Use somente tipos suportados no BPMN: task, condicional e entidade."
+    )
+
+    user_prompt = {
+        "goal": goal,
+        "context": {
+            "processName": process_name,
+            "entityName": entity_name,
+            "suggestedEntityNames": suggested_entities,
+            "currentUserName": current_user.get("nome"),
+            "currentUserRole": current_user.get("role"),
+            "existingEntities": [
+                {
+                    "nome": item.get("nome"),
+                    "tipoEntidade": item.get("tipoEntidade"),
+                    "campos": item.get("campos"),
+                }
+                for item in existing_entities[:20]
+            ],
+            "goalDataEntities": [
+                {
+                    "nome": item.get("nome"),
+                    "tipoEntidade": item.get("tipo"),
+                }
+                for item in goal_entities[:20]
+            ],
+            "generalAnalysis": general_analysis,
+            "allowedActionTypes": [
+                "create_entidade",
+                "create_oportunidade",
+                "update_bpmn_state",
+            ],
+        },
+        "constraints": {
+            "maxActions": 4,
+            "requiresHumanApproval": True,
+            "nameMaxLengths": {
+                "entityName": AI_ENTITY_NAME_MAX_LENGTH,
+                "taskName": AI_ACTIVITY_NAME_MAX_LENGTH,
+                "conditionalName": AI_CONDITIONAL_NAME_MAX_LENGTH,
+            },
+            "avoidIncompleteNames": True,
+            "decisionRules": {
+                "useMeaningfulQuestionLabels": True,
+                "requireBusinessSemanticsInBranches": True,
+                "avoidDecisionWithSingleEffectivePath": True,
+                "allowConvergingBranchesAfterDifferentSteps": True,
+            },
+        },
+    }
+
+    response = requests.post(
+        "https://api.groq.com/openai/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {GROQ_API_KEY}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": GROQ_MODEL,
+            "temperature": 0.2,
+            "response_format": {"type": "json_object"},
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": json.dumps(user_prompt, ensure_ascii=False)},
+            ],
+        },
+        timeout=AI_LLM_TIMEOUT_SECONDS,
+    )
+
+    if not response.ok:
+        raise RuntimeError(f"Falha LLM Groq: HTTP {response.status_code}")
+
+    response_payload = response.json()
+    payload = response_payload if isinstance(response_payload, dict) else {}
+    choices = payload.get("choices") if isinstance(payload, dict) else []
+    if not isinstance(choices, list) or not choices:
+        raise RuntimeError("Resposta Groq sem choices")
+
+    first = choices[0] if isinstance(choices[0], dict) else {}
+    message = first.get("message") if isinstance(first, dict) else {}
+    content = message.get("content") if isinstance(message, dict) else ""
+    parsed = _extract_json_object(str(content or ""))
+    if not parsed:
+        raise RuntimeError("Resposta Groq sem JSON valido")
+
+    raw_actions_value = parsed.get("actions")
+    raw_actions: list[Any] = raw_actions_value if isinstance(raw_actions_value, list) else []
+    sanitized_actions: list[dict[str, Any]] = []
+    for index, raw_action in enumerate(raw_actions, 1):
+        action = _sanitize_llm_action(raw_action, index, current_user)
+        if action:
+            sanitized_actions.append(action)
+
+    sanitized_actions = _ensure_entity_actions(
+        sanitized_actions,
+        process_name,
+        _dedupe_preserve_order([*suggested_entities, *fallback_entities]),
+        existing_entities,
+        goal_entity_type_by_name,
+    )
+
+    sanitized_actions = _ensure_core_plan_actions(
+        sanitized_actions,
+        goal,
+        process_name,
+        current_user,
+        fallback_bpmn_payload,
+    )
+
+    bpmn_action = next(
+        (
+            action
+            for action in sanitized_actions
+            if str(action.get("type") or "").strip() == "update_bpmn_state"
+            and isinstance(action.get("payload"), dict)
+        ),
+        None,
+    )
+    if bpmn_action is not None:
+        bpmn_payload = bpmn_action.get("payload")
+        bpmn_action["payload"] = _ensure_bpmn_entity_nodes(
+            bpmn_payload if isinstance(bpmn_payload, dict) else {},
+            _dedupe_preserve_order([*goal_entity_names, *fallback_entities]),
+            3,
+        )
+
+    if not sanitized_actions:
+        return None
+
+    matched_existing_entity = _find_matching_existing_entity(
+        [entity_name, process_name, goal],
+        existing_entities,
+    )
+
+    context_panel = _sanitize_context_panel_suggestion(parsed.get("contextPanelSuggestion"))
+    if not context_panel:
+        context_panel = _build_context_panel_suggestion_from_actions(
+            sanitized_actions,
+            process_name,
+            entity_name,
+            goal,
+            matched_existing_entity,
+        )
+
+    return {
+        "goal": goal,
+        "mode": "supervised",
+        "requiresHumanApproval": True,
+        "generatedAt": now_iso(),
+        "provider": "groq",
+        "model": GROQ_MODEL,
+        "generalAnalysis": general_analysis,
         "actions": sanitized_actions,
         "contextPanelSuggestion": context_panel,
     }
@@ -2100,6 +3149,9 @@ def _extract_goal_participants(goal: str) -> list[str]:
             flags=re.IGNORECASE,
         )
         participants.extend(inline_hits)
+
+    activity_pairs = _extract_participant_activity_pairs(text)
+    participants.extend([item.get("participante") or "" for item in activity_pairs])
 
     return _dedupe_preserve_order(participants)[:10]
 
@@ -2186,8 +3238,29 @@ def _extract_goal_steps(goal: str) -> list[str]:
     if not text:
         return []
 
-    flow_match = re.search(r"fluxo do processo\s*:\s*(.+)$", text, flags=re.IGNORECASE | re.DOTALL)
+    activity_pairs = _extract_participant_activity_pairs(text)
+    activity_steps = [
+        f"{str(item.get('participante') or '').strip()}: {str(item.get('descricao') or '').strip()}"
+        for item in activity_pairs
+        if str(item.get("participante") or "").strip()
+        and str(item.get("descricao") or "").strip()
+    ]
+
+    flow_match = re.search(
+        r"fluxo do processo\s*:\s*(.+?)(?:\n\s*entidades?\s+de\s+dados\s*:|\n\s*dados\s+do\s+processo\s*:|$)",
+        text,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    if not flow_match and activity_steps:
+        return _dedupe_preserve_order(activity_steps)[:28]
+
     flow_text = flow_match.group(1) if flow_match else text
+    flow_text = re.split(
+        r"\n\s*(?:entidades?\s+de\s+dados|dados\s+do\s+processo|entidades?)\s*:\s*",
+        flow_text,
+        maxsplit=1,
+        flags=re.IGNORECASE,
+    )[0]
     atomic_candidates = _split_flow_into_atomic_candidates(flow_text)
 
     exploded_steps: list[str] = []
@@ -2217,6 +3290,66 @@ def _extract_goal_steps(goal: str) -> list[str]:
     return _dedupe_preserve_order([item for item in exploded_steps if item])[:28]
 
 
+def _build_general_process_analysis(goal: str, process_name: str, entity_name: str) -> dict[str, Any]:
+    participants = _extract_goal_participants(goal)
+    steps = _extract_goal_steps(goal)
+    goal_entities = _extract_goal_data_entities(goal)
+
+    entity_names = _dedupe_preserve_order(
+        [
+            *[
+                str(item.get("nome") or "").strip()
+                for item in goal_entities
+                if isinstance(item, dict) and str(item.get("nome") or "").strip()
+            ],
+            str(entity_name or "").strip(),
+        ]
+    )
+
+    decision_steps = [step for step in steps if _looks_like_decision_stage(step)]
+    activity_steps = [step for step in steps if _looks_like_activity_stage(step)]
+    data_steps = [step for step in steps if _looks_like_data_stage(step)]
+
+    explicit_yes_no = sum(
+        1
+        for step in steps
+        if re.match(
+            r"^(sim|aprovad[oa]?|deferid[oa]?|n[aã]o|nao|reprovad[oa]?|indeferid[oa]?)\s*[:\-]",
+            str(step),
+            flags=re.IGNORECASE,
+        )
+    )
+
+    model_type = "linear"
+    if decision_steps:
+        model_type = "com_decisoes"
+    if len(decision_steps) >= 2:
+        model_type = "multiplas_decisoes"
+
+    analysis_notes: list[str] = []
+    if not participants:
+        analysis_notes.append("Nao foram identificados participantes explicitos; a IA vai inferir raias pelo contexto.")
+    if not entity_names:
+        analysis_notes.append("Nao foram identificadas entidades explicitas; a IA vai sugerir entidades base do processo.")
+    if decision_steps and explicit_yes_no < 1:
+        analysis_notes.append("Foram detectadas decisoes sem ramos explicitos Sim/Nao; a IA vai completar bifurcacoes validas.")
+    if len(activity_steps) < 2:
+        analysis_notes.append("Poucas atividades detectadas; a IA vai expandir etapas para manter fluxo executavel.")
+
+    return {
+        "processName": str(process_name or "").strip() or "Processo sugerido pela IA",
+        "participants": participants,
+        "steps": steps,
+        "entityNames": entity_names,
+        "modelType": model_type,
+        "decisionCount": len(decision_steps),
+        "activityCount": len(activity_steps),
+        "dataStageCount": len(data_steps),
+        "hasExplicitYesNoBranches": explicit_yes_no >= 1,
+        "notes": analysis_notes,
+    }
+
+
 def _resolve_stage_participant(stage_name: str, participants: list[str], fallback_index: int) -> str:
     stage_lower = str(stage_name or "").lower()
     for participant in participants:
@@ -2227,9 +3360,27 @@ def _resolve_stage_participant(stage_name: str, participants: list[str], fallbac
     return participants[fallback_index % len(participants)]
 
 
-def _build_local_bpmn_payload(goal: str, process_name: str, entity_name: str) -> tuple[dict[str, Any], list[str]]:
-    participants = _extract_goal_participants(goal)
-    steps = _extract_goal_steps(goal)
+def _build_local_bpmn_payload(
+    goal: str,
+    process_name: str,
+    entity_name: str,
+    general_analysis: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], list[str]]:
+    analysis = general_analysis if isinstance(general_analysis, dict) else {}
+
+    analysis_participants_raw = analysis.get("participants")
+    analysis_steps_raw = analysis.get("steps")
+
+    participants = (
+        [str(item).strip() for item in analysis_participants_raw if str(item).strip()]
+        if isinstance(analysis_participants_raw, list)
+        else _extract_goal_participants(goal)
+    )
+    steps = (
+        [str(item).strip() for item in analysis_steps_raw if str(item).strip()]
+        if isinstance(analysis_steps_raw, list)
+        else _extract_goal_steps(goal)
+    )
 
     if not steps:
         steps = [
@@ -2272,6 +3423,10 @@ def _build_local_bpmn_payload(goal: str, process_name: str, entity_name: str) ->
         stage_name = str(stage.get("nome") or f"Etapa {index}").strip()
         stage_type = str(stage.get("tipo") or "task").strip().lower()
         participant = str(stage.get("participante") or "").strip()
+        pair_participant, pair_activity_description = _split_stage_participant_activity(stage_name)
+        if pair_participant:
+            participant = pair_participant
+        effective_activity_description = pair_activity_description or stage_name
 
         lane_index = participant_lane_index.get(participant.lower(), 0)
         y = 120 + (lane_index * 170)
@@ -2283,8 +3438,9 @@ def _build_local_bpmn_payload(goal: str, process_name: str, entity_name: str) ->
             node_label = _build_non_data_stage_name("condicional", stage_name, index)
             description = _build_non_data_stage_description("condicional", stage_name, node_label)
         elif node_type_resolved == "task":
-            node_label = _build_non_data_stage_name("task", stage_name, index)
-            description = _build_non_data_stage_description("task", stage_name, node_label)
+            activity_name = _activity_name_from_description(effective_activity_description, index)
+            node_label = _sanitize_node_name_by_type(activity_name, "task", index)
+            description = _activity_description_from_text(effective_activity_description, index)
         else:
             data_stage_counter += 1
             node_label = _sanitize_node_name_by_type(participant or stage_name, "entidade", index)
@@ -2302,6 +3458,11 @@ def _build_local_bpmn_payload(goal: str, process_name: str, entity_name: str) ->
         if node_type_resolved == "condicional":
             node["condicionalNome"] = node_label
             node["condicionalDescricao"] = description
+            node["gatewayType"] = _infer_gateway_type_from_text(
+                node_label,
+                description,
+                outgoing_count=2,
+            )
         elif node_type_resolved == "task":
             node["taskNome"] = node_label
             node["taskDescricao"] = description
@@ -2388,6 +3549,8 @@ def _build_local_bpmn_payload(goal: str, process_name: str, entity_name: str) ->
         scored_candidates.sort(key=lambda item: (-item[0], item[1]))
         best_score, best_index = scored_candidates[0]
         if best_score <= 0:
+            if prefer_negative:
+                return None
             return start_index if start_index < len(stages) else None
         return best_index
 
@@ -2432,10 +3595,7 @@ def _build_local_bpmn_payload(goal: str, process_name: str, entity_name: str) ->
                 None,
             )
         if no_target_index is None:
-            no_target_index = next(
-                (probe_index for probe_index in range(index + 1, len(nodes)) if probe_index != yes_target_index),
-                None,
-            )
+            no_target_index = None
 
         yes_target_id = (
             str(nodes[yes_target_index].get("id") or "").strip()
@@ -2521,14 +3681,32 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
 
     context_payload = context if isinstance(context, dict) else {}
     process_name = str(context_payload.get("processName") or "Processo sugerido pela IA").strip()
-    suggested_entities = _extract_suggested_entity_names(context_payload)
+    goal_entities = _extract_goal_data_entities(normalized_goal)
+    goal_entity_names = [str(item.get("nome") or "").strip() for item in goal_entities if isinstance(item, dict)]
+    goal_entity_type_by_name = {
+        _normalize_ai_text(item.get("nome")): str(item.get("tipo") or "")
+        for item in goal_entities
+        if isinstance(item, dict) and str(item.get("nome") or "").strip()
+    }
+
+    suggested_entities = _dedupe_preserve_order([
+        *_extract_suggested_entity_names(context_payload),
+        *goal_entity_names,
+    ])
     entity_name = str((suggested_entities[0] if suggested_entities else process_name) or "Entidade IA").strip()
+    general_analysis = _build_general_process_analysis(normalized_goal, process_name, entity_name)
     existing_entities = _extract_existing_entities_context(context_payload)
 
     local_bpmn_payload, local_entities = _build_local_bpmn_payload(
         normalized_goal,
         process_name,
         entity_name,
+        general_analysis,
+    )
+    local_bpmn_payload = _ensure_bpmn_entity_nodes(
+        local_bpmn_payload,
+        _dedupe_preserve_order([*goal_entity_names, *local_entities]),
+        3,
     )
 
     matched_existing_entity = _find_matching_existing_entity(
@@ -2549,7 +3727,10 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
         if _has_exact_existing_entity_name(candidate_name, existing_entities):
             continue
 
-        entity_kind = "Principal" if entity_index == 1 else "Apoio"
+        entity_kind = _entity_type_label(
+            goal_entity_type_by_name.get(_normalize_ai_text(candidate_name), ""),
+            entity_index,
+        )
         entity_actions.append(
             {
                 "id": f"a{len(entity_actions) + 1}",
@@ -2562,10 +3743,14 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
                     "descricao": f"Representa a etapa de entidade do processo: {process_name}",
                     "categoria": "IA",
                     "tipoEntidade": entity_kind,
-                    "campos": _build_default_entity_fields_with_references(
+                    "campos": _sanitize_entity_fields(
+                        [],
                         candidate_name,
-                        entity_index,
-                        candidate_entities,
+                        _build_default_entity_fields_with_references(
+                            candidate_name,
+                            entity_index,
+                            candidate_entities,
+                        ),
                     ),
                 },
             }
@@ -2628,8 +3813,32 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
 
     if not _is_read_only_user(current_user):
         try:
+            bpmn_ia_plan = _build_ai_plan_via_bpmn_ia(
+                normalized_goal,
+                current_user,
+                context_payload,
+            )
+            if bpmn_ia_plan:
+                if not isinstance(bpmn_ia_plan.get("generalAnalysis"), dict):
+                    bpmn_ia_plan["generalAnalysis"] = general_analysis
+                return bpmn_ia_plan
+        except Exception as error:
+            print(f"[WARN] BPMN-IA indisponivel, usando fallback de IA existente: {error}")
+
+        try:
+            groq_plan = _build_ai_plan_via_groq(normalized_goal, current_user, context_payload)
+            if groq_plan:
+                if not isinstance(groq_plan.get("generalAnalysis"), dict):
+                    groq_plan["generalAnalysis"] = general_analysis
+                return groq_plan
+        except Exception as error:
+            print(f"[WARN] Groq indisponivel, tentando OpenAI: {error}")
+
+        try:
             llm_plan = _build_ai_plan_via_openai(normalized_goal, current_user, context_payload)
             if llm_plan:
+                if not isinstance(llm_plan.get("generalAnalysis"), dict):
+                    llm_plan["generalAnalysis"] = general_analysis
                 return llm_plan
         except Exception as error:
             print(f"[WARN] IA LLM indisponivel, usando fallback local: {error}")
@@ -2639,6 +3848,7 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
         "mode": "supervised",
         "requiresHumanApproval": True,
         "generatedAt": now_iso(),
+        "generalAnalysis": general_analysis,
         "actions": actions,
         "contextPanelSuggestion": context_panel_suggestion,
     }
@@ -3725,8 +4935,28 @@ def ai_plan(
     payload: dict = Body(...),
     current_user: dict = Depends(get_current_user),
 ):
-    goal = str(payload.get("goal") or "").strip()
-    context = payload.get("context") if isinstance(payload.get("context"), dict) else {}
+    context_raw = payload.get("context")
+    context: dict[str, Any] = context_raw if isinstance(context_raw, dict) else {}
+
+    raw_goal = str(payload.get("goal") or "").strip()
+    context_process_name = str(context.get("processName") or "").strip()
+    context_description = str(
+        context.get("processDescription")
+        or context.get("description")
+        or context.get("descricao")
+        or ""
+    ).strip()
+
+    goal_parts: list[str] = []
+    lowered_raw_goal = raw_goal.lower()
+    if context_process_name and context_process_name.lower() not in lowered_raw_goal:
+        goal_parts.append(f"Nome do processo: {context_process_name}")
+    if context_description and context_description.lower() not in lowered_raw_goal:
+        goal_parts.append(f"Descricao do processo: {context_description}")
+    if raw_goal:
+        goal_parts.append(raw_goal)
+
+    goal = "\n".join(goal_parts).strip() or context_description or context_process_name
 
     plan = _build_ai_plan(goal, current_user, context)
     audit_record = _append_ai_audit_log(
