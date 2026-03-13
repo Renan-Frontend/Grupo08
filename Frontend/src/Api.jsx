@@ -87,6 +87,9 @@ export const BPMN_EDITOR_STATE_PUT = (body, token) =>
 export const AI_PLAN_POST = (body, token) =>
   createRequest('/ai/plan', 'POST', body, token);
 
+export const AI_PARSE_POST = (body, token) =>
+  createRequest('/ai/parse-description', 'POST', body, token);
+
 export const AI_EXECUTE_POST = (body, token) =>
   createRequest('/ai/execute', 'POST', body, token);
 

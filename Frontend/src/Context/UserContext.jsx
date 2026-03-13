@@ -18,6 +18,7 @@ import {
 export const UserContext = createContext();
 const USER_SESSION_CACHE_KEY = 'user_session_cache_v1';
 const AUTH_REQUEST_TIMEOUT_MS = 8000;
+const LOGIN_REQUEST_TIMEOUT_MS = 12000;
 
 const readCachedUser = () => {
   try {
@@ -79,8 +80,17 @@ export const UserStorage = ({ children }) => {
   const userLogin = useCallback(
     async (username, password) => {
       const { url, options } = TOKEN_POST({ username, password });
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(
+        () => controller.abort(),
+        LOGIN_REQUEST_TIMEOUT_MS,
+      );
+
       try {
-        const res = await fetch(url, options);
+        const res = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error('Usuário ou senha incorretos');
         const data = await res.json();
         const token = data.access_token;
@@ -97,12 +107,19 @@ export const UserStorage = ({ children }) => {
         writeCachedUser(userData);
         return token;
       } catch (error) {
+        if (error?.name === 'AbortError') {
+          throw new Error(
+            'A autenticacao demorou demais. Tente novamente em alguns segundos.',
+          );
+        }
         if (error instanceof TypeError) {
           throw new Error(
             'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
           );
         }
         throw error;
+      } finally {
+        window.clearTimeout(timeoutId);
       }
     },
     [getUser],

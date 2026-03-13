@@ -361,6 +361,13 @@ const GerarBPMNCreate = () => {
       return fallbackName;
     }
 
+    // Prioridade 1: nome vindo do painel de IA (processName ou aiCanvasDraft.name)
+    const aiProcessName =
+      String(location?.state?.aiCanvasDraft?.name || '').trim() ||
+      String(location?.state?.processName || '').trim();
+    if (aiProcessName) return aiProcessName;
+
+    // Prioridade 2: rascunho salvo na sessão
     try {
       const savedName = window.sessionStorage.getItem(
         'bpmn_editor_name_draft:create',
@@ -1507,6 +1514,9 @@ const GerarBPMNCreate = () => {
 
           if ((depthById.get(targetId) ?? 0) < nextDepth) {
             depthById.set(targetId, nextDepth);
+            // Re-enfileira para propagar o caminho mais longo aos filhos
+            const targetNode = nodeList[nodeOrder.get(targetId) ?? -1];
+            if (targetNode) traversalQueue.push(targetNode);
           }
         });
       }
@@ -5270,6 +5280,47 @@ const GerarBPMNCreate = () => {
           ).trim();
           if (firstNodeId) {
             setSelectedNodeId(firstNodeId);
+          }
+
+          // Zoom-to-fit: calcula zoom para caber todos os nós na janela visível
+          const _aiNodes = pendingAiCanvasDraft.nodes;
+          if (_aiNodes.length > 0) {
+            requestAnimationFrame(() => {
+              const viewport = viewportRef.current;
+              if (!viewport) return;
+              const _CW = 220,
+                _CH = 110;
+              const _xs = _aiNodes.map((n) => Number(n.x) || 0);
+              const _ys = _aiNodes.map((n) => Number(n.y) || 0);
+              const _minX = Math.min(..._xs);
+              const _minY = Math.min(..._ys);
+              const _maxX = Math.max(..._xs) + _CW;
+              const _maxY = Math.max(..._ys) + _CH;
+              const _cw = Math.max(320, _maxX - _minX + 200);
+              const _ch = Math.max(180, _maxY - _minY + 160);
+              const _aw = Math.max(260, viewport.clientWidth - 60);
+              const _ah = Math.max(220, viewport.clientHeight - 60);
+              const _fz = Number(
+                Math.max(
+                  0.45,
+                  Math.min(1, Math.min(_aw / _cw, _ah / _ch)),
+                ).toFixed(2),
+              );
+              setZoom(_fz);
+              setZoomButtonDirection(_fz <= 0.45 ? 1 : -1);
+              requestAnimationFrame(() => {
+                const _cx = _minX + (_maxX - _minX) / 2;
+                const _cy = _minY + (_maxY - _minY) / 2;
+                viewport.scrollLeft = Math.max(
+                  0,
+                  _cx * _fz - viewport.clientWidth / 2,
+                );
+                viewport.scrollTop = Math.max(
+                  0,
+                  _cy * _fz - viewport.clientHeight / 2,
+                );
+              });
+            });
           }
         }
 

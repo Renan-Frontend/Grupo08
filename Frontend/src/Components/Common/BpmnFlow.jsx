@@ -11,10 +11,42 @@ const isPrimaryPointerButton = (event) =>
   event.button === undefined || event.button === 0;
 
 const getOrthogonalPolylinePoints = (x1, y1, x2, y2, fromHandle = 'right') => {
-  const usesVerticalFirst = fromHandle === 'top' || fromHandle === 'bottom';
-  const elbowX = usesVerticalFirst ? x1 : x2;
-  const elbowY = usesVerticalFirst ? y2 : y1;
-  return `${x1},${y1} ${elbowX},${elbowY} ${x2},${y2}`;
+  const GAP = 40; // margem mínima de roteamento fora dos nós
+  const CARD_H = 110; // altura do card — garante que o trecho horizontal fique fora dos retângulos
+  const vertical = fromHandle === 'top' || fromHandle === 'bottom';
+
+  if (vertical) {
+    // Mesmo eixo X → linha reta (sem cruzamento possível)
+    if (Math.abs(x1 - x2) < 2) {
+      return `${x1},${y1} ${x2},${y2}`;
+    }
+    // Conexão cruzando colunas (ex.: ramo SIM saindo pela base do condicional):
+    // empurra o trecho horizontal para FORA da faixa Y dos dois nós conectados,
+    // evitando cruzar retângulos intermediários (ex.: ramo NAO na mesma linha).
+    let midY;
+    if (fromHandle === 'bottom') {
+      // Sai pela base: se o alvo está acima ou na mesma altura, desce mais antes de cruzar
+      midY = y2 < y1 ? y1 + CARD_H : y1 + (y2 - y1) / 2;
+    } else {
+      // Sai pelo topo: se o alvo está abaixo ou na mesma altura, sobe mais antes de cruzar
+      midY = y2 > y1 ? y1 - CARD_H : y1 + (y2 - y1) / 2;
+    }
+    return `${x1},${y1} ${x1},${midY} ${x2},${midY} ${x2},${y2}`;
+  }
+
+  // Fluxo horizontal (right→left, left→right):
+  if (Math.abs(y1 - y2) < 2) {
+    // Mesma altura — linha reta
+    return `${x1},${y1} ${x2},${y2}`;
+  }
+  if (x2 > x1) {
+    // Alvo está à direita — L simples
+    return `${x1},${y1} ${x2},${y1} ${x2},${y2}`;
+  }
+  // Alvo está à esquerda de onde saímos (right handle) — rota U para evitar cruzar nós:
+  // sai para direita GAP pixels, desce/sobe até a altura do alvo, entra pela esquerda
+  const routeX = Math.max(x1, x2) + GAP;
+  return `${x1},${y1} ${routeX},${y1} ${routeX},${y2} ${x2},${y2}`;
 };
 
 const getHandlePoint = (node, handle = 'left') => {

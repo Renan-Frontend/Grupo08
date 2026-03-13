@@ -131,7 +131,8 @@ function AppContent() {
               path="/gerarbpmn/*"
               element={<Navigate to="/gerar-bpmn" replace />}
             />
-            <Route path="/ia" element={<IA />} />
+            <Route path="/ia" element={<IA key="ia-intro" />} />
+            <Route path="/ia/configurar" element={<IA key="ia-configurar" />} />
             <Route
               path="/recomendacoes"
               element={<Navigate to="/ia" replace />}

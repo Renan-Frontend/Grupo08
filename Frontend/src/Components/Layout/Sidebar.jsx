@@ -84,7 +84,9 @@ const Sidebar = ({ onNavigateItem }) => {
             </div>
             <div className={styles.addButtonWrapper}></div>
           </li>
-          <li className={`${styles.menuItem} ${isActive('/ia')}`}>
+          <li
+            className={`${styles.menuItem} ${location.pathname.startsWith('/ia') ? styles.active : ''}`}
+          >
             <div
               className={styles.menuItemContent}
               onClick={() => handleNavigation('/ia')}

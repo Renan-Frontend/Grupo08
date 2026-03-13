@@ -42,7 +42,7 @@ ENTIDADES_TABLE = "entidades_store"
 OPORTUNIDADES_TABLE = "oportunidades_store"
 AI_AUDIT_TABLE = "ai_audit_store"
 AI_MAX_ACTIONS_PER_MINUTE = int(os.getenv("AI_MAX_ACTIONS_PER_MINUTE", "20"))
-AI_PROVIDER = os.getenv("AI_PROVIDER", "bpmn_ia").strip().lower() or "bpmn_ia"
+AI_PROVIDER = os.getenv("AI_PROVIDER", "groq").strip().lower() or "groq"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini").strip() or "gpt-4o-mini"
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
@@ -556,7 +556,8 @@ def _build_non_data_stage_name(stage_type: str, stage_name: str, index: int) -> 
         return f"Atividade {index}"
 
     base = re.sub(r"^\d+[\.)]\s*", "", raw_text)
-    base = re.sub(r"^decis[aã]o\s*:?\s*", "", base, flags=re.IGNORECASE).strip()
+    base = re.sub(r"^(decis[aã]o(\s*xor)?|condicional|gateway)\s*:?\s*", "", base, flags=re.IGNORECASE).strip()
+    base = re.sub(r"\s*\(xor\)\s*", " ", base, flags=re.IGNORECASE).strip()
     base = base.strip(" .;,-")
 
     if normalized_type == "condicional" and "?" in base:
@@ -585,7 +586,7 @@ def _build_non_data_stage_name(stage_type: str, stage_name: str, index: int) -> 
                 raw_text,
                 flags=re.IGNORECASE,
             )
-            cleaned = re.sub(r"\s+", " ", cleaned).strip(" .;,-")
+            cleaned = re.sub(r"\s+", " ", cleaned).strip(" .;,:-")
 
             if cleaned:
                 candidate = cleaned if "?" in cleaned else f"{cleaned}?"
@@ -1065,6 +1066,228 @@ def _infer_data_entity_type(stage_name: str, participant: str = "", default: str
     return default
 
 
+def _inject_entity_nodes_into_bpmn(
+    nodes: list[dict[str, Any]],
+    connections: list[dict[str, Any]],
+    entity_names: list[str],
+    fallback_id: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Garante que cada entidade identificada aparece como node verde no BPMN,
+    conectada à task mais relevante."""
+    if not entity_names:
+        return nodes, connections
+
+    existing_entity_labels = {
+        _normalize_ai_text(n.get("label") or "")
+        for n in nodes
+        if str(n.get("nodeType") or "") == "entidade"
+    }
+
+    task_nodes = [n for n in nodes if str(n.get("nodeType") or "") == "task"]
+
+    injected_connections = list(connections)
+    injected_nodes = list(nodes)
+    entity_counter = 0
+
+    for entity_name in entity_names:
+        norm_name = _normalize_ai_text(entity_name)
+        if not norm_name or norm_name in existing_entity_labels:
+            continue
+
+        entity_counter += 1
+        entity_id = f"ai-entity-injected-{fallback_id}-{entity_counter}"
+
+        # Encontra a task mais relacionada (pelo nome)
+        best_task = None
+        best_score = 0
+        entity_words = set(norm_name.split())
+        for task in task_nodes:
+            task_label = _normalize_ai_text(task.get("label") or "")
+            task_words = set(task_label.split())
+            score = len(entity_words & task_words)
+            if score > best_score:
+                best_score = score
+                best_task = task
+
+        # Se nenhuma task relacionada, usa a primeira task do fluxo
+        if not best_task and task_nodes:
+            best_task = task_nodes[min(1, len(task_nodes) - 1)]  # segunda task (pós-início)
+
+        entity_node: dict[str, Any] = {
+            "id": entity_id,
+            "label": entity_name,
+            "nodeType": "entidade",
+            "entidadeNome": entity_name,
+            "tipoEntidade": "principal" if entity_counter == 1 else "apoio",
+            "x": float(best_task.get("x") or 100) if best_task else float(100 + entity_counter * 300),
+            "y": float(best_task.get("y") or 200) if best_task else 200.0,
+            "campos": [
+                {"nome": f"id_{_normalize_ai_text(entity_name).replace(' ', '_')}", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
+                {"nome": "nome", "tipo": "texto", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+                {"nome": "descricao", "tipo": "texto", "obrigatorio": False, "keyType": "NORMAL", "relacionamento": None},
+                {"nome": "data_criacao", "tipo": "data", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+            ],
+        }
+
+        injected_nodes.append(entity_node)
+        existing_entity_labels.add(norm_name)
+
+        if best_task:
+            conn_id = f"ai-conn-entity-{fallback_id}-{entity_counter}"
+            injected_connections.append({
+                "id": conn_id,
+                "from": str(best_task.get("id") or ""),
+                "to": entity_id,
+                "fromHandle": "right",
+                "toHandle": "left",
+                "decision": "",
+            })
+
+    return injected_nodes, injected_connections
+
+
+def _auto_layout_bpmn_nodes(
+    nodes: list[dict[str, Any]],
+    connections: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Recalcula x/y dos nodes com row-wrapping: no máximo MAX_PER_ROW por linha."""
+    if not nodes:
+        return nodes
+
+    # Se todos os nodes já têm posições pré-calculadas, respeita-as (layout direto pelo flowOrder)
+    if all("x" in n and "y" in n for n in nodes):
+        return nodes
+
+    node_ids = [str(n.get("id") or "") for n in nodes]
+    node_map = {str(n.get("id") or ""): n for n in nodes}
+    all_ids = [nid for nid in node_ids if nid]
+
+    # Grafo de fluxo
+    outgoing: dict[str, list[tuple[str, str]]] = {nid: [] for nid in all_ids}
+    incoming: dict[str, list[str]] = {nid: [] for nid in all_ids}
+    for conn in connections:
+        src = str(conn.get("from") or "")
+        dst = str(conn.get("to") or "")
+        decision = str(conn.get("decision") or "")
+        if src in outgoing and dst in outgoing:
+            outgoing[src].append((dst, decision))
+            incoming[dst].append(src)
+
+    # Raiz = nodes sem predecessores
+    roots = [nid for nid in all_ids if not incoming.get(nid)]
+    if not roots:
+        roots = all_ids[:1]
+
+    # Longest-path BFS: col = posição sequencial máxima alcançable a partir da raiz
+    col_by_id: dict[str, int] = {}
+    branch_by_id: dict[str, str] = {}
+    queue: list[tuple[str, int, str]] = [(roots[0], 0, "sim")]
+    max_iter = max(len(all_ids) ** 2, 256)
+    iterations = 0
+    while queue and iterations < max_iter:
+        iterations += 1
+        nid, col, branch = queue.pop(0)
+        if col <= col_by_id.get(nid, -1):
+            continue
+        col_by_id[nid] = col
+        branch_by_id[nid] = branch
+        for child_id, decision in outgoing.get(nid, []):
+            child_branch = "nao" if decision == "nao" else branch
+            queue.append((child_id, col + 1, child_branch))
+
+    # Nodes desconectados ficam ao final
+    max_col = max(col_by_id.values(), default=0)
+    for nid in all_ids:
+        if nid not in col_by_id:
+            max_col += 1
+            col_by_id[nid] = max_col
+            branch_by_id[nid] = "sim"
+
+    # Resolve colisões
+    from collections import Counter
+    used: Counter = Counter()
+    for nid in sorted(all_ids, key=lambda n: col_by_id.get(n, 0)):
+        col = col_by_id[nid]
+        br = branch_by_id[nid]
+        key = (col, br)
+        while used[key] > 0:
+            col += 1
+            col_by_id[nid] = col
+            key = (col, br)
+        used[key] += 1
+
+    # Constantes de layout — fluxo de CIMA para BAIXO
+    MAX_PER_COL = 5       # nodes por coluna antes de quebrar para a próxima
+    X_MAIN_BASE = 160
+    X_COL_GAP = 380       # espaço horizontal entre colunas do fluxo principal
+    X_NAO_OFFSET = 320    # quanto à direita fica o ramo "nao"
+    Y_START = 80
+    Y_STEP = 220          # espaço vertical entre nodes
+
+    # Primeiro passo: calcula posições base para todos os nodes
+    pos: dict[str, tuple[float, float]] = {}
+    for nid in all_ids:
+        col = col_by_id[nid]
+        branch = branch_by_id.get(nid, "sim")
+        page_col = col // MAX_PER_COL
+        row_in_col = col % MAX_PER_COL
+        x_main = X_MAIN_BASE + page_col * X_COL_GAP
+        x = x_main + (X_NAO_OFFSET if branch == "nao" else 0)
+        y = Y_START + row_in_col * Y_STEP
+        pos[nid] = (x, y)
+
+    # Segundo passo: alinha nodes NAO ao Y do seu condicional de origem
+    # para que fiquem lado a lado e não distantes verticalmente
+    for conn in connections:
+        if str(conn.get("decision") or "") == "nao":
+            src = str(conn.get("from") or "")
+            dst = str(conn.get("to") or "")
+            if src in pos and dst in pos:
+                # mesma altura (Y) que o condicional, X já foi calculado à direita
+                pos[dst] = (pos[dst][0], pos[src][1])
+
+    # Terceiro passo: resolve sobreposições reais de retângulos.
+    # Agrupa nodes por X aproximado e, dentro de cada grupo, empurra para baixo
+    # qualquer node que se sobreponha ao anterior (ordenados por Y).
+    CARD_W = 220.0   # largura real do card (deve bater com CARD_WIDTH no frontend)
+    CARD_H = 110.0   # altura real do card
+    PAD_X = 20.0     # espaço mínimo horizontal entre cards
+    PAD_Y = 20.0     # espaço mínimo vertical entre cards
+
+    def overlaps(ax: float, ay: float, bx: float, by: float) -> bool:
+        return (abs(ax - bx) < CARD_W + PAD_X) and (abs(ay - by) < CARD_H + PAD_Y)
+
+    # Itera várias vezes até não haver mais sobreposições (max 10 rounds)
+    for _ in range(10):
+        changed = False
+        # Ordena por Y para processar de cima para baixo
+        sorted_ids = sorted(all_ids, key=lambda n: (round(pos[n][0] / 50), pos[n][1]))
+        for i in range(len(sorted_ids)):
+            for j in range(i + 1, len(sorted_ids)):
+                na, nb = sorted_ids[i], sorted_ids[j]
+                ax, ay = pos[na]
+                bx, by = pos[nb]
+                if overlaps(ax, ay, bx, by):
+                    # Empurra nb para baixo (ou para a direita se mesmo Y)
+                    if abs(ax - bx) < PAD_X:
+                        # Mesmo X: empurra para baixo
+                        new_by = ay + CARD_H + PAD_Y
+                        pos[nb] = (bx, new_by)
+                    else:
+                        # X diferente mas sobreposição horizontal: empurra X para direita
+                        new_bx = ax + CARD_W + PAD_X
+                        pos[nb] = (new_bx, by)
+                    changed = True
+        if not changed:
+            break
+
+    for nid in all_ids:
+        node = node_map[nid]
+        node["x"], node["y"] = pos[nid]
+
+    return nodes
+
+
 def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[str, Any]:
     name = str(payload.get("name") or "BPMN gerado por IA").strip()
 
@@ -1134,8 +1357,22 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
         if not node_id or node_id in node_ids:
             continue
 
-        node_type_candidate = str(raw_node.get("nodeType") or "").strip().lower()
-        node_type = _stage_type_to_node_type(node_type_candidate or "dados")
+        # Remove nodes que a IA gera incorretamente com nomes de ramo de decisão
+        _DECISION_ONLY_LABELS = {
+            "sim", "nao", "não", "yes", "no",
+            "caminho sim", "caminho nao", "caminho não",
+            "ramo sim", "ramo nao", "ramo não",
+            "path sim", "path nao", "path não",
+        }
+        raw_label_check = str(raw_node.get("label") or raw_node.get("nome") or raw_node.get("name") or "").strip().lower()
+        if raw_label_check in _DECISION_ONLY_LABELS:
+            continue
+        # Remove nós sintéticos de encerramento gerados incorretamente pelo fallback
+        if re.match(r"^encerrar\s*[\(\[]", raw_label_check) or re.match(r"^fim\s*[\(\[]", raw_label_check):
+            continue
+
+        node_type_candidate = str(raw_node.get("nodeType") or raw_node.get("type") or "").strip().lower()
+        node_type = _stage_type_to_node_type(node_type_candidate) if node_type_candidate else "task"
 
         raw_label = str(
             raw_node.get("label") or raw_node.get("nome") or raw_node.get("name") or ""
@@ -1222,6 +1459,25 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             raw_subtitle = str(raw_node.get("subtitle") or "").strip()
             if raw_subtitle:
                 node_payload["subtitle"] = raw_subtitle
+            # Preserva campos gerados pela IA
+            raw_campos = raw_node.get("campos")
+            if isinstance(raw_campos, list) and raw_campos:
+                sanitized_campos = []
+                for fi, field in enumerate(raw_campos, 1):
+                    if not isinstance(field, dict):
+                        continue
+                    field_name = str(field.get("nome") or "").strip()
+                    if not field_name:
+                        continue
+                    sanitized_campos.append({
+                        "nome": field_name,
+                        "tipo": str(field.get("tipo") or "texto").strip().lower(),
+                        "obrigatorio": field.get("obrigatorio") is True or str(field.get("obrigatorio") or "").lower() == "sim",
+                        "keyType": str(field.get("keyType") or field.get("chave") or "NORMAL").strip().upper(),
+                        "relacionamento": str(field.get("relacionamento") or "").strip() or None,
+                    })
+                if sanitized_campos:
+                    node_payload["campos"] = sanitized_campos
 
         nodes.append(node_payload)
         node_ids.add(node_id)
@@ -1528,6 +1784,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             )
 
     nodes, connections = _ensure_terminal_end_node(nodes, connections, fallback_id)
+    nodes = _auto_layout_bpmn_nodes(nodes, connections)
 
     return {
         "name": name,
@@ -2113,8 +2370,6 @@ def _ensure_entity_actions(
             _normalize_ai_text(name) for name in existing_create_entities
         }:
             continue
-        if _has_exact_existing_entity_name(candidate_name, existing_entities):
-            continue
 
         entity_index = len(existing_create_entities) + len(entity_actions_to_add) + 1
         normalized_candidate = _normalize_ai_text(candidate_name)
@@ -2133,7 +2388,7 @@ def _ensure_entity_actions(
                 "payload": {
                     "nome": candidate_name,
                     "descricao": f"Representa a etapa de entidade do processo: {process_name}",
-                    "categoria": "IA",
+                    "categoria": process_name,
                     "tipoEntidade": entity_kind,
                     "campos": _sanitize_entity_fields(
                         [],
@@ -2881,6 +3136,186 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
     }
 
 
+def _default_entity_campos(entity_label: str) -> list[dict[str, Any]]:
+    norm = re.sub(r"[^a-z0-9]", "_", _normalize_ai_text(entity_label)).strip("_")
+    return [
+        {"nome": f"id_{norm}", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
+        {"nome": "nome", "tipo": "texto", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+        {"nome": "descricao", "tipo": "texto", "obrigatorio": False, "keyType": "NORMAL", "relacionamento": None},
+        {"nome": "data_criacao", "tipo": "data", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+    ]
+
+
+def _normalize_goal_for_bpmn_parse(goal: str) -> str:
+    """Extrai e normaliza o fluxo do goal para que _build_bpmn_from_flow_steps e o Groq
+    recebam cada parte '->' em sua própria linha, com Sim/Nao em linhas indentadas.
+    Remove os prefixos 'Nome do processo:' e 'Fluxo do processo:'.
+    """
+    text = str(goal or "").strip()
+
+    # Extrai só o texto depois de 'Fluxo do processo:' se presente
+    m = re.search(r'Fluxo do processo:\s*', text, re.IGNORECASE)
+    if m:
+        text = text[m.end():]
+
+    # Remove prefixo 'Nome do processo: X' no início se restar
+    text = re.sub(r'^Nome do processo:[^\n]*\n?', '', text, flags=re.IGNORECASE).strip()
+
+    # Insere newline antes de ramos Sim/Nao que estão no meio da linha
+    text = re.sub(r'\s+(Sim\s*->)', r'\n  Sim ->', text, flags=re.IGNORECASE)
+    text = re.sub(r'\s+(N[aã]o\s*->)', r'\n  Nao ->', text, flags=re.IGNORECASE)
+
+    return text.strip()
+
+
+
+def _build_bpmn_from_flow_steps(
+    goal: str,
+    entity_names: list[str],
+    process_name: str,
+    fallback_id: int,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Gera nodes e connections diretamente do formato '->' sem depender de LLM.
+    Regras:
+    - Cada parte separada por '->' vira um node.
+    - Linha começando com 'Sim ->' ou 'Nao ->' inicia um ramo do condicional mais recente.
+    - Condicional detectado por label terminando em '?'.
+    - Entidade detectada quando label normalizado bate com entity_names.
+    - Resto é task.
+    """
+    entity_norm_map: dict[str, str] = {_normalize_ai_text(e): e for e in (entity_names or [])}
+    nodes: list[dict[str, Any]] = []
+    connections: list[dict[str, Any]] = []
+    node_counter = 0
+    conn_counter = 0
+
+    def add_conn(from_id: str, to_id: str, decision: str = "") -> None:
+        nonlocal conn_counter
+        conn_counter += 1
+        connections.append({
+            "id": f"c{fallback_id}_{conn_counter}",
+            "from": from_id,
+            "to": to_id,
+            "fromHandle": "bottom" if decision == "nao" else "right",
+            "toHandle": "left",
+            "decision": decision,
+        })
+
+    def classify(label: str) -> tuple[str, str]:
+        """Returns (nodeType, canonical_label)."""
+        norm = _normalize_ai_text(label)
+        if label.rstrip().endswith("?"):
+            return "condicional", label
+        if norm in entity_norm_map:
+            return "entidade", entity_norm_map[norm]
+        return "task", label
+
+    # cond_stack: list of {id, sim_done, nao_done}
+    cond_stack: list[dict[str, Any]] = []
+    prev_id: str | None = None
+
+    for raw_line in (goal or "").split("\n"):
+        stripped = raw_line.strip()
+        if not stripped or re.match(r"^(fluxo|entidade|nome do processo)", stripped, re.IGNORECASE):
+            continue
+
+        branch = ""
+        m = re.match(r"^(Sim|Nao|N\u00e3o)\s*->\s*", stripped, re.IGNORECASE)
+        if m:
+            token = m.group(1).strip().lower()
+            branch = "sim" if token == "sim" else "nao"
+            stripped = stripped[m.end():]
+
+        parts = [p.strip() for p in stripped.split("->") if p.strip()]
+        line_first = True
+
+        for part in parts:
+            node_counter += 1
+            node_id = f"n{fallback_id}_{node_counter}"
+            ntype, canonical_label = classify(part)
+
+            node: dict[str, Any] = {
+                "id": node_id,
+                "label": canonical_label,
+                "nodeType": ntype,
+                "x": 100.0,
+                "y": 200.0,
+            }
+            if ntype == "entidade":
+                node["campos"] = _default_entity_campos(canonical_label)
+            nodes.append(node)
+
+            # Build connection
+            if line_first and branch:
+                # First node in a Sim/Nao branch → connect from right conditional
+                target_cond: dict[str, Any] | None = None
+                for c in reversed(cond_stack):
+                    key = f"{branch}_done"
+                    if not c.get(key):
+                        target_cond = c
+                        c[key] = True
+                        break
+                if target_cond:
+                    add_conn(target_cond["id"], node_id, branch)
+                prev_id = node_id
+            else:
+                if prev_id is not None:
+                    add_conn(prev_id, node_id, "")
+                prev_id = node_id
+
+            if ntype == "condicional":
+                cond_stack.append({"id": node_id, "sim_done": False, "nao_done": False})
+
+            line_first = False
+
+    return nodes, connections
+
+
+def _parse_goal_to_flow_steps(
+    goal: str,
+    entity_names: list[str],
+) -> list[dict[str, str]]:
+    """Parse '->'/indent flow notation into an ordered typed step list for the LLM.
+    Each '->' separator becomes a separate node. Lines starting with 'Sim ->' or 'Nao ->'
+    are tagged with the corresponding branch.
+    """
+    entity_norm_map: dict[str, str] = {_normalize_ai_text(e): e for e in (entity_names or [])}
+    steps: list[dict[str, str]] = []
+
+    for raw_line in (goal or "").split("\n"):
+        line = raw_line.strip()
+        if not line:
+            continue
+        if re.match(r"^(fluxo|entidade)", line, re.IGNORECASE):
+            continue
+
+        branch = ""
+        m = re.match(r"^(Sim|Nao|N\u00e3o)\s*->\s*", line, re.IGNORECASE)
+        if m:
+            token = m.group(1).strip().lower()
+            branch = "sim" if token == "sim" else "nao"
+            line = line[m.end():]
+
+        for part in [p.strip() for p in line.split("->") if p.strip()]:
+            norm = _normalize_ai_text(part)
+            if part.rstrip().endswith("?"):
+                ntype = "condicional"
+                canonical = part
+            elif norm in entity_norm_map:
+                ntype = "entidade"
+                canonical = entity_norm_map[norm]
+            else:
+                ntype = "task"
+                canonical = part
+
+            step: dict[str, str] = {"label": canonical, "nodeType": ntype}
+            if branch:
+                step["branch"] = branch
+            steps.append(step)
+
+    return steps
+
+
 def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: dict[str, Any]) -> dict[str, Any] | None:
     if AI_PROVIDER != "groq" or not GROQ_API_KEY:
         return None
@@ -2911,71 +3346,209 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         general_analysis,
     )
 
+    # Atividades e condicionais informadas pelo usuário via frontend
+    raw_activities = context.get("suggestedActivities")
+    suggested_activities: list[str] = [
+        str(a).strip() for a in (raw_activities if isinstance(raw_activities, list) else [])
+        if str(a).strip()
+    ]
+    raw_conditionals = context.get("suggestedConditionals")
+    suggested_conditionals: list[str] = [
+        str(c).strip() if str(c).strip().endswith("?") else str(c).strip() + "?"
+        for c in (raw_conditionals if isinstance(raw_conditionals, list) else [])
+        if str(c).strip()
+    ]
+
+    # Normaliza o goal inserindo newlines antes de Sim/Nao e cabeçalhos
+    normalized_flow = _normalize_goal_for_bpmn_parse(goal)
+
+    # flowOrder: lista de nomes na sequência definida pelo usuário via UI
+    # Items podem ser strings (legado) ou objetos {name, type, desc}
+    raw_flow_order = context.get("flowOrder")
+    flow_order_raw = raw_flow_order if isinstance(raw_flow_order, list) else []
+
+    def _fo_name(item: Any) -> str:
+        if isinstance(item, dict):
+            return str(item.get("name") or "").strip()
+        return str(item or "").strip()
+
+    def _fo_desc(item: Any) -> str:
+        if isinstance(item, dict):
+            return str(item.get("desc") or "").strip()
+        return ""
+
+    flow_order: list[str] = [_fo_name(i) for i in flow_order_raw if _fo_name(i)]
+    flow_order_descs: dict[str, str] = {
+        _fo_name(i): _fo_desc(i) for i in flow_order_raw if _fo_name(i) and _fo_desc(i)
+    }
+
+    # Fallback Python: usa flowOrder se disponível, depois synthetic de activities, depois normalized_flow
+    synthetic_flow: str = ""
+    if flow_order:
+        synthetic_flow = " -> ".join(flow_order)
+        python_nodes, python_connections = _build_bpmn_from_flow_steps(synthetic_flow, suggested_entities, process_name, 3)
+        print(f"[GROQ] flow_order ({len(flow_order)} items): {synthetic_flow[:120]}")
+    elif suggested_activities and "->" not in normalized_flow:
+        # Intercala activities e conditionals em ordem sequencial
+        acts = list(suggested_activities)
+        conds = list(suggested_conditionals)
+        items: list[str] = []
+        cond_interval = max(1, len(acts) // (len(conds) + 1)) if conds else len(acts)
+        cond_idx = 0
+        for i, act in enumerate(acts):
+            items.append(act)
+            if conds and cond_idx < len(conds) and (i + 1) % cond_interval == 0:
+                items.append(conds[cond_idx])
+                cond_idx += 1
+        items.extend(conds[cond_idx:])  # condicionais restantes
+        synthetic_flow = " -> ".join(items)
+        python_nodes, python_connections = _build_bpmn_from_flow_steps(synthetic_flow, suggested_entities, process_name, 3)
+        print(f"[GROQ] synthetic_flow: {synthetic_flow[:120]}")
+    else:
+        python_nodes, python_connections = _build_bpmn_from_flow_steps(normalized_flow, suggested_entities, process_name, 3)
+    print(f"[GROQ] python_nodes={len(python_nodes)} | flow_preview: {normalized_flow[:120]}")
+
+    # Constrói flowOrder tipado: cada item tem {name, type} para Groq usar diretamente
+    _cond_norm_set = {_normalize_ai_text(c) for c in suggested_conditionals if c}
+    _entity_norm_set_pre = {_normalize_ai_text(e) for e in suggested_entities if e}
+
+    def _classify_flow_item(name: str) -> str:
+        norm = _normalize_ai_text(name)
+        if norm in _cond_norm_set:
+            return "condicional"
+        if norm in _entity_norm_set_pre:
+            return "entidade"
+        if name.rstrip().endswith("?"):
+            return "condicional"
+        return "task"
+
+    # Usa o type vindo do frontend diretamente (confiável), com _classify_flow_item como fallback
+    def _fo_type(raw_item: Any) -> str:
+        if isinstance(raw_item, dict):
+            t = str(raw_item.get("type") or "").strip()
+            if t in ("task", "condicional", "entidade"):
+                return t
+        return ""
+
+    typed_flow_order = []
+    for raw_item in flow_order_raw:
+        name = _fo_name(raw_item)
+        if not name:
+            continue
+        fo_type = _fo_type(raw_item) or _classify_flow_item(name)
+        desc = _fo_desc(raw_item)
+        entry: dict[str, Any] = {"name": name, "type": fo_type}
+        if desc:
+            entry["desc"] = desc
+        typed_flow_order.append(entry)
+
+    # Few-shot example: ensina o Groq com um exemplo concreto de input → output
+    _fs_input = json.dumps({
+        "processName": "Pedido de Servico",
+        "entityNames": ["Funcionario", "Pedido", "Entrega"],
+        "activityNames": ["Registrar pedido", "Rejeitar pedido", "Executar pedido", "Confirmar entrega"],
+        "conditionalNames": ["Pedido aprovado?"],
+        "flowOrder": [
+            {"name": "Funcionario", "type": "entidade"},
+            {"name": "Registrar pedido", "type": "task"},
+            {"name": "Pedido", "type": "entidade"},
+            {"name": "Pedido aprovado?", "type": "condicional"},
+            {"name": "Rejeitar pedido", "type": "task"},
+            {"name": "Executar pedido", "type": "task"},
+            {"name": "Entrega", "type": "entidade"},
+            {"name": "Confirmar entrega", "type": "task"},
+        ],
+    }, ensure_ascii=False)
+    _fs_output = json.dumps({
+        "nodes": [
+            {"id": "n1", "label": "Funcionario", "nodeType": "entidade", "campos": [
+                {"nome": "id_funcionario", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
+                {"nome": "nome", "tipo": "texto", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+                {"nome": "email", "tipo": "email", "obrigatorio": False, "keyType": "NORMAL", "relacionamento": None},
+            ]},
+            {"id": "n2", "label": "Registrar pedido", "nodeType": "task"},
+            {"id": "n3", "label": "Pedido", "nodeType": "entidade", "campos": [
+                {"nome": "id_pedido", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
+                {"nome": "id_funcionario", "tipo": "numero", "obrigatorio": True, "keyType": "FK", "relacionamento": "Funcionario"},
+                {"nome": "status", "tipo": "texto", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+            ]},
+            {"id": "n4", "label": "Pedido aprovado?", "nodeType": "condicional"},
+            {"id": "n5", "label": "Rejeitar pedido", "nodeType": "task"},
+            {"id": "n6", "label": "Funcionario", "nodeType": "entidade", "campos": [
+                {"nome": "id_funcionario", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
+                {"nome": "nome", "tipo": "texto", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+            ]},
+            {"id": "n7", "label": "Executar pedido", "nodeType": "task"},
+            {"id": "n8", "label": "Entrega", "nodeType": "entidade", "campos": [
+                {"nome": "id_entrega", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
+                {"nome": "id_pedido", "tipo": "numero", "obrigatorio": True, "keyType": "FK", "relacionamento": "Pedido"},
+                {"nome": "data_entrega", "tipo": "data", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
+            ]},
+            {"id": "n9", "label": "Confirmar entrega", "nodeType": "task"},
+        ],
+        "connections": [
+            {"id": "c1", "from": "n1", "to": "n2", "fromHandle": "right", "toHandle": "left", "decision": ""},
+            {"id": "c2", "from": "n2", "to": "n3", "fromHandle": "right", "toHandle": "left", "decision": ""},
+            {"id": "c3", "from": "n3", "to": "n4", "fromHandle": "right", "toHandle": "left", "decision": ""},
+            {"id": "c4", "from": "n4", "to": "n5", "fromHandle": "bottom", "toHandle": "left", "decision": "nao"},
+            {"id": "c5", "from": "n5", "to": "n6", "fromHandle": "right", "toHandle": "left", "decision": ""},
+            {"id": "c6", "from": "n4", "to": "n7", "fromHandle": "right", "toHandle": "left", "decision": "sim"},
+            {"id": "c7", "from": "n7", "to": "n8", "fromHandle": "right", "toHandle": "left", "decision": ""},
+            {"id": "c8", "from": "n8", "to": "n9", "fromHandle": "right", "toHandle": "left", "decision": ""},
+        ],
+    }, ensure_ascii=False)
+
     system_prompt = (
-        "Voce e um planejador operacional para um CRM/BPMN. "
-        "Antes de gerar o diagrama, execute uma analise geral do processo e use essa analise para definir o melhor modelo BPMN. "
-        "Modele com regras estritas: atividade=task (amarelo), decisao=condicional XOR (azul), dados=entidade (verde). "
-        "Todo elemento de fluxo deve estar conectado por setas de fluxo, sem blocos isolados. "
-        "Entidades de dados nao entram na sequencia principal do fluxo; elas devem ser associadas as atividades que usam ou produzem os dados. "
-        "Nao crie entidades soltas sem associacao. "
-        "Cada gateway XOR deve ter exatamente dois ramos principais com semantica Sim/Nao e destinos coerentes. "
-        "Retorne SOMENTE JSON valido com este formato: "
-        "{\"actions\":[{\"id\":\"a1\",\"type\":\"create_entidade|create_oportunidade|update_bpmn_state\","
-        "\"label\":\"...\",\"risk\":\"low|medium|high\",\"payload\":{...}}]}. "
-        "Nao inclua markdown, comentarios ou texto fora do JSON. "
-        "As acoes devem ser concretas, curtas e executaveis no sistema. "
-        "Nomes de atividade, condicional e entidade devem ser resumidos e completos, sem reticencias. "
-        "Quando houver condicional (XOR), gere ramos com sentido de negocio (sim/nao) e evite decisao sem bifurcacao real. "
-        "Sempre inclua acoes para oportunidade e update_bpmn_state com payload completo (nodes, connections, stages). "
-        "Use somente tipos suportados no BPMN: task, condicional e entidade."
+        "Voce e um gerador de BPMN. Gere os nodes e connections do diagrama BPMN. Retorne APENAS JSON valido, sem markdown.\n\n"
+
+        "REGRAS FUNDAMENTAIS:\n"
+        "- 'flowOrder' é uma lista de objetos {name, type} que define EXATAMENTE a sequência e o tipo de cada node.\n"
+        "- Crie UM node por item de flowOrder. Use item.name como label e item.type como nodeType. NAO invente nomes.\n\n"
+
+        "PASSO 1 - GERACAO DOS NODES:\n"
+        "1. Para cada item em flowOrder, crie um node: label=item.name, nodeType=item.type.\n"
+        "2. NUNCA altere os nomes. NUNCA crie nodes com label 'Sim' ou 'Nao'.\n\n"
+
+        "PASSO 2 - CONEXOES:\n"
+        "3. Conecte os nodes em ordem baseada no flowOrder: fromHandle='right', toHandle='left', decision='', label=''.\n"
+        "4. Quando nodeType='condicional', crie DUAS conexoes de saida:\n"
+        "   - Caminho aprovado: decision='sim', label='\u2714', fromHandle='right', toHandle='left'\n"
+        "   - Caminho reprovado: decision='nao', label='\u2718', fromHandle='bottom', toHandle='left'\n"
+        "5. O proximo node na sequencia recebe o caminho SIM (\u2714). O node alternativo recebe o caminho NAO (\u2718).\n\n"
+
+        "PASSO 3 - ENTIDADES:\n"
+        "6. Nodes com nodeType='entidade' DEVEM ter 'campos' com 3-5 campos.\n"
+        "7. Formato de campo: {nome, tipo (texto|numero|email|booleano|data), obrigatorio (bool), keyType (PK|FK|NORMAL), relacionamento (null|nomeEntidade)}\n\n"
+
+        "FORMATO:\n"
+        "8. IDs de nodes: 'n1','n2',...; de connections: 'c1','c2',...\n"
+        "9. Retorne: {\"nodes\": [...], \"connections\": [...]}\n\n"
+
+        f"EXEMPLO INPUT:\n{_fs_input}\n\n"
+        f"EXEMPLO OUTPUT:\n{_fs_output}"
     )
 
+    # Para o fallback (flowOrder vazio), monta typed_flow_order a partir das listas separadas
+    if not typed_flow_order and (suggested_activities or suggested_conditionals):
+        acts = suggested_activities
+        conds = suggested_conditionals
+        fallback_items: list[str] = []
+        ci2 = 0
+        interval2 = max(1, len(acts) // (len(conds) + 1)) if conds else len(acts)
+        for i2, a2 in enumerate(acts):
+            fallback_items.append(a2)
+            if ci2 < len(conds) and (i2 + 1) % interval2 == 0:
+                fallback_items.append(conds[ci2])
+                ci2 += 1
+        fallback_items.extend(conds[ci2:])
+        typed_flow_order = [
+            {"name": n, "type": _classify_flow_item(n), **( {"desc": flow_order_descs[n]} if n in flow_order_descs else {})}
+            for n in fallback_items
+        ]
     user_prompt = {
-        "goal": goal,
-        "context": {
-            "processName": process_name,
-            "entityName": entity_name,
-            "suggestedEntityNames": suggested_entities,
-            "currentUserName": current_user.get("nome"),
-            "currentUserRole": current_user.get("role"),
-            "existingEntities": [
-                {
-                    "nome": item.get("nome"),
-                    "tipoEntidade": item.get("tipoEntidade"),
-                    "campos": item.get("campos"),
-                }
-                for item in existing_entities[:20]
-            ],
-            "goalDataEntities": [
-                {
-                    "nome": item.get("nome"),
-                    "tipoEntidade": item.get("tipo"),
-                }
-                for item in goal_entities[:20]
-            ],
-            "generalAnalysis": general_analysis,
-            "allowedActionTypes": [
-                "create_entidade",
-                "create_oportunidade",
-                "update_bpmn_state",
-            ],
-        },
-        "constraints": {
-            "maxActions": 4,
-            "requiresHumanApproval": True,
-            "nameMaxLengths": {
-                "entityName": AI_ENTITY_NAME_MAX_LENGTH,
-                "taskName": AI_ACTIVITY_NAME_MAX_LENGTH,
-                "conditionalName": AI_CONDITIONAL_NAME_MAX_LENGTH,
-            },
-            "avoidIncompleteNames": True,
-            "decisionRules": {
-                "useMeaningfulQuestionLabels": True,
-                "requireBusinessSemanticsInBranches": True,
-                "avoidDecisionWithSingleEffectivePath": True,
-                "allowConvergingBranchesAfterDifferentSteps": True,
-            },
-        },
+        "processName": process_name,
+        # flowOrder tipado: [{name, type}] — Groq usa diretamente sem precisar classificar
+        "flowOrder": typed_flow_order,
     }
 
     response = requests.post(
@@ -2996,62 +3569,340 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         timeout=AI_LLM_TIMEOUT_SECONDS,
     )
 
-    if not response.ok:
+    # 429 = rate limit: não propaga exceção, cai no python fallback abaixo
+    print(f"[GROQ] HTTP {response.status_code} | ok={response.ok}")
+    if not response.ok and response.status_code != 429:
         raise RuntimeError(f"Falha LLM Groq: HTTP {response.status_code}")
 
-    response_payload = response.json()
-    payload = response_payload if isinstance(response_payload, dict) else {}
-    choices = payload.get("choices") if isinstance(payload, dict) else []
-    if not isinstance(choices, list) or not choices:
-        raise RuntimeError("Resposta Groq sem choices")
+    # Valida a estrutura BPMN retornada pelo Groq (few-shot)
+    groq_nodes: list[dict[str, Any]] = []
+    groq_connections: list[dict[str, Any]] = []
+    parsed: dict[str, Any] | None = None
+    if response.ok:
+        response_payload = response.json()
+        payload = response_payload if isinstance(response_payload, dict) else {}
+        choices = payload.get("choices") if isinstance(payload, dict) else []
+        first = (choices[0] if isinstance(choices[0], dict) else {}) if isinstance(choices, list) and choices else {}
+        message = first.get("message") if isinstance(first, dict) else {}
+        content = message.get("content") if isinstance(message, dict) else ""
+        print(f"[GROQ] content (first 300 chars): {str(content or '')[:300]}")
+        parsed = _extract_json_object(str(content or ""))
+        if parsed and isinstance(parsed, dict):
+            raw_nodes = parsed.get("nodes") or []
+            raw_conns = parsed.get("connections") or []
+            print(f"[GROQ] raw_nodes={len(raw_nodes)}, raw_conns={len(raw_conns)}")
+            if isinstance(raw_nodes, list) and len(raw_nodes) >= 2:
+                node_ids = {str(n.get("id") or "") for n in raw_nodes if isinstance(n, dict)}
+                valid_nodes = [
+                    n for n in raw_nodes
+                    if isinstance(n, dict) and n.get("id") and n.get("label") and n.get("nodeType")
+                ]
+                valid_conns = [
+                    c for c in (raw_conns if isinstance(raw_conns, list) else [])
+                    if isinstance(c, dict)
+                    and str(c.get("from") or "") in node_ids
+                    and str(c.get("to") or "") in node_ids
+                ]
+                print(f"[GROQ] valid_nodes={len(valid_nodes)}, valid_conns={len(valid_conns)}")
+                if len(valid_nodes) >= 2:
+                    groq_nodes = valid_nodes
+                    groq_connections = valid_conns
+        else:
+            print(f"[GROQ] parsed=None ou nao dict. parsed type: {type(parsed)}")
 
-    first = choices[0] if isinstance(choices[0], dict) else {}
-    message = first.get("message") if isinstance(first, dict) else {}
-    content = message.get("content") if isinstance(message, dict) else ""
-    print(f"[DEBUG][GROQ] Raw response content: {str(content or '')[:2000]}")
-    parsed = _extract_json_object(str(content or ""))
-    if not parsed:
-        raise RuntimeError("Resposta Groq sem JSON valido")
+    # Pós-processamento: forçar labels/types do typed_flow_order por posição — SEMPRE.
+    # Groq ignora os nomes e gera "Atividade 2", "Condicional 5" etc.
+    # Solução: construímos os nodes DIRETAMENTE do typed_flow_order, sem depender do Groq para nomes.
+    flow_desc_by_norm = {_normalize_ai_text(item["name"]): item.get("desc", "") for item in typed_flow_order}
 
-    raw_actions_value = parsed.get("actions")
-    raw_actions: list[Any] = raw_actions_value if isinstance(raw_actions_value, list) else []
-    sanitized_actions: list[dict[str, Any]] = []
-    for index, raw_action in enumerate(raw_actions, 1):
-        action = _sanitize_llm_action(raw_action, index, current_user)
-        if action:
-            sanitized_actions.append(action)
+    def _build_direct_connections_from_fo(fo_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """
+        Constrói conexões a partir do typed_flow_order.
+        Se um condicional tem `branches: {sim: name, nao: name}`, usa isso diretamente.
+        Caso contrário, usa fallback posicional (item+1 = nao, item+2 = sim).
+        Itens que são destino de um ramo NAO não geram conexão sequencial para o próximo.
+        """
+        result: list[dict[str, Any]] = []
+        n = len(fo_list)
 
-    sanitized_actions = _ensure_entity_actions(
-        sanitized_actions,
-        process_name,
-        _dedupe_preserve_order([*suggested_entities, *fallback_entities]),
-        existing_entities,
-        goal_entity_type_by_name,
-    )
+        # Monta índice nome→posição para resolução de branches por nome
+        name_to_idx: dict[str, int] = {fo["name"]: i for i, fo in enumerate(fo_list)}
 
-    sanitized_actions = _ensure_core_plan_actions(
-        sanitized_actions,
-        goal,
-        process_name,
-        current_user,
-        fallback_bpmn_payload,
-    )
+        # Identifica índices que são destinos de ramo NAO — não participam da sequência principal
+        nao_target_indices: set[int] = set()
+        for i, fo in enumerate(fo_list):
+            if fo.get("type") != "condicional":
+                continue
+            br = fo.get("branches") or {}
+            nao_name = br.get("nao") or ""
+            if nao_name and nao_name in name_to_idx:
+                nao_target_indices.add(name_to_idx[nao_name])
+            elif not nao_name and i + 1 < n:
+                # fallback posicional: item imediatamente após é NAO
+                nao_target_indices.add(i + 1)
 
-    bpmn_action = next(
-        (
-            action
-            for action in sanitized_actions
-            if str(action.get("type") or "").strip() == "update_bpmn_state"
-            and isinstance(action.get("payload"), dict)
-        ),
-        None,
-    )
-    if bpmn_action is not None:
-        bpmn_payload = bpmn_action.get("payload")
-        bpmn_action["payload"] = _sanitize_bpmn_payload(
-            bpmn_payload if isinstance(bpmn_payload, dict) else {},
-            3,
-        )
+        for i, fo in enumerate(fo_list):
+            ntype = fo.get("type", "task")
+            cur = f"n{i + 1}"
+
+            if ntype == "condicional":
+                br = fo.get("branches") or {}
+                sim_name = br.get("sim") or ""
+                nao_name = br.get("nao") or ""
+
+                # Resolve SIM — sai pela alça inferior (continua o fluxo para baixo)
+                sim_idx = name_to_idx.get(sim_name, i + 2) if sim_name else (i + 2 if i + 2 < n else None)
+                if sim_idx is not None and sim_idx < n:
+                    result.append({"id": f"c{i + 1}b", "from": cur, "to": f"n{sim_idx + 1}",
+                                   "fromHandle": "bottom", "toHandle": "top",
+                                   "decision": "sim", "label": "\u2714"})
+
+                # Resolve NAO — sai pela alça direita (ramo lateral)
+                nao_idx = name_to_idx.get(nao_name, i + 1) if nao_name else (i + 1 if i + 1 < n else None)
+                if nao_idx is not None and nao_idx < n:
+                    result.append({"id": f"c{i + 1}a", "from": cur, "to": f"n{nao_idx + 1}",
+                                   "fromHandle": "right", "toHandle": "left",
+                                   "decision": "nao", "label": "\u2718"})
+            elif i not in nao_target_indices:
+                # Conexão sequencial normal — de baixo para cima do próximo
+                if i + 1 < n:
+                    result.append({"id": f"c{i + 1}", "from": cur, "to": f"n{i + 2}",
+                                   "fromHandle": "bottom", "toHandle": "top",
+                                   "decision": "", "label": ""})
+        return result
+
+    def _build_node_from_fo(idx: int, fo: dict[str, Any]) -> dict[str, Any]:
+        """Cria um node garantido com nome/tipo correto a partir de um item do typed_flow_order."""
+        label = fo["name"]
+        ntype = fo["type"]
+        desc = fo.get("desc", "")
+        node: dict[str, Any] = {"id": f"n{idx + 1}", "label": label, "nodeType": ntype}
+        if ntype == "entidade":
+            node["campos"] = _default_entity_campos(label)
+            node["entidadeNome"] = label
+            node.setdefault("subtitle", label)
+            node.setdefault("info", "id")
+        elif ntype == "task":
+            node["taskNome"] = label
+            node["taskDescricao"] = desc
+            node.setdefault("subtitle", "")
+            node.setdefault("info", "")
+        elif ntype == "condicional":
+            node["condicionalNome"] = label
+            node["condicionalDescricao"] = desc
+            node.setdefault("subtitle", "")
+            node.setdefault("gatewayType", "exclusivo")
+        return node
+
+    if typed_flow_order:
+        # Nodes sempre corretos — construídos diretamente do flowOrder do frontend
+        definitive_nodes = [_build_node_from_fo(i, fo) for i, fo in enumerate(typed_flow_order)]
+        definitive_node_ids = {f"n{i + 1}" for i in range(len(typed_flow_order))}
+
+        # Conexões construídas DIRETAMENTE do typed_flow_order — branching garantido correto.
+        # Groq e Python fallback ignorados: IDs e ordering deles não são confiáveis.
+        base_conns = _build_direct_connections_from_fo(typed_flow_order)
+
+        # Layout serpentina (snake): colunas pares descem ↓, colunas ímpares sobem ↑.
+        # Isso garante que conexões entre colunas tenham sempre a mesma Y nos dois lados,
+        # produzindo linhas horizontais limpas que não cruzam nenhum retângulo.
+        _MAX_PER_COL = 5
+        _CARD_W      = 220.0
+        _CARD_H      = 110.0
+        _GAP_X       = 80.0    # canal livre à direita do ramo NAO, antes da próxima coluna
+        _GAP_NAO     = 60.0    # espaço entre card principal e card do ramo NAO
+        _GAP_Y       = 60.0    # espaço vertical entre nós da mesma coluna
+        _X_START     = 60.0
+        _Y_START     = 80.0
+        _X_STEP      = _CARD_W + _GAP_NAO + _CARD_W + _GAP_X   # 580 px por coluna
+        _Y_STEP      = _CARD_H + _GAP_Y                          # 170 px por linha
+
+        # Mapa id → id do pai para ramos NAO
+        _nao_parent: dict[str, str] = {
+            str(c.get("to") or ""): str(c.get("from") or "")
+            for c in base_conns if c.get("decision") == "nao"
+        }
+
+        # Separa nós em fluxo principal vs. ramos NAO
+        _nao_ids    = set(_nao_parent.keys())
+        _main_nodes = [n for n in definitive_nodes if str(n.get("id") or "") not in _nao_ids]
+        _nao_nodes  = [n for n in definitive_nodes if str(n.get("id") or "") in _nao_ids]
+
+        _pos: dict[str, tuple[float, float]] = {}
+
+        # Fluxo principal: snake por colunas (par → desce, ímpar → sobe)
+        for _seq, _node in enumerate(_main_nodes):
+            _nid        = str(_node.get("id") or "")
+            _col        = _seq // _MAX_PER_COL
+            _row_in_col = _seq % _MAX_PER_COL
+            # Colunas pares: linha 0 no topo; ímpares: linha 0 na base (invertido)
+            _row = _row_in_col if _col % 2 == 0 else (_MAX_PER_COL - 1 - _row_in_col)
+            _pos[_nid] = (_X_START + _col * _X_STEP, _Y_START + _row * _Y_STEP)
+
+        # Ramos NAO: mesmo Y que o condicional pai, X à direita dele
+        for _node in _nao_nodes:
+            _nid = str(_node.get("id") or "")
+            _pid = _nao_parent[_nid]
+            _px, _py = _pos.get(_pid, (_X_START, _Y_START))
+            _pos[_nid] = (_px + _CARD_W + _GAP_NAO, _py)
+
+        # Aplica posições aos nós
+        for _node in definitive_nodes:
+            _nid = str(_node.get("id") or "")
+            _node["x"], _node["y"] = _pos.get(_nid, (_X_START, _Y_START))
+
+        # Pós-processamento de handles: ajusta entrada/saída de cada conexão
+        # baseado na posição real dos nós para eliminar cruzamentos.
+        #   – Mesma coluna descendo  → bottom → top
+        #   – Mesma coluna subindo   → top    → bottom
+        #   – Cruzamento de coluna   → right  → left  (linha horizontal, mesma Y)
+        #   – Ramo NAO               → mantém right → left (já definido)
+        _id_to_pos: dict[str, tuple[float, float]] = {
+            str(n.get("id") or ""): (float(n.get("x", 0)), float(n.get("y", 0)))
+            for n in definitive_nodes
+        }
+        for _conn in base_conns:
+            _dec = _conn.get("decision")
+            if _dec == "nao":
+                # Ramo NAO: sempre right→left (já definido); não alterar.
+                continue
+            _fid = str(_conn.get("from") or "")
+            _tid = str(_conn.get("to") or "")
+            _fx, _fy = _id_to_pos.get(_fid, (0.0, 0.0))
+            _tx, _ty = _id_to_pos.get(_tid, (0.0, 0.0))
+            _cross_col = abs(_fx - _tx) > _CARD_W / 2
+            if _cross_col:
+                if _dec == "sim":
+                    # SIM cruzando colunas: mantém bottom→top.
+                    # O frontend roteia a linha ABAIXO do ramo NAO (midY = y1 + CARD_H),
+                    # evitando atravessar o retângulo NAO que fica na mesma Y do condicional.
+                    pass
+                else:
+                    # Sequencial cruzando colunas → horizontal right→left (mesma Y na junção snake)
+                    _conn["fromHandle"] = "right"
+                    _conn["toHandle"]   = "left"
+            elif _ty < _fy:
+                # Mesma coluna, alvo acima (coluna ímpar — sobe): sai pelo topo, entra pela base
+                _conn["fromHandle"] = "top"
+                _conn["toHandle"]   = "bottom"
+            else:
+                # Mesma coluna, alvo abaixo (coluna par — desce): sai pela base, entra pelo topo
+                _conn["fromHandle"] = "bottom"
+                _conn["toHandle"]   = "top"
+
+        # Garantia: toda condição precisa ter pelo menos um ramo SIM e um NAO.
+        # Se o flowOrder estiver incompleto ou o nome do alvo não existir, adiciona fallback posicional.
+        _cond_has_sim: set[str] = set()
+        _cond_has_nao: set[str] = set()
+        for _c in base_conns:
+            if _c.get("decision") == "sim":
+                _cond_has_sim.add(str(_c.get("from") or ""))
+            elif _c.get("decision") == "nao":
+                _cond_has_nao.add(str(_c.get("from") or ""))
+        _fo_nao_set: set[int] = set()  # índices que são alvo de NAO (para fallback)
+        for _ci2, _fo2 in enumerate(typed_flow_order):
+            if _fo2.get("type") != "condicional":
+                continue
+            _cid2 = f"n{_ci2 + 1}"
+            _n2   = len(typed_flow_order)
+            if _cid2 not in _cond_has_nao:
+                _nao_fb = _ci2 + 1
+                if _nao_fb < _n2:
+                    base_conns.append({"id": f"c{_ci2 + 1}a_fb",
+                                       "from": _cid2, "to": f"n{_nao_fb + 1}",
+                                       "fromHandle": "right", "toHandle": "left",
+                                       "decision": "nao", "label": "\u2718"})
+            if _cid2 not in _cond_has_sim:
+                _sim_fb = _ci2 + 2
+                if _sim_fb < _n2:
+                    base_conns.append({"id": f"c{_ci2 + 1}b_fb",
+                                       "from": _cid2, "to": f"n{_sim_fb + 1}",
+                                       "fromHandle": "bottom", "toHandle": "top",
+                                       "decision": "sim", "label": "\u2714"})
+
+        base_nodes = definitive_nodes
+        print(f"[GROQ] Nodes definitivos: {len(base_nodes)} | Conexões: {len(base_conns)}")
+    else:
+        # Sem flowOrder: usa Groq completo ou fallback Python
+        if groq_nodes:
+            base_nodes = groq_nodes
+            base_conns = groq_connections
+            print(f"[GROQ] Usando Groq: {len(base_nodes)} nodes, {len(base_conns)} conns")
+        else:
+            base_nodes = python_nodes if len(python_nodes) >= 2 else (fallback_bpmn_payload.get("nodes") or [])
+            base_conns = python_connections if len(python_nodes) >= 2 else (fallback_bpmn_payload.get("connections") or [])
+            print(f"[GROQ] Usando fallback Python: {len(base_nodes)} nodes, {len(base_conns)} conns")
+    final_nodes = _auto_layout_bpmn_nodes(base_nodes, base_conns)
+    final_bpmn_payload = {
+        "name": process_name,
+        "nodes": final_nodes,
+        "connections": base_conns,
+    }
+
+    # Monta mapa nome → tipoEntidade a partir do typed_flow_order
+    fo_entity_tipo: dict[str, str] = {}
+    for _fo_item in typed_flow_order:
+        if _fo_item.get("type") == "entidade":
+            _fo_n = str(_fo_item.get("name") or "").strip()
+            _fo_t = str(_fo_item.get("tipoEntidade") or "").strip()
+            if _fo_n and _fo_t:
+                fo_entity_tipo[_fo_n.lower()] = _normalize_entity_type(_fo_t, default="apoio")
+
+    # Candidatos a criar: suggested_entities filtrados pelas já existentes
+    candidate_entities_groq = _dedupe_preserve_order([
+        str(n or "").strip()
+        for n in suggested_entities
+        if str(n or "").strip()
+    ])
+    entity_actions_groq: list[dict[str, Any]] = []
+    for _ei, _cname in enumerate(candidate_entities_groq, start=1):
+        _tipo_raw = fo_entity_tipo.get(_cname.lower()) or goal_entity_type_by_name.get(_normalize_ai_text(_cname), "")
+        _tipo = _normalize_entity_type(_tipo_raw, default="apoio") if _tipo_raw else _entity_type_label("", _ei)
+        entity_actions_groq.append({
+            "id": f"a{len(entity_actions_groq) + 1}",
+            "type": "create_entidade",
+            "label": f"Criar entidade {_cname}",
+            "risk": "medium",
+            "requiresApproval": True,
+            "payload": {
+                "nome": _cname,
+                "descricao": f"Entidade do processo: {process_name}",
+                "categoria": process_name,
+                "tipoEntidade": _tipo,
+                "campos": _sanitize_entity_fields(
+                    [],
+                    _cname,
+                    _build_default_entity_fields_with_references(
+                        _cname,
+                        _ei,
+                        candidate_entities_groq,
+                    ),
+                ),
+            },
+        })
+
+    _base = len(entity_actions_groq)
+
+    # Monta sanitized_actions com create_entidade + create_oportunidade + update_bpmn_state
+    sanitized_actions: list[dict[str, Any]] = [
+        *entity_actions_groq,
+        {
+            "id": f"a{_base + 1}",
+            "type": "create_oportunidade",
+            "label": "Criar oportunidade inicial para o fluxo",
+            "risk": "medium",
+            "requiresApproval": True,
+            "payload": _build_default_opportunity_payload(goal, process_name, current_user),
+        },
+        {
+            "id": f"a{_base + 2}",
+            "type": "update_bpmn_state",
+            "label": "Atualizar rascunho do editor BPMN",
+            "risk": "low",
+            "requiresApproval": True,
+            "payload": final_bpmn_payload,
+        },
+    ]
 
     if not sanitized_actions:
         return None
@@ -3061,7 +3912,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         existing_entities,
     )
 
-    context_panel = _sanitize_context_panel_suggestion(parsed.get("contextPanelSuggestion"))
+    context_panel = _sanitize_context_panel_suggestion(parsed.get("contextPanelSuggestion") if parsed else None)
     if not context_panel:
         context_panel = _build_context_panel_suggestion_from_actions(
             sanitized_actions,
@@ -3723,9 +4574,6 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
     )
 
     for entity_index, candidate_name in enumerate(candidate_entities, start=1):
-        if _has_exact_existing_entity_name(candidate_name, existing_entities):
-            continue
-
         entity_kind = _entity_type_label(
             goal_entity_type_by_name.get(_normalize_ai_text(candidate_name), ""),
             entity_index,
@@ -3740,7 +4588,7 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
                 "payload": {
                     "nome": candidate_name,
                     "descricao": f"Representa a etapa de entidade do processo: {process_name}",
-                    "categoria": "IA",
+                    "categoria": process_name,
                     "tipoEntidade": entity_kind,
                     "campos": _sanitize_entity_fields(
                         [],
@@ -4927,6 +5775,149 @@ def update_bpmn_editor_state(payload: dict = Body(...)):
         bpmn_editor_state = next_state
         save_bpmn_editor_state(BPMN_EDITOR_STATE_FILE, bpmn_editor_state)
     return bpmn_editor_state
+
+
+@app.post("/ai/parse-description")
+def ai_parse_description(
+    payload: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Recebe nome do processo + descrição livre e retorna dados estruturados
+    (entities, activities, conditionals, flowOrder) para pré-preencher o formulário da IA.
+    """
+    process_name = str(payload.get("processName") or "").strip()
+    description  = str(payload.get("description") or "").strip()
+
+    if not description and not process_name:
+        raise HTTPException(status_code=422, detail="Informe ao menos o nome do processo ou a descrição.")
+
+    if AI_PROVIDER != "groq" or not GROQ_API_KEY:
+        # Fallback sem LLM: retorna listas vazias para o frontend deixar o usuário preencher
+        return {"processName": process_name, "entities": [], "activities": [], "conditionals": [], "flowOrder": []}
+
+    system_prompt = (
+        "Você é um especialista em modelagem de processos de negócio (BPM). "
+        "A partir da descrição recebida, extraia e classifique TODOS os elementos do processo.\n\n"
+        "Regras obrigatórias:\n"
+        "- 'entities': lista de objetos com {\"name\": string, \"tipoEntidade\": string}. "
+        "Inclua TODOS os substantivos relevantes: objetos de dados, documentos E participantes/atores nomeados "
+        "(ex: Pedido, Nota Fiscal, Cliente, Fornecedor, Aprovacao). "
+        "Para tipoEntidade use EXATAMENTE um destes valores:\n"
+        "  - 'principal': entidade central do processo (geralmente o objeto que o processo transforma, ex: Pedido)\n"
+        "  - 'apoio': entidades secundárias que participam mas não são o foco (ex: Aprovacao, OrdemDeCompra)\n"
+        "  - 'externa': atores/participantes externos, fornecedores e clientes (ex: Cliente, Fornecedor)\n"
+        "  - 'associativa': entidade de relacionamento entre outras duas entidades\n"
+        "- 'activities': lista de strings com tarefas (verbos no infinitivo, ex: Analisar Pedido).\n"
+        "- 'conditionals': lista de strings com decisões exclusivas, SEMPRE terminam com '?' (ex: Pedido aprovado?).\n"
+        "- 'flowOrder': sequência ordenada de TODOS os elementos acima — inclua todas as entidades, atividades e condicionais, "
+        "sem omitir nenhum. Cada item é {\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", \"tipoEntidade\": string (só para entidades)}.\n"
+        "  Para condicionais em flowOrder, adicione 'branches': {\"sim\": \"<próximo elemento se verdadeiro>\", \"nao\": \"<próximo elemento se falso>\"}.\n"
+        "- Retorne JSON válido com exatamente estas chaves: processName, entities, activities, conditionals, flowOrder.\n"
+        "- Não inclua explicações, apenas o JSON."
+    )
+
+    user_prompt = f"Nome do processo: {process_name}\n\nDescrição:\n{description}"
+
+    # Usa modelo menor (8b) para extração estruturada: limite muito mais alto (6000 RPM)
+    # e qualidade suficiente para essa tarefa simples vs 70b (30 RPM).
+    _PARSE_MODEL = "llama-3.1-8b-instant"
+    groq_payload = {
+        "model": _PARSE_MODEL,
+        "temperature": 0.2,
+        "response_format": {"type": "json_object"},
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
+        ],
+    }
+    groq_headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=groq_headers,
+            json=groq_payload,
+            timeout=AI_LLM_TIMEOUT_SECONDS,
+        )
+        # Retry único com backoff quando o Groq sinalizar rate limit temporário
+        if resp.status_code == 429:
+            retry_after = int(resp.headers.get("retry-after", 5))
+            wait = min(retry_after, 10)
+            time.sleep(wait)
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=groq_headers,
+                json=groq_payload,
+                timeout=AI_LLM_TIMEOUT_SECONDS,
+            )
+        if resp.status_code == 429:
+            raise HTTPException(status_code=429, detail="Limite de requisições da IA atingido. Aguarde alguns instantes e tente novamente.")
+        if not resp.ok:
+            raise RuntimeError(f"Groq HTTP {resp.status_code}")
+
+        raw_json = resp.json()
+        content  = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        parsed   = json.loads(content)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"[parse-description] Groq falhou: {exc}")
+        parsed = {}
+
+    # Monta mapa name -> tipoEntidade a partir de parsed["entities"] (lista de objetos ou strings)
+    entity_tipo_map: dict[str, str] = {}
+    raw_entities_list = parsed.get("entities") or []
+    parsed_entities_names: list[str] = []
+    if isinstance(raw_entities_list, list):
+        for ent in raw_entities_list:
+            if isinstance(ent, dict):
+                name = str(ent.get("name") or "").strip()
+                tipo = _normalize_entity_type(ent.get("tipoEntidade"), default="apoio")
+                if name:
+                    parsed_entities_names.append(name)
+                    entity_tipo_map[name.lower()] = tipo
+            elif isinstance(ent, str) and ent.strip():
+                parsed_entities_names.append(ent.strip())
+
+    def _to_str_list(val):
+        if isinstance(val, list):
+            return [str(v).strip() for v in val if isinstance(v, str) and str(v).strip()]
+        return []
+
+    raw_fo = parsed.get("flowOrder") or []
+    flow_order = []
+    if isinstance(raw_fo, list):
+        for item in raw_fo:
+            if isinstance(item, dict) and item.get("name"):
+                fo_item: dict[str, Any] = {
+                    "name": str(item["name"]).strip(),
+                    "type": str(item.get("type") or "task").strip(),
+                }
+                if fo_item["type"] == "entidade":
+                    key = fo_item["name"].lower()
+                    # Prefere tipoEntidade do flowOrder, cai no mapa de entities
+                    raw_tipo = item.get("tipoEntidade") or entity_tipo_map.get(key, "apoio")
+                    fo_item["tipoEntidade"] = _normalize_entity_type(raw_tipo, default="apoio")
+                if isinstance(item.get("branches"), dict):
+                    fo_item["branches"] = {
+                        "sim": str(item["branches"].get("sim") or "").strip(),
+                        "nao": str(item["branches"].get("nao") or "").strip(),
+                    }
+                flow_order.append(fo_item)
+
+    # entities como lista de objetos {name, tipoEntidade}
+    entities_out = [
+        {"name": name, "tipoEntidade": entity_tipo_map.get(name.lower(), "apoio")}
+        for name in parsed_entities_names
+    ]
+
+    return {
+        "processName":  str(parsed.get("processName") or process_name).strip(),
+        "entities":     entities_out,
+        "activities":   _to_str_list(parsed.get("activities")),
+        "conditionals": _to_str_list(parsed.get("conditionals")),
+        "flowOrder":    flow_order,
+    }
 
 
 @app.post("/ai/plan")

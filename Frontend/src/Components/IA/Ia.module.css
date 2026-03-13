@@ -51,7 +51,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  overflow: auto;
+  overflow-y: auto;
+  scroll-padding-bottom: 0.5rem;
 }
 
 .resultCard {
@@ -87,17 +88,304 @@
   min-height: 84px;
 }
 
-.goalField {
-  flex: 1;
-  min-height: 0;
-}
-
 .goalTextarea {
-  min-height: clamp(200px, 36vh, 520px);
+  min-height: clamp(120px, 20vh, 300px);
 }
 
-.goalField .goalTextarea {
+/* Lista ordenável de fluxo */
+.flowOrderEmpty {
+  margin: 0.25rem 0 0;
+  font-size: 0.78rem;
+  color: #7a92a3;
+  font-style: italic;
+}
+
+.flowOrderList {
+  list-style: none;
+  margin: 0.2rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 260px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.flowOrderItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid #dce8f2;
+  background: #f8fbff;
+  font-size: 0.78rem;
+}
+
+.flowOrderTask {
+  border-left: 3px solid #f0c14b;
+}
+
+.flowOrderCondicional {
+  border-left: 3px solid #7aabea;
+}
+
+.flowOrderEntidade {
+  border-left: 3px solid #4caf84;
+}
+
+.flowOrderIndex {
+  min-width: 1.4rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #8aa4b8;
+  text-align: center;
+}
+
+.flowOrderName {
   flex: 1;
+  font-weight: 600;
+  color: #1e3344;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flowOrderTypeBadge {
+  font-size: 0.68rem;
+  color: #7a92a3;
+  white-space: nowrap;
+}
+
+.flowOrderButtons {
+  display: flex;
+  gap: 0.2rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.flowOrderBtn {
+  border: 1px solid #ccdbe8;
+  border-radius: 4px;
+  background: #eef5ff;
+  color: #2a4d6e;
+  font-size: 0.7rem;
+  font-weight: 700;
+  width: 1.3rem;
+  height: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+}
+
+.flowOrderBtn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.flowOrderBtn:not(:disabled):hover {
+  background: #daeaf8;
+}
+
+.flowOrderBtnRemove {
+  border-color: #f0c0c0;
+  background: #fff5f5;
+  color: #a33;
+}
+
+.flowOrderBtnRemove:not(:disabled):hover {
+  background: #fde8e8;
+}
+
+.flowOrderBtnDescActive {
+  border-color: #7aabea;
+  background: #e8f1ff;
+  color: #1a3d7c;
+}
+
+.flowOrderDescInput {
+  flex-basis: 100%;
+  border: 1px solid #b8d0e8;
+  border-radius: 6px;
+  padding: 0.28rem 0.5rem;
+  font-size: 0.76rem;
+  color: #233646;
+  background: #f5faff;
+  margin-top: 0.2rem;
+  outline: none;
+}
+
+.flowOrderDescInput:focus {
+  border-color: #6ca1d8;
+  box-shadow: 0 0 0 2px rgba(108, 161, 216, 0.15);
+}
+
+.flowOrderDescPreview {
+  flex-basis: 100%;
+  font-size: 0.7rem;
+  color: #7a92a3;
+  font-style: italic;
+  margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flowOrderBranches {
+  flex-basis: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.25rem;
+}
+
+.flowOrderBranchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.flowOrderBranchLabelSim {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #2a7a4b;
+  width: 4.5rem;
+  flex-shrink: 0;
+}
+
+.flowOrderBranchLabelNao {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #b03030;
+  width: 4.5rem;
+  flex-shrink: 0;
+}
+
+.flowOrderBranchSelect {
+  flex: 1;
+  font-size: 0.74rem;
+  border: 1px solid #b8d0e8;
+  border-radius: 5px;
+  padding: 0.18rem 0.35rem;
+  background: #f5faff;
+  color: #233646;
+  outline: none;
+}
+
+.flowOrderBranchSelect:focus {
+  border-color: #6ca1d8;
+  box-shadow: 0 0 0 2px rgba(108, 161, 216, 0.15);
+}
+
+.goalHelperBox {
+  border: 1px dashed #cddceb;
+  border-radius: 8px;
+  background: #f8fbff;
+  padding: 0.55rem 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.goalHelperBox p {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #4b6173;
+  line-height: 1.35;
+}
+
+.chipInputRow {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.chipInputRow input {
+  flex: 1;
+  border: 1px solid #cfdae5;
+  border-radius: 8px;
+  padding: 0.52rem 0.6rem;
+  font-size: 0.84rem;
+  color: #233646;
+  background: #fcfeff;
+}
+
+.chipInputRow input:focus {
+  outline: none;
+  border-color: #6ca1d8;
+  box-shadow: 0 0 0 2px rgba(108, 161, 216, 0.15);
+}
+
+.chipAddButton {
+  border: 1px solid #b0c8de;
+  border-radius: 8px;
+  background: #eef5ff;
+  color: #1a3d5c;
+  font-size: 1.1rem;
+  font-weight: 700;
+  padding: 0 0.7rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.chipAddButton:hover {
+  background: #daeaf8;
+}
+
+.chipList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.1rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 20px;
+  padding: 0.22rem 0.55rem 0.22rem 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chipTask {
+  background: #fff8e1;
+  border: 1px solid #f0c14b;
+  color: #6b4a00;
+}
+
+.chipConditional {
+  background: #e8f1ff;
+  border: 1px solid #7aabea;
+  color: #1a3d7c;
+}
+
+.chipEntity {
+  background: #e8f7ef;
+  border: 1px solid #4caf84;
+  color: #1a5237;
+}
+
+.chipRemove {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+  opacity: 0.6;
+  color: inherit;
+}
+
+.chipRemove:hover {
+  opacity: 1;
 }
 
 .field input:focus,
@@ -153,6 +441,46 @@
   margin: 0.8rem 0 0;
   color: #5f7386;
   font-size: 0.83rem;
+}
+
+.analysisBox {
+  margin-top: 0.75rem;
+  border: 1px solid #dce9f5;
+  border-radius: 8px;
+  background: #f4f9ff;
+  padding: 0.5rem 0.6rem;
+}
+
+.analysisTitle {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #274961;
+}
+
+.analysisSummary {
+  margin: 0.22rem 0 0;
+  font-size: 0.72rem;
+  color: #365c76;
+}
+
+.analysisText {
+  margin: 0.2rem 0 0;
+  font-size: 0.71rem;
+  color: #48667d;
+  line-height: 1.35;
+}
+
+.analysisNotes {
+  margin: 0.28rem 0 0;
+  padding-left: 1rem;
+  color: #4f6d84;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.analysisNotes li {
+  margin: 0.08rem 0;
 }
 
 .feedback {
@@ -332,5 +660,10 @@
   .resultCard {
     border-radius: 10px;
     padding: 0.75rem;
+  }
+
+  .goalHelperBox {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

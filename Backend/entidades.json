@@ -83,242 +83,54 @@
     "criadoPor": "Renan"
   },
   {
-    "categoria": "tabela de entidades",
-    "id": 16,
-    "nome": "venda",
-    "descricao": "testando a venda aqui",
-    "tipoEntidade": "Principal",
-    "isPrimaryEntity": true,
-    "atributoChave": null,
-    "numeroRelacionamentos": 0,
-    "bpmnUsageCount": 0,
-    "ativo": true,
-    "created_at": "2026-03-03T14:09:50.565982",
-    "updated_at": "2026-03-04T10:51:42.777121",
-    "criadoPor": "Renan"
-  },
-  {
-    "categoria": "asdasd",
-    "id": 17,
-    "nome": "sadasd",
-    "descricao": "asdasdas",
-    "tipoEntidade": "Apoio",
-    "isPrimaryEntity": false,
-    "atributoChave": "",
-    "campos": [
-      {
-        "id": "field-1773150669582-efzkeub6",
-        "nome": "dasdasd",
-        "tipo": "Texto",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "isUnique": false,
-        "relacionamento": null
-      }
-    ],
-    "numeroRelacionamentos": 0,
-    "bpmnUsageCount": 2,
-    "ativo": true,
-    "created_at": "",
-    "updated_at": "2026-03-10T11:37:48.440574",
-    "criadoPor": "Nome da conta"
-  },
-  {
-    "categoria": "asdasd",
-    "id": 18,
-    "nome": "qwes",
-    "descricao": "eqweqwe",
-    "tipoEntidade": "Apoio",
-    "isPrimaryEntity": false,
-    "atributoChave": "",
-    "campos": [
-      {
-        "id": "field-1773150698983-k39p3yw8",
-        "nome": "rqweqw",
-        "tipo": "Texto",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "isUnique": false,
-        "relacionamento": "weq"
-      }
-    ],
-    "numeroRelacionamentos": 0,
-    "bpmnUsageCount": 2,
-    "ativo": true,
-    "created_at": "",
-    "updated_at": "2026-03-10T11:37:48.472029",
-    "criadoPor": "Nome da conta"
-  },
-  {
-    "categoria": "IA",
-    "id": 19,
-    "nome": "Gestor",
-    "descricao": "Representa a etapa de entidade do processo: Aprovacao",
-    "tipoEntidade": "Principal",
-    "isPrimaryEntity": null,
-    "atributoChave": null,
-    "campos": [
-      {
-        "nome": "id_gestor",
-        "tipo": "INT",
-        "obrigatorio": true,
-        "keyType": "PK",
-        "referencia": ""
-      },
-      {
-        "nome": "nome",
-        "tipo": "VARCHAR(100)",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "descricao",
-        "tipo": "TEXT",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "referencia": ""
-      }
-    ],
-    "numeroRelacionamentos": null,
-    "bpmnUsageCount": null,
-    "ativo": true,
-    "created_at": "2026-03-11T11:57:13.595938",
-    "updated_at": "2026-03-11T11:57:13.595938",
-    "criadoPor": "Renan"
-  },
-  {
-    "categoria": "IA",
-    "id": 20,
-    "nome": "Financeiro",
-    "descricao": "Representa a etapa de entidade do processo: Aprovacao",
-    "tipoEntidade": "Apoio",
-    "isPrimaryEntity": null,
-    "atributoChave": null,
-    "campos": [
-      {
-        "nome": "id_financeiro",
-        "tipo": "INT",
-        "obrigatorio": true,
-        "keyType": "PK",
-        "referencia": ""
-      },
-      {
-        "nome": "nome",
-        "tipo": "VARCHAR(100)",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "descricao",
-        "tipo": "TEXT",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "referencia": ""
-      }
-    ],
-    "numeroRelacionamentos": null,
-    "bpmnUsageCount": null,
-    "ativo": true,
-    "created_at": "2026-03-11T11:57:13.597123",
-    "updated_at": "2026-03-11T11:57:13.597123",
-    "criadoPor": "Renan"
-  },
-  {
-    "categoria": "IA",
-    "id": 21,
-    "nome": "Solicitação de Compra",
-    "descricao": "Representa a etapa de entidade do processo: Processo de Aprovação de Solicitação de Compra.",
-    "tipoEntidade": "Principal",
-    "isPrimaryEntity": null,
-    "atributoChave": null,
-    "campos": [
-      {
-        "nome": "id_solicitacao_de_compra",
-        "tipo": "INT",
-        "obrigatorio": true,
-        "keyType": "PK",
-        "referencia": ""
-      },
-      {
-        "nome": "nome",
-        "tipo": "VARCHAR(100)",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "descricao",
-        "tipo": "TEXT",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "referencia": ""
-      }
-    ],
-    "numeroRelacionamentos": null,
-    "bpmnUsageCount": null,
-    "ativo": true,
-    "created_at": "2026-03-11T13:59:16.047911",
-    "updated_at": "2026-03-11T13:59:16.047911",
-    "criadoPor": "Renan"
-  },
-  {
-    "categoria": "IA",
-    "id": 22,
-    "nome": "Usuário",
-    "descricao": "Representa a etapa de entidade do processo: Processo de Aprovação de Solicitação de Compra.",
-    "tipoEntidade": "Apoio",
-    "isPrimaryEntity": null,
-    "atributoChave": null,
-    "campos": [
-      {
-        "nome": "id_usuario",
-        "tipo": "INT",
-        "obrigatorio": true,
-        "keyType": "PK",
-        "referencia": ""
-      },
-      {
-        "nome": "nome",
-        "tipo": "VARCHAR(100)",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "descricao",
-        "tipo": "TEXT",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "id_solicitacao_de_compra",
-        "tipo": "INT",
-        "obrigatorio": false,
-        "keyType": "FK",
-        "referencia": "Solicitação de Compra.id_solicitacao_de_compra"
-      }
-    ],
-    "numeroRelacionamentos": null,
-    "bpmnUsageCount": null,
-    "ativo": true,
-    "created_at": "2026-03-11T13:59:16.048808",
-    "updated_at": "2026-03-11T13:59:16.048808",
-    "criadoPor": "Renan"
-  },
-  {
-    "categoria": "IA",
+    "categoria": "Aprovacao de Pedido de Compra",
     "id": 23,
-    "nome": "Aprovação",
-    "descricao": "Representa a etapa de entidade do processo: Processo de Aprovação de Solicitação de Compra.",
+    "nome": "Cliente",
+    "descricao": "Entidade do processo: Aprovacao de Pedido de Compra",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-03-12T21:25:03.752138",
+    "updated_at": "2026-03-12T21:25:03.752138",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovacao de Pedido de Compra",
+    "id": 24,
+    "nome": "Pedido",
+    "descricao": "Entidade do processo: Aprovacao de Pedido de Compra",
     "tipoEntidade": "Apoio",
     "isPrimaryEntity": null,
     "atributoChave": null,
     "campos": [
       {
-        "nome": "id_aprovacao",
+        "nome": "id_pedido",
         "tipo": "INT",
         "obrigatorio": true,
         "keyType": "PK",
@@ -339,25 +151,70 @@
         "referencia": ""
       },
       {
-        "nome": "id_solicitacao_de_compra",
+        "nome": "id_cliente",
         "tipo": "INT",
         "obrigatorio": false,
         "keyType": "FK",
-        "referencia": "Solicitação de Compra.id_solicitacao_de_compra"
+        "referencia": "Cliente.id_cliente"
       }
     ],
     "numeroRelacionamentos": null,
     "bpmnUsageCount": null,
     "ativo": true,
-    "created_at": "2026-03-11T13:59:16.049957",
-    "updated_at": "2026-03-11T13:59:16.049957",
+    "created_at": "2026-03-12T21:25:03.753520",
+    "updated_at": "2026-03-12T21:25:03.753520",
     "criadoPor": "Renan"
   },
   {
-    "categoria": "IA",
-    "id": 24,
+    "categoria": "Aprovacao de Pedido de Compra",
+    "id": 25,
+    "nome": "OrdemDeCompra",
+    "descricao": "Entidade do processo: Aprovacao de Pedido de Compra",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Cliente.id_cliente"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-03-12T21:25:03.755068",
+    "updated_at": "2026-03-12T21:25:03.755068",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovacao de Pedido de Compra",
+    "id": 26,
     "nome": "Fornecedor",
-    "descricao": "Representa a etapa de entidade do processo: Processo de Aprovação de Solicitação de Compra.",
+    "descricao": "Entidade do processo: Aprovacao de Pedido de Compra",
     "tipoEntidade": "Apoio",
     "isPrimaryEntity": null,
     "atributoChave": null,
@@ -384,18 +241,18 @@
         "referencia": ""
       },
       {
-        "nome": "id_solicitacao_de_compra",
+        "nome": "id_cliente",
         "tipo": "INT",
         "obrigatorio": false,
         "keyType": "FK",
-        "referencia": "Solicitação de Compra.id_solicitacao_de_compra"
+        "referencia": "Cliente.id_cliente"
       }
     ],
     "numeroRelacionamentos": null,
     "bpmnUsageCount": null,
     "ativo": true,
-    "created_at": "2026-03-11T13:59:16.051460",
-    "updated_at": "2026-03-11T13:59:16.051460",
+    "created_at": "2026-03-12T21:25:03.756882",
+    "updated_at": "2026-03-12T21:25:03.756882",
     "criadoPor": "Renan"
   }
 ]

@@ -23,7 +23,7 @@ const LoginHome = () => {
   const [resetSuccessNotice, setResetSuccessNotice] = React.useState(false);
   const navigate = useNavigate();
 
-  const { userLogin, getUser } = React.useContext(UserContext);
+  const { userLogin } = React.useContext(UserContext);
 
   // Verificar se está acessando via link de reset
   React.useEffect(() => {
@@ -54,8 +54,7 @@ const LoginHome = () => {
       senha: password,
     },
     onSubmit: async () => {
-      const token = await userLogin(username.value, password.value);
-      await getUser(token);
+      await userLogin(username.value, password.value);
       navigate('/gerar-bpmn');
     },
   });
