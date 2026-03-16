@@ -260,6 +260,7 @@ const Ia = () => {
   // Preenche o formulário com dados vindos da tela /ia (via location.state) ao montar /ia/configurar
   const locationParseData = location.state?.parseData ?? null;
   const locationIntroName = location.state?.introName ?? '';
+  const locationProcessDescription = location.state?.processDescription ?? '';
 
   React.useEffect(() => {
     if (!locationParseData) return;
@@ -413,11 +414,17 @@ const Ia = () => {
     setFeedback('');
 
     const normalizedProcessName = String(processName || '').trim();
-    const orderedNames = flowOrder.map((item) => item.name);
-    const flowString = orderedNames.join(' -> ');
+    const flowLines = flowOrder
+      .map((item) =>
+        item.desc ? `${item.name} (${String(item.desc).trim()})` : item.name,
+      )
+      .join(' -> ');
     const enrichedGoal = [
       normalizedProcessName ? `Nome do processo: ${normalizedProcessName}` : '',
-      flowString,
+      locationProcessDescription
+        ? `Descrição do processo: ${locationProcessDescription}`
+        : '',
+      flowLines,
     ]
       .filter(Boolean)
       .join('\n');
@@ -634,7 +641,11 @@ const Ia = () => {
       }
 
       navigate('/ia/configurar', {
-        state: { parseData: await response.json(), introName: trimmedName },
+        state: {
+          parseData: await response.json(),
+          introName: trimmedName,
+          processDescription: trimmedDesc,
+        },
       });
     } catch (err) {
       setIntroFeedback('Erro ao conectar. Tente novamente.');
@@ -777,8 +788,36 @@ const Ia = () => {
     const payload = await response.json();
     const executed = Number(payload?.executed || 0);
     setFeedback(`Execução concluída. Ações executadas: ${executed}.`);
+
+    // Notifica a linha do tempo das oportunidades sobre ações da IA
+    window.dispatchEvent(
+      new CustomEvent('ia:actions-executed', {
+        detail: {
+          executed,
+          approvedActions: selectedActionIds,
+          plan,
+        },
+      }),
+    );
+
     setIsExecuting(false);
     loadAudit();
+
+    // Navega para o BPMN gerado
+    const results = Array.isArray(payload?.results) ? payload.results : [];
+    const bpmnResult = results.find((r) => r?.type === 'update_bpmn_state');
+    const opportunityResult = results.find(
+      (r) => r?.type === 'create_oportunidade',
+    );
+    const opportunityId =
+      bpmnResult?.syncedOpportunity?.id ??
+      bpmnResult?.syncedOpportunity?._id ??
+      opportunityResult?.result?.id ??
+      opportunityResult?.result?._id ??
+      null;
+    if (opportunityId !== null && opportunityId !== undefined) {
+      navigate(`/gerar-bpmn/pipeline/${opportunityId}`);
+    }
   };
 
   const handleOpenBpmnEditor = () => {

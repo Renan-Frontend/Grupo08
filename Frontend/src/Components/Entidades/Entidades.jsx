@@ -116,6 +116,7 @@ const Entidades = () => {
   );
   const [filtro, setFiltro] = React.useState('todas');
   const [deleteConfirm, setDeleteConfirm] = React.useState(null);
+  const [deleteTabelaConfirm, setDeleteTabelaConfirm] = React.useState(null);
   const [skipDeleteEntidadeConfirm, setSkipDeleteEntidadeConfirm] =
     React.useState(false);
   const [
@@ -537,6 +538,18 @@ const Entidades = () => {
     if (!canDelete) return;
     setDeleteConfirm({ type: 'campo', id });
   };
+
+  const handleDeleteTabela = async () => {
+    if (!canDelete || !deleteTabelaConfirm) return;
+    const entities = deleteTabelaConfirm.entities || [];
+    for (const entity of entities) {
+      const id = getEntidadeId(entity);
+      if (id !== null && id !== undefined) {
+        await deletarEntidade(id);
+      }
+    }
+    setDeleteTabelaConfirm(null);
+  };
   const handleEditCampo = (campo) => {
     if (isReadOnlyMode) return;
     if (!campo) return;
@@ -831,6 +844,15 @@ const Entidades = () => {
       <div className={styles.tableSection}>
         <div className={styles.tableHeader}>
           <h2 className={styles.tableTitle}>{section.title}</h2>
+          {canDelete && entidadesCategoria.length > 0 && (
+            <button
+              className={styles.deleteTabelaBtn}
+              onClick={() => setDeleteTabelaConfirm(section)}
+              title="Deletar a tabela inteira"
+            >
+              🗑️ Deletar tabela
+            </button>
+          )}
         </div>
         <div className={styles.tableWrapper}>
           <table className={`${styles.table} ${styles.entityTable}`}>
@@ -897,35 +919,42 @@ const Entidades = () => {
             </tbody>
           </table>
         </div>
-        {usaPaginacao && (
-          <Pagination
-            currentPage={paginaAtual}
-            totalPages={Math.ceil(entidadesCategoria.length / itemsPorPagina)}
-            onPrevious={() => {
-              if (filtro === 'todas') {
-                setPaginasPorTabela((prev) => ({
-                  ...prev,
-                  [section.key]: Math.max(
-                    1,
-                    Number(prev[section.key] || 1) - 1,
-                  ),
-                }));
-                return;
-              }
-              setTabelaPaginaAtual((prev) => Math.max(1, prev - 1));
-            }}
-            onNext={() => {
-              if (filtro === 'todas') {
-                setPaginasPorTabela((prev) => ({
-                  ...prev,
-                  [section.key]: Number(prev[section.key] || 1) + 1,
-                }));
-                return;
-              }
-              setTabelaPaginaAtual((prev) => prev + 1);
-            }}
-          />
-        )}
+        {usaPaginacao &&
+          Math.ceil(entidadesCategoria.length / itemsPorPagina) > 1 && (
+            <Pagination
+              currentPage={paginaAtual}
+              totalPages={Math.ceil(entidadesCategoria.length / itemsPorPagina)}
+              onPrevious={() => {
+                if (filtro === 'todas') {
+                  setPaginasPorTabela((prev) => ({
+                    ...prev,
+                    [section.key]: Math.max(
+                      1,
+                      Number(prev[section.key] || 1) - 1,
+                    ),
+                  }));
+                  return;
+                }
+                setTabelaPaginaAtual((prev) => Math.max(1, prev - 1));
+              }}
+              onNext={() => {
+                const totalPags = Math.ceil(
+                  entidadesCategoria.length / itemsPorPagina,
+                );
+                if (filtro === 'todas') {
+                  setPaginasPorTabela((prev) => ({
+                    ...prev,
+                    [section.key]: Math.min(
+                      totalPags,
+                      Number(prev[section.key] || 1) + 1,
+                    ),
+                  }));
+                  return;
+                }
+                setTabelaPaginaAtual((prev) => Math.min(totalPags, prev + 1));
+              }}
+            />
+          )}
         {temMuitos && !usaPaginacao && (
           <button
             className={styles.viewMoreBtn}
@@ -1234,6 +1263,15 @@ const Entidades = () => {
               : renderCamposView()}
         </div>
       </div>
+
+      {deleteTabelaConfirm && (
+        <Close
+          title="Deletar tabela inteira"
+          message={`Tem certeza que deseja deletar todas as ${deleteTabelaConfirm.entities.length} entidades da tabela "${deleteTabelaConfirm.title}"? Esta ação não pode ser desfeita.`}
+          onConfirm={handleDeleteTabela}
+          onCancel={() => setDeleteTabelaConfirm(null)}
+        />
+      )}
 
       {deleteConfirm && (
         <Close

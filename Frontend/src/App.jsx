@@ -39,6 +39,18 @@ const LazyFallback = () => (
 function AppContent() {
   const { user, authLoading } = React.useContext(UserContext);
   const isLogged = !!user;
+
+  const [isOffline, setIsOffline] = React.useState(!navigator.onLine);
+  React.useEffect(() => {
+    const onOnline = () => setIsOffline(false);
+    const onOffline = () => setIsOffline(true);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
   const loginElement = authLoading ? null : isLogged ? (
     <Navigate to="/gerar-bpmn" replace />
   ) : (
@@ -72,6 +84,13 @@ function AppContent() {
 
   return (
     <div>
+      {isOffline && (
+        <div className="offlineBanner" role="alert">
+          <span className="offlineBannerIcon">⚡</span>
+          Você está offline — exibindo dados em cache. Alterações não serão
+          salvas até a conexão ser restaurada.
+        </div>
+      )}
       {isLogged && <Header />}
 
       <React.Suspense fallback={<LazyFallback />}>

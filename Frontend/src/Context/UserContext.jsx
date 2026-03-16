@@ -20,6 +20,49 @@ const USER_SESSION_CACHE_KEY = 'user_session_cache_v1';
 const AUTH_REQUEST_TIMEOUT_MS = 8000;
 const LOGIN_REQUEST_TIMEOUT_MS = 12000;
 
+// Offline session: persists token + user in localStorage so the app works
+// after a browser restart when there is no network connection.
+// Only used when navigator.onLine === false — online flow is unchanged.
+const OFFLINE_SESSION_KEY = 'offline_session_v1';
+const OFFLINE_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+const readOfflineSession = () => {
+  try {
+    const raw = window.localStorage.getItem(OFFLINE_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const { token, user, savedAt } = parsed;
+    if (!token || !user || !savedAt) return null;
+    if (Date.now() - savedAt > OFFLINE_SESSION_TTL_MS) {
+      window.localStorage.removeItem(OFFLINE_SESSION_KEY);
+      return null;
+    }
+    return { token, user };
+  } catch {
+    return null;
+  }
+};
+
+const writeOfflineSession = (token, userData) => {
+  try {
+    window.localStorage.setItem(
+      OFFLINE_SESSION_KEY,
+      JSON.stringify({ token, user: userData, savedAt: Date.now() }),
+    );
+  } catch {
+    // no-op
+  }
+};
+
+const clearOfflineSession = () => {
+  try {
+    window.localStorage.removeItem(OFFLINE_SESSION_KEY);
+  } catch {
+    // no-op
+  }
+};
+
 const readCachedUser = () => {
   try {
     const raw = window.sessionStorage.getItem(USER_SESSION_CACHE_KEY);
@@ -105,6 +148,9 @@ export const UserStorage = ({ children }) => {
 
         setUser(userData);
         writeCachedUser(userData);
+        // Persist offline session so the app can work after a browser
+        // restart without network connection (read-only mode).
+        writeOfflineSession(token, userData);
         return token;
       } catch (error) {
         if (error?.name === 'AbortError') {
@@ -130,6 +176,7 @@ export const UserStorage = ({ children }) => {
     window.sessionStorage.removeItem('token');
     window.localStorage.removeItem('token');
     clearCachedUser();
+    clearOfflineSession();
     setUser(null);
   }, []);
 
@@ -155,6 +202,17 @@ export const UserStorage = ({ children }) => {
         window.localStorage.removeItem(USER_SESSION_CACHE_KEY);
 
         if (!sessionToken) {
+          // Offline recovery: no session token but we have a persisted
+          // offline session — restore it without any network call.
+          if (!navigator.onLine) {
+            const offlineSession = readOfflineSession();
+            if (offlineSession) {
+              window.sessionStorage.setItem('token', offlineSession.token);
+              writeCachedUser(offlineSession.user);
+              if (isMounted) setUser(offlineSession.user);
+              return;
+            }
+          }
           window.sessionStorage.removeItem('token');
           if (isMounted) setUser(null);
           return;
@@ -163,6 +221,18 @@ export const UserStorage = ({ children }) => {
         const cachedUser = readCachedUser();
         if (cachedUser && isMounted) {
           setUser(cachedUser);
+          setAuthLoading(false);
+        }
+
+        // Skip network validation when offline — the cached user is enough.
+        // When connectivity is restored the next API call will revalidate.
+        if (!navigator.onLine) {
+          if (!cachedUser) {
+            const offlineSession = readOfflineSession();
+            if (offlineSession && isMounted) setUser(offlineSession.user);
+            else if (isMounted) setUser(null);
+          }
+          return;
         }
 
         const userData = await getUser(sessionToken);
@@ -170,6 +240,8 @@ export const UserStorage = ({ children }) => {
 
         setUser(userData);
         writeCachedUser(userData);
+        // Keep offline session fresh with the latest user data.
+        writeOfflineSession(sessionToken, userData);
       } catch (error) {
         // If we already have a cached user, keep the session alive
         // instead of logging out on a transient network/timeout error.

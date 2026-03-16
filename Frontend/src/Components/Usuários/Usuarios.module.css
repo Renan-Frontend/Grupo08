@@ -111,6 +111,11 @@ tbody {
   width: 14%;
 }
 
+.table td.nameCol {
+  color: #1f9b55;
+  font-weight: 700;
+}
+
 .emailCol {
   width: 22%;
 }

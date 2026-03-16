@@ -243,8 +243,8 @@
 }
 
 .assignedTo {
-  color: #27ae60;
-  font-weight: 500;
+  color: #1f9b55;
+  font-weight: 700;
 }
 
 .assignedSelect {
@@ -253,7 +253,8 @@
   border: 1px solid #ddd;
   border-radius: 0.4rem;
   background: #fff;
-  color: #333;
+  color: #1f9b55;
+  font-weight: 700;
   font-size: 0.82rem;
   line-height: 1.2;
   padding: 0.35rem;

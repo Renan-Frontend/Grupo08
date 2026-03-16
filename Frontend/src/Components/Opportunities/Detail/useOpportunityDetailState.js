@@ -1661,6 +1661,46 @@ const useOpportunityDetailState = ({
     owner,
   ]);
 
+  // Escuta execuções da IA e registra na linha do tempo
+  useEffect(() => {
+    const handleIaExecuted = (event) => {
+      const {
+        executed = 0,
+        approvedActions = [],
+        plan: eventPlan,
+      } = event.detail || {};
+      const actions = Array.isArray(eventPlan?.actions)
+        ? eventPlan.actions
+        : [];
+      const approvedSet = new Set(approvedActions.map(String));
+      const executedActions = actions.filter((action) =>
+        approvedSet.has(String(action?.id || '')),
+      );
+      const actionLabels = executedActions
+        .map((action) => String(action?.label || '').trim())
+        .filter(Boolean)
+        .join(', ');
+
+      appendAutomaticTimelineNote({
+        autoKey: `ia-execute:${Date.now()}:${approvedActions.join(',')}`,
+        title: `IA executou ${executed} ação(ões)`,
+        description: actionLabels
+          ? `Ações executadas: ${actionLabels}.`
+          : `A IA executou ${executed} ação(ões) aprovadas.`,
+        actionType: 'ia',
+        elementType: 'ia',
+        itemName: 'Execução da IA',
+        before: '',
+        after: actionLabels || `${executed} ação(ões) executadas`,
+      });
+    };
+
+    window.addEventListener('ia:actions-executed', handleIaExecuted);
+    return () => {
+      window.removeEventListener('ia:actions-executed', handleIaExecuted);
+    };
+  }, [appendAutomaticTimelineNote]);
+
   const status = useMemo(() => {
     const doneCount = stages.filter((stage) => stage.done).length;
     const defaultStatus =

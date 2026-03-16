@@ -858,24 +858,38 @@ const GerarBPMNCreate = () => {
         }
 
         const linkedEntity = resolveLinkedEntityFromNode(node);
-        let label = String(node.label || '').trim() || 'Entidade';
-        let subtitle = String(node.subtitle || '').trim() || 'Nova Etapa';
+        const nodeDraftDesc = String(
+          entityDraftsByNodeId[node.id]?.newEntityForm?.descricao || '',
+        ).trim();
+        const entityName = linkedEntity
+          ? getEntidadeNome(linkedEntity)
+          : String(node.entidadeNome || node.label || '').trim();
+        // node.subtitle set by AI is sometimes the entity name, not a description.
+        // Only treat it as a description when it differs from the entity name.
+        const nodeSavedSubtitle = String(node.subtitle || '').trim();
+        const subtitleIsRealDesc =
+          nodeSavedSubtitle &&
+          nodeSavedSubtitle.toLowerCase() !== entityName.toLowerCase();
+        let label = entityName || 'Entidade';
+        // Priority: linkedEntity.descricao > draft desc > saved subtitle (only when it's a real desc)
+        let subtitle = linkedEntity
+          ? getEntidadeDescricao(linkedEntity) ||
+            nodeDraftDesc ||
+            (subtitleIsRealDesc ? nodeSavedSubtitle : '') ||
+            'Nova Etapa'
+          : (subtitleIsRealDesc ? nodeSavedSubtitle : '') ||
+            nodeDraftDesc ||
+            'Nova Etapa';
         let info = getEntityTypeInfoLabel(node?.tipoEntidade);
 
         if (linkedEntity) {
-          label = getEntidadeNome(linkedEntity) || 'Entidade';
-          subtitle = getEntidadeDescricao(linkedEntity) || 'Nova Etapa';
           info = getEntityTypeInfoLabel(
             String(node?.tipoEntidade || '').trim() ||
               linkedEntity?.tipoEntidade,
           );
         }
 
-        if (
-          selectedNodeId === node.id &&
-          entityMode === 'nova' &&
-          !linkedEntity
-        ) {
+        if (selectedNodeId === node.id && entityMode === 'nova') {
           label = String(newEntityForm.nome || '').trim() || 'Entidade';
           subtitle =
             String(newEntityForm.descricao || '').trim() || 'Nova Etapa';
@@ -893,6 +907,7 @@ const GerarBPMNCreate = () => {
       conditionalForm.descricao,
       conditionalForm.nome,
       entityMode,
+      entityDraftsByNodeId,
       newEntityForm.descricao,
       newEntityForm.nome,
       nodes,
@@ -1176,7 +1191,9 @@ const GerarBPMNCreate = () => {
       setEntityMode('nova');
       setNewEntityForm({
         nome: String(selectedNodeLinkedEntity.nome || '').trim(),
-        descricao: String(selectedNodeLinkedEntity.descricao || '').trim(),
+        descricao:
+          String(selectedNodeLinkedEntity.descricao || '').trim() ||
+          String(selectedNode.subtitle || '').trim(),
         atributoChave: String(
           selectedNodeLinkedEntity.atributoChave || '',
         ).trim(),

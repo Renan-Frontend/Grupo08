@@ -120,6 +120,28 @@
   padding: 0.5rem 1rem;
   background: #fafafa;
   border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.deleteTabelaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #dc2626;
+  background: #fff;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.deleteTabelaBtn:hover {
+  background: #fef2f2;
 }
 
 .tableTitle {
@@ -168,13 +190,16 @@
   background: #fafafa;
 }
 
-.nameCell {
+.nameCell,
+.table td.nameCell {
   color: #4caf50;
   font-weight: 500;
 }
 
-.creatorCell {
-  color: #4caf50;
+.creatorCell,
+.table td.creatorCell {
+  color: #1f9b55;
+  font-weight: 700;
   font-size: 0.85rem;
 }
 

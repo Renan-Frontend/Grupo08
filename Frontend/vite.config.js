@@ -31,33 +31,57 @@ export default defineConfig({
         enabled: false,
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2}'],
         navigateFallback: 'index.html',
         navigateFallbackAllowlist: [/^(?!\/__).*/],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/dogsapi\.origamid\.dev\/json\/.*/i,
+            // Cache GET requests to the real backend API (dev + production)
+            urlPattern: ({ request }) =>
+              request.method === 'GET' &&
+              /https?:\/\/(grupo08\.onrender\.com|127\.0\.0\.1:\d+|localhost:\d+)\/.*/i.test(
+                request.url,
+              ),
             handler: 'NetworkFirst',
             options: {
-              cacheName: 'api-cache',
+              cacheName: 'api-get-cache',
               expiration: {
-                maxEntries: 100,
+                maxEntries: 300,
                 maxAgeSeconds: 60 * 60 * 24, // 24 horas
               },
-              networkTimeoutSeconds: 10,
+              networkTimeoutSeconds: 8,
               cacheableResponse: {
                 statuses: [0, 200],
               },
             },
           },
           {
-            urlPattern: /^https:\/\/.*\.(png|jpg|jpeg|svg|gif|webp)$/i,
+            // Cache imagens e assets estáticos
+            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'images-cache',
               expiration: {
-                maxEntries: 50,
+                maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            // Cache fontes (Google Fonts etc)
+            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'fonts-cache',
+              expiration: {
+                maxEntries: 20,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 ano
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
               },
             },
           },

@@ -30,6 +30,7 @@ const getActionTypeLabel = (actionType) => {
   if (actionType === 'create') return 'Criação';
   if (actionType === 'delete') return 'Remoção';
   if (actionType === 'comment') return 'Comentário';
+  if (actionType === 'ia') return 'Automação IA';
   return 'Atualização';
 };
 
@@ -37,6 +38,7 @@ const getActionIcon = (actionType) => {
   if (actionType === 'create') return '➕';
   if (actionType === 'delete') return '🗑️';
   if (actionType === 'comment') return '💬';
+  if (actionType === 'ia') return '🤖';
   return '✏️';
 };
 
@@ -96,7 +98,7 @@ const TimelineCard = ({
       (item) => {
         const actionType =
           String(item?.actionType || 'update').trim() || 'update';
-        if (!['create', 'update', 'delete'].includes(actionType)) {
+        if (!['create', 'update', 'delete', 'ia'].includes(actionType)) {
           return false;
         }
 
@@ -120,16 +122,19 @@ const TimelineCard = ({
           elementType === 'status' ||
           elementType === 'layout' ||
           elementType === 'topico' ||
-          elementType === 'datas';
+          elementType === 'datas' ||
+          elementType === 'ia';
 
         const isEligibleBySourceOrTitle =
           source === 'bpmn-save' ||
           source === 'opportunity-save' ||
+          source === 'ia' ||
           title.includes('bpmn') ||
           title.includes('entidade') ||
           title.includes('oportunidade') ||
           title.includes('pipeline') ||
-          title.includes('propriet');
+          title.includes('propriet') ||
+          title.includes('ia executou');
 
         if (!isEligibleByElementType && !isEligibleBySourceOrTitle) {
           return false;

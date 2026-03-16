@@ -189,7 +189,7 @@ function Usuarios() {
                     const canDeleteThisUser = !isPrincipalAdmin;
                     return (
                       <tr key={usuario.id}>
-                        <td>{usuario.nome}</td>
+                        <td className={styles.nameCol}>{usuario.nome}</td>
                         <td>{usuario.email}</td>
                         <td>
                           {editingId === usuario.id ? (

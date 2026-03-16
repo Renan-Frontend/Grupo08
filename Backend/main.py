@@ -238,7 +238,7 @@ def _execute_ai_action(action: dict[str, Any], current_user: dict[str, Any]) -> 
         entidade_data = {
             "categoria": str(payload.get("categoria") or "IA"),
             "nome": str(payload.get("nome") or "Entidade IA").strip(),
-            "descricao": str(payload.get("descricao") or "Entidade gerada por IA").strip(),
+            "descricao": str(payload.get("descricao") or "").strip(),
             "tipoEntidade": str(payload.get("tipoEntidade") or "Processo"),
             "campos": payload.get("campos") if isinstance(payload.get("campos"), list) else [],
             "criadoPor": current_user.get("nome") or "IA",
@@ -252,7 +252,7 @@ def _execute_ai_action(action: dict[str, Any], current_user: dict[str, Any]) -> 
 
     if action_type == "create_oportunidade":
         oportunidade_data = {
-            "nome": str(payload.get("nome") or "Oportunidade IA").strip(),
+            "nome": _unique_opportunity_name(str(payload.get("nome") or "Oportunidade IA").strip()),
             "descricao": str(payload.get("descricao") or "Gerada por IA").strip(),
             "etapa": str(payload.get("etapa") or "Mapeamento"),
             "responsavel": str(payload.get("responsavel") or current_user.get("nome") or "IA"),
@@ -1002,8 +1002,11 @@ def _ensure_bpmn_entity_nodes(
         except Exception:
             max_x = 120.0
 
+    # Limita a 1 node de entidade por BPMN para evitar canvas poluido
     added_count = 0
     for entity_name in entity_names:
+        if added_count >= 1:
+            break
         normalized = _normalize_ai_text(entity_name)
         if not normalized or normalized in existing_entity_names:
             continue
@@ -1950,10 +1953,19 @@ def _sanitize_llm_action(raw_action: Any, fallback_id: int, current_user: dict[s
             payload.get("campos"),
             entity_name,
         )
+        _BAD_DESC_PREFIXES = (
+            "entidade do processo",
+            "entidade de ",
+            "representa a entidade",
+            "entidade responsavel",
+            "entidade que representa",
+        )
+        raw_desc = str(payload.get("descricao") or "").strip()
+        clean_desc = raw_desc if not any(raw_desc.lower().startswith(p) for p in _BAD_DESC_PREFIXES) else ""
         payload = {
             "categoria": str(payload.get("categoria") or "IA"),
             "nome": entity_name,
-            "descricao": str(payload.get("descricao") or "Entidade sugerida por IA").strip(),
+            "descricao": clean_desc,
             "tipoEntidade": _entity_type_label(str(payload.get("tipoEntidade") or ""), fallback_id),
             "campos": sanitized_fields,
         }
@@ -2363,9 +2375,17 @@ def _ensure_entity_actions(
     )
 
     entity_actions_to_add: list[dict[str, Any]] = []
-    full_reference_list = _dedupe_preserve_order([*existing_create_entities, *candidate_entities])
+    # Se já há 3 ou mais create_entidade no plano, não adiciona mais
+    if len(existing_create_entities) >= 3:
+        for index, action in enumerate(sanitized_actions, start=1):
+            action["id"] = f"a{index}"
+        return sanitized_actions
 
-    for candidate_name in candidate_entities:
+    needed = 3 - len(existing_create_entities)
+    candidate_entities_limited = [c for c in suggested_entities if str(c or "").strip()][:needed]
+    full_reference_list = _dedupe_preserve_order([*existing_create_entities, *candidate_entities_limited])
+
+    for candidate_name in candidate_entities_limited:
         if _normalize_ai_text(candidate_name) in {
             _normalize_ai_text(name) for name in existing_create_entities
         }:
@@ -2387,7 +2407,7 @@ def _ensure_entity_actions(
                 "requiresApproval": True,
                 "payload": {
                     "nome": candidate_name,
-                    "descricao": f"Representa a etapa de entidade do processo: {process_name}",
+                    "descricao": "",
                     "categoria": process_name,
                     "tipoEntidade": entity_kind,
                     "campos": _sanitize_entity_fields(
@@ -2977,10 +2997,22 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "\"label\":\"...\",\"risk\":\"low|medium|high\",\"payload\":{...}}]}. "
         "Nao inclua markdown, comentarios ou texto fora do JSON. "
         "As acoes devem ser concretas, curtas e executaveis no sistema. "
-        "Nomes de atividade, condicional e entidade devem ser resumidos e completos, sem reticencias. "
+        "NOMES OBRIGATORIAMENTE CURTOS: atividades com no maximo 3 palavras, entidades com no maximo 2 palavras, condicionais com no maximo 4 palavras + '?'. "
+        "NUNCA use nomes longos como 'Registrar Solicitacao de Compra' — use 'Registrar Solicitacao'. "
+        "Para cada entidade criada (create_entidade), o campo 'descricao' deve explicar o CONTEXTO/SITUACAO desta entidade no processo em 1 frase — NUNCA repita nem parafraseie o nome. "
+        "PROIBIDO: iniciar descricao com 'Entidade do processo:', 'Entidade de', 'Representa a entidade', 'Entidade responsavel' ou qualquer variacao similar. "
+        "Exemplo ruim: nome='Pedido', descricao='Entidade do processo de compra'. Exemplo bom: nome='Pedido', descricao='Registrado pelo cliente ao solicitar itens; passa por analise antes de ser aprovado'. "
+        "TIPO DA ENTIDADE (campo tipoEntidade): escolha com cuidado — nao use sempre 'apoio'. "
+        "  - 'principal': entidade central do processo, geralmente o objeto que inicia e conduz o fluxo (ex: Pedido, Contrato, Solicitacao). "
+        "  - 'apoio': entidade de suporte ou referencia usada pelo processo mas nao e o objeto central (ex: Cliente, Fornecedor, Funcionario). "
+        "  - 'associativa': entidade que representa um relacionamento entre duas outras entidades (ex: ItemPedido, ParticipanteEvento). "
+        "  - 'externa': entidade que pertence a um sistema externo ou dominio fora do processo (ex: NFe, Boleto, EmailExterior). "
+        "Identifique o tipo correto com base no papel da entidade no processo descrito. "
         "Quando houver condicional (XOR), gere ramos com sentido de negocio (sim/nao) e evite decisao sem bifurcacao real. "
         "Sempre inclua acoes para oportunidade e update_bpmn_state com payload completo (nodes, connections, stages). "
-        "Use somente tipos suportados no BPMN: task, condicional e entidade."
+        "Use somente tipos suportados no BPMN: task, condicional e entidade. "
+        "IMPORTANTE: gere NO MAXIMO 3 acoes do tipo create_entidade — priorize as entidades principais e de apoio do processo. "
+        "No BPMN (update_bpmn_state), inclua NO MAXIMO 1 node do tipo entidade no diagrama — apenas a entidade central que o fluxo produz ou consome."
     )
 
     user_prompt = {
@@ -3072,6 +3104,17 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         action = _sanitize_llm_action(raw_action, index, current_user)
         if action:
             sanitized_actions.append(action)
+
+    # Mantém no máximo 3 create_entidade
+    entidade_count = 0
+    filtered_actions: list[dict[str, Any]] = []
+    for _a in sanitized_actions:
+        if str(_a.get("type") or "") == "create_entidade":
+            if entidade_count >= 3:
+                continue
+            entidade_count += 1
+        filtered_actions.append(_a)
+    sanitized_actions = filtered_actions
 
     sanitized_actions = _ensure_entity_actions(
         sanitized_actions,
@@ -3502,8 +3545,9 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         "Voce e um gerador de BPMN. Gere os nodes e connections do diagrama BPMN. Retorne APENAS JSON valido, sem markdown.\n\n"
 
         "REGRAS FUNDAMENTAIS:\n"
-        "- 'flowOrder' é uma lista de objetos {name, type} que define EXATAMENTE a sequência e o tipo de cada node.\n"
-        "- Crie UM node por item de flowOrder. Use item.name como label e item.type como nodeType. NAO invente nomes.\n\n"
+        "- 'flowOrder' é uma lista de objetos {name, type, desc?} que define EXATAMENTE a sequência e o tipo de cada node.\n"
+        "- Crie UM node por item de flowOrder. Use item.name como label e item.type como nodeType. NAO invente nomes.\n"
+        "- Se item.desc existir, use-o como taskDescricao (tasks) ou condicionalDescricao (condicionais) ou subtitle (entidades).\n\n"
 
         "PASSO 1 - GERACAO DOS NODES:\n"
         "1. Para cada item em flowOrder, crie um node: label=item.name, nodeType=item.type.\n"
@@ -3517,7 +3561,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         "5. O proximo node na sequencia recebe o caminho SIM (\u2714). O node alternativo recebe o caminho NAO (\u2718).\n\n"
 
         "PASSO 3 - ENTIDADES:\n"
-        "6. Nodes com nodeType='entidade' DEVEM ter 'campos' com 3-5 campos.\n"
+        "6. Nodes com nodeType='entidade' representam dados produzidos/consumidos por uma tarefa. Inclua NO MAXIMO 1 node de entidade no diagrama — apenas o objeto central do processo.\n"
         "7. Formato de campo: {nome, tipo (texto|numero|email|booleano|data), obrigatorio (bool), keyType (PK|FK|NORMAL), relacionamento (null|nomeEntidade)}\n\n"
 
         "FORMATO:\n"
@@ -3855,8 +3899,10 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         if str(n or "").strip()
     ])
     entity_actions_groq: list[dict[str, Any]] = []
-    for _ei, _cname in enumerate(candidate_entities_groq, start=1):
+    # Limita a 3 entidades para não sobrecarregar o plano
+    for _ei, _cname in enumerate(candidate_entities_groq[:3], start=1):
         _tipo_raw = fo_entity_tipo.get(_cname.lower()) or goal_entity_type_by_name.get(_normalize_ai_text(_cname), "")
+        _desc_fo = next((str(i.get("desc") or "").strip() for i in typed_flow_order if i.get("name") == _cname and i.get("desc")), "")
         _tipo = _normalize_entity_type(_tipo_raw, default="apoio") if _tipo_raw else _entity_type_label("", _ei)
         entity_actions_groq.append({
             "id": f"a{len(entity_actions_groq) + 1}",
@@ -3866,7 +3912,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             "requiresApproval": True,
             "payload": {
                 "nome": _cname,
-                "descricao": f"Entidade do processo: {process_name}",
+                "descricao": _desc_fo,
                 "categoria": process_name,
                 "tipoEntidade": _tipo,
                 "campos": _sanitize_entity_fields(
@@ -4565,13 +4611,14 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
     )
 
     entity_actions: list[dict[str, Any]] = []
+    # Limita a 3 entidades para não sobrecarregar o plano
     candidate_entities = _dedupe_preserve_order(
         [
             str(name or "").strip()
             for name in ([*suggested_entities, *local_entities] or [entity_name, process_name])
             if str(name or "").strip()
         ]
-    )
+    )[:3]
 
     for entity_index, candidate_name in enumerate(candidate_entities, start=1):
         entity_kind = _entity_type_label(
@@ -4587,7 +4634,7 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
                 "requiresApproval": True,
                 "payload": {
                     "nome": candidate_name,
-                    "descricao": f"Representa a etapa de entidade do processo: {process_name}",
+                    "descricao": "",
                     "categoria": process_name,
                     "tipoEntidade": entity_kind,
                     "campos": _sanitize_entity_fields(
@@ -4883,7 +4930,7 @@ def _sync_bpmn_state_to_opportunity_table(
         entidade_data = {
             "categoria": str(payload.get("categoria") or "IA"),
             "nome": str(payload.get("nome") or "Entidade IA").strip(),
-            "descricao": str(payload.get("descricao") or "Entidade gerada por IA").strip(),
+            "descricao": str(payload.get("descricao") or "").strip(),
             "tipoEntidade": str(payload.get("tipoEntidade") or "Processo"),
             "campos": payload.get("campos") if isinstance(payload.get("campos"), list) else [],
             "criadoPor": current_user.get("nome") or "IA",
@@ -4897,7 +4944,7 @@ def _sync_bpmn_state_to_opportunity_table(
 
     if action_type == "create_oportunidade":
         oportunidade_data = {
-            "nome": str(payload.get("nome") or "Oportunidade IA").strip(),
+            "nome": _unique_opportunity_name(str(payload.get("nome") or "Oportunidade IA").strip()),
             "descricao": str(payload.get("descricao") or "Gerada por IA").strip(),
             "etapa": str(payload.get("etapa") or "Mapeamento"),
             "responsavel": str(payload.get("responsavel") or current_user.get("nome") or "IA"),
@@ -5294,6 +5341,22 @@ def get_app():
     return app
 
 app = get_app()
+
+
+def _unique_opportunity_name(base_name: str) -> str:
+    """Returns base_name, or base_name (1), base_name (2) ... if already taken."""
+    existing = load_oportunidades_data()
+    existing_names = {str(o.get("nome") or "").strip().lower() for o in existing}
+    candidate = base_name.strip()
+    if candidate.lower() not in existing_names:
+        return candidate
+    counter = 1
+    while True:
+        candidate = f"{base_name.strip()} ({counter})"
+        if candidate.lower() not in existing_names:
+            return candidate
+        counter += 1
+
 
 # Endpoint para criar oportunidade
 @app.post("/oportunidades", status_code=201)
@@ -5810,8 +5873,14 @@ def ai_parse_description(
         "- 'activities': lista de strings com tarefas (verbos no infinitivo, ex: Analisar Pedido).\n"
         "- 'conditionals': lista de strings com decisões exclusivas, SEMPRE terminam com '?' (ex: Pedido aprovado?).\n"
         "- 'flowOrder': sequência ordenada de TODOS os elementos acima — inclua todas as entidades, atividades e condicionais, "
-        "sem omitir nenhum. Cada item é {\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", \"tipoEntidade\": string (só para entidades)}.\n"
+        "sem omitir nenhum. Cada item é {\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", "
+        "\"desc\": string (obrigatório — descreva o papel deste elemento no processo em 1 frase), "
+        "\"tipoEntidade\": string (só para entidades)}.\n"
         "  Para condicionais em flowOrder, adicione 'branches': {\"sim\": \"<próximo elemento se verdadeiro>\", \"nao\": \"<próximo elemento se falso>\"}.\n"
+        "- NOMES CURTOS: nomes de atividade devem ter no máximo 3 palavras; nomes de entidade no máximo 2 palavras; nomes de condicional no máximo 4 palavras + '?'.\n"
+        "- 'desc' DEVE explicar o CONTEXTO/SITUAÇÃO do elemento no processo — NUNCA repita nem parafraseie o nome. "
+        "Exemplo ruim: name='Analisar Pedido', desc='Análise do pedido'. "
+        "Exemplo bom: name='Analisar Pedido', desc='Responsável verifica se o pedido atende às políticas internas antes de aprovar'.\n"
         "- Retorne JSON válido com exatamente estas chaves: processName, entities, activities, conditionals, flowOrder.\n"
         "- Não inclua explicações, apenas o JSON."
     )
@@ -5903,6 +5972,10 @@ def ai_parse_description(
                         "sim": str(item["branches"].get("sim") or "").strip(),
                         "nao": str(item["branches"].get("nao") or "").strip(),
                     }
+                # Preserva desc se a IA retornou
+                raw_desc = str(item.get("desc") or "").strip()
+                if raw_desc:
+                    fo_item["desc"] = raw_desc
                 flow_order.append(fo_item)
 
     # entities como lista de objetos {name, tipoEntidade}
@@ -5989,9 +6062,31 @@ def ai_execute(
     if not actions_to_execute:
         raise HTTPException(status_code=400, detail="Nenhuma acao valida foi selecionada para execucao.")
 
+    # Pre-compute unique opportunity names so update_bpmn_state syncs to the right record
+    opportunity_name_map: dict[str, str] = {}
+    for action in actions_to_execute:
+        if isinstance(action, dict) and action.get("type") == "create_oportunidade":
+            p = action.get("payload") if isinstance(action.get("payload"), dict) else {}
+            original = str(p.get("nome") or "Oportunidade IA").strip()
+            opportunity_name_map[original.lower()] = _unique_opportunity_name(original)
+
     results = []
     for action in actions_to_execute:
-        result = _execute_ai_action(action, current_user)
+        action_to_run = action
+        if isinstance(action, dict) and opportunity_name_map:
+            atype = action.get("type")
+            apayload = action.get("payload") if isinstance(action.get("payload"), dict) else {}
+            if atype == "update_bpmn_state":
+                bpmn_name = str(apayload.get("name") or "").strip()
+                mapped = opportunity_name_map.get(bpmn_name.lower())
+                if mapped:
+                    action_to_run = {**action, "payload": {**apayload, "name": mapped}}
+            elif atype == "create_entidade":
+                cat = str(apayload.get("categoria") or "").strip()
+                mapped_cat = opportunity_name_map.get(cat.lower())
+                if mapped_cat:
+                    action_to_run = {**action, "payload": {**apayload, "categoria": mapped_cat}}
+        result = _execute_ai_action(action_to_run, current_user)
         results.append({
             "id": action.get("id"),
             **result,
