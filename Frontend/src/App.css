@@ -2,6 +2,11 @@
   box-sizing: border-box;
 }
 
+html {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 html,
 body {
   margin: 0;
@@ -11,6 +16,8 @@ body {
 }
 
 body {
+  overflow-x: hidden;
+  max-width: 100%;
   color: #333;
   --type-first: Helvetica, Arial, sans-serif;
   --type-second: 'Spectral', Georgia;
