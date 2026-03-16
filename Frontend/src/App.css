@@ -5,6 +5,7 @@
 html {
   max-width: 100%;
   overflow-x: hidden;
+  overscroll-behavior-x: none;
 }
 
 html,
@@ -18,6 +19,7 @@ body {
 body {
   overflow-x: hidden;
   max-width: 100%;
+  overscroll-behavior-x: none;
   color: #333;
   --type-first: Helvetica, Arial, sans-serif;
   --type-second: 'Spectral', Georgia;
@@ -252,6 +254,7 @@ a {
 #root {
   height: 100%;
   width: 100%;
+  overflow-x: hidden;
 }
 
 main {
