@@ -172,8 +172,19 @@
 /* Responsivo - Mobile */
 @media (max-width: 1024px) {
   .loginContainer {
+    grid-template-columns: 1fr;
     max-width: 98vw;
     min-height: 300px;
+    border-radius: 14px;
+  }
+
+  .loginPanel .title,
+  .signupPanel .title {
+    font-size: 1.8rem;
+  }
+
+  .signupPanel {
+    display: none;
   }
 }
 

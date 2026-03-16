@@ -154,4 +154,10 @@
   .chartSection {
     padding: 1rem;
   }
+
+  .chartFooter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+  }
 }

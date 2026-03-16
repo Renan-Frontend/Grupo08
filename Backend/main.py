@@ -6054,7 +6054,7 @@ def ai_execute(
     actions_raw = plan.get("actions")
     all_actions: list[Any] = actions_raw if isinstance(actions_raw, list) else []
     selected_ids = {str(item).strip() for item in approved_actions}
-    actions_to_execute = [
+    actions_to_execute: list[dict] = [
         action for action in all_actions
         if isinstance(action, dict) and str(action.get("id", "")).strip() in selected_ids
     ]
@@ -6065,17 +6065,19 @@ def ai_execute(
     # Pre-compute unique opportunity names so update_bpmn_state syncs to the right record
     opportunity_name_map: dict[str, str] = {}
     for action in actions_to_execute:
-        if isinstance(action, dict) and action.get("type") == "create_oportunidade":
-            p = action.get("payload") if isinstance(action.get("payload"), dict) else {}
+        if action.get("type") == "create_oportunidade":
+            _raw_p = action.get("payload")
+            p: dict = _raw_p if isinstance(_raw_p, dict) else {}
             original = str(p.get("nome") or "Oportunidade IA").strip()
             opportunity_name_map[original.lower()] = _unique_opportunity_name(original)
 
     results = []
     for action in actions_to_execute:
-        action_to_run = action
-        if isinstance(action, dict) and opportunity_name_map:
+        action_to_run: dict = action
+        if opportunity_name_map:
             atype = action.get("type")
-            apayload = action.get("payload") if isinstance(action.get("payload"), dict) else {}
+            _raw_ap = action.get("payload")
+            apayload: dict = _raw_ap if isinstance(_raw_ap, dict) else {}
             if atype == "update_bpmn_state":
                 bpmn_name = str(apayload.get("name") or "").strip()
                 mapped = opportunity_name_map.get(bpmn_name.lower())

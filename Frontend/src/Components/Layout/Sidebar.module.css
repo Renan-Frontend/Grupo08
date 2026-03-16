@@ -308,7 +308,7 @@ button.addButton:hover {
   .menuItem {
     display: block;
     margin-bottom: 0;
-    font-size: 0.66rem;
+    font-size: 0.77rem;
     border-radius: 7px;
     min-width: 0;
   }
@@ -318,7 +318,7 @@ button.addButton:hover {
     border: 1px solid #e5e7eb;
     border-radius: 7px;
     background: #f8fafc;
-    min-height: 2.4rem;
+    min-height: 2.75rem;
   }
 
   .menuItemContent:hover {
