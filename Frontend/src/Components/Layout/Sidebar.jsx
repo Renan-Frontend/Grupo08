@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './Sidebar.module.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { UserContext } from '../../Context/UserContext';
-import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
+import { isReadOnlyAccessLevelOne, canCreateByAccessLevel } from '../../Utils/accessControl';
 import Button from '../Forms/Button';
 
 const Sidebar = ({ onNavigateItem }) => {
@@ -10,6 +10,7 @@ const Sidebar = ({ onNavigateItem }) => {
   const location = useLocation();
   const { userLogout, user } = React.useContext(UserContext);
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
+  const canCreate = canCreateByAccessLevel(user);
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -40,6 +41,10 @@ const Sidebar = ({ onNavigateItem }) => {
 
   const isGerarBpmnCreating = () => {
     return location.pathname === '/gerar-bpmn/criar' ? styles.active : '';
+  };
+
+  const isDashboardCreating = () => {
+    return location.pathname === '/dashboard/criar' ? styles.active : '';
   };
 
   const isOportunidadesCreating = () => {
@@ -82,7 +87,20 @@ const Sidebar = ({ onNavigateItem }) => {
               <span className={styles.icon}>📄</span>
               Dashboard
             </div>
-            <div className={styles.addButtonWrapper}></div>
+            <div className={styles.addButtonWrapper}>
+              {canCreate ? (
+                <button
+                  className={`${styles.addButton} ${isDashboardCreating()}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNavigation('/dashboard/criar');
+                  }}
+                  title="Criar Dashboard"
+                >
+                  +
+                </button>
+              ) : null}
+            </div>
           </li>
           <li
             className={`${styles.menuItem} ${location.pathname.startsWith('/ia') ? styles.active : ''}`}

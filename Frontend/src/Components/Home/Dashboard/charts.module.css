@@ -1,0 +1,92 @@
+.chartCard {
+  background: white;
+  border-radius: 0.6rem;
+  padding: 1.5rem;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+}
+
+/* Row layout for header: title on left, edit button on right */
+.chartHeaderRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  gap: 0.75rem;
+}
+
+.editDataBtn {
+  background: none;
+  border: 1.5px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: border-color 120ms, background 120ms;
+}
+
+.editDataBtn:hover {
+  border-color: #2fa866;
+  background: #f0fdf4;
+}
+
+.chartTitle {
+  font-size: 1rem;
+  color: #0f172a;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+
+.chartSubtitle {
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+/* Custom tooltip */
+.tooltip {
+  background: #0f172a;
+  border-radius: 0.45rem;
+  padding: 0.55rem 0.8rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
+  min-width: 120px;
+}
+
+.tooltipLabel {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tooltipValue {
+  font-size: 1rem;
+  color: #f8fafc;
+  font-weight: 700;
+}
+
+.tooltipRow {
+  font-size: 0.83rem;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+  .chartCard {
+    padding: 1rem;
+  }
+}

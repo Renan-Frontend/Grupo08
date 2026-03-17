@@ -152,15 +152,16 @@ function Usuarios() {
   };
 
   return (
-    <section className={styles.page}>
-      <div className={styles.container}>
-        <div className={styles.header}>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div>
           <h1 className={styles.title}>Administrar usuários</h1>
+          <p className={styles.subtitle}>Gerencie acessos, cargos e permissões dos usuários.</p>
         </div>
+      </div>
 
-        <div className={styles.content}>
-          <div className={styles.tableBox}>
-            <table className={styles.table}>
+      <div className={styles.tableBox}>
+        <table className={styles.table}>
               <thead>
                 <tr>
                   <th className={styles.nameCol}>Nome</th>
@@ -311,19 +312,17 @@ function Usuarios() {
                   })}
               </tbody>
             </table>
-          </div>
-
-          {/* Pagination component reutilizável */}
-          <Pagination
-            page={usuarios.page}
-            limit={usuarios.limit}
-            total={usuarios.total}
-            hasNext={usuarios.has_next}
-            hasPrev={usuarios.has_prev}
-            onPageChange={fetchUsuarios}
-          />
-        </div>
       </div>
+
+      {/* Pagination component reutilizável */}
+      <Pagination
+        page={usuarios.page}
+        limit={usuarios.limit}
+        total={usuarios.total}
+        hasNext={usuarios.has_next}
+        hasPrev={usuarios.has_prev}
+        onPageChange={fetchUsuarios}
+      />
 
       {deleteUserId ? (
         <Close
@@ -334,7 +333,7 @@ function Usuarios() {
           confirmLabel="Excluir"
         />
       ) : null}
-    </section>
+    </div>
   );
 }
 

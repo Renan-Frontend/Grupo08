@@ -492,10 +492,11 @@ const Entidades = () => {
   const handleFiltroChange = (valor) => {
     if (valor === 'todas') {
       navigate('/entidades');
+      setFiltro('todas');
     } else {
       setFiltro(valor);
-      setTabelaPaginaAtual(1);
     }
+    setTabelaPaginaAtual(1);
     setPaginasPorTabela({});
   };
 
@@ -863,7 +864,7 @@ const Entidades = () => {
                 <th>Qtd. Campos</th>
                 <th>Usada em BPMN</th>
                 <th>Tipo da Entidade</th>
-                <th>Criado por</th>
+                <th>Usuário</th>
                 <th>Atualizado em</th>
                 <th>Ações</th>
               </tr>
@@ -1193,9 +1194,16 @@ const Entidades = () => {
           return (
             <div className={styles.header}>
               <div className={styles.headerLeft}>
-                <h1 className={styles.title}>
-                  {isEntityFieldsView ? 'Campo de Entidade' : 'Entidades'}
-                </h1>
+                <div>
+                  <h1 className={styles.title}>
+                    {isEntityFieldsView ? 'Campo de Entidade' : 'Entidades'}
+                  </h1>
+                  <p className={styles.titleSub}>
+                    {isEntityFieldsView
+                      ? 'Configure os campos desta entidade.'
+                      : 'Gerencie as entidades e seus campos customizados.'}
+                  </p>
+                </div>
 
                 {!isEntityFieldsView && (
                   <select

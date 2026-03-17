@@ -1,0 +1,116 @@
+.wrapper {
+  background: #fff;
+  border-radius: 0.6rem;
+  padding: 1.5rem;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.header {
+  margin-bottom: 1.25rem;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.2rem;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.5rem;
+}
+
+.editBtn {
+  background: none;
+  border: 1.5px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 0.82rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+  font: inherit;
+}
+
+.editBtn:hover {
+  border-color: #2fa866;
+  color: #2fa866;
+  background: #f0fdf4;
+}
+
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.stage {
+  display: grid;
+  grid-template-columns: 130px 1fr 200px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.stageLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.barTrack {
+  height: 22px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: #2fa866;
+  border-radius: 6px;
+  transition: width 500ms ease;
+}
+
+.stageMeta {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.leads {
+  font-size: 0.82rem;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.valor {
+  font-size: 0.82rem;
+  color: #1e293b;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .stage {
+    grid-template-columns: 1fr;
+    gap: 0.3rem;
+  }
+
+  .stageMeta {
+    justify-content: flex-start;
+  }
+}

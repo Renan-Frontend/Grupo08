@@ -57,7 +57,9 @@
 .canvasMode {
   display: block;
   min-height: 560px;
-  touch-action: none;
+  /* Do NOT set touch-action: none here. The viewport relies on native scroll
+     for panning on touch devices. Individual draggable nodes override with
+     touch-action: none via inline style when needed. */
 }
 
 .stageCard {
@@ -99,6 +101,7 @@
   cursor: pointer;
   padding: 0;
   z-index: 5;
+  touch-action: none;
   transition:
     opacity 120ms ease,
     transform 120ms ease,

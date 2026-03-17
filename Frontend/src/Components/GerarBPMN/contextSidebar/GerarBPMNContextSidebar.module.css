@@ -115,9 +115,16 @@
 }
 
 .sidebarMobileMenu {
-  position: sticky;
-  top: 0;
-  z-index: 12;
+  /* Inside the right-side drawer: fill height, no sticky positioning */
+  flex: 1;
+  border-radius: 0;
+  border-top: none;
+  border-right: none;
+  border-bottom: none;
+  border-left: 1px solid #dbe1ea;
+  overflow-y: auto;
+  min-height: 0;
+  position: static;
 }
 
 .sidebarCollapsed {
@@ -138,18 +145,26 @@
 .mobilePopupOverlay {
   position: fixed;
   inset: 0;
-  z-index: 40;
-  background: rgba(15, 23, 42, 0.5);
+  z-index: 120;
+  background: transparent;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding: 2.2rem 0.4rem 0.45rem;
+  align-items: stretch;
+  /* Panel slides in from the right — never covers canvas centre */
+  justify-content: flex-end;
+  padding: 0;
+  /* Allow taps on the canvas (left side) to pass through */
+  pointer-events: none;
 }
 
 .mobilePopupCardWrap {
-  width: 100%;
+  width: min(300px, 88vw);
+  height: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: -4px 0 16px rgba(15, 23, 42, 0.18);
+  /* Re-enable pointer events only on the panel itself */
+  pointer-events: auto;
 }
 
 .mobilePopupHeader {

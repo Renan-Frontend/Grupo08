@@ -1,0 +1,823 @@
+.container {
+  width: 100%;
+  min-height: calc(100vh - 220px);
+  padding: 2rem;
+  background: #f7f7f7;
+  border-radius: 0.75rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 1700px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+/* ==================== HEADER ==================== */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.title {
+  margin: 0;
+  color: #111827;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.description {
+  margin: 0.55rem 0 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+/* ==================== BUTTONS ==================== */
+.primaryButton {
+  border: 1px solid #278a55;
+  background: #2fa866;
+  color: #fff;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: #278a55;
+  border-color: #1f6e43;
+}
+
+.primaryButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.secondaryButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.dangerButton {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.dangerButton:hover:not(:disabled) {
+  background: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* ==================== TABLE ==================== */
+.tableSection {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.empty {
+  padding: 2rem 1.5rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table th {
+  color: #374151;
+  font-weight: 700;
+  background: #f9fafb;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table tbody tr:hover {
+  background: #fafafa;
+}
+
+.nameLink {
+  color: #1f9b55;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 400;
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.nameLink:hover {
+  text-decoration: underline;
+}
+
+.tableActions {
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.actionButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 8px;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.viewButton {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.viewButton:hover {
+  background: #eff6ff;
+}
+
+.configButton {
+  border-color: #d97706;
+  color: #b45309;
+}
+
+.configButton:hover {
+  background: #fffbeb;
+}
+
+.bpmnLinkBtn {
+  border-color: #4f46e5;
+  color: #4338ca;
+}
+
+.bpmnLinkBtn:hover {
+  background: #eef2ff;
+}
+
+.deleteButton {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.deleteButton:hover {
+  background: #fef2f2;
+}
+
+/* ==================== WIDGET BADGES (table) ==================== */
+.widgetBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.18rem 0.5rem;
+  white-space: nowrap;
+}
+
+/* ==================== BPMN LINK (table cell) ==================== */
+.bpmnSelect {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f9b55;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.7rem;
+  cursor: pointer;
+  max-width: 260px;
+  width: 100%;
+}
+
+.bpmnSelect:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.creatorCell,
+.table td.creatorCell {
+  color: #1f9b55;
+  font-weight: 700;
+}
+
+.bpmnLinked {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.bpmnLinkedName {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #16a34a;
+  cursor: pointer;
+  text-align: left;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bpmnLinkedName:hover {
+  text-decoration: underline;
+}
+
+.bpmnUnlinkBtn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.1rem 0.25rem;
+  border-radius: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.bpmnUnlinkBtn:hover {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.bpmnEmpty {
+  color: #d1d5db;
+  font-size: 0.9rem;
+}
+
+/* ==================== BPMN PICKER LIST ==================== */
+.bpmnPickerList {
+  list-style: none;
+  margin: 0.75rem 0 1.25rem;
+  padding: 0.35rem;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.bpmnPickerItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0.7rem 1rem;
+  font: inherit;
+  font-size: 0.88rem;
+  color: #374151;
+  cursor: pointer;
+  text-align: left;
+  transition: background 100ms;
+  border-radius: 6px;
+}
+
+.bpmnPickerItem:last-child {
+  border-bottom: none;
+}
+
+.bpmnPickerItem:hover {
+  background: #f5f3ff;
+}
+
+.bpmnPickerItemActive {
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.bpmnPickerIcon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.bpmnPickerName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bpmnPickerCheck {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #4338ca;
+  flex-shrink: 0;
+}
+
+.bpmnPickerEmpty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.88rem;
+  padding: 1.25rem 0;
+}
+
+/* ==================== MODAL STEP INDICATOR ==================== */
+.modalStepIndicator {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 1rem;
+}
+
+.modalStep {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: #e5e7eb;
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modalStepActive {
+  background: #2fa866;
+  color: #fff;
+}
+
+.modalStepLine {
+  flex: 1;
+  height: 2px;
+  background: #e5e7eb;
+  margin: 0 0.4rem;
+}
+
+.modalStepLabel {
+  font-size: 0.78rem;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+  margin-top: -0.5rem;
+}
+
+/* ==================== WIDGET SELECTION GRID ==================== */
+.widgetGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+  margin-bottom: 1.25rem;
+}
+
+.widgetCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem 1fr 1.5rem;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 0 0.6rem;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 120ms ease, background 120ms ease;
+  font: inherit;
+  width: 100%;
+}
+
+.widgetCard:hover {
+  border-color: #86efac;
+  background: #f0fdf4;
+}
+
+.widgetCardActive {
+  border-color: #2fa866;
+  background: #f0fdf4;
+}
+
+.widgetCardIcon {
+  font-size: 1.4rem;
+  grid-row: 1 / span 2;
+  grid-column: 1;
+  line-height: 1;
+}
+
+.widgetCardLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #111827;
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.widgetCardDesc {
+  font-size: 0.78rem;
+  color: #6b7280;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.widgetCardCheck {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #2fa866;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  min-height: 1.25rem;
+}
+
+/* ==================== MODAL ==================== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 1.75rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.18);
+}
+
+.modalWide {
+  max-width: 680px;
+}
+
+.modalTitle {
+  margin: 0 0 1.1rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.modalText {
+  margin: 0 0 1.25rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.modalLabel {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.modalInput {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+  color: #111827;
+  box-sizing: border-box;
+  margin-bottom: 1.25rem;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.modalInput:focus {
+  border-color: #2fa866;
+  box-shadow: 0 0 0 3px rgba(47, 168, 102, 0.15);
+}
+
+.modalActions {
+  display: flex;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+    min-height: auto;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primaryButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tableWrapper {
+    overflow-x: auto;
+  }
+
+  .table {
+    min-width: 0;
+  }
+
+  .table,
+  .table tbody,
+  .table tr,
+  .table td {
+    display: block;
+    width: 100%;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table tr {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 0.65rem 0.75rem;
+    margin-bottom: 0.55rem;
+    background: #fff;
+  }
+
+  .table tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .table td {
+    border-bottom: none;
+    padding: 0.32rem 0;
+    display: grid;
+    grid-template-columns: 6.5rem 1fr;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    align-items: center;
+  }
+
+  .table td::before {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .table td:nth-child(1)::before {
+    content: 'Nome';
+  }
+
+  .table td:nth-child(2)::before {
+    content: 'BPMN Vinculado';
+  }
+
+  .table td:nth-child(3)::before {
+    content: 'Widgets';
+  }
+
+  .table td:nth-child(4)::before {
+    content: 'Usuário';
+  }
+
+  .table td:nth-child(5)::before {
+    content: 'Data de Criação';
+  }
+
+  .table td.tableActions {
+    display: flex;
+    gap: 0.4rem;
+    padding-top: 0.5rem;
+  }
+
+  .table td.tableActions::before {
+    content: 'Ações';
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+  }
+
+  .modal {
+    padding: 1.25rem;
+  }
+
+  .modalActions {
+    flex-direction: column-reverse;
+  }
+
+  .modalActions button {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.6rem;
+  }
+
+  .card {
+    padding: 0.85rem;
+  }
+}
+
+/* ==================== STEP 4 — DATA EDITING ==================== */
+
+.dataTabRow {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.dataTab {
+  padding: 0.35rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 20px;
+  background: #f9fafb;
+  color: #374151;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+  font: inherit;
+}
+
+.dataTab:hover {
+  border-color: #2fa866;
+  color: #2fa866;
+  background: #f0fdf4;
+}
+
+.dataTabActive {
+  background: #2fa866;
+  border-color: #2fa866;
+  color: #fff;
+}
+
+.dataTableWrap {
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+}
+
+.dataTable {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.83rem;
+}
+
+.dataTh {
+  padding: 0.4rem 0.5rem;
+  background: #f9fafb;
+  color: #6b7280;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.dataTd {
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dataTdAction {
+  padding: 0.3rem 0.4rem;
+  text-align: center;
+  width: 2rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dataInput {
+  width: 100%;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 5px;
+  padding: 0.22rem 0.4rem;
+  font-size: 0.82rem;
+  color: #111827;
+  box-sizing: border-box;
+  font: inherit;
+  outline: none;
+  transition: border-color 120ms ease;
+}
+
+.dataInput:focus {
+  border-color: #2fa866;
+}
+
+.dataRemoveBtn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  line-height: 1;
+  transition: background 120ms ease;
+}
+
+.dataRemoveBtn:hover {
+  background: #fef2f2;
+}
+
+.dataAddBtn {
+  background: none;
+  border: 1.5px dashed #d1d5db;
+  border-radius: 7px;
+  color: #6b7280;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
+  margin-bottom: 1rem;
+  transition: border-color 120ms ease, color 120ms ease;
+  font: inherit;
+}
+
+.dataAddBtn:hover {
+  border-color: #2fa866;
+  color: #2fa866;
+}

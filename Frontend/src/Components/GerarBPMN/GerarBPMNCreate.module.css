@@ -319,14 +319,15 @@
   left: 0.58rem;
   top: 0.45rem;
   transform: none;
-  z-index: 4;
+  /* Must be above contextSidebarTopMenu (z-index 9) */
+  z-index: 10;
 }
 
 .canvasOverlayPropertiesButton {
   position: absolute;
   top: 0.45rem;
   right: 0.58rem;
-  z-index: 5;
+  z-index: 11;
 }
 
 .miniMapWrap {
@@ -505,6 +506,9 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
   cursor: grab;
+  /* Allow native pan on all pointer types by default.
+     Overridden to 'none' during JS-driven pointer panning. */
+  touch-action: pan-x pan-y;
 }
 
 .canvasViewport::-webkit-scrollbar {
@@ -921,9 +925,11 @@
 @media (max-width: 900px) {
   .container {
     gap: 0.55rem;
-    height: calc(100dvh - 2.9rem);
+    /* Allow the page to scroll naturally on touch: let the browser
+       scroll past the canvas instead of clipping it. */
+    height: auto;
     min-height: 0;
-    overflow-y: hidden;
+    overflow-y: visible;
     overflow-x: hidden;
   }
 
@@ -943,7 +949,7 @@
 
   .topbarLeft {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
     align-items: start;
     width: 100%;
     flex: 1 1 100%;
@@ -954,13 +960,6 @@
   .editorNameGroup {
     grid-column: 1;
     width: 100%;
-  }
-
-  .topbarInlineActions {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-    align-self: start;
-    justify-self: end;
   }
 
   .topbarCenter {
@@ -1000,7 +999,7 @@
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    margin-left: auto;
+    margin-left: 0;
     overflow: visible;
     border-top: none;
     padding: 0;
@@ -1076,7 +1075,7 @@
   }
 
   .container {
-    height: calc(100dvh - 2.3rem);
+    height: auto;
     min-height: 0;
     gap: 0.45rem;
   }
@@ -1164,7 +1163,7 @@
   }
 
   .container {
-    height: calc(100dvh - 2rem);
+    height: auto;
     min-height: 0;
     gap: 0.38rem;
   }

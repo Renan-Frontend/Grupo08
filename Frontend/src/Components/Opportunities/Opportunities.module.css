@@ -16,6 +16,11 @@
   margin-bottom: 1.5rem;
   gap: 1rem;
   flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .headerActions {
@@ -45,15 +50,15 @@
 
 .title {
   font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 0;
+  color: #111827;
+  margin: 0;
   font-weight: 600;
 }
 
 .subtitle {
   font-size: 0.9rem;
-  color: #95a5a6;
-  margin: 0;
+  color: #4b5563;
+  margin: 0.55rem 0 0;
 }
 
 .tableWrapper {
@@ -223,8 +228,8 @@
   align-items: center;
   min-height: 30px;
   max-width: 100%;
-  color: #2fa866;
-  font-weight: 600;
+  color: #1f9b55;
+  font-weight: 400;
   cursor: pointer;
   transition: text-decoration 0.2s;
   background: none;
@@ -305,17 +310,6 @@
 @media (max-width: 1024px) {
   .opportunitiesContainer {
     padding: 1.25rem;
-    min-height: 100%;
-  }
-
-  .table {
-    min-width: 720px;
-  }
-}
-
-@media (max-width: 768px) {
-  .opportunitiesContainer {
-    padding: 1rem;
     min-height: 100%;
   }
 

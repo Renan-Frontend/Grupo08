@@ -3983,7 +3983,7 @@ const GerarBPMNCreate = () => {
   React.useEffect(() => {
     if (!isTouchDevice) return;
 
-    setZoom((previousZoom) => (previousZoom === 1 ? 0.92 : previousZoom));
+    setZoom((previousZoom) => (previousZoom === 1 ? 0.65 : previousZoom));
   }, [isTouchDevice]);
 
   React.useEffect(() => {
@@ -6343,36 +6343,66 @@ const GerarBPMNCreate = () => {
               {editorNameSaveFeedback || 'Mensagem de confirmacao'}
             </span>
           </div>
-          <div className={styles.topbarInlineActions}>
-            <button
-              type="button"
-              className={`${styles.secondaryButton} ${styles.iconActionButton}`}
-              data-tutorial-id="reset-layout"
-              onClick={handleResetToDefault}
-              disabled={isReadOnlyMode}
-              aria-label="Voltar ao padrão"
-              title="Voltar ao padrão"
-            >
-              ↺
-            </button>
-            <button
-              type="button"
-              className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
-              data-tutorial-id="fullscreen-toggle"
-              onClick={handleToggleCanvasFullscreen}
-              aria-pressed={isCanvasFullscreen}
-              aria-label={
-                isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
-              }
-              title={isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
-            >
-              {isCanvasFullscreen ? '⤡' : '⤢'}
-            </button>
-          </div>
+          {!isTouchDevice ? (
+            <div className={styles.topbarInlineActions}>
+              <button
+                type="button"
+                className={`${styles.secondaryButton} ${styles.iconActionButton}`}
+                data-tutorial-id="reset-layout"
+                onClick={handleResetToDefault}
+                disabled={isReadOnlyMode}
+                aria-label="Voltar ao padrão"
+                title="Voltar ao padrão"
+              >
+                ↺
+              </button>
+              <button
+                type="button"
+                className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
+                data-tutorial-id="fullscreen-toggle"
+                onClick={handleToggleCanvasFullscreen}
+                aria-pressed={isCanvasFullscreen}
+                aria-label={
+                  isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
+                }
+                title={isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+              >
+                {isCanvasFullscreen ? '⤡' : '⤢'}
+              </button>
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.topbarCenter}>
           <div className={styles.topbarCenterActions}>
+            {isTouchDevice ? (
+              <>
+                <button
+                  type="button"
+                  className={`${styles.secondaryButton} ${styles.iconActionButton}`}
+                  data-tutorial-id="reset-layout"
+                  onClick={handleResetToDefault}
+                  disabled={isReadOnlyMode}
+                  aria-label="Voltar ao padrão"
+                  title="Voltar ao padrão"
+                >
+                  ↺
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
+                  data-tutorial-id="fullscreen-toggle"
+                  onClick={handleToggleCanvasFullscreen}
+                  aria-pressed={isCanvasFullscreen}
+                  aria-label={
+                    isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
+                  }
+                  title={isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                >
+                  {isCanvasFullscreen ? '⤡' : '⤢'}
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               className={`${styles.secondaryButton} ${styles.tutorialButton}`}
@@ -6455,24 +6485,7 @@ const GerarBPMNCreate = () => {
         }`}
         ref={workspaceFullscreenRef}
       >
-        {isTouchDevice ? (
-          <button
-            type="button"
-            className={styles.mobileSidebarToggle}
-            onClick={handleTogglePropertiesPinned}
-            aria-pressed={isPropertiesPinned}
-            disabled={!hasSelection}
-            aria-label={
-              isPropertiesPinned
-                ? 'Desligar painel de propriedades fixo'
-                : 'Ligar painel de propriedades fixo'
-            }
-          >
-            {isPropertiesPinned
-              ? '▤ Desligar propriedades fixas'
-              : '▤ Ligar propriedades fixas'}
-          </button>
-        ) : null}
+        {null /* mobile sidebar toggle removed */}
         {isCanvasFullscreen ? (
           <button
             type="button"

@@ -136534,5 +136534,1353 @@
       }
     ],
     "created_at": "2026-03-16T09:27:18.313854"
+  },
+  {
+    "id": 345,
+    "user_id": 1,
+    "user_nome": "Renan",
+    "event": "ai_plan_generated",
+    "goal": "Nome do processo: Aprovação de Pedido de Compra Descrição do processo: O processo de Aprovação de Pedido de Compra inicia quando o Cliente executa a atividade Solicitar compra, que gera um Pedido. Em seguida é realizada a atividade Analisar Pedido. O fluxo então avalia a condicional Pedido aprovado?: se NAO, é executada a atividade Registrar Aprovacao, que cria o registro de Aprovacao; se SIM, é executada a atividade Validar orcamento. O fluxo avalia a condicional Orcamento aprovado?: se NAO, é executada a atividade Atualizar Pedido; se SIM, é executada a atividade Gerar OrdemDeCompra, que cria o documento OrdemDeCompra. Em seguida é executada a atividade Enviar OrdemDeCompra ao Fornecedor, e o Fornecedor então executa a atividade Fornecedor recebe OrdemDeCompra. Solicitar compra (Cliente solicita compra) -> Pedido (Pedido gerado após solicitação) -> Analisar Pedido (Responsável verifica se o pedido atende às políticas internas antes de aprovar) -> Pedido aprovado? (Verifica se o pedido foi aprovado) -> Registrar Aprovacao (Cria registro de aprovação caso o pedido não seja aprovado) -> Validar orcamento (Responsável verifica se o orçamento foi aprovado) -> Orcamento aprovado? (Verifica se o orçamento foi aprovado) -> Atualizar Pedido (Responsável atualiza o pedido caso o orçamento não seja aprovado) -> Gerar OrdemDeCompra (Cria documento de OrdemDeCompra caso o orçamento seja aprovado) -> Enviar OrdemDeCompra ao Fornecedor (Responsável envia a OrdemDeCompra ao Fornecedor) -> Fornecedor (Fornecedor recebe a OrdemDeCompra) -> Fornecedor recebe OrdemDeCompra (Fornecedor recebe a OrdemDeCompra) -> Aprovacao -> OrdemDeCompra -> Cliente",
+    "actions_count": 5,
+    "created_at": "2026-03-17T08:55:19.597068"
+  },
+  {
+    "id": 346,
+    "user_id": 1,
+    "user_nome": "Renan",
+    "event": "ai_actions_executed",
+    "goal": "Nome do processo: Aprovação de Pedido de Compra Descrição do processo: O processo de Aprovação de Pedido de Compra inicia quando o Cliente executa a atividade Solicitar compra, que gera um Pedido. Em seguida é realizada a atividade Analisar Pedido. O fluxo então avalia a condicional Pedido aprovado?: se NAO, é executada a atividade Registrar Aprovacao, que cria o registro de Aprovacao; se SIM, é executada a atividade Validar orcamento. O fluxo avalia a condicional Orcamento aprovado?: se NAO, é executada a atividade Atualizar Pedido; se SIM, é executada a atividade Gerar OrdemDeCompra, que cria o documento OrdemDeCompra. Em seguida é executada a atividade Enviar OrdemDeCompra ao Fornecedor, e o Fornecedor então executa a atividade Fornecedor recebe OrdemDeCompra. Solicitar compra (Cliente solicita compra) -> Pedido (Pedido gerado após solicitação) -> Analisar Pedido (Responsável verifica se o pedido atende às políticas internas antes de aprovar) -> Pedido aprovado? (Verifica se o pedido foi aprovado) -> Registrar Aprovacao (Cria registro de aprovação caso o pedido não seja aprovado) -> Validar orcamento (Responsável verifica se o orçamento foi aprovado) -> Orcamento aprovado? (Verifica se o orçamento foi aprovado) -> Atualizar Pedido (Responsável atualiza o pedido caso o orçamento não seja aprovado) -> Gerar OrdemDeCompra (Cria documento de OrdemDeCompra caso o orçamento seja aprovado) -> Enviar OrdemDeCompra ao Fornecedor (Responsável envia a OrdemDeCompra ao Fornecedor) -> Fornecedor (Fornecedor recebe a OrdemDeCompra) -> Fornecedor recebe OrdemDeCompra (Fornecedor recebe a OrdemDeCompra) -> Aprovacao -> OrdemDeCompra -> Cliente",
+    "approved_action_ids": [
+      "a1",
+      "a2",
+      "a3",
+      "a4",
+      "a5"
+    ],
+    "results": [
+      {
+        "id": "a1",
+        "type": "create_entidade",
+        "status": "ok",
+        "result": {
+          "categoria": "Aprovação de Pedido de Compra (4)",
+          "id": 28,
+          "nome": "Pedido",
+          "descricao": "Pedido gerado após solicitação",
+          "tipoEntidade": "Principal",
+          "isPrimaryEntity": null,
+          "atributoChave": null,
+          "campos": [
+            {
+              "nome": "id_pedido",
+              "tipo": "INT",
+              "obrigatorio": true,
+              "keyType": "PK",
+              "referencia": ""
+            },
+            {
+              "nome": "nome",
+              "tipo": "VARCHAR(100)",
+              "obrigatorio": true,
+              "keyType": "NORMAL",
+              "referencia": ""
+            },
+            {
+              "nome": "descricao",
+              "tipo": "TEXT",
+              "obrigatorio": false,
+              "keyType": "NORMAL",
+              "referencia": ""
+            }
+          ],
+          "numeroRelacionamentos": null,
+          "bpmnUsageCount": null,
+          "ativo": true,
+          "created_at": "2026-03-17T08:55:21.204273",
+          "updated_at": "2026-03-17T08:55:21.204273",
+          "criadoPor": "Renan"
+        }
+      },
+      {
+        "id": "a2",
+        "type": "create_entidade",
+        "status": "ok",
+        "result": {
+          "categoria": "Aprovação de Pedido de Compra (4)",
+          "id": 29,
+          "nome": "Fornecedor",
+          "descricao": "Fornecedor recebe a OrdemDeCompra",
+          "tipoEntidade": "Apoio",
+          "isPrimaryEntity": null,
+          "atributoChave": null,
+          "campos": [
+            {
+              "nome": "id_fornecedor",
+              "tipo": "INT",
+              "obrigatorio": true,
+              "keyType": "PK",
+              "referencia": ""
+            },
+            {
+              "nome": "nome",
+              "tipo": "VARCHAR(100)",
+              "obrigatorio": true,
+              "keyType": "NORMAL",
+              "referencia": ""
+            },
+            {
+              "nome": "descricao",
+              "tipo": "TEXT",
+              "obrigatorio": false,
+              "keyType": "NORMAL",
+              "referencia": ""
+            },
+            {
+              "nome": "id_pedido",
+              "tipo": "INT",
+              "obrigatorio": false,
+              "keyType": "FK",
+              "referencia": "Pedido.id_pedido"
+            }
+          ],
+          "numeroRelacionamentos": null,
+          "bpmnUsageCount": null,
+          "ativo": true,
+          "created_at": "2026-03-17T08:55:21.212687",
+          "updated_at": "2026-03-17T08:55:21.212687",
+          "criadoPor": "Renan"
+        }
+      },
+      {
+        "id": "a3",
+        "type": "create_entidade",
+        "status": "ok",
+        "result": {
+          "categoria": "Aprovação de Pedido de Compra (4)",
+          "id": 30,
+          "nome": "Aprovacao",
+          "descricao": "",
+          "tipoEntidade": "Apoio",
+          "isPrimaryEntity": null,
+          "atributoChave": null,
+          "campos": [
+            {
+              "nome": "id_aprovacao",
+              "tipo": "INT",
+              "obrigatorio": true,
+              "keyType": "PK",
+              "referencia": ""
+            },
+            {
+              "nome": "nome",
+              "tipo": "VARCHAR(100)",
+              "obrigatorio": true,
+              "keyType": "NORMAL",
+              "referencia": ""
+            },
+            {
+              "nome": "descricao",
+              "tipo": "TEXT",
+              "obrigatorio": false,
+              "keyType": "NORMAL",
+              "referencia": ""
+            },
+            {
+              "nome": "id_pedido",
+              "tipo": "INT",
+              "obrigatorio": false,
+              "keyType": "FK",
+              "referencia": "Pedido.id_pedido"
+            }
+          ],
+          "numeroRelacionamentos": null,
+          "bpmnUsageCount": null,
+          "ativo": true,
+          "created_at": "2026-03-17T08:55:21.214667",
+          "updated_at": "2026-03-17T08:55:21.214667",
+          "criadoPor": "Renan"
+        }
+      },
+      {
+        "id": "a4",
+        "type": "create_oportunidade",
+        "status": "ok",
+        "result": {
+          "nome": "Aprovação de Pedido de Compra (4)",
+          "name": "Aprovação de Pedido de Compra (4)",
+          "valor": null,
+          "etapa": "Mapeamento",
+          "empresa": null,
+          "responsavel": "Renan",
+          "descricao": "Nome do processo: Aprovação de Pedido de Compra Descrição do processo: O processo de Aprovação de Pedido de Compra inicia quando o Cliente executa a atividade Solicitar compra, que gera um Pedido. Em seguida é realizada a atividade Analisar Pedido. O fluxo então avalia a condicional Pedido aprovado?: se NAO, é executada a atividade Registrar Aprovacao, que cria o registro de Aprovacao; se SIM, é executada a atividade Validar orcamento. O fluxo avalia a condicional Orcamento aprovado?: se NAO, é executada a atividade Atualizar Pedido; se SIM, é executada a atividade Gerar OrdemDeCompra, que cria o documento OrdemDeCompra. Em seguida é executada a atividade Enviar OrdemDeCompra ao Fornecedor, e o Fornecedor então executa a atividade Fornecedor recebe OrdemDeCompra. Solicitar compra (Cliente solicita compra) -> Pedido (Pedido gerado após solicitação) -> Analisar Pedido (Responsável verifica se o pedido atende às políticas internas antes de aprovar) -> Pedido aprovado? (Verifica se o pedido foi aprovado) -> Registrar Aprovacao (Cria registro de aprovação caso o pedido não seja aprovado) -> Validar orcamento (Responsável verifica se o orçamento foi aprovado) -> Orcamento aprovado? (Verifica se o orçamento foi aprovado) -> Atualizar Pedido (Responsável atualiza o pedido caso o orçamento não seja aprovado) -> Gerar OrdemDeCompra (Cria documento de OrdemDeCompra caso o orçamento seja aprovado) -> Enviar OrdemDeCompra ao Fornecedor (Responsável envia a OrdemDeCompra ao Fornecedor) -> Fornecedor (Fornecedor recebe a OrdemDeCompra) -> Fornecedor recebe OrdemDeCompra (Fornecedor recebe a OrdemDeCompra) -> Aprovacao -> OrdemDeCompra -> Cliente",
+          "ativo": true,
+          "created_at": "2026-03-17T08:55:21.223209",
+          "criadoPor": "Renan",
+          "owner": "Renan",
+          "assignedTo": "Renan",
+          "createdDate": "17/03/2026",
+          "endDate": "",
+          "status": "Em andamento",
+          "stages": null,
+          "infoRows": null,
+          "timelineItems": null,
+          "showPipeline": null,
+          "showTopico": null,
+          "showTimeline": null,
+          "pipelineTitle": null,
+          "pipelineSubtitle": null,
+          "bpmn": null,
+          "stageIndex": null,
+          "currentNodeId": null,
+          "activeNodeId": null,
+          "bpmnNodeId": null,
+          "bpmnCurrentNodeId": null,
+          "sourceNodeId": null,
+          "id": 6
+        }
+      },
+      {
+        "id": "a5",
+        "type": "update_bpmn_state",
+        "status": "ok",
+        "result": {
+          "name": "Aprovação de Pedido de Compra (4)",
+          "nodes": [
+            {
+              "id": "n1",
+              "label": "Solicitar compra",
+              "nodeType": "task",
+              "taskNome": "Solicitar compra",
+              "taskDescricao": "Cliente solicita compra",
+              "subtitle": "",
+              "info": "",
+              "x": 60,
+              "y": 80
+            },
+            {
+              "id": "n2",
+              "label": "Pedido",
+              "nodeType": "entidade",
+              "campos": [
+                {
+                  "nome": "id_pedido",
+                  "tipo": "numero",
+                  "obrigatorio": true,
+                  "keyType": "PK",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "nome",
+                  "tipo": "texto",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "descricao",
+                  "tipo": "texto",
+                  "obrigatorio": false,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "data_criacao",
+                  "tipo": "data",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                }
+              ],
+              "entidadeNome": "Pedido",
+              "subtitle": "Pedido",
+              "info": "id",
+              "x": 60,
+              "y": 250
+            },
+            {
+              "id": "n3",
+              "label": "Analisar Pedido",
+              "nodeType": "task",
+              "taskNome": "Analisar Pedido",
+              "taskDescricao": "Responsável verifica se o pedido atende às políticas internas antes de aprovar",
+              "subtitle": "",
+              "info": "",
+              "x": 60,
+              "y": 420
+            },
+            {
+              "id": "n4",
+              "label": "Pedido aprovado?",
+              "nodeType": "condicional",
+              "condicionalNome": "Pedido aprovado?",
+              "condicionalDescricao": "Verifica se o pedido foi aprovado",
+              "subtitle": "",
+              "gatewayType": "exclusivo",
+              "x": 60,
+              "y": 590
+            },
+            {
+              "id": "n5",
+              "label": "Registrar Aprovacao",
+              "nodeType": "task",
+              "taskNome": "Registrar Aprovacao",
+              "taskDescricao": "Cria registro de aprovação caso o pedido não seja aprovado",
+              "subtitle": "",
+              "info": "",
+              "x": 340,
+              "y": 590
+            },
+            {
+              "id": "n6",
+              "label": "Validar orcamento",
+              "nodeType": "task",
+              "taskNome": "Validar orcamento",
+              "taskDescricao": "Responsável verifica se o orçamento foi aprovado",
+              "subtitle": "",
+              "info": "",
+              "x": 60,
+              "y": 760
+            },
+            {
+              "id": "n7",
+              "label": "Orcamento aprovado?",
+              "nodeType": "condicional",
+              "condicionalNome": "Orcamento aprovado?",
+              "condicionalDescricao": "Verifica se o orçamento foi aprovado",
+              "subtitle": "",
+              "gatewayType": "exclusivo",
+              "x": 640,
+              "y": 760
+            },
+            {
+              "id": "n8",
+              "label": "Atualizar Pedido",
+              "nodeType": "task",
+              "taskNome": "Atualizar Pedido",
+              "taskDescricao": "Responsável atualiza o pedido caso o orçamento não seja aprovado",
+              "subtitle": "",
+              "info": "",
+              "x": 920,
+              "y": 760
+            },
+            {
+              "id": "n9",
+              "label": "Gerar OrdemDeCompra",
+              "nodeType": "task",
+              "taskNome": "Gerar OrdemDeCompra",
+              "taskDescricao": "Cria documento de OrdemDeCompra caso o orçamento seja aprovado",
+              "subtitle": "",
+              "info": "",
+              "x": 640,
+              "y": 590
+            },
+            {
+              "id": "n10",
+              "label": "Enviar OrdemDeCompra ao Fornecedor",
+              "nodeType": "task",
+              "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+              "taskDescricao": "Responsável envia a OrdemDeCompra ao Fornecedor",
+              "subtitle": "",
+              "info": "",
+              "x": 640,
+              "y": 420
+            },
+            {
+              "id": "n11",
+              "label": "Fornecedor",
+              "nodeType": "entidade",
+              "campos": [
+                {
+                  "nome": "id_fornecedor",
+                  "tipo": "numero",
+                  "obrigatorio": true,
+                  "keyType": "PK",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "nome",
+                  "tipo": "texto",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "descricao",
+                  "tipo": "texto",
+                  "obrigatorio": false,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "data_criacao",
+                  "tipo": "data",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                }
+              ],
+              "entidadeNome": "Fornecedor",
+              "subtitle": "Fornecedor",
+              "info": "id",
+              "x": 640,
+              "y": 250
+            },
+            {
+              "id": "n12",
+              "label": "Fornecedor recebe OrdemDeCompra",
+              "nodeType": "task",
+              "taskNome": "Fornecedor recebe OrdemDeCompra",
+              "taskDescricao": "Fornecedor recebe a OrdemDeCompra",
+              "subtitle": "",
+              "info": "",
+              "x": 640,
+              "y": 80
+            },
+            {
+              "id": "n13",
+              "label": "Aprovacao",
+              "nodeType": "entidade",
+              "campos": [
+                {
+                  "nome": "id_aprovacao",
+                  "tipo": "numero",
+                  "obrigatorio": true,
+                  "keyType": "PK",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "nome",
+                  "tipo": "texto",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "descricao",
+                  "tipo": "texto",
+                  "obrigatorio": false,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "data_criacao",
+                  "tipo": "data",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                }
+              ],
+              "entidadeNome": "Aprovacao",
+              "subtitle": "Aprovacao",
+              "info": "id",
+              "x": 1220,
+              "y": 80
+            },
+            {
+              "id": "n14",
+              "label": "OrdemDeCompra",
+              "nodeType": "entidade",
+              "campos": [
+                {
+                  "nome": "id_ordemdecompra",
+                  "tipo": "numero",
+                  "obrigatorio": true,
+                  "keyType": "PK",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "nome",
+                  "tipo": "texto",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "descricao",
+                  "tipo": "texto",
+                  "obrigatorio": false,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "data_criacao",
+                  "tipo": "data",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                }
+              ],
+              "entidadeNome": "OrdemDeCompra",
+              "subtitle": "OrdemDeCompra",
+              "info": "id",
+              "x": 1220,
+              "y": 250
+            },
+            {
+              "id": "n15",
+              "label": "Cliente",
+              "nodeType": "entidade",
+              "campos": [
+                {
+                  "nome": "id_cliente",
+                  "tipo": "numero",
+                  "obrigatorio": true,
+                  "keyType": "PK",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "nome",
+                  "tipo": "texto",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "descricao",
+                  "tipo": "texto",
+                  "obrigatorio": false,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                },
+                {
+                  "nome": "data_criacao",
+                  "tipo": "data",
+                  "obrigatorio": true,
+                  "keyType": "NORMAL",
+                  "relacionamento": null
+                }
+              ],
+              "entidadeNome": "Cliente",
+              "subtitle": "Cliente",
+              "info": "id",
+              "x": 1220,
+              "y": 420
+            }
+          ],
+          "connections": [
+            {
+              "id": "c1",
+              "from": "n1",
+              "to": "n2",
+              "fromHandle": "bottom",
+              "toHandle": "top",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c2",
+              "from": "n2",
+              "to": "n3",
+              "fromHandle": "bottom",
+              "toHandle": "top",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c3",
+              "from": "n3",
+              "to": "n4",
+              "fromHandle": "bottom",
+              "toHandle": "top",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c4b",
+              "from": "n4",
+              "to": "n6",
+              "fromHandle": "bottom",
+              "toHandle": "top",
+              "decision": "sim",
+              "label": "✔"
+            },
+            {
+              "id": "c4a",
+              "from": "n4",
+              "to": "n5",
+              "fromHandle": "right",
+              "toHandle": "left",
+              "decision": "nao",
+              "label": "✘"
+            },
+            {
+              "id": "c6",
+              "from": "n6",
+              "to": "n7",
+              "fromHandle": "right",
+              "toHandle": "left",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c7b",
+              "from": "n7",
+              "to": "n9",
+              "fromHandle": "top",
+              "toHandle": "bottom",
+              "decision": "sim",
+              "label": "✔"
+            },
+            {
+              "id": "c7a",
+              "from": "n7",
+              "to": "n8",
+              "fromHandle": "right",
+              "toHandle": "left",
+              "decision": "nao",
+              "label": "✘"
+            },
+            {
+              "id": "c9",
+              "from": "n9",
+              "to": "n10",
+              "fromHandle": "top",
+              "toHandle": "bottom",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c10",
+              "from": "n10",
+              "to": "n11",
+              "fromHandle": "top",
+              "toHandle": "bottom",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c11",
+              "from": "n11",
+              "to": "n12",
+              "fromHandle": "top",
+              "toHandle": "bottom",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c12",
+              "from": "n12",
+              "to": "n13",
+              "fromHandle": "right",
+              "toHandle": "left",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c13",
+              "from": "n13",
+              "to": "n14",
+              "fromHandle": "bottom",
+              "toHandle": "top",
+              "decision": "",
+              "label": ""
+            },
+            {
+              "id": "c14",
+              "from": "n14",
+              "to": "n15",
+              "fromHandle": "bottom",
+              "toHandle": "top",
+              "decision": "",
+              "label": ""
+            }
+          ],
+          "updated_at": "2026-03-17T08:55:21.234048"
+        },
+        "syncedOpportunity": {
+          "nome": "Aprovação de Pedido de Compra (4)",
+          "name": "Aprovação de Pedido de Compra (4)",
+          "valor": null,
+          "etapa": "Mapeamento",
+          "empresa": null,
+          "responsavel": "Renan",
+          "descricao": "Nome do processo: Aprovação de Pedido de Compra Descrição do processo: O processo de Aprovação de Pedido de Compra inicia quando o Cliente executa a atividade Solicitar compra, que gera um Pedido. Em seguida é realizada a atividade Analisar Pedido. O fluxo então avalia a condicional Pedido aprovado?: se NAO, é executada a atividade Registrar Aprovacao, que cria o registro de Aprovacao; se SIM, é executada a atividade Validar orcamento. O fluxo avalia a condicional Orcamento aprovado?: se NAO, é executada a atividade Atualizar Pedido; se SIM, é executada a atividade Gerar OrdemDeCompra, que cria o documento OrdemDeCompra. Em seguida é executada a atividade Enviar OrdemDeCompra ao Fornecedor, e o Fornecedor então executa a atividade Fornecedor recebe OrdemDeCompra. Solicitar compra (Cliente solicita compra) -> Pedido (Pedido gerado após solicitação) -> Analisar Pedido (Responsável verifica se o pedido atende às políticas internas antes de aprovar) -> Pedido aprovado? (Verifica se o pedido foi aprovado) -> Registrar Aprovacao (Cria registro de aprovação caso o pedido não seja aprovado) -> Validar orcamento (Responsável verifica se o orçamento foi aprovado) -> Orcamento aprovado? (Verifica se o orçamento foi aprovado) -> Atualizar Pedido (Responsável atualiza o pedido caso o orçamento não seja aprovado) -> Gerar OrdemDeCompra (Cria documento de OrdemDeCompra caso o orçamento seja aprovado) -> Enviar OrdemDeCompra ao Fornecedor (Responsável envia a OrdemDeCompra ao Fornecedor) -> Fornecedor (Fornecedor recebe a OrdemDeCompra) -> Fornecedor recebe OrdemDeCompra (Fornecedor recebe a OrdemDeCompra) -> Aprovacao -> OrdemDeCompra -> Cliente",
+          "ativo": true,
+          "created_at": "2026-03-17T08:55:21.223209",
+          "criadoPor": "Renan",
+          "owner": "Renan",
+          "assignedTo": "Renan",
+          "createdDate": "17/03/2026",
+          "endDate": "",
+          "status": "Em andamento",
+          "stages": [
+            {
+              "id": "n1",
+              "index": 0,
+              "nome": "Solicitar compra",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n2",
+              "index": 1,
+              "nome": "Pedido",
+              "tipo": "dados",
+              "participante": ""
+            },
+            {
+              "id": "n3",
+              "index": 2,
+              "nome": "Analisar Pedido",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n4",
+              "index": 3,
+              "nome": "Pedido aprovado?",
+              "tipo": "condicional",
+              "participante": ""
+            },
+            {
+              "id": "n6",
+              "index": 4,
+              "nome": "Validar orcamento",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n5",
+              "index": 5,
+              "nome": "Registrar Aprovacao",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n12",
+              "index": 6,
+              "nome": "Fornecedor recebe OrdemDeCompra",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n11",
+              "index": 7,
+              "nome": "Fornecedor",
+              "tipo": "dados",
+              "participante": ""
+            },
+            {
+              "id": "n10",
+              "index": 8,
+              "nome": "Enviar OrdemDeCompra ao Fornecedor",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n9",
+              "index": 9,
+              "nome": "Gerar OrdemDeCompra",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n7",
+              "index": 10,
+              "nome": "Orcamento aprovado?",
+              "tipo": "condicional",
+              "participante": ""
+            },
+            {
+              "id": "n8",
+              "index": 11,
+              "nome": "Atualizar Pedido",
+              "tipo": "task",
+              "participante": ""
+            },
+            {
+              "id": "n13",
+              "index": 12,
+              "nome": "Aprovacao",
+              "tipo": "dados",
+              "participante": ""
+            },
+            {
+              "id": "n14",
+              "index": 13,
+              "nome": "OrdemDeCompra",
+              "tipo": "dados",
+              "participante": ""
+            },
+            {
+              "id": "n15",
+              "index": 14,
+              "nome": "Cliente",
+              "tipo": "dados",
+              "participante": ""
+            }
+          ],
+          "infoRows": null,
+          "timelineItems": null,
+          "showPipeline": null,
+          "showTopico": null,
+          "showTimeline": null,
+          "pipelineTitle": null,
+          "pipelineSubtitle": null,
+          "bpmn": {
+            "name": "Aprovação de Pedido de Compra (4)",
+            "nodes": [
+              {
+                "id": "n1",
+                "label": "Solicitar compra",
+                "nodeType": "task",
+                "taskNome": "Solicitar compra",
+                "taskDescricao": "Cliente solicita compra",
+                "subtitle": "",
+                "info": "",
+                "x": 60,
+                "y": 80
+              },
+              {
+                "id": "n2",
+                "label": "Pedido",
+                "nodeType": "entidade",
+                "campos": [
+                  {
+                    "nome": "id_pedido",
+                    "tipo": "numero",
+                    "obrigatorio": true,
+                    "keyType": "PK",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "nome",
+                    "tipo": "texto",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "descricao",
+                    "tipo": "texto",
+                    "obrigatorio": false,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "data_criacao",
+                    "tipo": "data",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  }
+                ],
+                "entidadeNome": "Pedido",
+                "subtitle": "Pedido",
+                "info": "id",
+                "x": 60,
+                "y": 250
+              },
+              {
+                "id": "n3",
+                "label": "Analisar Pedido",
+                "nodeType": "task",
+                "taskNome": "Analisar Pedido",
+                "taskDescricao": "Responsável verifica se o pedido atende às políticas internas antes de aprovar",
+                "subtitle": "",
+                "info": "",
+                "x": 60,
+                "y": 420
+              },
+              {
+                "id": "n4",
+                "label": "Pedido aprovado?",
+                "nodeType": "condicional",
+                "condicionalNome": "Pedido aprovado?",
+                "condicionalDescricao": "Verifica se o pedido foi aprovado",
+                "subtitle": "",
+                "gatewayType": "exclusivo",
+                "x": 60,
+                "y": 590
+              },
+              {
+                "id": "n5",
+                "label": "Registrar Aprovacao",
+                "nodeType": "task",
+                "taskNome": "Registrar Aprovacao",
+                "taskDescricao": "Cria registro de aprovação caso o pedido não seja aprovado",
+                "subtitle": "",
+                "info": "",
+                "x": 340,
+                "y": 590
+              },
+              {
+                "id": "n6",
+                "label": "Validar orcamento",
+                "nodeType": "task",
+                "taskNome": "Validar orcamento",
+                "taskDescricao": "Responsável verifica se o orçamento foi aprovado",
+                "subtitle": "",
+                "info": "",
+                "x": 60,
+                "y": 760
+              },
+              {
+                "id": "n7",
+                "label": "Orcamento aprovado?",
+                "nodeType": "condicional",
+                "condicionalNome": "Orcamento aprovado?",
+                "condicionalDescricao": "Verifica se o orçamento foi aprovado",
+                "subtitle": "",
+                "gatewayType": "exclusivo",
+                "x": 640,
+                "y": 760
+              },
+              {
+                "id": "n8",
+                "label": "Atualizar Pedido",
+                "nodeType": "task",
+                "taskNome": "Atualizar Pedido",
+                "taskDescricao": "Responsável atualiza o pedido caso o orçamento não seja aprovado",
+                "subtitle": "",
+                "info": "",
+                "x": 920,
+                "y": 760
+              },
+              {
+                "id": "n9",
+                "label": "Gerar OrdemDeCompra",
+                "nodeType": "task",
+                "taskNome": "Gerar OrdemDeCompra",
+                "taskDescricao": "Cria documento de OrdemDeCompra caso o orçamento seja aprovado",
+                "subtitle": "",
+                "info": "",
+                "x": 640,
+                "y": 590
+              },
+              {
+                "id": "n10",
+                "label": "Enviar OrdemDeCompra ao Fornecedor",
+                "nodeType": "task",
+                "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+                "taskDescricao": "Responsável envia a OrdemDeCompra ao Fornecedor",
+                "subtitle": "",
+                "info": "",
+                "x": 640,
+                "y": 420
+              },
+              {
+                "id": "n11",
+                "label": "Fornecedor",
+                "nodeType": "entidade",
+                "campos": [
+                  {
+                    "nome": "id_fornecedor",
+                    "tipo": "numero",
+                    "obrigatorio": true,
+                    "keyType": "PK",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "nome",
+                    "tipo": "texto",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "descricao",
+                    "tipo": "texto",
+                    "obrigatorio": false,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "data_criacao",
+                    "tipo": "data",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  }
+                ],
+                "entidadeNome": "Fornecedor",
+                "subtitle": "Fornecedor",
+                "info": "id",
+                "x": 640,
+                "y": 250
+              },
+              {
+                "id": "n12",
+                "label": "Fornecedor recebe OrdemDeCompra",
+                "nodeType": "task",
+                "taskNome": "Fornecedor recebe OrdemDeCompra",
+                "taskDescricao": "Fornecedor recebe a OrdemDeCompra",
+                "subtitle": "",
+                "info": "",
+                "x": 640,
+                "y": 80
+              },
+              {
+                "id": "n13",
+                "label": "Aprovacao",
+                "nodeType": "entidade",
+                "campos": [
+                  {
+                    "nome": "id_aprovacao",
+                    "tipo": "numero",
+                    "obrigatorio": true,
+                    "keyType": "PK",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "nome",
+                    "tipo": "texto",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "descricao",
+                    "tipo": "texto",
+                    "obrigatorio": false,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "data_criacao",
+                    "tipo": "data",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  }
+                ],
+                "entidadeNome": "Aprovacao",
+                "subtitle": "Aprovacao",
+                "info": "id",
+                "x": 1220,
+                "y": 80
+              },
+              {
+                "id": "n14",
+                "label": "OrdemDeCompra",
+                "nodeType": "entidade",
+                "campos": [
+                  {
+                    "nome": "id_ordemdecompra",
+                    "tipo": "numero",
+                    "obrigatorio": true,
+                    "keyType": "PK",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "nome",
+                    "tipo": "texto",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "descricao",
+                    "tipo": "texto",
+                    "obrigatorio": false,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "data_criacao",
+                    "tipo": "data",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  }
+                ],
+                "entidadeNome": "OrdemDeCompra",
+                "subtitle": "OrdemDeCompra",
+                "info": "id",
+                "x": 1220,
+                "y": 250
+              },
+              {
+                "id": "n15",
+                "label": "Cliente",
+                "nodeType": "entidade",
+                "campos": [
+                  {
+                    "nome": "id_cliente",
+                    "tipo": "numero",
+                    "obrigatorio": true,
+                    "keyType": "PK",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "nome",
+                    "tipo": "texto",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "descricao",
+                    "tipo": "texto",
+                    "obrigatorio": false,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  },
+                  {
+                    "nome": "data_criacao",
+                    "tipo": "data",
+                    "obrigatorio": true,
+                    "keyType": "NORMAL",
+                    "relacionamento": null
+                  }
+                ],
+                "entidadeNome": "Cliente",
+                "subtitle": "Cliente",
+                "info": "id",
+                "x": 1220,
+                "y": 420
+              }
+            ],
+            "connections": [
+              {
+                "id": "c1",
+                "from": "n1",
+                "to": "n2",
+                "fromHandle": "bottom",
+                "toHandle": "top",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c2",
+                "from": "n2",
+                "to": "n3",
+                "fromHandle": "bottom",
+                "toHandle": "top",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c3",
+                "from": "n3",
+                "to": "n4",
+                "fromHandle": "bottom",
+                "toHandle": "top",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c4b",
+                "from": "n4",
+                "to": "n6",
+                "fromHandle": "bottom",
+                "toHandle": "top",
+                "decision": "sim",
+                "label": "✔"
+              },
+              {
+                "id": "c4a",
+                "from": "n4",
+                "to": "n5",
+                "fromHandle": "right",
+                "toHandle": "left",
+                "decision": "nao",
+                "label": "✘"
+              },
+              {
+                "id": "c6",
+                "from": "n6",
+                "to": "n7",
+                "fromHandle": "right",
+                "toHandle": "left",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c7b",
+                "from": "n7",
+                "to": "n9",
+                "fromHandle": "top",
+                "toHandle": "bottom",
+                "decision": "sim",
+                "label": "✔"
+              },
+              {
+                "id": "c7a",
+                "from": "n7",
+                "to": "n8",
+                "fromHandle": "right",
+                "toHandle": "left",
+                "decision": "nao",
+                "label": "✘"
+              },
+              {
+                "id": "c9",
+                "from": "n9",
+                "to": "n10",
+                "fromHandle": "top",
+                "toHandle": "bottom",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c10",
+                "from": "n10",
+                "to": "n11",
+                "fromHandle": "top",
+                "toHandle": "bottom",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c11",
+                "from": "n11",
+                "to": "n12",
+                "fromHandle": "top",
+                "toHandle": "bottom",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c12",
+                "from": "n12",
+                "to": "n13",
+                "fromHandle": "right",
+                "toHandle": "left",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c13",
+                "from": "n13",
+                "to": "n14",
+                "fromHandle": "bottom",
+                "toHandle": "top",
+                "decision": "",
+                "label": ""
+              },
+              {
+                "id": "c14",
+                "from": "n14",
+                "to": "n15",
+                "fromHandle": "bottom",
+                "toHandle": "top",
+                "decision": "",
+                "label": ""
+              }
+            ],
+            "stages": [
+              {
+                "id": "n1",
+                "index": 0,
+                "nome": "Solicitar compra",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n2",
+                "index": 1,
+                "nome": "Pedido",
+                "tipo": "dados",
+                "participante": ""
+              },
+              {
+                "id": "n3",
+                "index": 2,
+                "nome": "Analisar Pedido",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n4",
+                "index": 3,
+                "nome": "Pedido aprovado?",
+                "tipo": "condicional",
+                "participante": ""
+              },
+              {
+                "id": "n6",
+                "index": 4,
+                "nome": "Validar orcamento",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n5",
+                "index": 5,
+                "nome": "Registrar Aprovacao",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n12",
+                "index": 6,
+                "nome": "Fornecedor recebe OrdemDeCompra",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n11",
+                "index": 7,
+                "nome": "Fornecedor",
+                "tipo": "dados",
+                "participante": ""
+              },
+              {
+                "id": "n10",
+                "index": 8,
+                "nome": "Enviar OrdemDeCompra ao Fornecedor",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n9",
+                "index": 9,
+                "nome": "Gerar OrdemDeCompra",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n7",
+                "index": 10,
+                "nome": "Orcamento aprovado?",
+                "tipo": "condicional",
+                "participante": ""
+              },
+              {
+                "id": "n8",
+                "index": 11,
+                "nome": "Atualizar Pedido",
+                "tipo": "task",
+                "participante": ""
+              },
+              {
+                "id": "n13",
+                "index": 12,
+                "nome": "Aprovacao",
+                "tipo": "dados",
+                "participante": ""
+              },
+              {
+                "id": "n14",
+                "index": 13,
+                "nome": "OrdemDeCompra",
+                "tipo": "dados",
+                "participante": ""
+              },
+              {
+                "id": "n15",
+                "index": 14,
+                "nome": "Cliente",
+                "tipo": "dados",
+                "participante": ""
+              }
+            ],
+            "currentNodeId": "n1",
+            "activeNodeId": "n1",
+            "updated_at": "2026-03-17T08:55:21.246323"
+          },
+          "stageIndex": null,
+          "currentNodeId": "n1",
+          "activeNodeId": "n1",
+          "bpmnNodeId": "n1",
+          "bpmnCurrentNodeId": "n1",
+          "sourceNodeId": "n1",
+          "id": 6,
+          "updated_at": "2026-03-17T08:55:21.246313"
+        }
+      }
+    ],
+    "created_at": "2026-03-17T08:55:21.321362"
   }
 ]

@@ -1,0 +1,111 @@
+.metricsWrapper {
+  margin-bottom: 0;
+}
+
+.metricsActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.6rem;
+}
+
+.editBtn {
+  background: none;
+  border: 1.5px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.3rem 0.75rem;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: border-color 120ms, background 120ms;
+  font-family: inherit;
+}
+
+.editBtn:hover {
+  border-color: #2fa866;
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.metricCard {
+  background: white;
+  border-radius: 0.6rem;
+  padding: 1.4rem 1.5rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  transition: box-shadow 120ms ease;
+}
+
+.metricCard:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.09);
+}
+
+.metricIcon {
+  font-size: 2rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.metricContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.metricLabel {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.metricValue {
+  font-size: 1.75rem;
+  color: #0f172a;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 0.35rem;
+}
+
+.metricChange {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.up {
+  color: #22c55e;
+}
+
+.down {
+  color: #ef4444;
+}
+
+@media (max-width: 768px) {
+  .metricsGrid {
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+
+  .metricCard {
+    padding: 1rem;
+  }
+
+  .metricValue {
+    font-size: 1.4rem;
+  }
+
+  .metricIcon {
+    font-size: 1.6rem;
+  }
+}

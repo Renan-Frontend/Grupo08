@@ -277,10 +277,19 @@ button.primaryButton:hover {
   .container {
     padding: 1rem;
     min-height: auto;
+    /* Let the page body scroll naturally on phones */
+    height: auto;
+    overflow: visible;
   }
 
   .card {
     padding: 1rem;
+    height: auto;
+    overflow: visible;
+  }
+
+  .createdSection {
+    overflow: visible;
   }
 
   .actions {

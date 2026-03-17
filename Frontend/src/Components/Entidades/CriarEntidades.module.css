@@ -346,7 +346,7 @@
   }
 
   .table td:nth-child(3)::before {
-    content: 'Criado por';
+    content: 'Usuário';
   }
 }
 

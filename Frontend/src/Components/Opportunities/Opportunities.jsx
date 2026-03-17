@@ -155,7 +155,10 @@ const Opportunities = () => {
   return (
     <div className={styles.opportunitiesContainer}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Oportunidades</h1>
+        <div>
+          <h1 className={styles.title}>Oportunidades</h1>
+          <p className={styles.subtitle}>Gerencie e acompanhe suas oportunidades de negócio.</p>
+        </div>
         <div className={styles.headerActions}>
           {!isReadOnlyMode ? (
             <button

@@ -329,10 +329,14 @@ const BpmnFlow = ({
       if (!connectorsEnabled) return false;
       if (selectedNodeId === nodeId) return true;
 
+      // When a touch connection draft is active, show all connectors on OTHER nodes
+      // so the user can tap a specific handle to complete the connection.
+      if (touchConnectionDraft && touchConnectionDraft.fromId !== nodeId) return true;
+
       // Keep linked output handles visible even when the node is not selected.
       return hasOutgoingConnectionAtHandle(nodeId, handle);
     },
-    [connectorsEnabled, hasOutgoingConnectionAtHandle, selectedNodeId],
+    [connectorsEnabled, hasOutgoingConnectionAtHandle, selectedNodeId, touchConnectionDraft],
   );
 
   const startConnectorDrag = React.useCallback(
@@ -404,6 +408,21 @@ const BpmnFlow = ({
       if (isTouchPointer) {
         event.stopPropagation();
         event.preventDefault();
+
+        // If a draft is already active and the user taps a connector on a DIFFERENT node,
+        // complete the connection to that specific handle instead of starting a new draft.
+        if (touchConnectionDraft && touchConnectionDraft.fromId !== nodeId) {
+          onCreateConnection?.(
+            touchConnectionDraft.fromId,
+            nodeId,
+            touchConnectionDraft.fromHandle,
+            handle,
+            { clientX: event.clientX, clientY: event.clientY },
+          );
+          setTouchConnectionDraft(null);
+          return;
+        }
+
         onSelectConnection?.('');
         onSelectNode?.(nodeId);
         setTouchConnectionDraft({ fromId: nodeId, fromHandle: handle });
@@ -415,9 +434,11 @@ const BpmnFlow = ({
     [
       connectorsEnabled,
       getConnectionByHandle,
+      onCreateConnection,
       onSelectConnection,
       onSelectNode,
       startConnectorDrag,
+      touchConnectionDraft,
     ],
   );
 
@@ -788,7 +809,7 @@ const BpmnFlow = ({
           const active = isNodeActive(node);
           const textScale = zoom < 1 ? Math.max(0.82, zoom) : 1;
           const connectorScale = zoom < 1 ? Math.max(0.9, zoom) : 1;
-          const connectorSize = (isCoarsePointer ? 32 : 14) * connectorScale;
+          const connectorSize = (isCoarsePointer ? 20 : 14) * connectorScale;
           const connectorHalf = connectorSize / 2;
           const activeIndex = activeIndexById[node.id];
           const isDone =
@@ -901,6 +922,9 @@ const BpmnFlow = ({
               }}
               onPointerDown={(event) => {
                 if (!draggable || disabled || disableNodeDrag) return;
+                // While a touch connection draft is active, don't start node drag —
+                // the tap completes the connection via onClick instead.
+                if (touchConnectionDraft) return;
                 if (!isPrimaryPointerButton(event)) return;
                 const targetTag = event.target?.tagName?.toLowerCase();
                 if (

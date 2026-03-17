@@ -11,7 +11,9 @@ import { UserStorage } from './Context/UserContext';
 import { EntidadesProvider } from './Context/EntidadesContext';
 import ProtectedRoute from './Components/Helper/ProtectedRoute';
 
-const Dashboard = React.lazy(() => import('./Components/Home/Dashboard'));
+const DashboardRoutes = React.lazy(
+  () => import('./Components/Home/DashboardRoutes'),
+);
 const GerarBPMN = React.lazy(() => import('./Components/GerarBPMN/GerarBPMN'));
 const OpportunitiesRoutes = React.lazy(
   () => import('./Components/Opportunities/OpportunitiesRoutes'),
@@ -104,7 +106,7 @@ function AppContent() {
 
           {/* rotas protegidas */}
           <Route element={protectedNavigation}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/*" element={<DashboardRoutes />} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/entidades" element={<Entidades />} />
             <Route path="/entidades/id/:entidadeId" element={<Entidades />} />

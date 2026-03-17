@@ -29,8 +29,13 @@
 .header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start; /* muda aqui */
+  align-items: flex-start;
   gap: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .headerLeft {
@@ -41,15 +46,22 @@
 
 .title {
   font-size: 1.5rem;
-  font-weight: 500;
-  color: #333;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+}
+
+.titleSub {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin: 0.55rem 0 0;
 }
 
 .filter {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   color: #666;
-  background: white;
+  background: #f3f4f6;
   border: 1px solid #e0e0e0;
   border-radius: 0.25rem;
   cursor: pointer;
@@ -62,8 +74,12 @@
 }
 
 .filter option {
-  color: #666;
+  color: #1f9b55;
   font-style: normal;
+}
+
+.filter option[value='todas'] {
+  color: #666;
 }
 
 .headerActions {
@@ -147,7 +163,7 @@
 .tableTitle {
   font-size: 0.7rem;
   font-weight: 600;
-  color: #666;
+  color: #111827;
   text-transform: uppercase;
 }
 
@@ -192,8 +208,8 @@
 
 .nameCell,
 .table td.nameCell {
-  color: #4caf50;
-  font-weight: 500;
+  color: #1f9b55;
+  font-weight: 400;
 }
 
 .creatorCell,
@@ -428,25 +444,9 @@
   }
 
   .container {
+    margin-left: 0;
     padding: 1.25rem;
     gap: 1rem;
-  }
-
-  .table {
-    min-width: 760px;
-  }
-}
-
-@media (max-width: 768px) {
-  .layout,
-  .main,
-  .container {
-    min-height: auto;
-  }
-
-  .container {
-    margin-left: 0;
-    padding: 1rem;
   }
 
   .content {
@@ -577,7 +577,7 @@
   }
 
   .entityTable td:nth-child(7)::before {
-    content: 'Criado por';
+    content: 'Usuário';
   }
 
   .entityTable td:nth-child(8)::before {
@@ -625,6 +625,12 @@
   .actionsCell {
     width: auto;
     min-width: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
   }
 }
 
