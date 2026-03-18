@@ -1255,7 +1255,9 @@ const Entidades = () => {
 
         <div>
           {filtro === 'todas'
-            ? tableSections.map((section) => (
+            ? tableSections
+                .filter((section) => section.entities.length > 0)
+                .map((section) => (
                 <React.Fragment key={section.key}>
                   {renderTable(section)}
                 </React.Fragment>
