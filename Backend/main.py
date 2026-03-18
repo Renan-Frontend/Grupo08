@@ -4989,6 +4989,7 @@ def init_supabase_storage():
                     )
                     """
                 )
+                cursor.execute(f"ALTER TABLE {USERS_TABLE} ENABLE ROW LEVEL SECURITY")
                 cursor.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {ENTIDADES_TABLE} (
@@ -4997,6 +4998,7 @@ def init_supabase_storage():
                     )
                     """
                 )
+                cursor.execute(f"ALTER TABLE {ENTIDADES_TABLE} ENABLE ROW LEVEL SECURITY")
                 cursor.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {OPORTUNIDADES_TABLE} (
@@ -5005,6 +5007,7 @@ def init_supabase_storage():
                     )
                     """
                 )
+                cursor.execute(f"ALTER TABLE {OPORTUNIDADES_TABLE} ENABLE ROW LEVEL SECURITY")
                 cursor.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {BPMN_EDITOR_STATE_TABLE} (
@@ -5013,6 +5016,7 @@ def init_supabase_storage():
                     )
                     """
                 )
+                cursor.execute(f"ALTER TABLE {BPMN_EDITOR_STATE_TABLE} ENABLE ROW LEVEL SECURITY")
                 cursor.execute(
                     f"""
                     CREATE TABLE IF NOT EXISTS {AI_AUDIT_TABLE} (
@@ -5021,6 +5025,7 @@ def init_supabase_storage():
                     )
                     """
                 )
+                cursor.execute(f"ALTER TABLE {AI_AUDIT_TABLE} ENABLE ROW LEVEL SECURITY")
 
                 cursor.execute(f"SELECT COUNT(*) FROM {USERS_TABLE}")
                 users_row = cursor.fetchone()
