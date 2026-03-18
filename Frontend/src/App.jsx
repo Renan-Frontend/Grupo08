@@ -40,6 +40,13 @@ const LazyFallback = () => (
 
 function AppContent() {
   const { user, authLoading } = React.useContext(UserContext);
+
+  // Pre-warm the Render backend on app load to reduce cold-start delay on login.
+  React.useEffect(() => {
+    import('./Api').then(({ API_URL }) => {
+      fetch(`${API_URL}/health`, { method: 'GET', signal: AbortSignal.timeout(60000) }).catch(() => {});
+    });
+  }, []);
   const isLogged = !!user;
 
   const [isOffline, setIsOffline] = React.useState(!navigator.onLine);

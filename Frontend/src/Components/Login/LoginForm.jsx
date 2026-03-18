@@ -15,6 +15,7 @@ import stylesBtn from '../Forms/Button.module.css';
 const LoginForm = () => {
   const email = useForm('email');
   const password = useForm();
+  const [slowWarning, setSlowWarning] = React.useState(false);
 
   const { userLogin, getUser } = React.useContext(UserContext);
   const isOnline = useOnline();
@@ -31,6 +32,15 @@ const LoginForm = () => {
       navigate('/gerar-bpmn');
     },
   });
+
+  React.useEffect(() => {
+    if (!loading) {
+      setSlowWarning(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setSlowWarning(true), 5000);
+    return () => window.clearTimeout(timer);
+  }, [loading]);
 
   return (
     <section className="animeLeft">
@@ -68,7 +78,14 @@ const LoginForm = () => {
         />
 
         {loading ? (
-          <Button disabled>Carregando...</Button>
+          <>
+            <Button disabled>Carregando...</Button>
+            {slowWarning && (
+              <p className={styles.warmupWarning}>
+                ⏳ O servidor está acordando (pode levar até 1 min na primeira vez)...
+              </p>
+            )}
+          </>
         ) : (
           <Button>Entrar</Button>
         )}

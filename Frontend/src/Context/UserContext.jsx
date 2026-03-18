@@ -17,8 +17,8 @@ import {
 
 export const UserContext = createContext();
 const USER_SESSION_CACHE_KEY = 'user_session_cache_v1';
-const AUTH_REQUEST_TIMEOUT_MS = 8000;
-const LOGIN_REQUEST_TIMEOUT_MS = 12000;
+const AUTH_REQUEST_TIMEOUT_MS = 30000;
+const LOGIN_REQUEST_TIMEOUT_MS = 70000;
 
 // Offline session: persists token + user in localStorage so the app works
 // after a browser restart when there is no network connection.
