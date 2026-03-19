@@ -547,11 +547,25 @@ const GerarBPMNCreate = () => {
   const aiContextAppliedRef = React.useRef(false);
   const aiCanvasAppliedRef = React.useRef(false);
 
-  const confirmLeavePage = React.useCallback(() => {
-    if (skipNavigationPromptRef.current) return true;
-    return window.confirm(
-      'Tem certeza que deseja sair desta pagina? As alteracoes nao salvas podem ser perdidas.',
-    );
+  const [leavePageModalOpen, setLeavePageModalOpen] = React.useState(false);
+  const pendingLeaveNavRef = React.useRef(null);
+
+  const openLeavePageModal = React.useCallback((onProceed) => {
+    pendingLeaveNavRef.current = onProceed;
+    setLeavePageModalOpen(true);
+  }, []);
+
+  const handleLeaveConfirm = React.useCallback(() => {
+    setLeavePageModalOpen(false);
+    skipNavigationPromptRef.current = true;
+    const fn = pendingLeaveNavRef.current;
+    pendingLeaveNavRef.current = null;
+    fn?.();
+  }, []);
+
+  const handleLeaveCancel = React.useCallback(() => {
+    setLeavePageModalOpen(false);
+    pendingLeaveNavRef.current = null;
   }, []);
 
   const tutorialSteps = React.useMemo(
@@ -5610,13 +5624,6 @@ const GerarBPMNCreate = () => {
       event.returnValue = '';
     };
 
-    const allowNavigation = () => {
-      const confirmed = confirmLeavePage();
-      if (!confirmed) return false;
-      skipNavigationPromptRef.current = true;
-      return true;
-    };
-
     const handleDocumentClickCapture = (event) => {
       if (skipNavigationPromptRef.current) return;
       if (event.defaultPrevented) return;
@@ -5642,10 +5649,16 @@ const GerarBPMNCreate = () => {
 
       if (isSameRoute) return;
 
-      if (!allowNavigation()) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
+      event.preventDefault();
+      event.stopPropagation();
+      const targetHref = anchor.href;
+      openLeavePageModal(() => {
+        if (nextUrl.origin === window.location.origin) {
+          navigate(nextUrl.pathname + nextUrl.search + nextUrl.hash);
+        } else {
+          window.location.href = targetHref;
+        }
+      });
     };
 
     const originalPushState = window.history.pushState;
@@ -5660,7 +5673,15 @@ const GerarBPMNCreate = () => {
             nextUrl.search === currentUrl.search &&
             nextUrl.hash === currentUrl.hash;
 
-          if (!isSameRoute && !allowNavigation()) {
+          if (!isSameRoute) {
+            openLeavePageModal(() => {
+              if (nextUrl.origin === window.location.origin) {
+                navigate(nextUrl.pathname + nextUrl.search + nextUrl.hash);
+              } else {
+                originalPushState.apply(window.history, args);
+                currentPageUrlRef.current = window.location.href;
+              }
+            });
             return;
           }
         }
@@ -5677,14 +5698,17 @@ const GerarBPMNCreate = () => {
         return;
       }
 
-      const confirmed = confirmLeavePage();
-      if (!confirmed) {
-        window.history.pushState(null, '', currentPageUrlRef.current);
-        return;
-      }
+      const targetUrl = window.location.href;
+      window.history.pushState(null, '', currentPageUrlRef.current);
 
-      skipNavigationPromptRef.current = true;
-      currentPageUrlRef.current = window.location.href;
+      openLeavePageModal(() => {
+        const parsed = new URL(targetUrl);
+        if (parsed.origin === window.location.origin) {
+          navigate(parsed.pathname + parsed.search + parsed.hash);
+        } else {
+          window.location.href = targetUrl;
+        }
+      });
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -5697,7 +5721,7 @@ const GerarBPMNCreate = () => {
       window.removeEventListener('popstate', handlePopState);
       window.history.pushState = originalPushState;
     };
-  }, [confirmLeavePage]);
+  }, [openLeavePageModal]);
 
   React.useEffect(() => {
     return () => {
@@ -6397,7 +6421,9 @@ const GerarBPMNCreate = () => {
                   aria-label={
                     isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
                   }
-                  title={isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                  title={
+                    isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
+                  }
                 >
                   {isCanvasFullscreen ? '⤡' : '⤢'}
                 </button>
@@ -6892,7 +6918,7 @@ const GerarBPMNCreate = () => {
                 setDisableCreateNodeConnectionPromptDraft(event.target.checked)
               }
             />
-            Não quero receber essa mensagem novamente neste BPMN.
+            Não receber essa mensagem novamente
           </label>
         </Close>
       ) : null}
@@ -6913,7 +6939,7 @@ const GerarBPMNCreate = () => {
                 setDisableDeleteSuggestedEntityPromptDraft(event.target.checked)
               }
             />
-            Não quero receber essa mensagem novamente neste BPMN.
+            Não receber essa mensagem novamente
           </label>
         </Close>
       ) : null}
@@ -6934,9 +6960,20 @@ const GerarBPMNCreate = () => {
                 setDisableDeleteSelectionPromptDraft(event.target.checked)
               }
             />
-            Não quero receber essa mensagem novamente neste BPMN.
+            Não receber essa mensagem novamente
           </label>
         </Close>
+      ) : null}
+
+      {leavePageModalOpen ? (
+        <Close
+          title="Sair da página"
+          message="Tem certeza que deseja sair desta página? As alterações não salvas podem ser perdidas."
+          onConfirm={handleLeaveConfirm}
+          onCancel={handleLeaveCancel}
+          confirmLabel="Sair"
+          cancelLabel="Ficar"
+        />
       ) : null}
 
       {noticeModal.open ? (

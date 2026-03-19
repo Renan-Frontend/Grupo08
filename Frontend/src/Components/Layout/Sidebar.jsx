@@ -2,7 +2,10 @@ import React from 'react';
 import styles from './Sidebar.module.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { UserContext } from '../../Context/UserContext';
-import { isReadOnlyAccessLevelOne, canCreateByAccessLevel } from '../../Utils/accessControl';
+import {
+  isReadOnlyAccessLevelOne,
+  canCreateByAccessLevel,
+} from '../../Utils/accessControl';
 import Button from '../Forms/Button';
 
 const Sidebar = ({ onNavigateItem }) => {
@@ -11,9 +14,18 @@ const Sidebar = ({ onNavigateItem }) => {
   const { userLogout, user } = React.useContext(UserContext);
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
   const canCreate = canCreateByAccessLevel(user);
+  const isAdmin = user?.admin === true || user?.role === 'admin';
 
   const handleNavigation = (path) => {
     navigate(path);
+    onNavigateItem?.();
+  };
+
+  const handleCreateGerarBpmn = () => {
+    try {
+      window.localStorage.removeItem('bpmn_editor_create_draft_v1');
+    } catch {}
+    navigate('/gerar-bpmn/criar');
     onNavigateItem?.();
   };
 
@@ -24,7 +36,14 @@ const Sidebar = ({ onNavigateItem }) => {
   };
 
   const isActive = (path) => {
+    if (path === '/usuarios') {
+      return location.pathname === '/usuarios' ? styles.active : '';
+    }
     return location.pathname === path ? styles.active : '';
+  };
+
+  const isUsuariosCreating = () => {
+    return location.pathname === '/usuarios/criar' ? styles.active : '';
   };
 
   const isEntidadesActive = () => {
@@ -37,6 +56,17 @@ const Sidebar = ({ onNavigateItem }) => {
 
   const isEntidadesCreating = () => {
     return location.pathname === '/entidades/criar' ? styles.active : '';
+  };
+
+  const isIaActive = () => {
+    if (location.pathname === '/ia/configurar') {
+      return '';
+    }
+    return location.pathname.startsWith('/ia') ? styles.active : '';
+  };
+
+  const isIaConfigurarActive = () => {
+    return location.pathname === '/ia/configurar' ? styles.active : '';
   };
 
   const isGerarBpmnCreating = () => {
@@ -70,7 +100,7 @@ const Sidebar = ({ onNavigateItem }) => {
                   className={`${styles.addButton} ${isGerarBpmnCreating()}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleNavigation('/gerar-bpmn/criar');
+                    handleCreateGerarBpmn();
                   }}
                   title="Criar BPMN"
                 >
@@ -102,9 +132,7 @@ const Sidebar = ({ onNavigateItem }) => {
               ) : null}
             </div>
           </li>
-          <li
-            className={`${styles.menuItem} ${location.pathname.startsWith('/ia') ? styles.active : ''}`}
-          >
+          <li className={`${styles.menuItem} ${isIaActive()}`}>
             <div
               className={styles.menuItemContent}
               onClick={() => handleNavigation('/ia')}
@@ -112,7 +140,20 @@ const Sidebar = ({ onNavigateItem }) => {
               <span className={styles.icon}>✨</span>
               IA BPMN
             </div>
-            <div className={styles.addButtonWrapper}></div>
+            <div className={styles.addButtonWrapper}>
+              {!isReadOnlyMode ? (
+                <button
+                  className={`${styles.addButton} ${isIaConfigurarActive()}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNavigation('/ia/configurar');
+                  }}
+                  title="Criar Processo"
+                >
+                  +
+                </button>
+              ) : null}
+            </div>
           </li>
           <li className={`${styles.menuItem} ${isActive('/usuarios')}`}>
             <div
@@ -122,7 +163,20 @@ const Sidebar = ({ onNavigateItem }) => {
               <span className={styles.icon}>👥</span>
               Usuários
             </div>
-            <div className={styles.addButtonWrapper}></div>
+            <div className={styles.addButtonWrapper}>
+              {isAdmin ? (
+                <button
+                  className={`${styles.addButton} ${isUsuariosCreating()}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNavigation('/usuarios/criar');
+                  }}
+                  title="Criar Usuário"
+                >
+                  +
+                </button>
+              ) : null}
+            </div>
           </li>
           <li className={`${styles.menuItem} ${isEntidadesActive()}`}>
             <div
@@ -147,12 +201,6 @@ const Sidebar = ({ onNavigateItem }) => {
               ) : null}
             </div>
           </li>
-        </ul>
-      </div>
-
-      <div className={styles.sidebarSection}>
-        <h3 className={styles.sidebarTitle}>Vendas</h3>
-        <ul className={styles.menuList}>
           <li className={`${styles.menuItem} ${isActive('/oportunidades')}`}>
             <div
               className={styles.menuItemContent}

@@ -842,8 +842,8 @@ const Entidades = () => {
     const temMuitos = false;
 
     return (
-      <div className={styles.tableSection}>
-        <div className={styles.tableHeader}>
+      <div className={styles.sectionGroup}>
+        <div className={styles.sectionTopRow}>
           <h2 className={styles.tableTitle}>{section.title}</h2>
           {canDelete && entidadesCategoria.length > 0 && (
             <button
@@ -855,116 +855,122 @@ const Entidades = () => {
             </button>
           )}
         </div>
-        <div className={styles.tableWrapper}>
-          <table className={`${styles.table} ${styles.entityTable}`}>
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Descrição</th>
-                <th>Qtd. Campos</th>
-                <th>Usada em BPMN</th>
-                <th>Tipo da Entidade</th>
-                <th>Usuário</th>
-                <th>Atualizado em</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {dadosExibidos.map((item) => (
-                <tr key={getEntidadeId(item) ?? item.nome}>
-                  <td
-                    className={styles.nameCell}
-                    onClick={() => {
-                      handleViewEntityFields(item);
-                    }}
-                    style={{ cursor: 'pointer' }}
-                    title="Clique para visualizar os campos da entidade"
-                  >
-                    {item.nome}
-                  </td>
-                  <td>{item.descricao}</td>
-                  <td>{getEntityFieldCount(item)}</td>
-                  <td>{getEntityBpmnUsageCount(item)}</td>
-                  <td>{getEntityTypeLabel(item)}</td>
-                  <td className={styles.creatorCell}>{item.criadoPor}</td>
-                  <td>
-                    {formatDateTimeLabel(item.updated_at || item.created_at)}
-                  </td>
-                  <td className={styles.actionsCell}>
-                    <div className={styles.actions}>
-                      {isReadOnlyMode ? (
-                        <span className={styles.viewOnlyBadge}>Visualizar</span>
-                      ) : null}
-                      {!isReadOnlyMode ? (
-                        <button
-                          className={styles.editBtn}
-                          onClick={() => handleEdit(item, section)}
-                          title="Editar"
-                        >
-                          ✏️
-                        </button>
-                      ) : null}
-                      {canDelete ? (
-                        <button
-                          className={styles.deleteBtn}
-                          onClick={() => handleDelete(getEntidadeId(item))}
-                          title="Deletar"
-                        >
-                          🗑️
-                        </button>
-                      ) : null}
-                    </div>
-                  </td>
+        <div className={styles.tableSection}>
+          <div className={styles.tableWrapper}>
+            <table className={`${styles.table} ${styles.entityTable}`}>
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Descrição</th>
+                  <th>Qtd. Campos</th>
+                  <th>Usada em BPMN</th>
+                  <th>Tipo da Entidade</th>
+                  <th>Usuário</th>
+                  <th>Atualizado em</th>
+                  <th>Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {usaPaginacao &&
-          Math.ceil(entidadesCategoria.length / itemsPorPagina) > 1 && (
-            <Pagination
-              currentPage={paginaAtual}
-              totalPages={Math.ceil(entidadesCategoria.length / itemsPorPagina)}
-              onPrevious={() => {
-                if (filtro === 'todas') {
-                  setPaginasPorTabela((prev) => ({
-                    ...prev,
-                    [section.key]: Math.max(
-                      1,
-                      Number(prev[section.key] || 1) - 1,
-                    ),
-                  }));
-                  return;
-                }
-                setTabelaPaginaAtual((prev) => Math.max(1, prev - 1));
-              }}
-              onNext={() => {
-                const totalPags = Math.ceil(
+              </thead>
+              <tbody>
+                {dadosExibidos.map((item) => (
+                  <tr key={getEntidadeId(item) ?? item.nome}>
+                    <td
+                      className={styles.nameCell}
+                      onClick={() => {
+                        handleViewEntityFields(item);
+                      }}
+                      style={{ cursor: 'pointer' }}
+                      title="Clique para visualizar os campos da entidade"
+                    >
+                      {item.nome}
+                    </td>
+                    <td>{item.descricao}</td>
+                    <td>{getEntityFieldCount(item)}</td>
+                    <td>{getEntityBpmnUsageCount(item)}</td>
+                    <td>{getEntityTypeLabel(item)}</td>
+                    <td className={styles.creatorCell}>{item.criadoPor}</td>
+                    <td>
+                      {formatDateTimeLabel(item.updated_at || item.created_at)}
+                    </td>
+                    <td className={styles.actionsCell}>
+                      <div className={styles.actions}>
+                        {isReadOnlyMode ? (
+                          <span className={styles.viewOnlyBadge}>
+                            Visualizar
+                          </span>
+                        ) : null}
+                        {!isReadOnlyMode ? (
+                          <button
+                            className={styles.editBtn}
+                            onClick={() => handleEdit(item, section)}
+                            title="Editar"
+                          >
+                            ✏️
+                          </button>
+                        ) : null}
+                        {canDelete ? (
+                          <button
+                            className={styles.deleteBtn}
+                            onClick={() => handleDelete(getEntidadeId(item))}
+                            title="Deletar"
+                          >
+                            🗑️
+                          </button>
+                        ) : null}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {usaPaginacao &&
+            Math.ceil(entidadesCategoria.length / itemsPorPagina) > 1 && (
+              <Pagination
+                currentPage={paginaAtual}
+                totalPages={Math.ceil(
                   entidadesCategoria.length / itemsPorPagina,
-                );
-                if (filtro === 'todas') {
-                  setPaginasPorTabela((prev) => ({
-                    ...prev,
-                    [section.key]: Math.min(
-                      totalPags,
-                      Number(prev[section.key] || 1) + 1,
-                    ),
-                  }));
-                  return;
-                }
-                setTabelaPaginaAtual((prev) => Math.min(totalPags, prev + 1));
-              }}
-            />
+                )}
+                onPrevious={() => {
+                  if (filtro === 'todas') {
+                    setPaginasPorTabela((prev) => ({
+                      ...prev,
+                      [section.key]: Math.max(
+                        1,
+                        Number(prev[section.key] || 1) - 1,
+                      ),
+                    }));
+                    return;
+                  }
+                  setTabelaPaginaAtual((prev) => Math.max(1, prev - 1));
+                }}
+                onNext={() => {
+                  const totalPags = Math.ceil(
+                    entidadesCategoria.length / itemsPorPagina,
+                  );
+                  if (filtro === 'todas') {
+                    setPaginasPorTabela((prev) => ({
+                      ...prev,
+                      [section.key]: Math.min(
+                        totalPags,
+                        Number(prev[section.key] || 1) + 1,
+                      ),
+                    }));
+                    return;
+                  }
+                  setTabelaPaginaAtual((prev) => Math.min(totalPags, prev + 1));
+                }}
+              />
+            )}
+          {temMuitos && !usaPaginacao && (
+            <button
+              className={styles.viewMoreBtn}
+              onClick={() => setFiltro(section.key)}
+            >
+              Ver a tabela completa
+            </button>
           )}
-        {temMuitos && !usaPaginacao && (
-          <button
-            className={styles.viewMoreBtn}
-            onClick={() => setFiltro(section.key)}
-          >
-            Ver a tabela completa
-          </button>
-        )}
-        {!temMuitos && <div className={styles.tableBorder}></div>}
+          {!temMuitos && <div className={styles.tableBorder}></div>}
+        </div>
       </div>
     );
   };
@@ -1237,7 +1243,7 @@ const Entidades = () => {
                     className={styles.createBtn}
                     onClick={() => navigate('/entidades/criar')}
                   >
-                    ✚ Criar Entidade
+                    Criar Entidade
                   </Button>
                 )}
                 {isEntityFieldsView && (
@@ -1253,7 +1259,7 @@ const Entidades = () => {
           );
         })()}
 
-        <div>
+        <div className={styles.sectionsWrapper}>
           {filtro === 'todas'
             ? tableSections
                 .filter((section) => section.entities.length > 0)

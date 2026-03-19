@@ -721,5 +721,175 @@
     "created_at": "2026-03-17T08:55:21.214667",
     "updated_at": "2026-03-17T08:55:21.214667",
     "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 31,
+    "nome": "Pedido",
+    "descricao": "Pedido gerado após solicitação do Cliente",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-03-19T07:13:34.129525",
+    "updated_at": "2026-03-19T07:13:34.129525",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 32,
+    "nome": "OrdemDeCompra",
+    "descricao": "OrdemDeCompra gerada após aprovação do orçamento",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-03-19T07:13:34.184656",
+    "updated_at": "2026-03-19T07:13:34.184656",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 33,
+    "nome": "Fornecedor",
+    "descricao": "Fornecedor recebe a OrdemDeCompra",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_fornecedor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-03-19T07:13:34.186137",
+    "updated_at": "2026-03-19T07:13:34.186137",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "ttesteeeeeeee",
+    "id": 34,
+    "nome": "etttttttttt",
+    "descricao": "tteeeeeeeeeeeeeeeee",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": false,
+    "atributoChave": null,
+    "campos": [
+      {
+        "id": "campo-1773916859983-cthsjy9z",
+        "nome": "tttttttttttttttttt",
+        "tipo": "Data",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "isUnique": false,
+        "relacionamento": "ttt"
+      }
+    ],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 0,
+    "ativo": true,
+    "created_at": "2026-03-19T07:40:50.036640",
+    "updated_at": "2026-03-19T07:40:59.998409",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "dasd",
+    "id": 35,
+    "nome": "sadasd",
+    "descricao": "asdsa",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": false,
+    "atributoChave": null,
+    "campos": [],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 0,
+    "ativo": true,
+    "created_at": "2026-03-19T10:06:01.462649",
+    "updated_at": "2026-03-19T10:06:01.462649",
+    "criadoPor": "Renan"
   }
 ]

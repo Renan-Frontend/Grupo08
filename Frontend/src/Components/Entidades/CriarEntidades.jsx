@@ -129,10 +129,16 @@ const CriarEntidades = () => {
           },
           token,
         );
+        navigate('/entidades');
       } else {
-        await adicionarEntidade(novaEntidade, token);
+        const criada = await adicionarEntidade(novaEntidade, token);
+        const novaId = criada?.id ?? criada?._id;
+        if (novaId) {
+          navigate(`/entidades?entidadeId=${novaId}`);
+        } else {
+          navigate('/entidades');
+        }
       }
-      navigate('/entidades');
     } catch (error) {
       setFormError(
         error?.message ||
@@ -145,134 +151,153 @@ const CriarEntidades = () => {
 
   return (
     <section className={styles.container}>
-      <h1 className={styles.title}>
-        {isEditingMode ? 'Editar Entidade' : 'Criar Entidade'}
-      </h1>
-      {isReadOnlyMode ? (
-        <p className={styles.error}>
-          Seu usuário está em modo somente visualização e não pode criar
-          entidades.
-        </p>
-      ) : null}
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>
+            {isEditingMode ? 'Editar Entidade' : 'Criar Entidade'}
+          </h1>
+          <p className={styles.description}>
+            {isEditingMode
+              ? 'Atualize os dados da entidade.'
+              : 'Preencha os dados para criar uma nova entidade.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className={styles.backButton}
+          onClick={() => navigate(-1)}
+        >
+          ← Voltar
+        </button>
+      </div>
 
-      <form className={styles.form} onSubmit={handleSubmit}>
-        <div className={styles.field}>
-          <label htmlFor="nomeTabela" className={styles.label}>
-            Nome da tabela
-          </label>
-          <div className={styles.tableOptions}>
-            <label className={styles.optionLabel}>
-              <input
-                type="radio"
-                name="tabelaModo"
-                value="existente"
-                checked={tabelaModo === 'existente'}
-                onChange={(event) => setTabelaModo(event.target.value)}
-                disabled={!hasTabelas || isReadOnlyMode}
-              />
-              Usar existente
+      <div className={styles.card}>
+        {isReadOnlyMode ? (
+          <p className={styles.error}>
+            Seu usuário está em modo somente visualização e não pode criar
+            entidades.
+          </p>
+        ) : null}
+
+        <form className={styles.form} onSubmit={handleSubmit}>
+          <div className={styles.field}>
+            <label htmlFor="nomeTabela" className={styles.label}>
+              Nome da tabela
             </label>
-            <label className={styles.optionLabel}>
-              <input
-                type="radio"
-                name="tabelaModo"
-                value="nova"
-                checked={tabelaModo === 'nova'}
-                onChange={(event) => setTabelaModo(event.target.value)}
+            <div className={styles.tableOptions}>
+              <label className={styles.optionLabel}>
+                <input
+                  type="radio"
+                  name="tabelaModo"
+                  value="existente"
+                  checked={tabelaModo === 'existente'}
+                  onChange={(event) => setTabelaModo(event.target.value)}
+                  disabled={!hasTabelas || isReadOnlyMode}
+                />
+                Usar existente
+              </label>
+              <label className={styles.optionLabel}>
+                <input
+                  type="radio"
+                  name="tabelaModo"
+                  value="nova"
+                  checked={tabelaModo === 'nova'}
+                  onChange={(event) => setTabelaModo(event.target.value)}
+                  disabled={isReadOnlyMode}
+                />
+                Criar nova
+              </label>
+            </div>
+
+            {tabelaModo === 'existente' && hasTabelas ? (
+              <select
+                id="nomeTabela"
+                name="nomeTabela"
+                className={styles.select}
+                value={nomeTabela}
+                onChange={(event) => setNomeTabela(event.target.value)}
                 disabled={isReadOnlyMode}
+              >
+                <option value="" disabled>
+                  Selecione uma tabela...
+                </option>
+                {tabelasDisponiveis.map((tabelaExistente) => (
+                  <option key={tabelaExistente} value={tabelaExistente}>
+                    {tabelaExistente}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                id="nomeTabela"
+                type="text"
+                name="nomeTabela"
+                className={styles.input}
+                value={nomeTabela}
+                onChange={(event) => setNomeTabela(event.target.value)}
+                disabled={isReadOnlyMode}
+                placeholder="Ex: Clientes, Pedidos, Contratos..."
               />
-              Criar nova
-            </label>
+            )}
           </div>
 
-          {tabelaModo === 'existente' && hasTabelas ? (
+          <div className={styles.field}>
+            <label htmlFor="nome" className={styles.label}>
+              Nome de entidade
+            </label>
+            <input
+              id="nome"
+              type="text"
+              name="nome"
+              className={styles.input}
+              value={nome.value}
+              onChange={nome.onChange}
+              onBlur={nome.onBlur}
+              disabled={isReadOnlyMode}
+              placeholder="Escreva o nome da entidade que será exibido"
+            />
+            {nome.error && <span className={styles.error}>{nome.error}</span>}
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="descricao" className={styles.label}>
+              Descrição
+            </label>
+            <textarea
+              id="descricao"
+              className={styles.textarea}
+              placeholder="Escreva a descrição da entidade..."
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              disabled={isReadOnlyMode}
+              rows={6}
+            />
+          </div>
+
+          <div className={styles.field}>
+            <label htmlFor="tipoEntidade" className={styles.label}>
+              Tipo de entidade
+            </label>
             <select
-              id="nomeTabela"
-              name="nomeTabela"
+              id="tipoEntidade"
+              name="tipoEntidade"
               className={styles.select}
-              value={nomeTabela}
-              onChange={(event) => setNomeTabela(event.target.value)}
+              value={tipoEntidade}
+              onChange={(event) => setTipoEntidade(event.target.value)}
               disabled={isReadOnlyMode}
             >
-              <option value="" disabled>
-                Selecione uma tabela...
-              </option>
-              {tabelasDisponiveis.map((tabelaExistente) => (
-                <option key={tabelaExistente} value={tabelaExistente}>
-                  {tabelaExistente}
-                </option>
-              ))}
+              <option value="Principal">Principal</option>
+              <option value="Apoio">Apoio</option>
+              <option value="Associativa">Associativa</option>
+              <option value="Externa">Externa</option>
             </select>
-          ) : (
-            <input
-              id="nomeTabela"
-              type="text"
-              name="nomeTabela"
-              className={styles.input}
-              value={nomeTabela}
-              onChange={(event) => setNomeTabela(event.target.value)}
-              disabled={isReadOnlyMode}
-              placeholder="Ex: Clientes, Pedidos, Contratos..."
-            />
-          )}
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="nome" className={styles.label}>
-            Nome de entidade
-          </label>
-          <input
-            id="nome"
-            type="text"
-            name="nome"
-            className={styles.input}
-            value={nome.value}
-            onChange={nome.onChange}
-            onBlur={nome.onBlur}
-            disabled={isReadOnlyMode}
-            placeholder="Escreva o nome da entidade que será exibido"
-          />
-          {nome.error && <span className={styles.error}>{nome.error}</span>}
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="descricao" className={styles.label}>
-            Descrição
-          </label>
-          <textarea
-            id="descricao"
-            className={styles.textarea}
-            placeholder="Escreva a descrição da entidade..."
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            disabled={isReadOnlyMode}
-            rows={6}
-          />
-        </div>
-
-        <div className={styles.field}>
-          <label htmlFor="tipoEntidade" className={styles.label}>
-            Tipo de entidade
-          </label>
-          <select
-            id="tipoEntidade"
-            name="tipoEntidade"
-            className={styles.select}
-            value={tipoEntidade}
-            onChange={(event) => setTipoEntidade(event.target.value)}
-            disabled={isReadOnlyMode}
-          >
-            <option value="Principal">Principal</option>
-            <option value="Apoio">Apoio</option>
-            <option value="Associativa">Associativa</option>
-            <option value="Externa">Externa</option>
-          </select>
-        </div>
-        <Button className={styles.button} disabled={isReadOnlyMode}>
-          {isEditingMode ? 'Salvar alterações' : 'Criar'}
-        </Button>
-        {formError && <p className={styles.error}>{formError}</p>}
-      </form>
+          </div>
+          <Button className={styles.button} disabled={isReadOnlyMode}>
+            {isEditingMode ? 'Salvar alterações' : 'Criar'}
+          </Button>
+          {formError && <p className={styles.error}>{formError}</p>}
+        </form>
+      </div>
     </section>
   );
 };

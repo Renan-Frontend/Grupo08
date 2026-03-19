@@ -1,0 +1,192 @@
+.wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 2rem;
+
+  box-sizing: border-box;
+  overflow: hidden;
+  background: #f7f7f7;
+  border-radius: 0.75rem;
+}
+
+.hero {
+  border: 1px solid #e0e0e0;
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #333;
+}
+
+.hero p {
+  margin: 0.45rem 0 0;
+  color: #666;
+  font-size: 0.92rem;
+}
+
+.formCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 0.95rem;
+  padding-bottom: 1.75rem;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.field span {
+  font-size: 0.76rem;
+  color: #555;
+  font-weight: 600;
+}
+
+.field input,
+.field textarea {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0.52rem 0.6rem;
+  font-size: 0.84rem;
+  color: #333;
+  background: #fff;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.15);
+}
+
+.generateButton {
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2fac66 60%, #229954 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  padding: 0.6rem 1.25rem;
+  cursor: pointer;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s;
+}
+
+.generateButton:hover {
+  opacity: 0.88;
+}
+
+.generateButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #444;
+  font-weight: 600;
+  font-size: 0.78rem;
+  padding: 0.45rem 0.65rem;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: #e5e7eb;
+  border-color: #999;
+}
+
+.feedback {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #2e7d32;
+  background: #e8f5e9;
+  border: 1px solid #c8e6c9;
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+}
+
+@media (max-width: 1024px) {
+  .wrapper {
+    height: auto;
+    overflow: visible;
+  }
+
+  .formCard {
+    min-height: auto;
+    height: auto;
+    overflow-y: visible;
+  }
+
+  .generateButton,
+  .secondaryButton {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding: 0.6rem;
+    gap: 0.65rem;
+  }
+
+  .hero {
+    border-radius: 10px;
+    padding: 0.7rem 0.75rem;
+  }
+
+  .hero h1 {
+    font-size: 1.05rem;
+  }
+
+  .hero p {
+    font-size: 0.82rem;
+  }
+
+  .formCard {
+    border-radius: 10px;
+    padding: 0.7rem 0.75rem;
+    gap: 0.6rem;
+  }
+
+  .field span {
+    font-size: 0.74rem;
+  }
+
+  .field input,
+  .field textarea {
+    font-size: 0.83rem;
+    padding: 0.55rem 0.6rem;
+  }
+
+  .generateButton,
+  .secondaryButton {
+    font-size: 0.84rem;
+    padding: 0.6rem 0.65rem;
+  }
+}

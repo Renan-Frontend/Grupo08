@@ -1,32 +1,34 @@
 .container {
   width: 100%;
-  min-height: calc(100vh - 220px);
   padding: 2rem;
   background: #f7f7f7;
   border-radius: 0.75rem;
   box-sizing: border-box;
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .card {
   width: 100%;
-  max-width: 1700px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
-  padding: 1.75rem;
+  padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 /* ==================== HEADER ==================== */
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   flex-wrap: wrap;
 }
 
@@ -45,21 +47,21 @@
 
 /* ==================== BUTTONS ==================== */
 .primaryButton {
-  border: 1px solid #278a55;
-  background: #2fa866;
+  border: none;
+  background: linear-gradient(135deg, #2fac66 60%, #229954 100%);
   color: #fff;
-  border-radius: 8px;
-  padding: 0.55rem 1rem;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 120ms ease, border-color 120ms ease;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s;
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: #278a55;
-  border-color: #1f6e43;
+  opacity: 0.88;
 }
 
 .primaryButton:disabled {
@@ -118,6 +120,13 @@
   min-width: 900px;
 }
 
+.table th:nth-child(1) {
+  width: 200px;
+}
+.table th:nth-child(3) {
+  width: 32%;
+}
+
 .table th,
 .table td {
   text-align: left;
@@ -125,6 +134,7 @@
   border-bottom: 1px solid #e5e7eb;
   font-size: 0.875rem;
   color: #1f2937;
+  vertical-align: top;
 }
 
 .table tbody tr:last-child td {
@@ -154,7 +164,10 @@
   font-size: 0.9rem;
   cursor: pointer;
   text-align: left;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 200px;
+  display: inline-block;
 }
 
 .nameLink:hover {
@@ -248,11 +261,16 @@
   font-size: 0.85rem;
   padding: 0.4rem 0.7rem;
   cursor: pointer;
-  max-width: 260px;
-  width: 100%;
+  width: 7.5rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: width 0.18s ease;
 }
 
+.bpmnSelect:hover,
 .bpmnSelect:focus {
+  width: 17rem;
   outline: none;
   border-color: #6366f1;
 }
@@ -424,25 +442,27 @@
 /* ==================== WIDGET SELECTION GRID ==================== */
 .widgetGrid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.6rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
   margin-bottom: 1.25rem;
 }
 
 .widgetCard {
   position: relative;
   display: grid;
-  grid-template-columns: 2rem 1fr 1.5rem;
+  grid-template-columns: 1.75rem 1fr 1.25rem;
   grid-template-rows: auto auto;
   align-items: center;
-  gap: 0 0.6rem;
+  gap: 0 0.45rem;
   background: #fff;
   border: 1.5px solid #e5e7eb;
   border-radius: 10px;
-  padding: 0.75rem 0.85rem;
+  padding: 0.55rem 0.65rem;
   cursor: pointer;
   text-align: left;
-  transition: border-color 120ms ease, background 120ms ease;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease;
   font: inherit;
   width: 100%;
 }
@@ -458,14 +478,14 @@
 }
 
 .widgetCardIcon {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   grid-row: 1 / span 2;
   grid-column: 1;
   line-height: 1;
 }
 
 .widgetCardLabel {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #111827;
   grid-column: 2;
@@ -473,7 +493,7 @@
 }
 
 .widgetCardDesc {
-  font-size: 0.78rem;
+  font-size: 0.7rem;
   color: #6b7280;
   grid-column: 2;
   grid-row: 2;
@@ -626,7 +646,7 @@
     border-bottom: none;
     padding: 0.32rem 0;
     display: grid;
-    grid-template-columns: 6.5rem 1fr;
+    grid-template-columns: 8rem 1fr;
     gap: 0.4rem;
     font-size: 0.82rem;
     align-items: center;
@@ -649,7 +669,7 @@
   }
 
   .table td:nth-child(3)::before {
-    content: 'Widgets';
+    content: 'Gráficos';
   }
 
   .table td:nth-child(4)::before {
@@ -674,6 +694,21 @@
     text-transform: uppercase;
   }
 
+  .nameLink {
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .bpmnSelect {
+    max-width: none;
+  }
+
+  .bpmnLinkedName {
+    white-space: normal;
+    max-width: none;
+    word-break: break-word;
+  }
+
   .modal {
     padding: 1.25rem;
   }
@@ -693,8 +728,25 @@
     padding: 0.6rem;
   }
 
+  .header {
+    padding: 0.9rem 1rem;
+  }
+
   .card {
     padding: 0.85rem;
+  }
+
+  .table td {
+    grid-template-columns: 7rem 1fr;
+    font-size: 0.78rem;
+  }
+
+  .table td::before {
+    font-size: 0.64rem;
+  }
+
+  .title {
+    font-size: 1.1rem;
   }
 }
 
@@ -813,7 +865,9 @@
   padding: 0.3rem 0.75rem;
   cursor: pointer;
   margin-bottom: 1rem;
-  transition: border-color 120ms ease, color 120ms ease;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease;
   font: inherit;
 }
 

@@ -101,22 +101,56 @@ const MODAL_STEP_CONFIG = 'config';
 const MODAL_STEP_BPMN = 'bpmn';
 const MODAL_STEP_DATA = 'data';
 
-const MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+const MONTHS = [
+  'Jan',
+  'Fev',
+  'Mar',
+  'Abr',
+  'Mai',
+  'Jun',
+  'Jul',
+  'Ago',
+  'Set',
+  'Out',
+  'Nov',
+  'Dez',
+];
 
 const DEFAULT_CHART_DATA = {
   revenue: MONTHS.map((mes, i) => ({
     mes,
-    valor: [42000, 58000, 51000, 67000, 72000, 68000, 85000, 91000, 78000, 95000, 102000, 118000][i],
+    valor: [
+      42000, 58000, 51000, 67000, 72000, 68000, 85000, 91000, 78000, 95000,
+      102000, 118000,
+    ][i],
   })),
   sales: MONTHS.map((mes, i) => ({
     mes,
-    vendas:   [210, 285, 251, 320, 342, 308, 395, 420, 378, 445, 488, 505][i],
+    vendas: [210, 285, 251, 320, 342, 308, 395, 420, 378, 445, 488, 505][i],
     clientes: [180, 220, 198, 265, 290, 260, 330, 355, 312, 380, 410, 430][i],
   })),
   metrics: [
-    { icon: '💰', label: 'FATURAMENTO TOTAL', value: 'R$ 847.250', change: '↑ 12,5%', up: true },
-    { icon: '👥', label: 'TOTAL DE CLIENTES',  value: '1.284',      change: '↑ 8,2%',  up: true },
-    { icon: '🛒', label: 'TOTAL DE VENDAS',    value: '3.647',      change: '↑ 15,3%', up: true },
+    {
+      icon: '💰',
+      label: 'FATURAMENTO TOTAL',
+      value: 'R$ 847.250',
+      change: '↑ 12,5%',
+      up: true,
+    },
+    {
+      icon: '👥',
+      label: 'TOTAL DE CLIENTES',
+      value: '1.284',
+      change: '↑ 8,2%',
+      up: true,
+    },
+    {
+      icon: '🛒',
+      label: 'TOTAL DE VENDAS',
+      value: '3.647',
+      change: '↑ 15,3%',
+      up: true,
+    },
   ],
   conversions: MONTHS.map((mes, i) => ({
     mes,
@@ -124,80 +158,92 @@ const DEFAULT_CHART_DATA = {
   })),
   expenses: MONTHS.map((mes, i) => ({
     mes,
-    fixas:     [18000, 18000, 18500, 18500, 19000, 19000, 19500, 19500, 20000, 20000, 20500, 21000][i],
-    variaveis: [12000, 15000, 11000, 14000, 16000, 13000, 18000, 17000, 15000, 19000, 22000, 25000][i],
+    fixas: [
+      18000, 18000, 18500, 18500, 19000, 19000, 19500, 19500, 20000, 20000,
+      20500, 21000,
+    ][i],
+    variaveis: [
+      12000, 15000, 11000, 14000, 16000, 13000, 18000, 17000, 15000, 19000,
+      22000, 25000,
+    ][i],
   })),
   tasks: [
-    { icon: '✅', status: 'Concluídas',   valor: 47 },
+    { icon: '✅', status: 'Concluídas', valor: 47 },
     { icon: '🔄', status: 'Em andamento', valor: 23 },
-    { icon: '⏳', status: 'Pendentes',    valor: 15 },
-    { icon: '⚠️', status: 'Atrasadas',    valor: 8  },
+    { icon: '⏳', status: 'Pendentes', valor: 15 },
+    { icon: '⚠️', status: 'Atrasadas', valor: 8 },
   ],
   pipeline: [
-    { etapa: 'Prospecção',   leads: 120, valor: 240000 },
-    { etapa: 'Qualificação', leads: 85,  valor: 197000 },
-    { etapa: 'Proposta',     leads: 52,  valor: 125000 },
-    { etapa: 'Negociação',   leads: 28,  valor: 89000  },
-    { etapa: 'Fechamento',   leads: 15,  valor: 52000  },
+    { etapa: 'Prospecção', leads: 120, valor: 240000 },
+    { etapa: 'Qualificação', leads: 85, valor: 197000 },
+    { etapa: 'Proposta', leads: 52, valor: 125000 },
+    { etapa: 'Negociação', leads: 28, valor: 89000 },
+    { etapa: 'Fechamento', leads: 15, valor: 52000 },
   ],
 };
 
 const WIDGET_COLUMNS = {
   revenue: [
-    { key: 'mes',   label: 'Mês',       type: 'text'   },
+    { key: 'mes', label: 'Mês', type: 'text' },
     { key: 'valor', label: 'Valor (R$)', type: 'number' },
   ],
   sales: [
-    { key: 'mes',      label: 'Mês',      type: 'text'   },
-    { key: 'vendas',   label: 'Vendas',   type: 'number' },
+    { key: 'mes', label: 'Mês', type: 'text' },
+    { key: 'vendas', label: 'Vendas', type: 'number' },
     { key: 'clientes', label: 'Clientes', type: 'number' },
   ],
   metrics: [
-    { key: 'icon',   label: 'Ícone',     type: 'text'    },
-    { key: 'label',  label: 'Indicador', type: 'text'    },
-    { key: 'value',  label: 'Valor',     type: 'text'    },
-    { key: 'change', label: 'Variação',  type: 'text'    },
-    { key: 'up',     label: 'Tendência', type: 'boolean' },
+    { key: 'icon', label: 'Ícone', type: 'text' },
+    { key: 'label', label: 'Indicador', type: 'text' },
+    { key: 'value', label: 'Valor', type: 'text' },
+    { key: 'change', label: 'Variação', type: 'text' },
+    { key: 'up', label: 'Tendência', type: 'boolean' },
   ],
   conversions: [
-    { key: 'mes',  label: 'Mês',     type: 'text'   },
+    { key: 'mes', label: 'Mês', type: 'text' },
     { key: 'taxa', label: 'Taxa (%)', type: 'number' },
   ],
   expenses: [
-    { key: 'mes',       label: 'Mês',           type: 'text'   },
-    { key: 'fixas',     label: 'Fixas (R$)',     type: 'number' },
+    { key: 'mes', label: 'Mês', type: 'text' },
+    { key: 'fixas', label: 'Fixas (R$)', type: 'number' },
     { key: 'variaveis', label: 'Variáveis (R$)', type: 'number' },
   ],
   tasks: [
-    { key: 'icon',   label: 'Ícone',  type: 'text'   },
-    { key: 'status', label: 'Status', type: 'text'   },
-    { key: 'valor',  label: 'Qtd',    type: 'number' },
+    { key: 'icon', label: 'Ícone', type: 'text' },
+    { key: 'status', label: 'Status', type: 'text' },
+    { key: 'valor', label: 'Qtd', type: 'number' },
   ],
   pipeline: [
-    { key: 'etapa', label: 'Etapa',      type: 'text'   },
-    { key: 'leads', label: 'Leads',      type: 'number' },
+    { key: 'etapa', label: 'Etapa', type: 'text' },
+    { key: 'leads', label: 'Leads', type: 'number' },
     { key: 'valor', label: 'Valor (R$)', type: 'number' },
   ],
 };
 
 const WIDGET_LABELS = {
-  revenue:     'Faturamento Mensal',
-  sales:       'Vendas e Clientes',
-  metrics:     'Métricas KPI',
+  revenue: 'Faturamento Mensal',
+  sales: 'Vendas e Clientes',
+  metrics: 'Métricas KPI',
   conversions: 'Taxa de Conversão',
-  expenses:    'Despesas Mensais',
-  tasks:       'Tarefas',
-  pipeline:    'Pipeline de Vendas',
+  expenses: 'Despesas Mensais',
+  tasks: 'Tarefas',
+  pipeline: 'Pipeline de Vendas',
 };
 
 const cloneChartData = (src = DEFAULT_CHART_DATA) => ({
-  revenue:     (src.revenue     || DEFAULT_CHART_DATA.revenue)    .map((r) => ({ ...r })),
-  sales:       (src.sales       || DEFAULT_CHART_DATA.sales)      .map((r) => ({ ...r })),
-  metrics:     (src.metrics     || DEFAULT_CHART_DATA.metrics)    .map((r) => ({ ...r })),
-  conversions: (src.conversions || DEFAULT_CHART_DATA.conversions).map((r) => ({ ...r })),
-  expenses:    (src.expenses    || DEFAULT_CHART_DATA.expenses)   .map((r) => ({ ...r })),
-  tasks:       (src.tasks       || DEFAULT_CHART_DATA.tasks)      .map((r) => ({ ...r })),
-  pipeline:    (src.pipeline    || DEFAULT_CHART_DATA.pipeline)   .map((r) => ({ ...r })),
+  revenue: (src.revenue || DEFAULT_CHART_DATA.revenue).map((r) => ({ ...r })),
+  sales: (src.sales || DEFAULT_CHART_DATA.sales).map((r) => ({ ...r })),
+  metrics: (src.metrics || DEFAULT_CHART_DATA.metrics).map((r) => ({ ...r })),
+  conversions: (src.conversions || DEFAULT_CHART_DATA.conversions).map((r) => ({
+    ...r,
+  })),
+  expenses: (src.expenses || DEFAULT_CHART_DATA.expenses).map((r) => ({
+    ...r,
+  })),
+  tasks: (src.tasks || DEFAULT_CHART_DATA.tasks).map((r) => ({ ...r })),
+  pipeline: (src.pipeline || DEFAULT_CHART_DATA.pipeline).map((r) => ({
+    ...r,
+  })),
 });
 
 const DashboardStart = () => {
@@ -226,7 +272,9 @@ const DashboardStart = () => {
   const [createBpmnSearch, setCreateBpmnSearch] = React.useState('');
 
   // Create wizard — step 4 data editing
-  const [initChartData, setInitChartData] = React.useState(() => cloneChartData());
+  const [initChartData, setInitChartData] = React.useState(() =>
+    cloneChartData(),
+  );
   const [activeDataWidget, setActiveDataWidget] = React.useState('metrics');
   const [dataEditRows, setDataEditRows] = React.useState([]);
 
@@ -328,7 +376,7 @@ const DashboardStart = () => {
     if (location.pathname.endsWith('/criar')) {
       openCreate();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openCreate = () => {
@@ -364,7 +412,8 @@ const DashboardStart = () => {
     setInitChartData(cloneChartData());
     setActiveDataWidget('metrics');
     setDataEditRows([]);
-    if (location.pathname.endsWith('/criar')) navigate('/dashboard', { replace: true });
+    if (location.pathname.endsWith('/criar'))
+      navigate('/dashboard', { replace: true });
   };
 
   const goToConfig = () => {
@@ -415,8 +464,10 @@ const DashboardStart = () => {
         if (!cols.find((c) => c.key === k)) obj[k] = rest[k]; // preserve extra fields like icon
       });
       cols.forEach((c) => {
-        if (c.type === 'number' || c.type === 'currency') obj[c.key] = Number(rest[c.key]) || 0;
-        else if (c.type === 'boolean') obj[c.key] = rest[c.key] === true || rest[c.key] === 'true';
+        if (c.type === 'number' || c.type === 'currency')
+          obj[c.key] = Number(rest[c.key]) || 0;
+        else if (c.type === 'boolean')
+          obj[c.key] = rest[c.key] === true || rest[c.key] === 'true';
         else obj[c.key] = rest[c.key] ?? '';
       });
       return obj;
@@ -425,7 +476,9 @@ const DashboardStart = () => {
   };
 
   const updateDataCell = (idx, key, value) =>
-    setDataEditRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [key]: value } : r)));
+    setDataEditRows((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, [key]: value } : r)),
+    );
 
   const addDataRow = () => {
     const cols = WIDGET_COLUMNS[activeDataWidget] || [];
@@ -442,7 +495,9 @@ const DashboardStart = () => {
     setDataEditRows((prev) => prev.filter((_, i) => i !== idx));
 
   const filteredCreateBpmns = createBpmnList.filter((b) =>
-    getOpportunityName(b).toLowerCase().includes(createBpmnSearch.toLowerCase()),
+    getOpportunityName(b)
+      .toLowerCase()
+      .includes(createBpmnSearch.toLowerCase()),
   );
 
   const toggleWidget = (id) => {
@@ -467,10 +522,14 @@ const DashboardStart = () => {
       const cols = WIDGET_COLUMNS[activeDataWidget] || [];
       const cleaned = dataEditRows.map(({ _id, ...rest }) => {
         const obj = {};
-        Object.keys(rest).forEach((k) => { if (!cols.find((c) => c.key === k)) obj[k] = rest[k]; });
+        Object.keys(rest).forEach((k) => {
+          if (!cols.find((c) => c.key === k)) obj[k] = rest[k];
+        });
         cols.forEach((c) => {
-          if (c.type === 'number' || c.type === 'currency') obj[c.key] = Number(rest[c.key]) || 0;
-          else if (c.type === 'boolean') obj[c.key] = rest[c.key] === true || rest[c.key] === 'true';
+          if (c.type === 'number' || c.type === 'currency')
+            obj[c.key] = Number(rest[c.key]) || 0;
+          else if (c.type === 'boolean')
+            obj[c.key] = rest[c.key] === true || rest[c.key] === 'true';
           else obj[c.key] = rest[c.key] ?? '';
         });
         return obj;
@@ -514,30 +573,30 @@ const DashboardStart = () => {
 
   return (
     <section className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>Dashboards</h1>
-            <p className={styles.description}>
-              Gerencie e visualize seus dashboards analíticos.
-            </p>
-          </div>
-          {canCreate && (
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={openCreate}
-            >
-              + Criar Dashboard
-            </button>
-          )}
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Dashboards</h1>
+          <p className={styles.description}>
+            Gerencie e visualize seus dashboards analíticos.
+          </p>
         </div>
+        {canCreate && (
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={openCreate}
+          >
+            Criar Dashboard
+          </button>
+        )}
+      </div>
 
+      <div className={styles.card}>
         <section className={styles.tableSection}>
           {dashboards.length === 0 ? (
             <p className={styles.empty}>
               Nenhum dashboard criado ainda. Clique em{' '}
-              <strong>&ldquo;+ Criar Dashboard&rdquo;</strong> para começar.
+              <strong>&ldquo;Criar Dashboard&rdquo;</strong> para começar.
             </p>
           ) : (
             <div className={styles.tableWrapper}>
@@ -546,7 +605,7 @@ const DashboardStart = () => {
                   <tr>
                     <th>Nome</th>
                     <th>BPMN Vinculado</th>
-                    <th>Widgets</th>
+                    <th>Gráficos</th>
                     <th>Usuário</th>
                     <th>Data de Criação</th>
                     <th>Ações</th>
@@ -567,11 +626,15 @@ const DashboardStart = () => {
                       <td>
                         <select
                           className={styles.bpmnSelect}
-                          value={item.linkedBpmn ? String(item.linkedBpmn.id) : ''}
+                          value={
+                            item.linkedBpmn ? String(item.linkedBpmn.id) : ''
+                          }
                           disabled={isReadOnlyMode}
-                          onChange={(e) => handleBpmnSelectChange(item, e.target.value)}
+                          onChange={(e) =>
+                            handleBpmnSelectChange(item, e.target.value)
+                          }
                         >
-                          <option value="">— Sem vínculo —</option>
+                          <option value="">Sem vínculo</option>
                           {bpmnList.map((b) => (
                             <option key={b.id} value={String(b.id)}>
                               {getOpportunityName(b)}
@@ -591,7 +654,9 @@ const DashboardStart = () => {
                           })}
                         </div>
                       </td>
-                      <td className={styles.creatorCell}>{item.createdBy || '—'}</td>
+                      <td className={styles.creatorCell}>
+                        {item.createdBy || '—'}
+                      </td>
                       <td>{formatDate(item.createdAt)}</td>
                       <td className={styles.tableActions}>
                         <button
@@ -656,7 +721,9 @@ const DashboardStart = () => {
         >
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalStepIndicator}>
-              <span className={`${styles.modalStep} ${styles.modalStepActive}`}>1</span>
+              <span className={`${styles.modalStep} ${styles.modalStepActive}`}>
+                1
+              </span>
               <span className={styles.modalStepLine} />
               <span className={styles.modalStep}>2</span>
               <span className={styles.modalStepLine} />
@@ -716,7 +783,11 @@ const DashboardStart = () => {
                 <span className={styles.modalStepLine} />
                 <span className={styles.modalStep}>2</span>
                 <span className={styles.modalStepLine} />
-                <span className={`${styles.modalStep} ${styles.modalStepActive}`}>3</span>
+                <span
+                  className={`${styles.modalStep} ${styles.modalStepActive}`}
+                >
+                  3
+                </span>
                 <span className={styles.modalStepLine} />
                 <span className={styles.modalStep}>4</span>
               </div>
@@ -725,7 +796,9 @@ const DashboardStart = () => {
               {editingId ? `Configurar — ${newName}` : 'Tipos de Gráficos'}
             </h2>
             <p className={styles.modalStepLabel}>
-              {editingId ? 'Escolha os widgets a exibir' : 'Passo 3 de 4 — Selecione os gráficos'}
+              {editingId
+                ? 'Escolha os gráficos a exibir'
+                : 'Passo 3 de 4 — Selecione os gráficos'}
             </p>
             <div className={styles.widgetGrid}>
               {ALL_WIDGETS.map((widget) => {
@@ -739,8 +812,12 @@ const DashboardStart = () => {
                     aria-pressed={active}
                   >
                     <span className={styles.widgetCardIcon}>{widget.icon}</span>
-                    <span className={styles.widgetCardLabel}>{widget.label}</span>
-                    <span className={styles.widgetCardDesc}>{widget.description}</span>
+                    <span className={styles.widgetCardLabel}>
+                      {widget.label}
+                    </span>
+                    <span className={styles.widgetCardDesc}>
+                      {widget.description}
+                    </span>
                     <span className={styles.widgetCardCheck}>
                       {active ? '✓' : ''}
                     </span>
@@ -791,7 +868,9 @@ const DashboardStart = () => {
             <div className={styles.modalStepIndicator}>
               <span className={styles.modalStep}>1</span>
               <span className={styles.modalStepLine} />
-              <span className={`${styles.modalStep} ${styles.modalStepActive}`}>2</span>
+              <span className={`${styles.modalStep} ${styles.modalStepActive}`}>
+                2
+              </span>
               <span className={styles.modalStepLine} />
               <span className={styles.modalStep}>3</span>
               <span className={styles.modalStepLine} />
@@ -811,7 +890,9 @@ const DashboardStart = () => {
               <p className={styles.bpmnPickerEmpty}>Carregando BPMNs...</p>
             ) : filteredCreateBpmns.length === 0 ? (
               <p className={styles.bpmnPickerEmpty}>
-                {createBpmnSearch ? 'Nenhum BPMN encontrado.' : 'Nenhum BPMN disponível.'}
+                {createBpmnSearch
+                  ? 'Nenhum BPMN encontrado.'
+                  : 'Nenhum BPMN disponível.'}
               </p>
             ) : (
               <ul className={styles.bpmnPickerList}>
@@ -883,7 +964,10 @@ const DashboardStart = () => {
           aria-modal="true"
           aria-label="Editar métricas"
         >
-          <div className={`${styles.modal} ${styles.modalWide}`} onClick={(e) => e.stopPropagation()}>
+          <div
+            className={`${styles.modal} ${styles.modalWide}`}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className={styles.modalStepIndicator}>
               <span className={styles.modalStep}>1</span>
               <span className={styles.modalStepLine} />
@@ -891,10 +975,14 @@ const DashboardStart = () => {
               <span className={styles.modalStepLine} />
               <span className={styles.modalStep}>3</span>
               <span className={styles.modalStepLine} />
-              <span className={`${styles.modalStep} ${styles.modalStepActive}`}>4</span>
+              <span className={`${styles.modalStep} ${styles.modalStepActive}`}>
+                4
+              </span>
             </div>
             <h2 className={styles.modalTitle}>Configurar Gráficos</h2>
-            <p className={styles.modalStepLabel}>Passo 4 de 4 — Configure os dados iniciais</p>
+            <p className={styles.modalStepLabel}>
+              Passo 4 de 4 — Configure os dados iniciais
+            </p>
 
             {/* Widget tab selector */}
             <div className={styles.dataTabRow}>
@@ -907,7 +995,8 @@ const DashboardStart = () => {
                   }`}
                   onClick={() => switchDataWidget(wid)}
                 >
-                  {ALL_WIDGETS.find((w) => w.id === wid)?.icon} {WIDGET_LABELS[wid]}
+                  {ALL_WIDGETS.find((w) => w.id === wid)?.icon}{' '}
+                  {WIDGET_LABELS[wid]}
                 </button>
               ))}
             </div>
@@ -918,7 +1007,9 @@ const DashboardStart = () => {
                 <thead>
                   <tr>
                     {(WIDGET_COLUMNS[activeDataWidget] || []).map((c) => (
-                      <th key={c.key} className={styles.dataTh}>{c.label}</th>
+                      <th key={c.key} className={styles.dataTh}>
+                        {c.label}
+                      </th>
                     ))}
                     <th className={styles.dataTh} />
                   </tr>
@@ -931,7 +1022,13 @@ const DashboardStart = () => {
                           {c.type === 'boolean' ? (
                             <select
                               value={String(row[c.key])}
-                              onChange={(e) => updateDataCell(idx, c.key, e.target.value === 'true')}
+                              onChange={(e) =>
+                                updateDataCell(
+                                  idx,
+                                  c.key,
+                                  e.target.value === 'true',
+                                )
+                              }
                               className={styles.dataInput}
                             >
                               <option value="true">↑ Sobe</option>
@@ -939,9 +1036,15 @@ const DashboardStart = () => {
                             </select>
                           ) : (
                             <input
-                              type={c.type === 'number' || c.type === 'currency' ? 'number' : 'text'}
+                              type={
+                                c.type === 'number' || c.type === 'currency'
+                                  ? 'number'
+                                  : 'text'
+                              }
                               value={row[c.key] ?? ''}
-                              onChange={(e) => updateDataCell(idx, c.key, e.target.value)}
+                              onChange={(e) =>
+                                updateDataCell(idx, c.key, e.target.value)
+                              }
                               className={styles.dataInput}
                             />
                           )}
@@ -961,7 +1064,11 @@ const DashboardStart = () => {
                 </tbody>
               </table>
             </div>
-            <button type="button" className={styles.dataAddBtn} onClick={addDataRow}>
+            <button
+              type="button"
+              className={styles.dataAddBtn}
+              onClick={addDataRow}
+            >
               + Linha
             </button>
 
@@ -1023,7 +1130,9 @@ const DashboardStart = () => {
               <p className={styles.bpmnPickerEmpty}>Carregando BPMNs...</p>
             ) : filteredBpmns.length === 0 ? (
               <p className={styles.bpmnPickerEmpty}>
-                {bpmnSearch ? 'Nenhum BPMN encontrado.' : 'Nenhum BPMN disponível.'}
+                {bpmnSearch
+                  ? 'Nenhum BPMN encontrado.'
+                  : 'Nenhum BPMN disponível.'}
               </p>
             ) : (
               <ul className={styles.bpmnPickerList}>
@@ -1113,4 +1222,3 @@ const DashboardStart = () => {
 };
 
 export default DashboardStart;
-

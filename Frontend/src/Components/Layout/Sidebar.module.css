@@ -45,14 +45,14 @@
   transition: background 0.2s;
   color: #4d4d4db2;
   font-size: 1rem;
-  overflow: hidden;
 }
 
 .menuItemContent {
   display: flex;
   align-items: center;
-  flex: 1;
-  padding: 0.75rem 1rem 0.75rem 1rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.75rem 0.5rem 0.75rem 1rem;
   cursor: pointer;
 }
 
@@ -171,6 +171,7 @@ button.addButton:hover {
 .addButtonWrapper {
   width: 2rem;
   min-width: 2rem;
+  height: 2rem;
   padding: 0;
   display: flex;
   align-items: center;
@@ -179,7 +180,7 @@ button.addButton:hover {
   position: relative;
   z-index: 10;
   border-radius: 6px;
-  margin-left: 0.25rem;
+  flex-shrink: 0;
 }
 
 .menuItem.active .addButtonWrapper {

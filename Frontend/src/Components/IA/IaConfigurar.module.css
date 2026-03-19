@@ -1,9 +1,9 @@
 .wrapper {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  height: calc(100dvh - 2.7rem);
+  gap: 1.25rem;
+  padding: 2rem;
   box-sizing: border-box;
   overflow: hidden;
   background: #f7f7f7;
@@ -15,18 +15,44 @@
   border-radius: 14px;
   padding: 1rem 1.1rem;
   background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .hero h1 {
   margin: 0;
-  font-size: 1.25rem;
-  color: #333;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
 }
 
 .hero p {
-  margin: 0.45rem 0 0;
-  color: #666;
-  font-size: 0.92rem;
+  margin: 0.55rem 0 0;
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+
+.backButton {
+  border: 1px solid #d1d5db;
+  background: #f3f4f6;
+  color: #374151;
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.backButton:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
 }
 
 .grid {
@@ -410,18 +436,20 @@
 .generateButton,
 .useButton {
   border: none;
-  border-radius: 8px;
-  background: #16a34a;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2fac66 60%, #229954 100%);
   color: #fff;
   font-weight: 700;
-  font-size: 0.85rem;
-  padding: 0.5rem 0.65rem;
+  font-size: 0.95rem;
+  padding: 0.6rem 1.25rem;
   cursor: pointer;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s;
 }
 
 .generateButton:hover,
 .useButton:hover {
-  background: #15803d;
+  opacity: 0.88;
 }
 
 .secondaryButton {

@@ -3,10 +3,10 @@
   background: #f7f7f7;
   padding: 2rem;
   border-radius: 0.75rem;
-  min-height: calc(100vh - 4rem);
+
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -47,27 +47,36 @@
 }
 
 .table thead {
-  background: #f3f3f3;
+  background: none;
 }
 
 .table th {
   text-align: left;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #374151;
-  padding: 0.55rem 0.75rem;
+  padding: 0.7rem 1rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
 }
 
 .table td {
-  padding: 0.55rem 0.75rem;
-  border-top: 1px solid #e5e7eb;
-  font-size: 0.85rem;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
   color: #1f2937;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .table tbody tr:hover {
-  background: #fafafa;
+  background: #f9fafb;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .nameCol {
@@ -142,6 +151,23 @@
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.btnCriar {
+  background: linear-gradient(135deg, #2fac66 60%, #229954 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+
+.btnCriar:hover {
+  opacity: 0.88;
 }
 
 .content {

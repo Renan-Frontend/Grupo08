@@ -264,135 +264,133 @@ const GerarBPMNStart = () => {
 
   return (
     <section className={styles.container}>
-      <div className={styles.card}>
-        <h1 className={styles.title}>Gerar BPMN</h1>
-        <p className={styles.description}>
-          Escolha como deseja iniciar o processo.
-        </p>
-
-        <div className={styles.actions}>
-          {!isReadOnlyMode ? (
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={handleCreateBpmn}
-            >
-              Criar BPMN
-            </button>
-          ) : (
-            <p className={styles.createdEmpty}>
-              Modo somente visualização ativo para o seu nível de acesso.
-            </p>
-          )}
+      <div className={styles.header}>
+        <div>
+          <h1 className={styles.title}>Gerar BPMN</h1>
+          <p className={styles.description}>
+            Escolha como deseja iniciar o processo.
+          </p>
         </div>
+        {!isReadOnlyMode ? (
+          <button
+            type="button"
+            className={styles.primaryButton}
+            onClick={handleCreateBpmn}
+          >
+            Criar BPMN
+          </button>
+        ) : (
+          <p className={styles.createdEmpty}>
+            Modo somente visualização ativo para o seu nível de acesso.
+          </p>
+        )}
+      </div>
 
-        <section className={styles.createdSection}>
-          <h2 className={styles.createdTitle}>BPMNs criados</h2>
+      <div className={styles.card}>
+        <h2 className={styles.createdTitle}>BPMNs criados</h2>
 
-          {loading ? (
-            <p className={styles.createdEmpty}>Carregando BPMNs...</p>
-          ) : createdBpmns.length === 0 ? (
-            <p className={styles.createdEmpty}>
-              {isReadOnlyMode
-                ? 'Nenhum BPMN disponível para visualização no momento.'
-                : 'Nenhum BPMN criado ainda. Clique em “Criar BPMN”.'}
-            </p>
-          ) : (
-            <div className={styles.tableWrapper}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th>Nome do Processo</th>
-                    <th>Atribuído à</th>
-                    <th>Status</th>
-                    <th>Etapas do Fluxo</th>
-                    <th>Estrutura BPMN</th>
-                    <th>Data de Criação</th>
-                    <th>Ações</th>
+        {loading ? (
+          <p className={styles.createdEmpty}>Carregando BPMNs...</p>
+        ) : createdBpmns.length === 0 ? (
+          <p className={styles.createdEmpty}>
+            {isReadOnlyMode
+              ? 'Nenhum BPMN disponível para visualização no momento.'
+              : 'Nenhum BPMN criado ainda. Clique em “Criar BPMN”.'}
+          </p>
+        ) : (
+          <div className={styles.tableWrapper}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Nome do Processo</th>
+                  <th>Atribuído à</th>
+                  <th>Status</th>
+                  <th>Etapas do Fluxo</th>
+                  <th>Estrutura BPMN</th>
+                  <th>Data de Criação</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {createdBpmns.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <button
+                        type="button"
+                        className={styles.processLink}
+                        onClick={() => handleOpenBpmnFromTable(item)}
+                      >
+                        {getOpportunityName(item)}
+                      </button>
+                    </td>
+                    <td>
+                      <select
+                        className={styles.assignedSelect}
+                        value={getOpportunityAssignedName(item)}
+                        disabled={
+                          isReadOnlyMode || !canManageOpportunity(user, item)
+                        }
+                        onChange={(event) =>
+                          handleAssignedChange(item, event.target.value)
+                        }
+                      >
+                        {[getOpportunityAssignedName(item), ...userOptions]
+                          .filter(Boolean)
+                          .filter(
+                            (value, index, arr) => arr.indexOf(value) === index,
+                          )
+                          .map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                      </select>
+                    </td>
+                    <td>{getOpportunityStage(item)}</td>
+                    <td>{getBpmnFlowStepsSummary(item)}</td>
+                    <td>{getBpmnStructureSummary(item)}</td>
+                    <td>{formatOpportunityCreatedAt(item)}</td>
+                    <td className={styles.tableActions}>
+                      <button
+                        type="button"
+                        className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
+                        onClick={() => handleOpenBpmnFromTable(item)}
+                        title={
+                          isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
+                        }
+                        aria-label={
+                          isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
+                        }
+                      >
+                        {isReadOnlyMode ? '👁️' : '✏️'}
+                      </button>
+                      {!isReadOnlyMode ? (
+                        <button
+                          type="button"
+                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.deleteActionButton}`}
+                          onClick={() => handleDeleteBpmnFromTable(item)}
+                          title="Deletar BPMN"
+                          aria-label="Deletar BPMN"
+                        >
+                          🗑️
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={`${styles.actionButton} ${styles.iconActionButton} ${styles.folderActionButton}`}
+                        onClick={() => handleOpenOpportunityFromTable(item)}
+                        title="Ir para oportunidade"
+                        aria-label="Ir para oportunidade"
+                      >
+                        💼
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {createdBpmns.map((item) => (
-                    <tr key={item.id}>
-                      <td>
-                        <button
-                          type="button"
-                          className={styles.processLink}
-                          onClick={() => handleOpenBpmnFromTable(item)}
-                        >
-                          {getOpportunityName(item)}
-                        </button>
-                      </td>
-                      <td>
-                        <select
-                          className={styles.assignedSelect}
-                          value={getOpportunityAssignedName(item)}
-                          disabled={
-                            isReadOnlyMode || !canManageOpportunity(user, item)
-                          }
-                          onChange={(event) =>
-                            handleAssignedChange(item, event.target.value)
-                          }
-                        >
-                          {[getOpportunityAssignedName(item), ...userOptions]
-                            .filter(Boolean)
-                            .filter(
-                              (value, index, arr) =>
-                                arr.indexOf(value) === index,
-                            )
-                            .map((option) => (
-                              <option key={option} value={option}>
-                                {option}
-                              </option>
-                            ))}
-                        </select>
-                      </td>
-                      <td>{getOpportunityStage(item)}</td>
-                      <td>{getBpmnFlowStepsSummary(item)}</td>
-                      <td>{getBpmnStructureSummary(item)}</td>
-                      <td>{formatOpportunityCreatedAt(item)}</td>
-                      <td className={styles.tableActions}>
-                        <button
-                          type="button"
-                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
-                          onClick={() => handleOpenBpmnFromTable(item)}
-                          title={
-                            isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
-                          }
-                          aria-label={
-                            isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
-                          }
-                        >
-                          {isReadOnlyMode ? '👁️' : '✏️'}
-                        </button>
-                        {!isReadOnlyMode ? (
-                          <button
-                            type="button"
-                            className={`${styles.actionButton} ${styles.iconActionButton} ${styles.deleteActionButton}`}
-                            onClick={() => handleDeleteBpmnFromTable(item)}
-                            title="Deletar BPMN"
-                            aria-label="Deletar BPMN"
-                          >
-                            🗑️
-                          </button>
-                        ) : null}
-                        <button
-                          type="button"
-                          className={`${styles.actionButton} ${styles.iconActionButton} ${styles.folderActionButton}`}
-                          onClick={() => handleOpenOpportunityFromTable(item)}
-                          title="Ir para oportunidade"
-                          aria-label="Ir para oportunidade"
-                        >
-                          💼
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {deleteConfirmItem && (

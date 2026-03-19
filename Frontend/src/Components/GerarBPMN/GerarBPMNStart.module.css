@@ -1,18 +1,28 @@
 .container {
   width: 100%;
-  min-height: calc(100vh - 220px);
   padding: 2rem;
   background: #f7f7f7;
   border-radius: 0.75rem;
   box-sizing: border-box;
   display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.header {
+  display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .card {
   width: 100%;
-  max-width: 1240px;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 14px;
@@ -20,38 +30,43 @@
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .title {
   margin: 0;
   color: #111827;
   font-size: 1.5rem;
+  font-weight: 600;
 }
 
 .description {
   margin: 0.55rem 0 0;
   color: #4b5563;
-}
-
-.actions {
-  margin-top: 1rem;
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
+  font-size: 0.9rem;
 }
 
 .primaryButton {
-  border: 1px solid #278a55 !important;
-  background: #2fa866 !important;
+  border: none;
+  background: linear-gradient(135deg, #2fac66 60%, #229954 100%);
   color: #fff !important;
-  border-radius: 8px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.9rem;
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.2s;
 }
 
 button.primaryButton:hover {
-  background: #278a55 !important;
-  border-color: #278a55 !important;
-  color: #fff !important;
+  opacity: 0.88;
 }
 
 .secondaryButton {
@@ -92,6 +107,9 @@ button.primaryButton:hover {
 .tableWrapper {
   margin-top: 0.75rem;
   overflow-x: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .table {
@@ -100,18 +118,34 @@ button.primaryButton:hover {
   min-width: 1080px;
 }
 
-.table th,
-.table td {
+.table th {
   text-align: left;
-  padding: 0.55rem 0.5rem;
+  padding: 0.7rem 1rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #f9fafb;
   border-bottom: 1px solid #e5e7eb;
-  font-size: 0.85rem;
-  color: #1f2937;
+  white-space: nowrap;
 }
 
-.table th {
-  color: #374151;
-  font-weight: 700;
+.table td {
+  text-align: left;
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+  color: #1f2937;
+  vertical-align: top;
+}
+
+.table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .tableActions {
@@ -123,14 +157,18 @@ button.primaryButton:hover {
 }
 
 .processLink {
-  color: #2fa866;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  color: #1f9b55;
+  font-weight: 400;
+  cursor: pointer;
   background: none;
   border: none;
   padding: 0;
   font: inherit;
-  cursor: pointer;
   text-align: left;
+  line-height: 1.4;
+  text-decoration: none;
 }
 
 .processLink:hover {

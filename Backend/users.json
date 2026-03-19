@@ -40,5 +40,17 @@
     "created_at": "2026-03-04T10:53:42.979853",
     "admin": false,
     "role": "user"
+  },
+  {
+    "id": 5,
+    "nome": "teste",
+    "email": "teste@hotmail.com",
+    "senha": "ae6ee2d9efe52f7d0398a1668f38ef29f003f7501adbdc3bedc1691ff960706c",
+    "ativo": true,
+    "created_at": "2026-03-19T07:43:10.462329",
+    "admin": false,
+    "role": "user",
+    "nivel": "1",
+    "cargo": ""
   }
 ]

@@ -201,7 +201,10 @@ button[class*='nameLink']:not(:disabled):hover,
 button[class*='processLink']:not(:disabled):hover,
 a[class*='nameLink']:hover,
 a[class*='processLink']:hover {
+  background: none;
   border-color: transparent;
+  box-shadow: none;
+  transform: none;
 }
 
 button:focus-visible,

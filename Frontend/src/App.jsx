@@ -22,6 +22,9 @@ const CriarEntidades = React.lazy(
   () => import('./Components/Entidades/CriarEntidades'),
 );
 const Usuarios = React.lazy(() => import('./Components/Usuários/Usuarios'));
+const CriarUsuario = React.lazy(
+  () => import('./Components/Usuários/CriarUsuario'),
+);
 const IA = React.lazy(() => import('./Components/IA/Ia'));
 
 const LazyFallback = () => (
@@ -117,6 +120,7 @@ function AppContent() {
           <Route element={protectedNavigation}>
             <Route path="/dashboard/*" element={<DashboardRoutes />} />
             <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/usuarios/criar" element={<CriarUsuario />} />
             <Route path="/entidades" element={<Entidades />} />
             <Route path="/entidades/id/:entidadeId" element={<Entidades />} />
             <Route path="/entidades/:entidadeSlug" element={<Entidades />} />
@@ -131,8 +135,7 @@ function AppContent() {
               path="/gerarbpmn/*"
               element={<Navigate to="/gerar-bpmn" replace />}
             />
-            <Route path="/ia" element={<IA key="ia-intro" />} />
-            <Route path="/ia/configurar" element={<IA key="ia-configurar" />} />
+            <Route path="/ia/*" element={<IA />} />
             <Route
               path="/recomendacoes"
               element={<Navigate to="/ia" replace />}

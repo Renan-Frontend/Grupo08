@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Opportunities.module.css';
-import Pagination from '../Common/Pagination';
 import Close from '../Helper/Close';
 import { UserContext } from '../../Context/UserContext';
 import {
@@ -29,13 +28,10 @@ const Opportunities = () => {
 
   // Exemplo: buscar oportunidades da API (ajuste endpoint conforme backend)
   const [opportunities, setOpportunities] = React.useState([]);
-  const [totalPages, setTotalPages] = React.useState(1);
-  const [currentPage, setCurrentPage] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [userOptions, setUserOptions] = React.useState([]);
   const [noticeMessage, setNoticeMessage] = React.useState('');
-  const itemsPerPage = 10;
 
   const updateAssignedTo = async (opportunityId, assignedValue) => {
     const targetOpportunity = opportunities.find(
@@ -93,12 +89,11 @@ const Opportunities = () => {
       setError(null);
       try {
         const json = await fetchOpportunitiesPage({
-          page: currentPage,
-          limit: itemsPerPage,
+          page: 1,
+          limit: 10000,
           token: getAuthToken(),
         });
         setOpportunities(json.data || []);
-        setTotalPages(json.total ? Math.ceil(json.total / itemsPerPage) : 1);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -106,7 +101,7 @@ const Opportunities = () => {
       }
     }
     fetchOpportunities();
-  }, [currentPage]);
+  }, []);
 
   React.useEffect(() => {
     async function fetchUsers() {
@@ -122,9 +117,6 @@ const Opportunities = () => {
   }, []);
 
   const paginatedItems = opportunities;
-
-  const nextPage = () => setCurrentPage((p) => Math.min(p + 1, totalPages));
-  const prevPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
 
   const handleNovaOportunidade = () => {
     if (isReadOnlyMode) {
@@ -157,7 +149,9 @@ const Opportunities = () => {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Oportunidades</h1>
-          <p className={styles.subtitle}>Gerencie e acompanhe suas oportunidades de negócio.</p>
+          <p className={styles.subtitle}>
+            Gerencie e acompanhe suas oportunidades de negócio.
+          </p>
         </div>
         <div className={styles.headerActions}>
           {!isReadOnlyMode ? (
@@ -165,7 +159,7 @@ const Opportunities = () => {
               className={styles.createBtn}
               onClick={handleNovaOportunidade}
             >
-              ✚ Nova Oportunidade
+              Criar Oportunidade
             </button>
           ) : null}
         </div>
@@ -288,13 +282,6 @@ const Opportunities = () => {
           />
         ) : null}
       </div>
-
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPrevious={prevPage}
-        onNext={nextPage}
-      />
     </div>
   );
 };
