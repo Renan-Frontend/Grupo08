@@ -34,25 +34,24 @@ jobs:
           cache: npm
           cache-dependency-path: Frontend/package-lock.json
 
-      - name: Check required vars
+      - name: Resolve env vars
+        id: env
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          SECRET_API_URL: ${{ secrets.VITE_API_URL }}
         run: |
-          if [ -z "$VITE_API_URL" ]; then
-            echo "Missing secret VITE_API_URL"
-            exit 1
+          API_URL="${SECRET_API_URL:-https://bp-company-backend.onrender.com}"
+          if echo "$API_URL" | grep -Eq "localhost|127\.0\.0\.1"; then
+            echo "VITE_API_URL contains localhost — using default Render URL instead"
+            API_URL="https://bp-company-backend.onrender.com"
           fi
-          if echo "$VITE_API_URL" | grep -Eq "localhost|127\.0\.0\.1"; then
-            echo "Invalid VITE_API_URL for production: $VITE_API_URL"
-            exit 1
-          fi
+          echo "api_url=$API_URL" >> "$GITHUB_OUTPUT"
 
       - name: Install dependencies
         run: npm ci
 
       - name: Build frontend
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+          VITE_API_URL: ${{ steps.env.outputs.api_url }}
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_BASE_PATH: /${{ github.event.repository.name }}/
