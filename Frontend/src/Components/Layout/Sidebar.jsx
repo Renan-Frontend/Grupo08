@@ -151,32 +151,6 @@ const Sidebar = ({ onNavigateItem }) => {
       </div>
 
       <div className={styles.sidebarSection}>
-        <h3 className={styles.sidebarTitle}>Clientes</h3>
-        <ul className={styles.menuList}>
-          <li className={`${styles.menuItem} ${isActive('/contatos')}`}>
-            <div
-              className={styles.menuItemContent}
-              onClick={() => handleNavigation('/contatos')}
-            >
-              <span className={styles.icon}>📋</span>
-              Contatos
-            </div>
-            <div className={styles.addButtonWrapper}></div>
-          </li>
-          <li className={`${styles.menuItem} ${isActive('/contas')}`}>
-            <div
-              className={styles.menuItemContent}
-              onClick={() => handleNavigation('/contas')}
-            >
-              <span className={styles.icon}>📞</span>
-              Contas
-            </div>
-            <div className={styles.addButtonWrapper}></div>
-          </li>
-        </ul>
-      </div>
-
-      <div className={styles.sidebarSection}>
         <h3 className={styles.sidebarTitle}>Vendas</h3>
         <ul className={styles.menuList}>
           <li className={`${styles.menuItem} ${isActive('/oportunidades')}`}>
@@ -201,16 +175,6 @@ const Sidebar = ({ onNavigateItem }) => {
                 </button>
               ) : null}
             </div>
-          </li>
-          <li className={`${styles.menuItem} ${isActive('/concorrentes')}`}>
-            <div
-              className={styles.menuItemContent}
-              onClick={() => handleNavigation('/concorrentes')}
-            >
-              <span className={styles.icon}>🤝</span>
-              Concorrentes
-            </div>
-            <div className={styles.addButtonWrapper}></div>
           </li>
         </ul>
       </div>

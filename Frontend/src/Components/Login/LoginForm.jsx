@@ -30,7 +30,7 @@ const LoginForm = () => {
     onSubmit: async () => {
       const token = await userLogin(email.value, password.value);
       await getUser(token);
-      navigate('/gerar-bpmn');
+      navigate('/ia');
     },
   });
 

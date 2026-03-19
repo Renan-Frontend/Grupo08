@@ -55,7 +55,7 @@ const LoginHome = () => {
     },
     onSubmit: async () => {
       await userLogin(username.value, password.value);
-      navigate('/gerar-bpmn');
+      navigate('/ia');
     },
   });
 

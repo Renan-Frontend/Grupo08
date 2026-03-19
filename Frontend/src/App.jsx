@@ -5,7 +5,6 @@ import Header from './Components/Header';
 import Footer from './Components/Footer';
 import Navigation from './Components/Layout/Navigation';
 import Login from './Components/Login/Login';
-import PagePlaceholder from './Components/Home/PagePlaceholder';
 import { UserContext } from './Context/UserContext';
 import { UserStorage } from './Context/UserContext';
 import { EntidadesProvider } from './Context/EntidadesContext';
@@ -64,7 +63,7 @@ function AppContent() {
     };
   }, []);
   const loginElement = authLoading ? null : isLogged ? (
-    <Navigate to="/gerar-bpmn" replace />
+    <Navigate to="/ia" replace />
   ) : (
     <Login isLogged={isLogged} />
   );
@@ -126,37 +125,7 @@ function AppContent() {
               path="/entidadesdes/criar"
               element={<Navigate to="/entidades/criar" replace />}
             />
-            <Route
-              path="/contatos"
-              element={
-                <PagePlaceholder
-                  title="Contatos"
-                  icon="📋"
-                  description="Gerenciamento de contatos de clientes"
-                />
-              }
-            />
-            <Route
-              path="/contas"
-              element={
-                <PagePlaceholder
-                  title="Contas"
-                  icon="📞"
-                  description="Gerenciamento de contas e relacionamentos"
-                />
-              }
-            />
             <Route path="/oportunidades/*" element={<OpportunitiesRoutes />} />
-            <Route
-              path="/concorrentes"
-              element={
-                <PagePlaceholder
-                  title="Concorrentes"
-                  icon="🤝"
-                  description="Análise de concorrência e mercado"
-                />
-              }
-            />
             <Route path="/gerar-bpmn/*" element={<GerarBPMN />} />
             <Route
               path="/gerarbpmn/*"
@@ -168,7 +137,7 @@ function AppContent() {
               path="/recomendacoes"
               element={<Navigate to="/ia" replace />}
             />
-            <Route path="*" element={<Navigate to="/gerar-bpmn" replace />} />
+            <Route path="*" element={<Navigate to="/ia" replace />} />
           </Route>
         </Routes>
       </React.Suspense>
