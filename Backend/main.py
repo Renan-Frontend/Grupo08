@@ -844,6 +844,43 @@ def _build_non_data_stage_description(stage_type: str, stage_name: str, summary_
     return f"{summary}. {detail}"
 
 
+def _default_entity_description(entity_name: str, entity_type: str = "", process_name: str = "") -> str:
+    """Gera uma descrição de fallback sensata para uma entidade quando o LLM não fornece uma."""
+    name = str(entity_name or "").strip()
+    etype = str(entity_type or "").strip().lower()
+    proc = str(process_name or "").strip()
+
+    if not name:
+        return "Participa do processo como elemento de suporte."
+
+    norm = _normalize_ai_text(name)
+
+    # Entidades externas conhecidas
+    if norm in ("cliente", "clientes"):
+        return f"Pessoa ou empresa que solicita o serviço{f' no processo de {proc}' if proc else ''}."
+    if norm in ("fornecedor", "fornecedores"):
+        return f"Empresa responsável pelo fornecimento de itens{f' para o processo de {proc}' if proc else ''}."
+    if norm in ("parceiro", "parceiros"):
+        return f"Empresa ou pessoa parceira que participa{f' do processo de {proc}' if proc else ''}."
+    if norm in ("usuario", "usuarios"):
+        return f"Usuário que interage com o sistema{f' no contexto de {proc}' if proc else ''}."
+    if norm in ("funcionario", "funcionarios", "colaborador", "colaboradores"):
+        return f"Colaborador responsável por executar etapas{f' no processo de {proc}' if proc else ''}."
+    if norm in ("gestor", "gestores", "aprovador", "aprovadores"):
+        return f"Responsável por aprovar ou validar etapas{f' no processo de {proc}' if proc else ''}."
+
+    # Por tipo de entidade
+    if etype == "principal":
+        return f"Objeto central do processo{f' de {proc}' if proc else ''}; inicia e conduz o fluxo principal."
+    if etype == "associativa":
+        return f"Relaciona entidades do processo{f' de {proc}' if proc else ''}."
+    if etype == "externa":
+        return f"Entidade externa que interage com o processo{f' de {proc}' if proc else ''}."
+
+    # Fallback genérico
+    return f"Participa do processo{f' de {proc}' if proc else ''} como elemento de suporte."
+
+
 def _build_default_entity_fields(entity_name: str) -> list[dict[str, Any]]:
     normalized = re.sub(r"[^a-z0-9]+", "_", _normalize_ai_text(entity_name)).strip("_")
     if not normalized:
@@ -1961,12 +1998,19 @@ def _sanitize_llm_action(raw_action: Any, fallback_id: int, current_user: dict[s
             "entidade que representa",
         )
         raw_desc = str(payload.get("descricao") or "").strip()
+        entity_type_raw = _entity_type_label(str(payload.get("tipoEntidade") or ""), fallback_id)
         clean_desc = raw_desc if not any(raw_desc.lower().startswith(p) for p in _BAD_DESC_PREFIXES) else ""
+        if not clean_desc:
+            clean_desc = _default_entity_description(
+                entity_name,
+                entity_type_raw,
+                str(payload.get("categoria") or ""),
+            )
         payload = {
             "categoria": str(payload.get("categoria") or "IA"),
             "nome": entity_name,
             "descricao": clean_desc,
-            "tipoEntidade": _entity_type_label(str(payload.get("tipoEntidade") or ""), fallback_id),
+            "tipoEntidade": entity_type_raw,
             "campos": sanitized_fields,
         }
     elif action_type == "create_oportunidade":
@@ -2407,7 +2451,7 @@ def _ensure_entity_actions(
                 "requiresApproval": True,
                 "payload": {
                     "nome": candidate_name,
-                    "descricao": "",
+                    "descricao": _default_entity_description(candidate_name, entity_kind, process_name),
                     "categoria": process_name,
                     "tipoEntidade": entity_kind,
                     "campos": _sanitize_entity_fields(
@@ -4634,7 +4678,7 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
                 "requiresApproval": True,
                 "payload": {
                     "nome": candidate_name,
-                    "descricao": "",
+                    "descricao": _default_entity_description(candidate_name, entity_kind, process_name),
                     "categoria": process_name,
                     "tipoEntidade": entity_kind,
                     "campos": _sanitize_entity_fields(
