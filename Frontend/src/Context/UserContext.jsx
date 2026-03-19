@@ -123,50 +123,72 @@ export const UserStorage = ({ children }) => {
   const userLogin = useCallback(
     async (username, password) => {
       const { url, options } = TOKEN_POST({ username, password });
-      const controller = new AbortController();
-      const timeoutId = window.setTimeout(
-        () => controller.abort(),
-        LOGIN_REQUEST_TIMEOUT_MS,
-      );
 
+      // Single fetch attempt with its own timeout + abort controller
+      const attemptFetch = async () => {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(
+          () => controller.abort(),
+          LOGIN_REQUEST_TIMEOUT_MS,
+        );
+        try {
+          const res = await fetch(url, {
+            ...options,
+            signal: controller.signal,
+          });
+          if (!res.ok) throw new Error('Usuário ou senha incorretos');
+          return await res.json();
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
+      };
+
+      let data;
       try {
-        const res = await fetch(url, {
-          ...options,
-          signal: controller.signal,
-        });
-        if (!res.ok) throw new Error('Usuário ou senha incorretos');
-        const data = await res.json();
-        const token = data.access_token;
-        window.sessionStorage.setItem('token', token);
-        // Clear legacy persistent token so the app asks login again
-        // after browser restart.
-        window.localStorage.removeItem('token');
-
-        const userDataFromLogin =
-          data?.user && typeof data.user === 'object' ? data.user : null;
-        const userData = userDataFromLogin || (await getUser(token));
-
-        setUser(userData);
-        writeCachedUser(userData);
-        // Persist offline session so the app can work after a browser
-        // restart without network connection (read-only mode).
-        writeOfflineSession(token, userData);
-        return token;
-      } catch (error) {
-        if (error?.name === 'AbortError') {
-          throw new Error(
-            'A autenticacao demorou demais. Tente novamente em alguns segundos.',
-          );
+        data = await attemptFetch();
+      } catch (firstError) {
+        if (firstError?.name !== 'AbortError') {
+          if (firstError instanceof TypeError) {
+            throw new Error(
+              'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
+            );
+          }
+          throw firstError;
         }
-        if (error instanceof TypeError) {
-          throw new Error(
-            'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
-          );
+        // Backend em cold start (Render) — tenta novamente automaticamente
+        try {
+          data = await attemptFetch();
+        } catch (retryError) {
+          if (retryError?.name === 'AbortError') {
+            throw new Error(
+              'A autenticacao demorou demais. Tente novamente em alguns segundos.',
+            );
+          }
+          if (retryError instanceof TypeError) {
+            throw new Error(
+              'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
+            );
+          }
+          throw retryError;
         }
-        throw error;
-      } finally {
-        window.clearTimeout(timeoutId);
       }
+
+      const token = data.access_token;
+      window.sessionStorage.setItem('token', token);
+      // Clear legacy persistent token so the app asks login again
+      // after browser restart.
+      window.localStorage.removeItem('token');
+
+      const userDataFromLogin =
+        data?.user && typeof data.user === 'object' ? data.user : null;
+      const userData = userDataFromLogin || (await getUser(token));
+
+      setUser(userData);
+      writeCachedUser(userData);
+      // Persist offline session so the app can work after a browser
+      // restart without network connection (read-only mode).
+      writeOfflineSession(token, userData);
+      return token;
     },
     [getUser],
   );

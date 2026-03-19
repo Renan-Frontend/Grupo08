@@ -16,6 +16,7 @@ const LoginForm = () => {
   const email = useForm('email');
   const password = useForm();
   const [slowWarning, setSlowWarning] = React.useState(false);
+  const [retryWarning, setRetryWarning] = React.useState(false);
 
   const { userLogin, getUser } = React.useContext(UserContext);
   const isOnline = useOnline();
@@ -36,10 +37,15 @@ const LoginForm = () => {
   React.useEffect(() => {
     if (!loading) {
       setSlowWarning(false);
+      setRetryWarning(false);
       return;
     }
-    const timer = window.setTimeout(() => setSlowWarning(true), 5000);
-    return () => window.clearTimeout(timer);
+    const slowTimer = window.setTimeout(() => setSlowWarning(true), 5000);
+    const retryTimer = window.setTimeout(() => setRetryWarning(true), 75000);
+    return () => {
+      window.clearTimeout(slowTimer);
+      window.clearTimeout(retryTimer);
+    };
   }, [loading]);
 
   return (
@@ -80,11 +86,16 @@ const LoginForm = () => {
         {loading ? (
           <>
             <Button disabled>Carregando...</Button>
-            {slowWarning && (
+            {retryWarning ? (
               <p className={styles.warmupWarning}>
-                ⏳ O servidor está acordando (pode levar até 1 min na primeira vez)...
+                🔄 Reconectando ao servidor, aguarde mais um momento...
               </p>
-            )}
+            ) : slowWarning ? (
+              <p className={styles.warmupWarning}>
+                ⏳ O servidor está acordando (pode levar até 1 min na primeira
+                vez)...
+              </p>
+            ) : null}
           </>
         ) : (
           <Button>Entrar</Button>
