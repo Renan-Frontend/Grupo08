@@ -114,6 +114,16 @@ input[type='reset']:not(:disabled):hover {
   filter: none;
 }
 
+button[class*='createBtn']:not(:disabled):hover,
+button[class*='btnCriar']:not(:disabled):hover {
+  background: #efefef;
+  color: #fff;
+  border-color: transparent;
+  opacity: 1;
+  transform: none;
+  box-shadow: none;
+}
+
 button:not(:disabled):active,
 input[type='button']:not(:disabled):active,
 input[type='submit']:not(:disabled):active,
@@ -199,6 +209,7 @@ button[class*='nameLink']:not(:disabled):hover {
 
 button[class*='nameLink']:not(:disabled):hover,
 button[class*='processLink']:not(:disabled):hover,
+button[class*='bpmnLinkedName']:not(:disabled):hover,
 a[class*='nameLink']:hover,
 a[class*='processLink']:hover {
   background: none;

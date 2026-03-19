@@ -123,6 +123,10 @@
 .table th:nth-child(1) {
   width: 200px;
 }
+.table th:nth-child(2) {
+  width: 220px;
+  min-width: 220px;
+}
 .table th:nth-child(3) {
   width: 32%;
 }
@@ -256,23 +260,21 @@
 .bpmnSelect {
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  background: #fff;
+  background: #f9fafb;
   color: #1f9b55;
   font-size: 0.85rem;
-  padding: 0.4rem 0.7rem;
+  padding: 0.4rem 2.2rem 0.4rem 0.7rem;
   cursor: pointer;
-  width: 7.5rem;
-  max-width: 100%;
+  width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: width 0.18s ease;
+  transition: none;
 }
 
 .bpmnSelect:hover,
 .bpmnSelect:focus {
-  width: 17rem;
   outline: none;
-  border-color: #6366f1;
+  border-color: #1f9b55;
 }
 
 .creatorCell,
@@ -305,6 +307,13 @@
 
 .bpmnLinkedName:hover {
   text-decoration: underline;
+  transform: none;
+  box-shadow: none;
+  background: none;
+}
+
+.bpmnLinkedName:active {
+  transform: translateY(-1px);
 }
 
 .bpmnUnlinkBtn {
@@ -333,7 +342,7 @@
 .bpmnPickerList {
   list-style: none;
   margin: 0.75rem 0 1.25rem;
-  padding: 0.35rem;
+  padding: 0.5rem;
   max-height: 280px;
   overflow-y: auto;
   border: 1px solid #e5e7eb;
