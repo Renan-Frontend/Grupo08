@@ -534,9 +534,9 @@ const TopicCard = ({
               type="button"
               className={styles.addButton}
               onClick={handleAddTopic}
-              aria-label="Adicionar campo extra"
+              aria-label="Adicionar tópico"
             >
-              +
+              + Adicionar tópico
             </button>
           ) : null}
         </div>
