@@ -388,6 +388,8 @@ const TopicCard = ({
         {infoRows.slice(1).map((row, idx) => {
           const parsedSummary = parseSummaryItems(row.value);
 
+          if (isBpmnDrivenPipeline && parsedSummary.isImportedFromBpmn && parsedSummary.isOnMainPath) return null;
+
           return (
             <div key={idx} className={styles.infoRow}>
               <div className={styles.infoRowFields}>
