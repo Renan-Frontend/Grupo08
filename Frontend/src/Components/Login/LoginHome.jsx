@@ -9,7 +9,7 @@ import useFormSubmit from '../../Hooks/useFormSubmit';
 import { UserContext } from '../../Context/UserContext';
 import Error from '../Helper/Error';
 import useFetch from '../../Hooks/useFetch';
-import { USER_POST, PASSWORD_LOST, PASSWORD_RESET } from '../../Api';
+import { USER_POST, PASSWORD_LOST, PASSWORD_RESET, HEALTH_GET } from '../../Api';
 import styles from './LoginHome.module.css';
 import stylesBtn from '../Forms/Button.module.css';
 import Close from '../Helper/Close';
@@ -35,6 +35,14 @@ const LoginHome = () => {
       setResetLogin(login);
       setIsPasswordReset(true);
     }
+  }, []);
+
+  // Pré-aquecer o backend Render para reduzir cold-start no login
+  React.useEffect(() => {
+    const { url, options } = HEALTH_GET();
+    fetch(url, { ...options, signal: AbortSignal.timeout(20000) }).catch(
+      () => {},
+    );
   }, []);
 
   // ======================

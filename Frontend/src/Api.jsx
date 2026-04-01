@@ -54,6 +54,9 @@ const createRequest = (endpoint, method, body, token) => ({
   },
 });
 
+// HEALTH CHECK (used to pre-warm the backend on cold start)
+export const HEALTH_GET = () => createRequest('/health', 'GET');
+
 // AUTENTICAÇÃO
 export const TOKEN_POST = (body) =>
   createRequest('/auth/login', 'POST', {

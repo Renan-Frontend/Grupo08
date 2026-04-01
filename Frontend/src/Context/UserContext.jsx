@@ -18,7 +18,7 @@ import {
 export const UserContext = createContext();
 const USER_SESSION_CACHE_KEY = 'user_session_cache_v1';
 const AUTH_REQUEST_TIMEOUT_MS = 30000;
-const LOGIN_REQUEST_TIMEOUT_MS = 70000;
+const LOGIN_REQUEST_TIMEOUT_MS = 20000; // first attempt; cold-start retry uses 50s
 
 // Offline session: persists token + user in localStorage so the app works
 // after a browser restart when there is no network connection.
@@ -125,11 +125,11 @@ export const UserStorage = ({ children }) => {
       const { url, options } = TOKEN_POST({ username, password });
 
       // Single fetch attempt with its own timeout + abort controller
-      const attemptFetch = async () => {
+      const attemptFetch = async (timeoutMs = LOGIN_REQUEST_TIMEOUT_MS) => {
         const controller = new AbortController();
         const timeoutId = window.setTimeout(
           () => controller.abort(),
-          LOGIN_REQUEST_TIMEOUT_MS,
+          timeoutMs,
         );
         try {
           const res = await fetch(url, {
@@ -157,7 +157,7 @@ export const UserStorage = ({ children }) => {
         }
         // Backend em cold start (Render) — tenta novamente automaticamente
         try {
-          data = await attemptFetch();
+          data = await attemptFetch(50000);
         } catch (retryError) {
           if (retryError?.name === 'AbortError') {
             throw new Error(
