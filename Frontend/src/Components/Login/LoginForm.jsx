@@ -18,7 +18,7 @@ const LoginForm = () => {
   const [slowWarning, setSlowWarning] = React.useState(false);
   const [retryWarning, setRetryWarning] = React.useState(false);
 
-  const { userLogin, getUser } = React.useContext(UserContext);
+  const { userLogin } = React.useContext(UserContext);
   const isOnline = useOnline();
   const navigate = useNavigate();
 
@@ -28,8 +28,7 @@ const LoginForm = () => {
       senha: password,
     },
     onSubmit: async () => {
-      const token = await userLogin(email.value, password.value);
-      await getUser(token);
+      await userLogin(email.value, password.value);
       navigate('/ia');
     },
   });

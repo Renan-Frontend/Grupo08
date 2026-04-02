@@ -170,6 +170,15 @@ const EditablePipeline = ({
     setControlledPipelineTitle || setLocalPipelineTitle;
   const setPipelineSubtitleValue =
     setControlledPipelineSubtitle || setLocalPipelineSubtitle;
+
+  // Estado local dos inputs — evita re-render do componente inteiro a cada tecla
+  const [inputTitle, setInputTitle] = useState(pipelineTitle);
+  const [inputSubtitle, setInputSubtitle] = useState(pipelineSubtitle);
+
+  // Sincroniza se o valor externo mudar (ex: carregamento de pipeline)
+  useEffect(() => { setInputTitle(pipelineTitle); }, [pipelineTitle]);
+  useEffect(() => { setInputSubtitle(pipelineSubtitle); }, [pipelineSubtitle]);
+
   const isBpmnDrivenPipeline = stages.some((stage) => stage?.fromBpmn === true);
 
   const getStagePalette = (stage) => {
@@ -372,209 +381,261 @@ const EditablePipeline = ({
     if (!isBpmnDrivenPipeline || !stage) return;
 
     const stageName = String(stage?.label || '').trim() || 'Etapa';
-    const details =
-      stageDetailsByLabel.get(normalizeLabelKey(stageName)) ||
-      'Sem detalhes adicionais para esta etapa.';
+    const rawValue = stageDetailsByLabel.get(normalizeLabelKey(stageName)) || '';
+    const participante = String(stage?.participante || '').trim();
+    const tipoLabel = getStageTypeLabel(stage?.stageType);
 
-    setStageDetailModal({
-      title: `${getStageTypeLabel(stage?.stageType)}: ${stageName}`,
-      message: details,
+    const isEntity = stage?.stageType === 'entidade' || stage?.stageType === 'entity';
+    const fieldMatchers = [
+      { label: 'Descrição',         matcher: /^Descri[cç][aã]o\s*:\s*(.*)$/i },
+      ...(isEntity ? [
+        { label: 'Atributo chave',   matcher: /^Atributo\s*chave\s*:\s*(.*)$/i },
+        { label: 'Tipo da entidade', matcher: /^Tipo\s*da\s*entidade\s*:\s*(.*)$/i },
+      ] : []),
+    ];
+
+    const parsedRows = [];
+    rawValue.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
+      const field = fieldMatchers.find(f => f.matcher.test(line));
+      if (!field) return;
+      const m = line.match(field.matcher);
+      const val = String(m?.[1] || '').trim();
+      if (val && val !== '-') parsedRows.push({ label: field.label, value: val });
     });
+
+    const descRows = parsedRows.length > 0
+      ? parsedRows
+      : rawValue
+        ? [{ label: 'Descrição', value: rawValue }]
+        : [{ label: 'Descrição', value: 'Sem detalhes adicionais para esta etapa.' }];
+
+    const rows = [
+      { label: 'Tipo', value: tipoLabel },
+      ...(participante ? [{ label: 'Participante', value: participante }] : []),
+      ...descRows,
+    ];
+
+    setStageDetailModal({ title: stageName, rows });
   };
 
   return (
     <div className={styles.pipelineShell}>
       <div className={styles.pipelineFrame}>
         <div className={styles.pipelineLeft}>
-          <div className={styles.editableField}>
-            <textarea
-              className={styles.leftTitle}
-              value={pipelineTitle}
-              onChange={(e) => {
-                if (isReadOnlyMode) return;
-                setPipelineTitleValue(e.target.value);
-              }}
-              onInput={handleTextareaInput}
-              placeholder="Título da pipeline..."
-              maxLength={50}
-              rows={1}
-              readOnly={isReadOnlyMode}
-            />
-            <svg
-              className={styles.editIcon}
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
+          <div className={styles.pipelineLeftContent}>
+            <div className={styles.pipelineLeftMeta}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+              </svg>
+              <span className={styles.pipelineLeftMetaText}>Pipeline</span>
+            </div>
+            <div className={styles.editableField}>
+              <textarea
+                className={styles.leftTitle}
+                value={inputTitle}
+                onChange={(e) => {
+                  if (isReadOnlyMode) return;
+                  setInputTitle(e.target.value);
+                }}
+                onBlur={(e) => {
+                  if (isReadOnlyMode) return;
+                  setPipelineTitleValue(e.target.value);
+                }}
+                onInput={handleTextareaInput}
+                placeholder="Nome da pipeline..."
+                maxLength={80}
+                rows={1}
+                readOnly={isReadOnlyMode}
+              />
+              {!isReadOnlyMode && (
+                <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              )}
+            </div>
+            <div className={styles.editableField}>
+              <textarea
+                className={styles.leftSubtitle}
+                value={inputSubtitle}
+                onChange={(e) => {
+                  if (isReadOnlyMode) return;
+                  setInputSubtitle(e.target.value);
+                }}
+                onBlur={(e) => {
+                  if (isReadOnlyMode) return;
+                  setPipelineSubtitleValue(e.target.value);
+                }}
+                onInput={handleTextareaInput}
+                placeholder="Descrição..."
+                maxLength={160}
+                rows={1}
+                readOnly={isReadOnlyMode}
+              />
+              {!isReadOnlyMode && (
+                <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+              )}
+            </div>
+            <div className={styles.pipelineLeftDivider} />
+            <div className={styles.pipelineLeftStats}>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span className={styles.pipelineLeftStatsText}>
+                {stages.length} etapa{stages.length !== 1 ? 's' : ''}
+                {anyCompleted ? ` · ${completedCount} concluída${completedCount !== 1 ? 's' : ''}` : ''}
+              </span>
+            </div>
           </div>
-          <div className={styles.editableField}>
-            <textarea
-              className={styles.leftSubtitle}
-              value={pipelineSubtitle}
-              onChange={(e) => {
-                if (isReadOnlyMode) return;
-                setPipelineSubtitleValue(e.target.value);
-              }}
-              onInput={handleTextareaInput}
-              placeholder="Subtítulo..."
-              maxLength={50}
-              rows={1}
-              readOnly={isReadOnlyMode}
+          <div className={styles.pipelineProgressBar}>
+            <div
+              className={styles.pipelineProgressFill}
+              style={{ width: `${progressPercentage}%` }}
             />
-            <svg
-              className={styles.editIcon}
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-            </svg>
           </div>
         </div>
         <div className={styles.pipelineMain}>
-          <div className={styles.pipelineTopBar}>
-            <div
-              className={styles.progressBar}
-              style={{ '--progress-percentage': `${progressPercentage}%` }}
-            />
+          <div className={styles.stepperTrack}>
             {stages.map((stage, index) => {
               const palette = getStagePalette(stage);
               const stageLabelRaw = String(stage?.label || '').trim();
-              const stageLabelCompact = compactLabel(stageLabelRaw, 24);
+              const stageLabelCompact = stageLabelRaw;
+              const isLastStage = index === stages.length - 1;
 
               return (
-                <div key={stage.id} className={styles.circleWrapper}>
-                  <div
-                    className={`${styles.circle} ${stage.done ? styles.circleCompleted : ''}`}
-                    style={
-                      isBpmnDrivenPipeline
-                        ? {
-                            background: stage.done ? palette.base : '#d0d0d0',
-                          }
-                        : undefined
-                    }
-                  >
-                    <button
-                      className={styles.completeButton}
+                <React.Fragment key={stage.id}>
+                  <div className={styles.stepItem}>
+                    <div
+                      className={`${styles.stepCard} ${stage.done ? styles.stepCardDone : ''} ${isReadOnlyMode ? styles.stepCardReadOnly : ''}`}
                       onClick={() => handleStageClick(index, stage)}
-                      disabled={isReadOnlyMode}
-                      style={
-                        isBpmnDrivenPipeline
-                          ? stage.done
-                            ? {
-                                background: '#fff',
-                                borderColor: '#fff',
-                                color: palette.contrast,
-                              }
-                            : {
-                                background: palette.soft,
-                                borderColor: palette.base,
-                              }
-                          : undefined
-                      }
-                      onMouseEnter={(event) => {
-                        if (!isBpmnDrivenPipeline || stage.done) return;
-                        event.currentTarget.style.background =
-                          palette.softHover;
-                      }}
-                      onMouseLeave={(event) => {
-                        if (!isBpmnDrivenPipeline || stage.done) return;
-                        event.currentTarget.style.background = palette.soft;
-                      }}
-                      title={
-                        isBpmnDrivenPipeline
-                          ? stage.done
-                            ? 'Marcar como incompleto (pipeline BPMN)'
-                            : 'Marcar como completo (pipeline BPMN)'
-                          : stage.done
-                            ? 'Marcar como incompleto'
-                            : 'Marcar como completo'
-                      }
-                    >
-                      {stage.done && '✓'}
-                    </button>
-                    {!isBpmnDrivenPipeline && stages.length > 1 && (
-                      <button
-                        className={styles.removeButton}
-                        onClick={() => removeStage(stage.id)}
-                        disabled={isReadOnlyMode}
-                        title="Remover etapa"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                  {isBpmnDrivenPipeline ? (
-                    <span
-                      className={styles.circleLabelCompact}
-                      onClick={() => handleOpenStageDetails(stage)}
-                      title={stageLabelRaw || 'Entidade da etapa'}
                       role="button"
                       tabIndex={0}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault();
-                          handleOpenStageDetails(stage);
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleStageClick(index, stage);
                         }
                       }}
-                      style={{ cursor: 'pointer' }}
+                      style={{
+                        borderLeftColor: stage.done ? palette.base : palette.base,
+                        ...(stage.done ? { background: palette.soft } : {}),
+                      }}
+                      title={stage.done ? 'Marcar como incompleto' : 'Marcar como completo'}
                     >
-                      {stageLabelCompact || 'Entidade da etapa'}
-                    </span>
-                  ) : (
-                    <textarea
-                      className={styles.circleLabel}
-                      value={stage.label}
-                      onChange={(e) =>
-                        updateStage(stage.id, { label: e.target.value })
-                      }
-                      onInput={handleTextareaInput}
-                      placeholder="Digite..."
-                      rows={2}
-                      maxLength={20}
-                      readOnly={isReadOnlyMode}
+                      {/* Checkmark badge absoluto — não empurra nada */}
+                      {stage.done && (
+                        <span className={styles.stepCardDoneBadge} style={{ background: palette.base }}>
+                          ✓
+                        </span>
+                      )}
+
+                      {/* Header: número + tipo */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.15rem' }}>
+                        <div
+                          className={`${styles.stepCardIcon} ${stage.done ? styles.stepCardIconDone : ''}`}
+                          style={
+                            stage.done
+                              ? { background: palette.base, borderColor: palette.base, color: '#fff' }
+                              : { borderColor: palette.base, color: palette.base, background: '#fff' }
+                          }
+                        >
+                          {index + 1}
+                        </div>
+                        {isBpmnDrivenPipeline && stage.stageType && (
+                          <span style={{
+                            fontSize: '0.6rem',
+                            fontWeight: 600,
+                            color: palette.contrast,
+                            background: palette.soft,
+                            borderRadius: '0.25rem',
+                            padding: '0.05rem 0.3rem',
+                            letterSpacing: '0.02em',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            {getStageTypeLabel(stage.stageType)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Label */}
+                      {!isBpmnDrivenPipeline && stages.length > 1 && !isReadOnlyMode && (
+                        <button
+                          className={styles.stepCardRemove}
+                          onClick={(e) => { e.stopPropagation(); removeStage(stage.id); }}
+                          title="Remover etapa"
+                        >
+                          ×
+                        </button>
+                      )}
+                      {isBpmnDrivenPipeline ? (
+                        <>
+                          <span
+                            className={styles.stepCardLabelCompact}
+                            style={{ color: '#000' }}
+                          >
+                            {stageLabelCompact || 'Etapa'}
+                          </span>
+                          <button
+                            className={styles.stepCardDetailsBtn}
+                            onClick={(e) => { e.stopPropagation(); handleOpenStageDetails(stage); }}
+                            style={stage.done ? { borderColor: palette.base, color: '#fff', background: palette.base } : { color: palette.base, borderColor: palette.base }}
+                            title="Ver detalhes da etapa"
+                          >
+                            Detalhes ›
+                          </button>
+                        </>
+                      ) : (
+                        <textarea
+                          className={styles.stepCardLabel}
+                          value={stage.label}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            updateStage(stage.id, { label: e.target.value });
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          onInput={handleTextareaInput}
+                          placeholder="Nome..."
+                          rows={1}
+                          maxLength={20}
+                          readOnly={isReadOnlyMode}
+                        />
+                      )}
+                    </div>
+                  </div>
+                  {!isLastStage && (
+                    <div
+                      className={`${styles.stepConnector} ${stage.done ? styles.stepConnectorDone : ''}`}
                     />
                   )}
-                </div>
+                </React.Fragment>
               );
             })}
+            {!isBpmnDrivenPipeline && (
+              <>
+                <div className={styles.stepConnector} />
+                <button
+                  className={styles.stepAddCard}
+                  onClick={handleAddOrReset}
+                  disabled={isReadOnlyMode}
+                  title={stages.length >= 7 ? 'Resetar para padrão (3 etapas)' : 'Adicionar etapa'}
+                >
+                  {stages.length >= 7 ? '⟲' : '+'}
+                </button>
+              </>
+            )}
           </div>
-          {!isBpmnDrivenPipeline ? (
-            <button
-              className={`${styles.addButton} ${stages.length >= 7 ? styles.resetButton : ''}`}
-              onClick={handleAddOrReset}
-              disabled={isReadOnlyMode}
-              title={
-                stages.length >= 7
-                  ? 'Resetar para padrão (3 etapas)'
-                  : 'Adicionar etapa'
-              }
-            >
-              {stages.length >= 7 ? '×' : '+'}
-            </button>
-          ) : null}
         </div>
       </div>
       <p className={styles.pipelineNote}>
-        {isBpmnDrivenPipeline ? (
-          '* Pipeline sincronizada com o BPMN. *'
-        ) : (
-          <>
-            {'* '}Clique no <PipelineAddButtonIcon /> para adicionar etapas, no
-            botão <PipelineCircleIcon /> para completar, no{' '}
-            <PipelineRemoveButtonIcon /> para remover.{' *'}
-          </>
-        )}
+        {isBpmnDrivenPipeline
+          ? '* Pipeline sincronizada com o BPMN. *'
+          : '* Clique em um card para completar a etapa. Passe o mouse para remover. Clique em + para adicionar. *'}
       </p>
       {deleteConfirm && (
         <Close
@@ -595,12 +656,20 @@ const EditablePipeline = ({
       {stageDetailModal && (
         <Close
           title={stageDetailModal.title}
-          message={stageDetailModal.message}
           onConfirm={() => setStageDetailModal(null)}
           onCancel={() => setStageDetailModal(null)}
           confirmLabel="Fechar"
           hideCancel
-        />
+        >
+          <div className={styles.stageDetailRows}>
+            {stageDetailModal.rows.map(({ label, value }) => (
+              <div key={label} className={styles.stageDetailRow}>
+                <span className={styles.stageDetailLabel}>{label}</span>
+                <span className={styles.stageDetailValue}>{value}</span>
+              </div>
+            ))}
+          </div>
+        </Close>
       )}
     </div>
   );

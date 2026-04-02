@@ -891,5 +891,927 @@
     "created_at": "2026-03-19T10:06:01.462649",
     "updated_at": "2026-03-19T10:06:01.462649",
     "criadoPor": "Renan"
+  },
+  {
+    "categoria": "tete",
+    "id": 36,
+    "nome": "aeweawe",
+    "descricao": "aweawea",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": true,
+    "atributoChave": null,
+    "campos": [
+      {
+        "id": "campo-1774263589025-adwea72d",
+        "nome": "rrwe",
+        "tipo": "Texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "isUnique": false,
+        "relacionamento": "wrr"
+      }
+    ],
+    "numeroRelacionamentos": 0,
+    "bpmnUsageCount": 0,
+    "ativo": true,
+    "created_at": "2026-03-23T07:59:40.538199",
+    "updated_at": "2026-03-23T07:59:49.041900",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 37,
+    "nome": "Pedido",
+    "descricao": "Geração do pedido após solicitação do cliente",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:21:15.428922",
+    "updated_at": "2026-04-01T08:21:15.428922",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 38,
+    "nome": "OrdemDeCompra",
+    "descricao": "Geração da ordem de compra após aprovação do orçamento",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:21:15.436410",
+    "updated_at": "2026-04-01T08:21:15.436410",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 39,
+    "nome": "Fornecedor",
+    "descricao": "Fornecedor recebe a ordem de compra",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_fornecedor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:21:15.438749",
+    "updated_at": "2026-04-01T08:21:15.438749",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (5)",
+    "id": 40,
+    "nome": "Pedido",
+    "descricao": "",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:24:14.654817",
+    "updated_at": "2026-04-01T08:24:14.654817",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (5)",
+    "id": 41,
+    "nome": "Aprovacao",
+    "descricao": "",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aprovacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:24:14.657608",
+    "updated_at": "2026-04-01T08:24:14.657608",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (5)",
+    "id": 42,
+    "nome": "OrdemDeCompra",
+    "descricao": "",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:24:14.660239",
+    "updated_at": "2026-04-01T08:24:14.660239",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (6)",
+    "id": 43,
+    "nome": "Pedido",
+    "descricao": "Documento que contém as informações do pedido de compra; é gerado quando o cliente solicita compra e é atualizado ao longo do processo.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:30:42.410391",
+    "updated_at": "2026-04-01T08:30:42.410391",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (6)",
+    "id": 44,
+    "nome": "Aprovacao",
+    "descricao": "Registro que contém as informações da aprovação do pedido; é criado quando o pedido não é aprovado e é utilizado para notificar o cliente.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aprovacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:30:42.413358",
+    "updated_at": "2026-04-01T08:30:42.413358",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (6)",
+    "id": 45,
+    "nome": "OrdemDeCompra",
+    "descricao": "Documento que contém as informações da ordem de compra; é gerado quando o pedido é aprovado e é enviado ao fornecedor.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:30:42.416105",
+    "updated_at": "2026-04-01T08:30:42.416105",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (7)",
+    "id": 46,
+    "nome": "Pedido",
+    "descricao": "",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:34:01.844343",
+    "updated_at": "2026-04-01T08:34:01.844343",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (7)",
+    "id": 47,
+    "nome": "Aprovacao",
+    "descricao": "",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aprovacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:34:01.846580",
+    "updated_at": "2026-04-01T08:34:01.846580",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (7)",
+    "id": 48,
+    "nome": "OrdemDeCompra",
+    "descricao": "",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:34:01.859214",
+    "updated_at": "2026-04-01T08:34:01.859214",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (8)",
+    "id": 49,
+    "nome": "Pedido",
+    "descricao": "",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:38:01.303870",
+    "updated_at": "2026-04-01T08:38:01.303870",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (8)",
+    "id": 50,
+    "nome": "Aprovacao",
+    "descricao": "",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aprovacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:38:01.306760",
+    "updated_at": "2026-04-01T08:38:01.306760",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (8)",
+    "id": 51,
+    "nome": "OrdemDeCompra",
+    "descricao": "",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:38:01.309258",
+    "updated_at": "2026-04-01T08:38:01.309258",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (9)",
+    "id": 52,
+    "nome": "Pedido",
+    "descricao": "Documento que descreve a compra solicitada pelo Cliente; é gerado automaticamente quando o Cliente solicita a compra.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:44:14.789125",
+    "updated_at": "2026-04-01T08:44:14.789125",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (9)",
+    "id": 53,
+    "nome": "OrdemDeCompra",
+    "descricao": "Documento que formaliza a compra; é gerado quando o Pedido é aprovado e o orçamento é validado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:44:14.792153",
+    "updated_at": "2026-04-01T08:44:14.792153",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (9)",
+    "id": 54,
+    "nome": "Fornecedor",
+    "descricao": "Pessoa ou empresa que fornece os produtos ou serviços solicitados; recebe a OrdemDeCompra e executa as atividades necessárias para cumprir a compra.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_fornecedor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:44:14.795498",
+    "updated_at": "2026-04-01T08:44:14.795498",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (10)",
+    "id": 55,
+    "nome": "Pedido",
+    "descricao": "Documento que representa a solicitação de compra do Cliente; é gerado automaticamente quando o Cliente solicita compra.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:48:11.189437",
+    "updated_at": "2026-04-01T08:48:11.189437",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (10)",
+    "id": 56,
+    "nome": "Aprovacao",
+    "descricao": "Registro que documenta a aprovação do Pedido; é criado quando o Pedido não é aprovado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aprovacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:48:11.192459",
+    "updated_at": "2026-04-01T08:48:11.192459",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (10)",
+    "id": 57,
+    "nome": "OrdemDeCompra",
+    "descricao": "Documento que representa a ordem de compra do Fornecedor; é gerado automaticamente quando o Pedido é aprovado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-01T08:48:11.195500",
+    "updated_at": "2026-04-01T08:48:11.195500",
+    "criadoPor": "Renan"
   }
 ]

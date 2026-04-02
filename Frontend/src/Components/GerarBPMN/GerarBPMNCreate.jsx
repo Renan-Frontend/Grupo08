@@ -890,10 +890,18 @@ const GerarBPMNCreate = () => {
           ? getEntidadeDescricao(linkedEntity) ||
             nodeDraftDesc ||
             (subtitleIsRealDesc ? nodeSavedSubtitle : '') ||
-            'Nova Etapa'
+            ''
           : (subtitleIsRealDesc ? nodeSavedSubtitle : '') ||
             nodeDraftDesc ||
-            'Nova Etapa';
+            '';
+        // Fallback for nodes stored without subtitle (e.g. generated before the AI fill rule)
+        if (!subtitle && label && label !== 'Entidade') {
+          const tipo = String(node?.tipoEntidade || '').trim().toLowerCase();
+          if (tipo === 'principal') subtitle = 'Objeto central do processo; inicia e conduz o fluxo.';
+          else if (tipo === 'associativa') subtitle = 'Relaciona entidades do processo.';
+          else if (tipo === 'externa') subtitle = 'Entidade externa que interage com o processo.';
+          else subtitle = 'Participa do processo como elemento de suporte.';
+        }
         let info = getEntityTypeInfoLabel(node?.tipoEntidade);
 
         if (linkedEntity) {
@@ -906,7 +914,7 @@ const GerarBPMNCreate = () => {
         if (selectedNodeId === node.id && entityMode === 'nova') {
           label = String(newEntityForm.nome || '').trim() || 'Entidade';
           subtitle =
-            String(newEntityForm.descricao || '').trim() || 'Nova Etapa';
+            String(newEntityForm.descricao || '').trim() || '';
           info = getEntityTypeInfoLabel(node?.tipoEntidade);
         }
 

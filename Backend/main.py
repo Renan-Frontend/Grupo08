@@ -1496,9 +1496,10 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 raw_node.get("tipoEntidade"),
                 default=inferred_type,
             )
-            raw_subtitle = str(raw_node.get("subtitle") or "").strip()
-            if raw_subtitle:
-                node_payload["subtitle"] = raw_subtitle
+            raw_subtitle = str(raw_node.get("subtitle") or raw_node.get("descricao") or "").strip()
+            if not raw_subtitle:
+                raw_subtitle = _default_entity_description(label, node_payload.get("tipoEntidade", ""), "")
+            node_payload["subtitle"] = raw_subtitle
             # Preserva campos gerados pela IA
             raw_campos = raw_node.get("campos")
             if isinstance(raw_campos, list) and raw_campos:
@@ -1968,6 +1969,18 @@ def _ensure_terminal_end_node(
     return safe_nodes, safe_connections
 
 
+def _descricao_fallback(nome: str, tipo: str) -> str:
+    """Gera descrição mínima quando a IA não preencheu o campo."""
+    nome = nome.strip()
+    if tipo == "entidade":
+        return f"Entidade utilizada no processo para registrar e gerenciar as informações de {nome.lower()}."
+    if tipo == "task":
+        return f"Etapa responsável por executar a ação de {nome.lower()} dentro do fluxo do processo."
+    if tipo == "condicional":
+        return f"Ponto de decisão que avalia a condição '{nome.rstrip('?')}' e direciona o fluxo conforme o resultado."
+    return f"Elemento do processo relacionado a {nome.lower()}."
+
+
 def _sanitize_llm_action(raw_action: Any, fallback_id: int, current_user: dict[str, Any]) -> dict[str, Any] | None:
     if not isinstance(raw_action, dict):
         return None
@@ -2000,6 +2013,12 @@ def _sanitize_llm_action(raw_action: Any, fallback_id: int, current_user: dict[s
         raw_desc = str(payload.get("descricao") or "").strip()
         entity_type_raw = _entity_type_label(str(payload.get("tipoEntidade") or ""), fallback_id)
         clean_desc = raw_desc if not any(raw_desc.lower().startswith(p) for p in _BAD_DESC_PREFIXES) else ""
+        # Rejeita descrição que é igual ou contida no nome da entidade (ex: nome='Cliente', desc='Cliente')
+        if clean_desc and _normalize_ai_text(clean_desc) == _normalize_ai_text(entity_name):
+            clean_desc = ""
+        # Rejeita descrições muito curtas (menos de 20 chars) pois são insuficientes
+        if clean_desc and len(clean_desc) < 20:
+            clean_desc = ""
         if not clean_desc:
             clean_desc = _default_entity_description(
                 entity_name,
@@ -2095,12 +2114,16 @@ def _sanitize_context_panel_suggestion(raw_value: Any) -> dict[str, Any] | None:
                 "entidade",
                 1,
             ),
-            "descricao": str(new_entity.get("descricao") or "").strip(),
+            "descricao": str(new_entity.get("descricao") or "").strip() or _descricao_fallback(
+                new_entity.get("nome") or "entidade", "entidade"
+            ),
             "atributoChave": str(new_entity.get("atributoChave") or "").strip(),
         },
         "task": {
             "nome": _sanitize_node_name_by_type(task.get("nome") or "", "task", 1),
-            "descricao": str(task.get("descricao") or "").strip(),
+            "descricao": str(task.get("descricao") or "").strip() or _descricao_fallback(
+                task.get("nome") or "atividade", "task"
+            ),
         },
         "conditional": {
             "nome": _sanitize_node_name_by_type(
@@ -2108,7 +2131,9 @@ def _sanitize_context_panel_suggestion(raw_value: Any) -> dict[str, Any] | None:
                 "condicional",
                 1,
             ),
-            "descricao": str(conditional.get("descricao") or "").strip(),
+            "descricao": str(conditional.get("descricao") or "").strip() or _descricao_fallback(
+                conditional.get("nome") or "condicao", "condicional"
+            ),
         },
         "fields": fields,
     }
@@ -3041,11 +3066,21 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "\"label\":\"...\",\"risk\":\"low|medium|high\",\"payload\":{...}}]}. "
         "Nao inclua markdown, comentarios ou texto fora do JSON. "
         "As acoes devem ser concretas, curtas e executaveis no sistema. "
-        "NOMES OBRIGATORIAMENTE CURTOS: atividades com no maximo 3 palavras, entidades com no maximo 2 palavras, condicionais com no maximo 4 palavras + '?'. "
+        "NOMES OBRIGATORIAMENTE CURTOS: atividades com no maximo 2 palavras (ex: 'Aprovar', 'Enviar NF', 'Revisar'), entidades com no maximo 2 palavras (ex: 'Pedido', 'NF Fiscal', 'Aprovacao'), condicionais com no maximo 4 palavras + '?'. "
         "NUNCA use nomes longos como 'Registrar Solicitacao de Compra' — use 'Registrar Solicitacao'. "
-        "Para cada entidade criada (create_entidade), o campo 'descricao' deve explicar o CONTEXTO/SITUACAO desta entidade no processo em 1 frase — NUNCA repita nem parafraseie o nome. "
-        "PROIBIDO: iniciar descricao com 'Entidade do processo:', 'Entidade de', 'Representa a entidade', 'Entidade responsavel' ou qualquer variacao similar. "
-        "Exemplo ruim: nome='Pedido', descricao='Entidade do processo de compra'. Exemplo bom: nome='Pedido', descricao='Registrado pelo cliente ao solicitar itens; passa por analise antes de ser aprovado'. "
+        "DESCRICAO — REGRAS ABSOLUTAS PARA TODOS OS ELEMENTOS (entidade, atividade e condicional): "
+        "(1) O campo 'descricao' e OBRIGATORIO em todo elemento — jamais deixe vazio, nulo ou use 'Gerada por IA'. "
+        "(2) ENTIDADE: descreva quem usa a entidade, quando ela e criada/atualizada e qual papel ela cumpre no processo (minimo 1 frase completa). "
+        "(3) ATIVIDADE: descreva o que acontece neste passo, quem executa e qual o resultado esperado (minimo 1 frase completa). "
+        "(4) CONDICIONAL: descreva qual criterio e avaliado, quem decide e o que diferencia o caminho SIM do NAO (minimo 1 frase completa). "
+        "(5) NUNCA repita nem parafraseie o nome na descricao. "
+        "(6) PROIBIDO iniciar com: 'Entidade do processo:', 'Entidade de', 'Representa a entidade', 'Atividade que', 'Condicional que'. "
+        "Exemplo ERRADO: nome='Cliente', descricao='Cliente'. "
+        "Exemplo ERRADO: nome='Analisar Pedido', descricao='Analise do pedido'. "
+        "Exemplo ERRADO: nome='Aprovado?', descricao='Verifica aprovacao'. "
+        "Exemplo CORRETO (entidade): nome='Cliente', descricao='Pessoa ou empresa que solicita o servico; seus dados sao registrados no inicio do processo e consultados em cada etapa de aprovacao'. "
+        "Exemplo CORRETO (atividade): nome='Analisar Pedido', descricao='Responsavel verifica se o pedido atende as politicas internas de prazo e orcamento antes de seguir para aprovacao'. "
+        "Exemplo CORRETO (condicional): nome='Aprovado?', descricao='Gestor avalia se o pedido atende aos criterios financeiros e de prazo; caminho SIM segue para execucao, caminho NAO retorna para revisao'. "
         "TIPO DA ENTIDADE (campo tipoEntidade): escolha com cuidado — nao use sempre 'apoio'. "
         "  - 'principal': entidade central do processo, geralmente o objeto que inicia e conduz o fluxo (ex: Pedido, Contrato, Solicitacao). "
         "  - 'apoio': entidade de suporte ou referencia usada pelo processo mas nao e o objeto central (ex: Cliente, Fornecedor, Funcionario). "
@@ -3589,9 +3624,9 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         "Voce e um gerador de BPMN. Gere os nodes e connections do diagrama BPMN. Retorne APENAS JSON valido, sem markdown.\n\n"
 
         "REGRAS FUNDAMENTAIS:\n"
-        "- 'flowOrder' é uma lista de objetos {name, type, desc?} que define EXATAMENTE a sequência e o tipo de cada node.\n"
+        "- 'flowOrder' é uma lista de objetos {name, type, desc} que define EXATAMENTE a sequência e o tipo de cada node.\n"
         "- Crie UM node por item de flowOrder. Use item.name como label e item.type como nodeType. NAO invente nomes.\n"
-        "- Se item.desc existir, use-o como taskDescricao (tasks) ou condicionalDescricao (condicionais) ou subtitle (entidades).\n\n"
+        "- Use item.desc como taskDescricao (tasks) ou condicionalDescricao (condicionais) ou subtitle (entidades). O campo desc e OBRIGATORIO — nunca deixe vazio.\n\n"
 
         "PASSO 1 - GERACAO DOS NODES:\n"
         "1. Para cada item em flowOrder, crie um node: label=item.name, nodeType=item.type.\n"
@@ -5926,10 +5961,18 @@ def ai_parse_description(
         "\"desc\": string (obrigatório — descreva o papel deste elemento no processo em 1 frase), "
         "\"tipoEntidade\": string (só para entidades)}.\n"
         "  Para condicionais em flowOrder, adicione 'branches': {\"sim\": \"<próximo elemento se verdadeiro>\", \"nao\": \"<próximo elemento se falso>\"}.\n"
-        "- NOMES CURTOS: nomes de atividade devem ter no máximo 3 palavras; nomes de entidade no máximo 2 palavras; nomes de condicional no máximo 4 palavras + '?'.\n"
-        "- 'desc' DEVE explicar o CONTEXTO/SITUAÇÃO do elemento no processo — NUNCA repita nem parafraseie o nome. "
-        "Exemplo ruim: name='Analisar Pedido', desc='Análise do pedido'. "
-        "Exemplo bom: name='Analisar Pedido', desc='Responsável verifica se o pedido atende às políticas internas antes de aprovar'.\n"
+        "- NOMES CURTOS: nomes de atividade devem ter no máximo 2 palavras (ex: 'Aprovar', 'Enviar NF', 'Revisar'); nomes de entidade no máximo 2 palavras (ex: 'Pedido', 'NF Fiscal'); nomes de condicional no máximo 4 palavras + '?'.\n"
+        "- 'desc' é OBRIGATÓRIO em TODOS os elementos (entidade, atividade e condicional) — NUNCA deixe vazio. "
+        "Para entidades: descreva quem usa a entidade, quando ela é criada/atualizada e qual papel ela cumpre no processo (mínimo 1 frase completa). "
+        "Para atividades: descreva o que acontece neste passo, quem executa e qual o resultado esperado (mínimo 1 frase completa). "
+        "Para condicionais: descreva qual critério é avaliado, quem decide e o que diferencia o caminho SIM do NÃO (mínimo 1 frase completa). "
+        "NUNCA repita nem parafraseie o nome no desc. "
+        "Exemplo ruim (atividade): name='Analisar Pedido', desc='Análise do pedido'. "
+        "Exemplo bom (atividade): name='Analisar Pedido', desc='Responsável verifica se o pedido atende às políticas internas de prazo e orçamento antes de seguir para aprovação'.\n"
+        "Exemplo ruim (entidade): name='Cliente', desc='Cliente'. "
+        "Exemplo bom (entidade): name='Cliente', desc='Pessoa ou empresa que origina o processo; seus dados são consultados em cada etapa de aprovação e notificação'.\n"
+        "Exemplo ruim (condicional): name='Aprovado?', desc='Verifica aprovação'. "
+        "Exemplo bom (condicional): name='Aprovado?', desc='Gestor avalia se o pedido atende aos critérios financeiros e de prazo; SIM segue para execução, NÃO retorna para revisão'.\n"
         "- Retorne JSON válido com exatamente estas chaves: processName, entities, activities, conditionals, flowOrder.\n"
         "- Não inclua explicações, apenas o JSON."
     )

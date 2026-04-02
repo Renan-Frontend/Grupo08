@@ -17,6 +17,16 @@ import {
   FLOW_TEMPLATE,
 } from './iaHelpers';
 
+const BPMN_SAVED_OPPORTUNITY_MAP_KEY = 'bpmn_editor_saved_opportunity_by_slug_v1';
+
+const slugifyBpmnName = (value = '') =>
+  String(value)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'novo-bpmn';
+
 const IaConfigurar = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -417,8 +427,27 @@ const IaConfigurar = () => {
       opportunityResult?.result?.id ??
       opportunityResult?.result?._id ??
       null;
-    if (opportunityId !== null && opportunityId !== undefined) {
-      navigate(`/gerar-bpmn/pipeline/${opportunityId}`);
+
+    const opportunityName =
+      bpmnResult?.syncedOpportunity?.nome ??
+      bpmnResult?.syncedOpportunity?.name ??
+      opportunityResult?.result?.nome ??
+      opportunityResult?.result?.name ??
+      String(processName || '').trim();
+    const bpmnSlug = slugifyBpmnName(opportunityName);
+
+    if (opportunityId !== null && opportunityId !== undefined && bpmnSlug) {
+      try {
+        const rawMap = window.localStorage.getItem(BPMN_SAVED_OPPORTUNITY_MAP_KEY);
+        const existingMap = rawMap ? JSON.parse(rawMap) : {};
+        window.localStorage.setItem(
+          BPMN_SAVED_OPPORTUNITY_MAP_KEY,
+          JSON.stringify({ ...existingMap, [bpmnSlug]: opportunityId }),
+        );
+      } catch (_) {}
+      navigate(`/gerar-bpmn/${bpmnSlug}`);
+    } else {
+      navigate('/gerar-bpmn/criar');
     }
   };
 
