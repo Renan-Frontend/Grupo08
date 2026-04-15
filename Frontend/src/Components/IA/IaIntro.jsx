@@ -91,6 +91,7 @@ const IaIntro = () => {
         <label className={styles.field}>
           <span>Nome do processo</span>
           <input
+            name="introProcessName"
             value={introProcessName}
             onChange={(e) => setIntroProcessName(e.target.value)}
             placeholder="Ex.: Aprovação de pedido de compra"
@@ -101,6 +102,7 @@ const IaIntro = () => {
           <span>Descreva o processo</span>
           <textarea
             rows={20}
+            name="introDescription"
             style={{ resize: 'vertical', minHeight: 360 }}
             value={introDescription}
             onChange={(e) => setIntroDescription(e.target.value)}

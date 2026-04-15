@@ -1,0 +1,5967 @@
+[
+  {
+    "id": 77,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-14T13:32:24.926594"
+  },
+  {
+    "id": 78,
+    "event": "task_completed",
+    "data": {
+      "taskId": 24,
+      "opportunityId": 19,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.211118,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-14T13:32:25.098850"
+  },
+  {
+    "id": 79,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-14T13:32:25.259313"
+  },
+  {
+    "id": 80,
+    "event": "task_created",
+    "data": {
+      "taskId": 25,
+      "opportunityId": 19,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-14T13:32:25.659761"
+  },
+  {
+    "id": 81,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-14T13:32:25.743550"
+  },
+  {
+    "id": 82,
+    "event": "task_completed",
+    "data": {
+      "taskId": 25,
+      "opportunityId": 19,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.78947,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-14T13:32:26.448801"
+  },
+  {
+    "id": 83,
+    "event": "task_created",
+    "data": {
+      "taskId": 26,
+      "opportunityId": 19,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-14T13:32:26.513942"
+  },
+  {
+    "id": 84,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-14T13:32:26.599213"
+  },
+  {
+    "id": 85,
+    "event": "task_completed",
+    "data": {
+      "taskId": 26,
+      "opportunityId": 19,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.580158,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-14T13:32:27.072594"
+  },
+  {
+    "id": 86,
+    "event": "task_created",
+    "data": {
+      "taskId": 27,
+      "opportunityId": 19,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-14T13:32:27.276133"
+  },
+  {
+    "id": 87,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-14T13:32:27.332781"
+  },
+  {
+    "id": 88,
+    "event": "task_completed",
+    "data": {
+      "taskId": 27,
+      "opportunityId": 19,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.546364,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-14T13:32:27.813906"
+  },
+  {
+    "id": 89,
+    "event": "task_created",
+    "data": {
+      "taskId": 28,
+      "opportunityId": 19,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-14T13:32:27.902402"
+  },
+  {
+    "id": 90,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-14T13:32:28.080611"
+  },
+  {
+    "id": 91,
+    "event": "task_completed",
+    "data": {
+      "taskId": 28,
+      "opportunityId": 19,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.683877,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-14T13:32:28.558704"
+  },
+  {
+    "id": 92,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 19,
+      "currentNodeId": "n14",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-14T13:32:28.750782"
+  },
+  {
+    "id": 93,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 3,
+      "opportunityId": 1,
+      "label": "Solicitar compra"
+    },
+    "timestamp": "2026-04-15T09:35:47.298644"
+  },
+  {
+    "id": 94,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 2,
+      "opportunityId": 1,
+      "label": "Solicitar compra"
+    },
+    "timestamp": "2026-04-15T09:35:49.028955"
+  },
+  {
+    "id": 95,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 28,
+      "opportunityId": 19,
+      "label": "Fornecedor recebe OrdemDeCompra"
+    },
+    "timestamp": "2026-04-15T09:35:50.799943"
+  },
+  {
+    "id": 96,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 27,
+      "opportunityId": 19,
+      "label": "Enviar OrdemDeCompra ao Fornecedor"
+    },
+    "timestamp": "2026-04-15T09:35:52.546762"
+  },
+  {
+    "id": 97,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 26,
+      "opportunityId": 19,
+      "label": "Gerar OrdemDeCompra"
+    },
+    "timestamp": "2026-04-15T09:35:54.088853"
+  },
+  {
+    "id": 98,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 25,
+      "opportunityId": 19,
+      "label": "Atualizar Pedido"
+    },
+    "timestamp": "2026-04-15T09:35:56.016049"
+  },
+  {
+    "id": 99,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 24,
+      "opportunityId": 19,
+      "label": "Validar orcamento"
+    },
+    "timestamp": "2026-04-15T09:35:57.881278"
+  },
+  {
+    "id": 100,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 23,
+      "opportunityId": 19,
+      "label": "Registrar Aprovacao"
+    },
+    "timestamp": "2026-04-15T09:35:59.763438"
+  },
+  {
+    "id": 101,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 22,
+      "opportunityId": 19,
+      "label": "Analisar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:01.693942"
+  },
+  {
+    "id": 102,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 21,
+      "opportunityId": 19,
+      "label": "Solicitar compra"
+    },
+    "timestamp": "2026-04-15T09:36:03.467039"
+  },
+  {
+    "id": 103,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 20,
+      "opportunityId": 1,
+      "label": "Analisar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:05.061823"
+  },
+  {
+    "id": 104,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 19,
+      "opportunityId": 18,
+      "label": "Fornecedor recebe OrdemDeCompra"
+    },
+    "timestamp": "2026-04-15T09:36:06.550241"
+  },
+  {
+    "id": 105,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 18,
+      "opportunityId": 18,
+      "label": "Enviar OrdemDeCompra ao Fornecedor"
+    },
+    "timestamp": "2026-04-15T09:36:08.135192"
+  },
+  {
+    "id": 106,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 17,
+      "opportunityId": 18,
+      "label": "Gerar OrdemDeCompra"
+    },
+    "timestamp": "2026-04-15T09:36:09.644262"
+  },
+  {
+    "id": 107,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 16,
+      "opportunityId": 18,
+      "label": "Atualizar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:11.392056"
+  },
+  {
+    "id": 108,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 15,
+      "opportunityId": 18,
+      "label": "Validar orcamento"
+    },
+    "timestamp": "2026-04-15T09:36:13.002832"
+  },
+  {
+    "id": 109,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 14,
+      "opportunityId": 18,
+      "label": "Rejeitar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:14.963650"
+  },
+  {
+    "id": 110,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 13,
+      "opportunityId": 18,
+      "label": "Analisar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:16.467448"
+  },
+  {
+    "id": 111,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 4,
+      "opportunityId": 1,
+      "label": "Solicitar compra"
+    },
+    "timestamp": "2026-04-15T09:36:18.588592"
+  },
+  {
+    "id": 112,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 1,
+      "opportunityId": 18,
+      "label": "Solicitar compra"
+    },
+    "timestamp": "2026-04-15T09:36:20.365716"
+  },
+  {
+    "id": 113,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 5,
+      "opportunityId": 18,
+      "label": "Analisar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:22.555016"
+  },
+  {
+    "id": 114,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 6,
+      "opportunityId": 18,
+      "label": "Registrar Aprovacao"
+    },
+    "timestamp": "2026-04-15T09:36:23.942080"
+  },
+  {
+    "id": 115,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 7,
+      "opportunityId": 18,
+      "label": "Validar orcamento"
+    },
+    "timestamp": "2026-04-15T09:36:25.251868"
+  },
+  {
+    "id": 116,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 8,
+      "opportunityId": 18,
+      "label": "Atualizar Pedido"
+    },
+    "timestamp": "2026-04-15T09:36:26.524383"
+  },
+  {
+    "id": 117,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 9,
+      "opportunityId": 18,
+      "label": "Gerar OrdemDeCompra"
+    },
+    "timestamp": "2026-04-15T09:36:27.748180"
+  },
+  {
+    "id": 118,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 10,
+      "opportunityId": 18,
+      "label": "Enviar OrdemDeCompra ao Fornecedor"
+    },
+    "timestamp": "2026-04-15T09:36:29.050352"
+  },
+  {
+    "id": 119,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 11,
+      "opportunityId": 18,
+      "label": "Fornecedor recebe OrdemDeCompra"
+    },
+    "timestamp": "2026-04-15T09:36:30.484700"
+  },
+  {
+    "id": 120,
+    "event": "task_deleted",
+    "data": {
+      "taskId": 12,
+      "opportunityId": 18,
+      "label": "Solicitar compra"
+    },
+    "timestamp": "2026-04-15T09:36:32.957292"
+  },
+  {
+    "id": 121,
+    "event": "task_created",
+    "data": {
+      "taskId": 1,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T10:57:10.686920"
+  },
+  {
+    "id": 122,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T10:57:10.704797"
+  },
+  {
+    "id": 123,
+    "event": "task_cancelled",
+    "data": {
+      "opportunityId": 1
+    },
+    "timestamp": "2026-04-15T10:57:18.303661"
+  },
+  {
+    "id": 124,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T10:57:18.327164"
+  },
+  {
+    "id": 125,
+    "event": "task_created",
+    "data": {
+      "taskId": 2,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T10:57:18.373931"
+  },
+  {
+    "id": 126,
+    "event": "task_completed",
+    "data": {
+      "taskId": 2,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 4.840005,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T10:57:23.194488"
+  },
+  {
+    "id": 127,
+    "event": "task_created",
+    "data": {
+      "taskId": 3,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T10:57:23.230504"
+  },
+  {
+    "id": 128,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T10:57:23.255097"
+  },
+  {
+    "id": 129,
+    "event": "task_completed",
+    "data": {
+      "taskId": 3,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.526971,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T10:57:24.757407"
+  },
+  {
+    "id": 130,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T10:57:24.797780"
+  },
+  {
+    "id": 131,
+    "event": "task_created",
+    "data": {
+      "taskId": 4,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T10:57:26.662791"
+  },
+  {
+    "id": 132,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T10:57:26.694608"
+  },
+  {
+    "id": 133,
+    "event": "task_completed",
+    "data": {
+      "taskId": 4,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 7.931499,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T10:57:34.594232"
+  },
+  {
+    "id": 134,
+    "event": "task_created",
+    "data": {
+      "taskId": 5,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T10:57:34.632479"
+  },
+  {
+    "id": 135,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T10:57:34.658312"
+  },
+  {
+    "id": 136,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T11:15:48.502700"
+  },
+  {
+    "id": 137,
+    "event": "task_created",
+    "data": {
+      "taskId": 6,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T11:15:48.533734"
+  },
+  {
+    "id": 138,
+    "event": "task_completed",
+    "data": {
+      "taskId": 6,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 11.702849,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T11:16:00.215902"
+  },
+  {
+    "id": 139,
+    "event": "task_created",
+    "data": {
+      "taskId": 7,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T11:16:00.258325"
+  },
+  {
+    "id": 140,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T11:16:00.277795"
+  },
+  {
+    "id": 141,
+    "event": "task_cancelled",
+    "data": {
+      "opportunityId": 2
+    },
+    "timestamp": "2026-04-15T11:16:21.387416"
+  },
+  {
+    "id": 142,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T11:16:21.416851"
+  },
+  {
+    "id": 143,
+    "event": "task_created",
+    "data": {
+      "taskId": 8,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": null,
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T11:16:21.461140"
+  },
+  {
+    "id": 144,
+    "event": "task_completed",
+    "data": {
+      "taskId": 5,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 5503.860011,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:18.481915"
+  },
+  {
+    "id": 145,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:29:18.539381"
+  },
+  {
+    "id": 146,
+    "event": "task_created",
+    "data": {
+      "taskId": 9,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:20.118187"
+  },
+  {
+    "id": 147,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:20.148002"
+  },
+  {
+    "id": 148,
+    "event": "task_completed",
+    "data": {
+      "taskId": 9,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.810148,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:20.968164"
+  },
+  {
+    "id": 149,
+    "event": "task_created",
+    "data": {
+      "taskId": 10,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:21.018507"
+  },
+  {
+    "id": 150,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:21.074300"
+  },
+  {
+    "id": 151,
+    "event": "task_completed",
+    "data": {
+      "taskId": 10,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 1.010513,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:22.028129"
+  },
+  {
+    "id": 152,
+    "event": "task_created",
+    "data": {
+      "taskId": 11,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:22.083499"
+  },
+  {
+    "id": 153,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:22.125340"
+  },
+  {
+    "id": 154,
+    "event": "task_completed",
+    "data": {
+      "taskId": 11,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.688512,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:22.770187"
+  },
+  {
+    "id": 155,
+    "event": "task_created",
+    "data": {
+      "taskId": 12,
+      "opportunityId": 1,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:22.886038"
+  },
+  {
+    "id": 156,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:22.952539"
+  },
+  {
+    "id": 157,
+    "event": "task_completed",
+    "data": {
+      "taskId": 12,
+      "opportunityId": 1,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.632817,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:23.509523"
+  },
+  {
+    "id": 158,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T12:29:23.591326"
+  },
+  {
+    "id": 159,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T12:29:28.322598"
+  },
+  {
+    "id": 160,
+    "event": "task_created",
+    "data": {
+      "taskId": 13,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:28.356809"
+  },
+  {
+    "id": 161,
+    "event": "task_completed",
+    "data": {
+      "taskId": 13,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.749952,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:30.081150"
+  },
+  {
+    "id": 162,
+    "event": "task_created",
+    "data": {
+      "taskId": 14,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:30.124821"
+  },
+  {
+    "id": 163,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:30.183275"
+  },
+  {
+    "id": 164,
+    "event": "task_completed",
+    "data": {
+      "taskId": 14,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.949412,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:32.072930"
+  },
+  {
+    "id": 165,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:29:32.141707"
+  },
+  {
+    "id": 166,
+    "event": "task_created",
+    "data": {
+      "taskId": 15,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:33.995894"
+  },
+  {
+    "id": 167,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:34.041683"
+  },
+  {
+    "id": 168,
+    "event": "task_completed",
+    "data": {
+      "taskId": 15,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.731594,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:34.726363"
+  },
+  {
+    "id": 169,
+    "event": "task_created",
+    "data": {
+      "taskId": 16,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:34.783406"
+  },
+  {
+    "id": 170,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:34.818429"
+  },
+  {
+    "id": 171,
+    "event": "task_completed",
+    "data": {
+      "taskId": 16,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.869331,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:35.645786"
+  },
+  {
+    "id": 172,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:29:35.701359"
+  },
+  {
+    "id": 173,
+    "event": "task_created",
+    "data": {
+      "taskId": 17,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:36.311017"
+  },
+  {
+    "id": 174,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:36.358652"
+  },
+  {
+    "id": 175,
+    "event": "task_completed",
+    "data": {
+      "taskId": 17,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.685982,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:36.980076"
+  },
+  {
+    "id": 176,
+    "event": "task_created",
+    "data": {
+      "taskId": 18,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:37.033856"
+  },
+  {
+    "id": 177,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:37.077649"
+  },
+  {
+    "id": 178,
+    "event": "task_completed",
+    "data": {
+      "taskId": 18,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.735813,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:37.767774"
+  },
+  {
+    "id": 179,
+    "event": "task_created",
+    "data": {
+      "taskId": 19,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:37.830061"
+  },
+  {
+    "id": 180,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:37.879804"
+  },
+  {
+    "id": 181,
+    "event": "task_completed",
+    "data": {
+      "taskId": 19,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 1.003078,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:38.822841"
+  },
+  {
+    "id": 182,
+    "event": "task_created",
+    "data": {
+      "taskId": 20,
+      "opportunityId": 1,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:29:38.879582"
+  },
+  {
+    "id": 183,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:29:38.925699"
+  },
+  {
+    "id": 184,
+    "event": "task_completed",
+    "data": {
+      "taskId": 20,
+      "opportunityId": 1,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 1.035636,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:29:39.908464"
+  },
+  {
+    "id": 185,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T12:29:39.976866"
+  },
+  {
+    "id": 186,
+    "event": "task_completed",
+    "data": {
+      "taskId": 8,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 4469.768034,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:51.213343"
+  },
+  {
+    "id": 187,
+    "event": "task_created",
+    "data": {
+      "taskId": 21,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:51.271404"
+  },
+  {
+    "id": 188,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:51.320587"
+  },
+  {
+    "id": 189,
+    "event": "task_completed",
+    "data": {
+      "taskId": 21,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.41807,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:52.682010"
+  },
+  {
+    "id": 190,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:30:52.764062"
+  },
+  {
+    "id": 191,
+    "event": "task_created",
+    "data": {
+      "taskId": 22,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:53.654497"
+  },
+  {
+    "id": 192,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:53.713002"
+  },
+  {
+    "id": 193,
+    "event": "task_completed",
+    "data": {
+      "taskId": 22,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.674515,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:54.328181"
+  },
+  {
+    "id": 194,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n7",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:30:54.400885"
+  },
+  {
+    "id": 195,
+    "event": "task_created",
+    "data": {
+      "taskId": 23,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:54.917757"
+  },
+  {
+    "id": 196,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n8",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:54.970619"
+  },
+  {
+    "id": 197,
+    "event": "task_completed",
+    "data": {
+      "taskId": 23,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.661081,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:55.578314"
+  },
+  {
+    "id": 198,
+    "event": "task_created",
+    "data": {
+      "taskId": 24,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:55.664719"
+  },
+  {
+    "id": 199,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:55.749568"
+  },
+  {
+    "id": 200,
+    "event": "task_completed",
+    "data": {
+      "taskId": 24,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.703465,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:56.352146"
+  },
+  {
+    "id": 201,
+    "event": "task_created",
+    "data": {
+      "taskId": 25,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:56.525371"
+  },
+  {
+    "id": 202,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n12",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:56.586001"
+  },
+  {
+    "id": 203,
+    "event": "task_completed",
+    "data": {
+      "taskId": 25,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.611284,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:57.125936"
+  },
+  {
+    "id": 204,
+    "event": "task_created",
+    "data": {
+      "taskId": 26,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:57.256339"
+  },
+  {
+    "id": 205,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:57.452443"
+  },
+  {
+    "id": 206,
+    "event": "task_completed",
+    "data": {
+      "taskId": 26,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 1.316768,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:58.557757"
+  },
+  {
+    "id": 207,
+    "event": "task_created",
+    "data": {
+      "taskId": 27,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:30:58.622058"
+  },
+  {
+    "id": 208,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:30:58.678686"
+  },
+  {
+    "id": 209,
+    "event": "task_completed",
+    "data": {
+      "taskId": 27,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.723962,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:30:59.344153"
+  },
+  {
+    "id": 210,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n11",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T12:30:59.445277"
+  },
+  {
+    "id": 211,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T12:39:41.464806"
+  },
+  {
+    "id": 212,
+    "event": "task_created",
+    "data": {
+      "taskId": 28,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:41.514242"
+  },
+  {
+    "id": 213,
+    "event": "task_completed",
+    "data": {
+      "taskId": 28,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 2.937982,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:44.417252"
+  },
+  {
+    "id": 214,
+    "event": "task_created",
+    "data": {
+      "taskId": 29,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:44.470971"
+  },
+  {
+    "id": 215,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:44.502056"
+  },
+  {
+    "id": 216,
+    "event": "task_completed",
+    "data": {
+      "taskId": 29,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.587074,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:45.042761"
+  },
+  {
+    "id": 217,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:39:45.100279"
+  },
+  {
+    "id": 218,
+    "event": "task_created",
+    "data": {
+      "taskId": 30,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:45.977437"
+  },
+  {
+    "id": 219,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:46.017697"
+  },
+  {
+    "id": 220,
+    "event": "task_completed",
+    "data": {
+      "taskId": 30,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.49977,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:46.475965"
+  },
+  {
+    "id": 221,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n7",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T12:39:46.541467"
+  },
+  {
+    "id": 222,
+    "event": "task_created",
+    "data": {
+      "taskId": 31,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:47.105173"
+  },
+  {
+    "id": 223,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n8",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:47.179697"
+  },
+  {
+    "id": 224,
+    "event": "task_completed",
+    "data": {
+      "taskId": 31,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.112843,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:48.216728"
+  },
+  {
+    "id": 225,
+    "event": "task_created",
+    "data": {
+      "taskId": 32,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:48.289947"
+  },
+  {
+    "id": 226,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:48.312901"
+  },
+  {
+    "id": 227,
+    "event": "task_completed",
+    "data": {
+      "taskId": 32,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 1.031458,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:49.305397"
+  },
+  {
+    "id": 228,
+    "event": "task_created",
+    "data": {
+      "taskId": 33,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:49.384525"
+  },
+  {
+    "id": 229,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n12",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:49.434648"
+  },
+  {
+    "id": 230,
+    "event": "task_completed",
+    "data": {
+      "taskId": 33,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.803909,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:50.177048"
+  },
+  {
+    "id": 231,
+    "event": "task_created",
+    "data": {
+      "taskId": 34,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:50.237508"
+  },
+  {
+    "id": 232,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:50.293420"
+  },
+  {
+    "id": 233,
+    "event": "task_completed",
+    "data": {
+      "taskId": 34,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.778227,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:51.014287"
+  },
+  {
+    "id": 234,
+    "event": "task_created",
+    "data": {
+      "taskId": 35,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T12:39:51.073898"
+  },
+  {
+    "id": 235,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T12:39:51.106097"
+  },
+  {
+    "id": 236,
+    "event": "task_completed",
+    "data": {
+      "taskId": 35,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.946286,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T12:39:52.019087"
+  },
+  {
+    "id": 237,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n11",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T12:39:52.088553"
+  },
+  {
+    "id": 238,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T15:12:01.823450"
+  },
+  {
+    "id": 239,
+    "event": "task_created",
+    "data": {
+      "taskId": 36,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:01.865529"
+  },
+  {
+    "id": 240,
+    "event": "task_completed",
+    "data": {
+      "taskId": 36,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.405856,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:03.270651"
+  },
+  {
+    "id": 241,
+    "event": "task_created",
+    "data": {
+      "taskId": 37,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:03.328617"
+  },
+  {
+    "id": 242,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:03.377192"
+  },
+  {
+    "id": 243,
+    "event": "task_completed",
+    "data": {
+      "taskId": 37,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.717714,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:04.036430"
+  },
+  {
+    "id": 244,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:12:04.092726"
+  },
+  {
+    "id": 245,
+    "event": "task_created",
+    "data": {
+      "taskId": 38,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:05.220518"
+  },
+  {
+    "id": 246,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:05.262896"
+  },
+  {
+    "id": 247,
+    "event": "task_completed",
+    "data": {
+      "taskId": 38,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 1.408,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:06.627396"
+  },
+  {
+    "id": 248,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n7",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:12:06.686374"
+  },
+  {
+    "id": 249,
+    "event": "task_created",
+    "data": {
+      "taskId": 39,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:07.669160"
+  },
+  {
+    "id": 250,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n8",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:07.704031"
+  },
+  {
+    "id": 251,
+    "event": "task_completed",
+    "data": {
+      "taskId": 39,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.70372,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:08.372423"
+  },
+  {
+    "id": 252,
+    "event": "task_created",
+    "data": {
+      "taskId": 40,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:08.436104"
+  },
+  {
+    "id": 253,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:08.468233"
+  },
+  {
+    "id": 254,
+    "event": "task_completed",
+    "data": {
+      "taskId": 40,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.914147,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:09.340544"
+  },
+  {
+    "id": 255,
+    "event": "task_created",
+    "data": {
+      "taskId": 41,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:09.479766"
+  },
+  {
+    "id": 256,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n12",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:09.533879"
+  },
+  {
+    "id": 257,
+    "event": "task_completed",
+    "data": {
+      "taskId": 41,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.871349,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:10.295139"
+  },
+  {
+    "id": 258,
+    "event": "task_created",
+    "data": {
+      "taskId": 42,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:10.353935"
+  },
+  {
+    "id": 259,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:10.399028"
+  },
+  {
+    "id": 260,
+    "event": "task_completed",
+    "data": {
+      "taskId": 42,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.733612,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:11.086489"
+  },
+  {
+    "id": 261,
+    "event": "task_created",
+    "data": {
+      "taskId": 43,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:12:11.188651"
+  },
+  {
+    "id": 262,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:12:11.300764"
+  },
+  {
+    "id": 263,
+    "event": "task_completed",
+    "data": {
+      "taskId": 43,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.758197,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:12:11.902478"
+  },
+  {
+    "id": 264,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n11",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T15:12:11.972569"
+  },
+  {
+    "id": 265,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T15:15:42.619668"
+  },
+  {
+    "id": 266,
+    "event": "task_created",
+    "data": {
+      "taskId": 44,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:42.692044"
+  },
+  {
+    "id": 267,
+    "event": "task_completed",
+    "data": {
+      "taskId": 44,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.561816,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:44.205739"
+  },
+  {
+    "id": 268,
+    "event": "task_created",
+    "data": {
+      "taskId": 45,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:44.292707"
+  },
+  {
+    "id": 269,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:44.352190"
+  },
+  {
+    "id": 270,
+    "event": "task_completed",
+    "data": {
+      "taskId": 45,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.420347,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:45.692879"
+  },
+  {
+    "id": 271,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:15:45.828491"
+  },
+  {
+    "id": 272,
+    "event": "task_created",
+    "data": {
+      "taskId": 46,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:47.104149"
+  },
+  {
+    "id": 273,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:47.169552"
+  },
+  {
+    "id": 274,
+    "event": "task_completed",
+    "data": {
+      "taskId": 46,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.693244,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:47.795002"
+  },
+  {
+    "id": 275,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n7",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:15:47.866468"
+  },
+  {
+    "id": 276,
+    "event": "task_created",
+    "data": {
+      "taskId": 47,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:48.470556"
+  },
+  {
+    "id": 277,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n8",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:48.547553"
+  },
+  {
+    "id": 278,
+    "event": "task_completed",
+    "data": {
+      "taskId": 47,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.775495,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:49.208991"
+  },
+  {
+    "id": 279,
+    "event": "task_created",
+    "data": {
+      "taskId": 48,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:49.286689"
+  },
+  {
+    "id": 280,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:49.337053"
+  },
+  {
+    "id": 281,
+    "event": "task_completed",
+    "data": {
+      "taskId": 48,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.629717,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:49.906774"
+  },
+  {
+    "id": 282,
+    "event": "task_created",
+    "data": {
+      "taskId": 49,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:50.091071"
+  },
+  {
+    "id": 283,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n12",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:50.150231"
+  },
+  {
+    "id": 284,
+    "event": "task_completed",
+    "data": {
+      "taskId": 49,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.536626,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:50.601303"
+  },
+  {
+    "id": 285,
+    "event": "task_created",
+    "data": {
+      "taskId": 50,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:50.803324"
+  },
+  {
+    "id": 286,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:50.915771"
+  },
+  {
+    "id": 287,
+    "event": "task_completed",
+    "data": {
+      "taskId": 50,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.908014,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:51.692395"
+  },
+  {
+    "id": 288,
+    "event": "task_created",
+    "data": {
+      "taskId": 51,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:15:51.768959"
+  },
+  {
+    "id": 289,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:15:51.846690"
+  },
+  {
+    "id": 290,
+    "event": "task_completed",
+    "data": {
+      "taskId": 51,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.828547,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:15:52.585966"
+  },
+  {
+    "id": 291,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n11",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T15:15:52.692421"
+  },
+  {
+    "id": 292,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T15:16:13.572290"
+  },
+  {
+    "id": 293,
+    "event": "task_created",
+    "data": {
+      "taskId": 52,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:13.650091"
+  },
+  {
+    "id": 294,
+    "event": "task_completed",
+    "data": {
+      "taskId": 52,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 2.600221,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:16.196320"
+  },
+  {
+    "id": 295,
+    "event": "task_created",
+    "data": {
+      "taskId": 53,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:16.267102"
+  },
+  {
+    "id": 296,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:16.304658"
+  },
+  {
+    "id": 297,
+    "event": "task_completed",
+    "data": {
+      "taskId": 53,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.791412,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:17.057041"
+  },
+  {
+    "id": 298,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:16:17.129265"
+  },
+  {
+    "id": 299,
+    "event": "task_created",
+    "data": {
+      "taskId": 54,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:17.919167"
+  },
+  {
+    "id": 300,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:17.969180"
+  },
+  {
+    "id": 301,
+    "event": "task_completed",
+    "data": {
+      "taskId": 54,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.803659,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:18.720971"
+  },
+  {
+    "id": 302,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n7",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:16:18.803318"
+  },
+  {
+    "id": 303,
+    "event": "task_created",
+    "data": {
+      "taskId": 55,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:19.717354"
+  },
+  {
+    "id": 304,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n8",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:19.792039"
+  },
+  {
+    "id": 305,
+    "event": "task_completed",
+    "data": {
+      "taskId": 55,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.780137,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:20.496080"
+  },
+  {
+    "id": 306,
+    "event": "task_created",
+    "data": {
+      "taskId": 56,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:20.562942"
+  },
+  {
+    "id": 307,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:20.617542"
+  },
+  {
+    "id": 308,
+    "event": "task_completed",
+    "data": {
+      "taskId": 56,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.723999,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:21.279994"
+  },
+  {
+    "id": 309,
+    "event": "task_created",
+    "data": {
+      "taskId": 57,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:21.399035"
+  },
+  {
+    "id": 310,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n12",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:21.471367"
+  },
+  {
+    "id": 311,
+    "event": "task_completed",
+    "data": {
+      "taskId": 57,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.820732,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:22.206598"
+  },
+  {
+    "id": 312,
+    "event": "task_created",
+    "data": {
+      "taskId": 58,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:22.301735"
+  },
+  {
+    "id": 313,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:22.370963"
+  },
+  {
+    "id": 314,
+    "event": "task_completed",
+    "data": {
+      "taskId": 58,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.701394,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:22.989091"
+  },
+  {
+    "id": 315,
+    "event": "task_created",
+    "data": {
+      "taskId": 59,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:16:23.134516"
+  },
+  {
+    "id": 316,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:16:23.217733"
+  },
+  {
+    "id": 317,
+    "event": "task_completed",
+    "data": {
+      "taskId": 59,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.733946,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:16:23.856180"
+  },
+  {
+    "id": 318,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n11",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T15:16:23.980408"
+  },
+  {
+    "id": 319,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 2,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T15:22:14.858200"
+  },
+  {
+    "id": 320,
+    "event": "task_created",
+    "data": {
+      "taskId": 60,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:14.877885"
+  },
+  {
+    "id": 321,
+    "event": "task_completed",
+    "data": {
+      "taskId": 60,
+      "opportunityId": 2,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.384013,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:16.260392"
+  },
+  {
+    "id": 322,
+    "event": "task_created",
+    "data": {
+      "taskId": 61,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:16.332183"
+  },
+  {
+    "id": 323,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:16.381309"
+  },
+  {
+    "id": 324,
+    "event": "task_completed",
+    "data": {
+      "taskId": 61,
+      "opportunityId": 2,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.948354,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:17.280793"
+  },
+  {
+    "id": 325,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:22:17.395947"
+  },
+  {
+    "id": 326,
+    "event": "task_created",
+    "data": {
+      "taskId": 62,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:18.263627"
+  },
+  {
+    "id": 327,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:18.311622"
+  },
+  {
+    "id": 328,
+    "event": "task_completed",
+    "data": {
+      "taskId": 62,
+      "opportunityId": 2,
+      "nodeId": "n5",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 1.454788,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:19.717449"
+  },
+  {
+    "id": 329,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n7",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:22:19.804016"
+  },
+  {
+    "id": 330,
+    "event": "task_created",
+    "data": {
+      "taskId": 63,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:23.202591"
+  },
+  {
+    "id": 331,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n8",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:23.272161"
+  },
+  {
+    "id": 332,
+    "event": "task_completed",
+    "data": {
+      "taskId": 63,
+      "opportunityId": 2,
+      "nodeId": "n8",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.623563,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:23.825718"
+  },
+  {
+    "id": 333,
+    "event": "task_created",
+    "data": {
+      "taskId": 64,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:23.930879"
+  },
+  {
+    "id": 334,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:23.990916"
+  },
+  {
+    "id": 335,
+    "event": "task_completed",
+    "data": {
+      "taskId": 64,
+      "opportunityId": 2,
+      "nodeId": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.689658,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:24.614234"
+  },
+  {
+    "id": 336,
+    "event": "task_created",
+    "data": {
+      "taskId": 65,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:24.727286"
+  },
+  {
+    "id": 337,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n12",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:24.810043"
+  },
+  {
+    "id": 338,
+    "event": "task_completed",
+    "data": {
+      "taskId": 65,
+      "opportunityId": 2,
+      "nodeId": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.557306,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:25.280088"
+  },
+  {
+    "id": 339,
+    "event": "task_created",
+    "data": {
+      "taskId": 66,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:25.450334"
+  },
+  {
+    "id": 340,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:25.563243"
+  },
+  {
+    "id": 341,
+    "event": "task_completed",
+    "data": {
+      "taskId": 66,
+      "opportunityId": 2,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.755733,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:26.179349"
+  },
+  {
+    "id": 342,
+    "event": "task_created",
+    "data": {
+      "taskId": 67,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:22:26.317438"
+  },
+  {
+    "id": 343,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:22:26.362829"
+  },
+  {
+    "id": 344,
+    "event": "task_completed",
+    "data": {
+      "taskId": 67,
+      "opportunityId": 2,
+      "nodeId": "n15",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 1.140268,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:22:27.450169"
+  },
+  {
+    "id": 345,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 2,
+      "currentNodeId": "n11",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T15:22:28.247455"
+  },
+  {
+    "id": 346,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T15:23:10.678335"
+  },
+  {
+    "id": 347,
+    "event": "task_created",
+    "data": {
+      "taskId": 68,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:10.751854"
+  },
+  {
+    "id": 348,
+    "event": "task_completed",
+    "data": {
+      "taskId": 68,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.464454,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:12.166015"
+  },
+  {
+    "id": 349,
+    "event": "task_created",
+    "data": {
+      "taskId": 69,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:12.241215"
+  },
+  {
+    "id": 350,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:12.274388"
+  },
+  {
+    "id": 351,
+    "event": "task_completed",
+    "data": {
+      "taskId": 69,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.181671,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:13.410335"
+  },
+  {
+    "id": 352,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:23:13.510842"
+  },
+  {
+    "id": 353,
+    "event": "task_created",
+    "data": {
+      "taskId": 70,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:14.769169"
+  },
+  {
+    "id": 354,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:14.833475"
+  },
+  {
+    "id": 355,
+    "event": "task_completed",
+    "data": {
+      "taskId": 70,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.852472,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:15.620590"
+  },
+  {
+    "id": 356,
+    "event": "task_created",
+    "data": {
+      "taskId": 71,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:15.698976"
+  },
+  {
+    "id": 357,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:15.751999"
+  },
+  {
+    "id": 358,
+    "event": "task_completed",
+    "data": {
+      "taskId": 71,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.82345,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:16.511885"
+  },
+  {
+    "id": 359,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T15:23:16.597112"
+  },
+  {
+    "id": 360,
+    "event": "task_created",
+    "data": {
+      "taskId": 72,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:17.616107"
+  },
+  {
+    "id": 361,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:17.661736"
+  },
+  {
+    "id": 362,
+    "event": "task_completed",
+    "data": {
+      "taskId": 72,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.772849,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:18.389034"
+  },
+  {
+    "id": 363,
+    "event": "task_created",
+    "data": {
+      "taskId": 73,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:18.482479"
+  },
+  {
+    "id": 364,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:18.552880"
+  },
+  {
+    "id": 365,
+    "event": "task_completed",
+    "data": {
+      "taskId": 73,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.663575,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:19.136671"
+  },
+  {
+    "id": 366,
+    "event": "task_created",
+    "data": {
+      "taskId": 74,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:19.283545"
+  },
+  {
+    "id": 367,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:19.370071"
+  },
+  {
+    "id": 368,
+    "event": "task_completed",
+    "data": {
+      "taskId": 74,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.8818,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:20.140884"
+  },
+  {
+    "id": 369,
+    "event": "task_created",
+    "data": {
+      "taskId": 75,
+      "opportunityId": 1,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T15:23:20.243850"
+  },
+  {
+    "id": 370,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T15:23:20.301473"
+  },
+  {
+    "id": 371,
+    "event": "task_completed",
+    "data": {
+      "taskId": 75,
+      "opportunityId": 1,
+      "nodeId": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.986213,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T15:23:21.228036"
+  },
+  {
+    "id": 372,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T15:23:21.308826"
+  },
+  {
+    "id": 373,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T16:56:51.793601"
+  },
+  {
+    "id": 374,
+    "event": "task_created",
+    "data": {
+      "taskId": 76,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:56:51.840255"
+  },
+  {
+    "id": 375,
+    "event": "task_completed",
+    "data": {
+      "taskId": 76,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 37.834062,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:29.651256"
+  },
+  {
+    "id": 376,
+    "event": "task_created",
+    "data": {
+      "taskId": 77,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:29.740977"
+  },
+  {
+    "id": 377,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:57:29.801604"
+  },
+  {
+    "id": 378,
+    "event": "task_completed",
+    "data": {
+      "taskId": 77,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 15.191509,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:44.920439"
+  },
+  {
+    "id": 379,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T16:57:45.001418"
+  },
+  {
+    "id": 380,
+    "event": "task_created",
+    "data": {
+      "taskId": 78,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:46.193484"
+  },
+  {
+    "id": 381,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:57:46.239258"
+  },
+  {
+    "id": 382,
+    "event": "task_completed",
+    "data": {
+      "taskId": 78,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.930454,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:47.124283"
+  },
+  {
+    "id": 383,
+    "event": "task_created",
+    "data": {
+      "taskId": 79,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:47.215524"
+  },
+  {
+    "id": 384,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:57:47.266924"
+  },
+  {
+    "id": 385,
+    "event": "task_completed",
+    "data": {
+      "taskId": 79,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.875225,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:48.078094"
+  },
+  {
+    "id": 386,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T16:57:48.176703"
+  },
+  {
+    "id": 387,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T16:57:51.537129"
+  },
+  {
+    "id": 388,
+    "event": "task_created",
+    "data": {
+      "taskId": 80,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:51.598248"
+  },
+  {
+    "id": 389,
+    "event": "task_completed",
+    "data": {
+      "taskId": 80,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.451278,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:53.032640"
+  },
+  {
+    "id": 390,
+    "event": "task_created",
+    "data": {
+      "taskId": 81,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:53.127521"
+  },
+  {
+    "id": 391,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:57:53.204301"
+  },
+  {
+    "id": 392,
+    "event": "task_completed",
+    "data": {
+      "taskId": 81,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.180415,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:54.305989"
+  },
+  {
+    "id": 393,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T16:57:54.433101"
+  },
+  {
+    "id": 394,
+    "event": "task_created",
+    "data": {
+      "taskId": 82,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:55.808212"
+  },
+  {
+    "id": 395,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:57:55.861544"
+  },
+  {
+    "id": 396,
+    "event": "task_completed",
+    "data": {
+      "taskId": 82,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.749446,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:56.556901"
+  },
+  {
+    "id": 397,
+    "event": "task_created",
+    "data": {
+      "taskId": 83,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:57:56.660723"
+  },
+  {
+    "id": 398,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:57:56.719245"
+  },
+  {
+    "id": 399,
+    "event": "task_completed",
+    "data": {
+      "taskId": 83,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.903361,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:57:57.536699"
+  },
+  {
+    "id": 400,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T16:57:57.640998"
+  },
+  {
+    "id": 401,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T16:59:42.771675"
+  },
+  {
+    "id": 402,
+    "event": "task_created",
+    "data": {
+      "taskId": 84,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:59:42.854067"
+  },
+  {
+    "id": 403,
+    "event": "task_completed",
+    "data": {
+      "taskId": 84,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.245915,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:59:44.040554"
+  },
+  {
+    "id": 404,
+    "event": "task_created",
+    "data": {
+      "taskId": 85,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:59:44.121398"
+  },
+  {
+    "id": 405,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:59:44.179613"
+  },
+  {
+    "id": 406,
+    "event": "task_completed",
+    "data": {
+      "taskId": 85,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.82795,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:59:44.948977"
+  },
+  {
+    "id": 407,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T16:59:45.051881"
+  },
+  {
+    "id": 408,
+    "event": "task_created",
+    "data": {
+      "taskId": 86,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:59:45.735622"
+  },
+  {
+    "id": 409,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:59:45.788866"
+  },
+  {
+    "id": 410,
+    "event": "task_completed",
+    "data": {
+      "taskId": 86,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 1.026305,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:59:46.761145"
+  },
+  {
+    "id": 411,
+    "event": "task_created",
+    "data": {
+      "taskId": 87,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T16:59:46.856069"
+  },
+  {
+    "id": 412,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T16:59:46.934433"
+  },
+  {
+    "id": 413,
+    "event": "task_completed",
+    "data": {
+      "taskId": 87,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.762219,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T16:59:47.606935"
+  },
+  {
+    "id": 414,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T16:59:47.707267"
+  },
+  {
+    "id": 415,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T17:07:12.938362"
+  },
+  {
+    "id": 416,
+    "event": "task_created",
+    "data": {
+      "taskId": 88,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:12.981871"
+  },
+  {
+    "id": 417,
+    "event": "task_completed",
+    "data": {
+      "taskId": 88,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.834924,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:14.790263"
+  },
+  {
+    "id": 418,
+    "event": "task_created",
+    "data": {
+      "taskId": 89,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:14.839503"
+  },
+  {
+    "id": 419,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:14.864281"
+  },
+  {
+    "id": 420,
+    "event": "task_completed",
+    "data": {
+      "taskId": 89,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.0898,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:15.916147"
+  },
+  {
+    "id": 421,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:07:15.977434"
+  },
+  {
+    "id": 422,
+    "event": "task_created",
+    "data": {
+      "taskId": 90,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:16.625123"
+  },
+  {
+    "id": 423,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:16.640508"
+  },
+  {
+    "id": 424,
+    "event": "task_completed",
+    "data": {
+      "taskId": 90,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 1.009403,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:17.633031"
+  },
+  {
+    "id": 425,
+    "event": "task_created",
+    "data": {
+      "taskId": 91,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:17.687201"
+  },
+  {
+    "id": 426,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:17.716251"
+  },
+  {
+    "id": 427,
+    "event": "task_completed",
+    "data": {
+      "taskId": 91,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.728528,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:18.403309"
+  },
+  {
+    "id": 428,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:07:18.459595"
+  },
+  {
+    "id": 429,
+    "event": "task_created",
+    "data": {
+      "taskId": 92,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:19.116265"
+  },
+  {
+    "id": 430,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:19.134216"
+  },
+  {
+    "id": 431,
+    "event": "task_completed",
+    "data": {
+      "taskId": 92,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.861921,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:19.976092"
+  },
+  {
+    "id": 432,
+    "event": "task_created",
+    "data": {
+      "taskId": 93,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:20.026166"
+  },
+  {
+    "id": 433,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:20.056028"
+  },
+  {
+    "id": 434,
+    "event": "task_completed",
+    "data": {
+      "taskId": 93,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.795141,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:20.797168"
+  },
+  {
+    "id": 435,
+    "event": "task_created",
+    "data": {
+      "taskId": 94,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:20.851054"
+  },
+  {
+    "id": 436,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:20.867143"
+  },
+  {
+    "id": 437,
+    "event": "task_completed",
+    "data": {
+      "taskId": 94,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 1.106902,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:21.946274"
+  },
+  {
+    "id": 438,
+    "event": "task_created",
+    "data": {
+      "taskId": 95,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:07:21.999906"
+  },
+  {
+    "id": 439,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:07:22.057237"
+  },
+  {
+    "id": 440,
+    "event": "task_completed",
+    "data": {
+      "taskId": 95,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.961198,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:07:22.943098"
+  },
+  {
+    "id": 441,
+    "event": "workflow_advanced",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n14",
+      "status": "stopped"
+    },
+    "timestamp": "2026-04-15T17:07:23.001199"
+  },
+  {
+    "id": 442,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T17:20:46.515907"
+  },
+  {
+    "id": 443,
+    "event": "task_created",
+    "data": {
+      "taskId": 96,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:46.562565"
+  },
+  {
+    "id": 444,
+    "event": "task_completed",
+    "data": {
+      "taskId": 96,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.297387,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:47.828368"
+  },
+  {
+    "id": 445,
+    "event": "task_created",
+    "data": {
+      "taskId": 97,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:47.873018"
+  },
+  {
+    "id": 446,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:47.902696"
+  },
+  {
+    "id": 447,
+    "event": "task_completed",
+    "data": {
+      "taskId": 97,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.752572,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:48.614708"
+  },
+  {
+    "id": 448,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:20:48.659296"
+  },
+  {
+    "id": 449,
+    "event": "task_created",
+    "data": {
+      "taskId": 98,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:49.453235"
+  },
+  {
+    "id": 450,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:49.496757"
+  },
+  {
+    "id": 451,
+    "event": "task_completed",
+    "data": {
+      "taskId": 98,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.733191,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:50.183524"
+  },
+  {
+    "id": 452,
+    "event": "task_created",
+    "data": {
+      "taskId": 99,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:50.228841"
+  },
+  {
+    "id": 453,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:50.270355"
+  },
+  {
+    "id": 454,
+    "event": "task_completed",
+    "data": {
+      "taskId": 99,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.547191,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:50.762512"
+  },
+  {
+    "id": 455,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:20:50.829437"
+  },
+  {
+    "id": 456,
+    "event": "task_created",
+    "data": {
+      "taskId": 100,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:51.430849"
+  },
+  {
+    "id": 457,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:51.483813"
+  },
+  {
+    "id": 458,
+    "event": "task_completed",
+    "data": {
+      "taskId": 100,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.820582,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:52.250204"
+  },
+  {
+    "id": 459,
+    "event": "task_created",
+    "data": {
+      "taskId": 101,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:52.311985"
+  },
+  {
+    "id": 460,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:52.348002"
+  },
+  {
+    "id": 461,
+    "event": "task_completed",
+    "data": {
+      "taskId": 101,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.796322,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:53.070953"
+  },
+  {
+    "id": 462,
+    "event": "task_created",
+    "data": {
+      "taskId": 102,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:53.117933"
+  },
+  {
+    "id": 463,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:53.146832"
+  },
+  {
+    "id": 464,
+    "event": "task_completed",
+    "data": {
+      "taskId": 102,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.725497,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:53.832145"
+  },
+  {
+    "id": 465,
+    "event": "task_created",
+    "data": {
+      "taskId": 103,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:20:53.892537"
+  },
+  {
+    "id": 466,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:20:53.925380"
+  },
+  {
+    "id": 467,
+    "event": "task_completed",
+    "data": {
+      "taskId": 103,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.631311,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:20:54.522286"
+  },
+  {
+    "id": 468,
+    "event": "workflow_completed",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "executedCount": 15
+    },
+    "timestamp": "2026-04-15T17:20:54.580556"
+  },
+  {
+    "id": 469,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T17:28:32.356499"
+  },
+  {
+    "id": 470,
+    "event": "task_created",
+    "data": {
+      "taskId": 104,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:32.418316"
+  },
+  {
+    "id": 471,
+    "event": "task_completed",
+    "data": {
+      "taskId": 104,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 6.79244,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:39.171826"
+  },
+  {
+    "id": 472,
+    "event": "task_created",
+    "data": {
+      "taskId": 105,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:39.255420"
+  },
+  {
+    "id": 473,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:39.302864"
+  },
+  {
+    "id": 474,
+    "event": "task_completed",
+    "data": {
+      "taskId": 105,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 1.210196,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:40.460926"
+  },
+  {
+    "id": 475,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:28:40.530907"
+  },
+  {
+    "id": 476,
+    "event": "task_created",
+    "data": {
+      "taskId": 106,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:41.612963"
+  },
+  {
+    "id": 477,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:41.676971"
+  },
+  {
+    "id": 478,
+    "event": "task_completed",
+    "data": {
+      "taskId": 106,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.69093,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:42.302784"
+  },
+  {
+    "id": 479,
+    "event": "task_created",
+    "data": {
+      "taskId": 107,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:42.364641"
+  },
+  {
+    "id": 480,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:42.419981"
+  },
+  {
+    "id": 481,
+    "event": "task_completed",
+    "data": {
+      "taskId": 107,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.922115,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:43.284927"
+  },
+  {
+    "id": 482,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:28:43.346236"
+  },
+  {
+    "id": 483,
+    "event": "task_created",
+    "data": {
+      "taskId": 108,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:44.196543"
+  },
+  {
+    "id": 484,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:44.234023"
+  },
+  {
+    "id": 485,
+    "event": "task_completed",
+    "data": {
+      "taskId": 108,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.924121,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:45.119208"
+  },
+  {
+    "id": 486,
+    "event": "task_created",
+    "data": {
+      "taskId": 109,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:45.169907"
+  },
+  {
+    "id": 487,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:45.219987"
+  },
+  {
+    "id": 488,
+    "event": "task_completed",
+    "data": {
+      "taskId": 109,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.620739,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:45.777787"
+  },
+  {
+    "id": 489,
+    "event": "task_created",
+    "data": {
+      "taskId": 110,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:45.860511"
+  },
+  {
+    "id": 490,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:45.948466"
+  },
+  {
+    "id": 491,
+    "event": "task_completed",
+    "data": {
+      "taskId": 110,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.630809,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:46.477039"
+  },
+  {
+    "id": 492,
+    "event": "task_created",
+    "data": {
+      "taskId": 111,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:28:46.657633"
+  },
+  {
+    "id": 493,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:28:46.757569"
+  },
+  {
+    "id": 494,
+    "event": "task_completed",
+    "data": {
+      "taskId": 111,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 1.167874,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:28:47.801255"
+  },
+  {
+    "id": 495,
+    "event": "workflow_completed",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "executedCount": 15
+    },
+    "timestamp": "2026-04-15T17:28:47.868915"
+  },
+  {
+    "id": 496,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T17:29:00.374771"
+  },
+  {
+    "id": 497,
+    "event": "task_created",
+    "data": {
+      "taskId": 112,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:00.435789"
+  },
+  {
+    "id": 498,
+    "event": "task_completed",
+    "data": {
+      "taskId": 112,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 1.532206,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:01.946395"
+  },
+  {
+    "id": 499,
+    "event": "task_created",
+    "data": {
+      "taskId": 113,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:02.000687"
+  },
+  {
+    "id": 500,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:02.050842"
+  },
+  {
+    "id": 501,
+    "event": "task_completed",
+    "data": {
+      "taskId": 113,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.579228,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:02.567874"
+  },
+  {
+    "id": 502,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:29:02.642693"
+  },
+  {
+    "id": 503,
+    "event": "task_created",
+    "data": {
+      "taskId": 114,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:03.336099"
+  },
+  {
+    "id": 504,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:03.378541"
+  },
+  {
+    "id": 505,
+    "event": "task_completed",
+    "data": {
+      "taskId": 114,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.637502,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:03.972510"
+  },
+  {
+    "id": 506,
+    "event": "task_created",
+    "data": {
+      "taskId": 115,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:04.061088"
+  },
+  {
+    "id": 507,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:04.106458"
+  },
+  {
+    "id": 508,
+    "event": "task_completed",
+    "data": {
+      "taskId": 115,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.503782,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:04.564391"
+  },
+  {
+    "id": 509,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:29:04.781135"
+  },
+  {
+    "id": 510,
+    "event": "task_created",
+    "data": {
+      "taskId": 116,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:05.476170"
+  },
+  {
+    "id": 511,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:05.543917"
+  },
+  {
+    "id": 512,
+    "event": "task_completed",
+    "data": {
+      "taskId": 116,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.635699,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:06.109802"
+  },
+  {
+    "id": 513,
+    "event": "task_created",
+    "data": {
+      "taskId": 117,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:06.232290"
+  },
+  {
+    "id": 514,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:06.290385"
+  },
+  {
+    "id": 515,
+    "event": "task_completed",
+    "data": {
+      "taskId": 117,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.637663,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:06.810296"
+  },
+  {
+    "id": 516,
+    "event": "task_created",
+    "data": {
+      "taskId": 118,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:06.968053"
+  },
+  {
+    "id": 517,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:07.035671"
+  },
+  {
+    "id": 518,
+    "event": "task_completed",
+    "data": {
+      "taskId": 118,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.898924,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:07.841127"
+  },
+  {
+    "id": 519,
+    "event": "task_created",
+    "data": {
+      "taskId": 119,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:29:07.942915"
+  },
+  {
+    "id": 520,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:29:08.032712"
+  },
+  {
+    "id": 521,
+    "event": "task_completed",
+    "data": {
+      "taskId": 119,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.720006,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:29:08.653360"
+  },
+  {
+    "id": 522,
+    "event": "workflow_completed",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "executedCount": 15
+    },
+    "timestamp": "2026-04-15T17:29:08.772229"
+  },
+  {
+    "id": 523,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T17:31:03.405476"
+  },
+  {
+    "id": 524,
+    "event": "task_created",
+    "data": {
+      "taskId": 120,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:03.441071"
+  },
+  {
+    "id": 525,
+    "event": "task_completed",
+    "data": {
+      "taskId": 120,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 3.145718,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:06.567966"
+  },
+  {
+    "id": 526,
+    "event": "task_created",
+    "data": {
+      "taskId": 121,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:06.616814"
+  },
+  {
+    "id": 527,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:06.647194"
+  },
+  {
+    "id": 528,
+    "event": "task_completed",
+    "data": {
+      "taskId": 121,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.720256,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:07.336095"
+  },
+  {
+    "id": 529,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:31:07.382623"
+  },
+  {
+    "id": 530,
+    "event": "task_created",
+    "data": {
+      "taskId": 122,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:08.165826"
+  },
+  {
+    "id": 531,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n5",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:08.186603"
+  },
+  {
+    "id": 532,
+    "event": "task_completed",
+    "data": {
+      "taskId": 122,
+      "opportunityId": 1,
+      "nodeId": "n5",
+      "label": "Registrar Aprovacao",
+      "completedBy": null,
+      "durationSeconds": 0.659232,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:08.822493"
+  },
+  {
+    "id": 533,
+    "event": "task_created",
+    "data": {
+      "taskId": 123,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:08.877573"
+  },
+  {
+    "id": 534,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:08.908956"
+  },
+  {
+    "id": 535,
+    "event": "task_completed",
+    "data": {
+      "taskId": 123,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 0.625857,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:09.491673"
+  },
+  {
+    "id": 536,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:31:09.586433"
+  },
+  {
+    "id": 537,
+    "event": "task_created",
+    "data": {
+      "taskId": 124,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:10.217086"
+  },
+  {
+    "id": 538,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n9",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:10.270936"
+  },
+  {
+    "id": 539,
+    "event": "task_completed",
+    "data": {
+      "taskId": 124,
+      "opportunityId": 1,
+      "nodeId": "n9",
+      "label": "Atualizar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.882263,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:11.099159"
+  },
+  {
+    "id": 540,
+    "event": "task_created",
+    "data": {
+      "taskId": 125,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:11.171721"
+  },
+  {
+    "id": 541,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:11.204045"
+  },
+  {
+    "id": 542,
+    "event": "task_completed",
+    "data": {
+      "taskId": 125,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.664071,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:11.834400"
+  },
+  {
+    "id": 543,
+    "event": "task_created",
+    "data": {
+      "taskId": 126,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:11.902123"
+  },
+  {
+    "id": 544,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:11.947747"
+  },
+  {
+    "id": 545,
+    "event": "task_completed",
+    "data": {
+      "taskId": 126,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.498638,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:12.400123"
+  },
+  {
+    "id": 546,
+    "event": "task_created",
+    "data": {
+      "taskId": 127,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:12.513587"
+  },
+  {
+    "id": 547,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:12.610884"
+  },
+  {
+    "id": 548,
+    "event": "task_completed",
+    "data": {
+      "taskId": 127,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.581247,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:13.051935"
+  },
+  {
+    "id": 549,
+    "event": "workflow_completed",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "executedCount": 15
+    },
+    "timestamp": "2026-04-15T17:31:13.167440"
+  },
+  {
+    "id": 550,
+    "event": "workflow_started",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "status": "paused"
+    },
+    "timestamp": "2026-04-15T17:31:35.654433"
+  },
+  {
+    "id": 551,
+    "event": "task_created",
+    "data": {
+      "taskId": 128,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:35.721249"
+  },
+  {
+    "id": 552,
+    "event": "task_completed",
+    "data": {
+      "taskId": 128,
+      "opportunityId": 1,
+      "nodeId": "n1",
+      "label": "Solicitar compra",
+      "completedBy": null,
+      "durationSeconds": 2.284329,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:37.963508"
+  },
+  {
+    "id": 553,
+    "event": "task_created",
+    "data": {
+      "taskId": 129,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:38.032738"
+  },
+  {
+    "id": 554,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n3",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:38.078013"
+  },
+  {
+    "id": 555,
+    "event": "task_completed",
+    "data": {
+      "taskId": 129,
+      "opportunityId": 1,
+      "nodeId": "n3",
+      "label": "Analisar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.808707,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:38.825768"
+  },
+  {
+    "id": 556,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n4",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:31:38.958861"
+  },
+  {
+    "id": 557,
+    "event": "task_created",
+    "data": {
+      "taskId": 130,
+      "opportunityId": 1,
+      "nodeId": "n6",
+      "label": "Rejeitar Pedido",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:39.929727"
+  },
+  {
+    "id": 558,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n6",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:39.993936"
+  },
+  {
+    "id": 559,
+    "event": "task_completed",
+    "data": {
+      "taskId": 130,
+      "opportunityId": 1,
+      "nodeId": "n6",
+      "label": "Rejeitar Pedido",
+      "completedBy": null,
+      "durationSeconds": 0.844466,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:40.773067"
+  },
+  {
+    "id": 560,
+    "event": "task_created",
+    "data": {
+      "taskId": 131,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:40.835788"
+  },
+  {
+    "id": 561,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n7",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:40.892792"
+  },
+  {
+    "id": 562,
+    "event": "task_completed",
+    "data": {
+      "taskId": 131,
+      "opportunityId": 1,
+      "nodeId": "n7",
+      "label": "Validar orcamento",
+      "completedBy": null,
+      "durationSeconds": 1.124152,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:41.944159"
+  },
+  {
+    "id": 563,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n8",
+      "pausedReason": "decision"
+    },
+    "timestamp": "2026-04-15T17:31:42.002775"
+  },
+  {
+    "id": 564,
+    "event": "task_created",
+    "data": {
+      "taskId": 132,
+      "opportunityId": 1,
+      "nodeId": "n10",
+      "label": "Rejeitar Orcamento",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:44.188806"
+  },
+  {
+    "id": 565,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n10",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:44.211390"
+  },
+  {
+    "id": 566,
+    "event": "task_completed",
+    "data": {
+      "taskId": 132,
+      "opportunityId": 1,
+      "nodeId": "n10",
+      "label": "Rejeitar Orcamento",
+      "completedBy": null,
+      "durationSeconds": 1.152183,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:45.338117"
+  },
+  {
+    "id": 567,
+    "event": "task_created",
+    "data": {
+      "taskId": 133,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:45.392967"
+  },
+  {
+    "id": 568,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n11",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:45.457269"
+  },
+  {
+    "id": 569,
+    "event": "task_completed",
+    "data": {
+      "taskId": 133,
+      "opportunityId": 1,
+      "nodeId": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 1.728413,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:47.092162"
+  },
+  {
+    "id": 570,
+    "event": "task_created",
+    "data": {
+      "taskId": 134,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:47.148926"
+  },
+  {
+    "id": 571,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n13",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:47.192141"
+  },
+  {
+    "id": 572,
+    "event": "task_completed",
+    "data": {
+      "taskId": 134,
+      "opportunityId": 1,
+      "nodeId": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "completedBy": null,
+      "durationSeconds": 0.786344,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:47.922693"
+  },
+  {
+    "id": 573,
+    "event": "task_created",
+    "data": {
+      "taskId": 135,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "assignee": "Renan",
+      "assignedRole": null
+    },
+    "timestamp": "2026-04-15T17:31:48.000986"
+  },
+  {
+    "id": 574,
+    "event": "workflow_paused",
+    "data": {
+      "opportunityId": 1,
+      "currentNodeId": "n15",
+      "pausedReason": "user_input"
+    },
+    "timestamp": "2026-04-15T17:31:48.065773"
+  },
+  {
+    "id": 575,
+    "event": "task_completed",
+    "data": {
+      "taskId": 135,
+      "opportunityId": 1,
+      "nodeId": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "completedBy": null,
+      "durationSeconds": 0.903796,
+      "slaBreached": false
+    },
+    "timestamp": "2026-04-15T17:31:48.903244"
+  },
+  {
+    "id": 576,
+    "event": "workflow_completed",
+    "data": {
+      "opportunityId": 1,
+      "bpmnVersion": 1,
+      "executedCount": 15
+    },
+    "timestamp": "2026-04-15T17:31:48.972799"
+  }
+]

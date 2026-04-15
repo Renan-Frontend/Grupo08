@@ -1,10 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import styles from './DataEditModal.module.css';
+import { parseSpreadsheet } from './parseSpreadsheet';
 
 const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) => {
   const [rows, setRows] = useState(() =>
     initialRows.map((r, i) => ({ ...r, _id: i }))
   );
+  const [importError, setImportError] = useState(null);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0];
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = '';
+    if (!file) return;
+    setImportError(null);
+    setImporting(true);
+    try {
+      const parsed = await parseSpreadsheet(file, columns);
+      setRows(parsed.map((r, i) => ({ ...r, _id: Date.now() + i })));
+    } catch (err) {
+      setImportError(err.message);
+    } finally {
+      setImporting(false);
+    }
+  };
 
   const updateCell = (idx, key, value) =>
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [key]: value } : r)));
@@ -74,6 +95,7 @@ const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) =
                     <td key={c.key} className={styles.td}>
                       {c.type === 'boolean' ? (
                         <select
+                          name={`cellBool_${idx}_${c.key}`}
                           value={String(row[c.key])}
                           onChange={(e) =>
                             updateCell(idx, c.key, e.target.value === 'true')
@@ -90,6 +112,7 @@ const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) =
                               ? 'number'
                               : 'text'
                           }
+                          name={`cellVal_${idx}_${c.key}`}
                           value={row[c.key] ?? ''}
                           onChange={(e) => updateCell(idx, c.key, e.target.value)}
                           className={styles.input}
@@ -119,10 +142,33 @@ const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) =
           </table>
         </div>
 
+        {importError && (
+          <div className={styles.importError}>{importError}</div>
+        )}
+
         <div className={styles.modalFooter}>
-          <button type="button" className={styles.addBtn} onClick={addRow}>
-            + Linha
-          </button>
+          <div className={styles.footerLeft}>
+            <button type="button" className={styles.addBtn} onClick={addRow}>
+              + Linha
+            </button>
+            <button
+              type="button"
+              className={styles.importBtn}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              title="Importar CSV ou Excel (.xlsx)"
+            >
+              {importing ? 'Importando…' : '📂 Importar planilha'}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              name="importFileModal"
+              accept=".csv,.xlsx,.xls"
+              style={{ display: 'none' }}
+              onChange={handleImport}
+            />
+          </div>
           <div className={styles.footerRight}>
             <button type="button" className={styles.cancelBtn} onClick={onClose}>
               Cancelar

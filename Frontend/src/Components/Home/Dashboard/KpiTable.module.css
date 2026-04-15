@@ -1,0 +1,192 @@
+.card {
+  background: white;
+  border-radius: 0.6rem;
+  padding: 1.25rem;
+  border: 1px solid #eef2f7;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: 1rem;
+  color: #0f172a;
+  font-weight: 700;
+  margin: 0;
+}
+
+.subtitle {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin: 0.15rem 0 0;
+}
+
+.editBtn {
+  background: none;
+  border: 1.5px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 7px;
+  cursor: pointer;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: border-color 120ms, background 120ms;
+}
+
+.editBtn:hover {
+  border-color: #2fa866;
+  background: #f0fdf4;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 0.4rem;
+  border: 1px solid #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  min-width: 800px;
+}
+
+.table thead {
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.table th {
+  padding: 0.5rem 0.6rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.thSticky {
+  composes: th from global;
+  text-align: left !important;
+  position: sticky;
+  left: 0;
+  background: #f8fafc;
+  z-index: 3;
+  min-width: 200px;
+  max-width: 280px;
+}
+
+.thMeta {
+  min-width: 60px;
+}
+
+.thTrend {
+  min-width: 42px;
+}
+
+.thMonth {
+  min-width: 60px;
+}
+
+.thMedia {
+  min-width: 65px;
+  font-weight: 700;
+}
+
+.table tbody tr {
+  transition: background 100ms;
+}
+
+.table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.table tbody tr:nth-child(even) {
+  background: #fafbfd;
+}
+
+.table tbody tr:nth-child(even):hover {
+  background: #f1f5f9;
+}
+
+.table td {
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: center;
+  color: #334155;
+}
+
+.tdName {
+  text-align: left !important;
+  position: sticky;
+  left: 0;
+  background: inherit;
+  z-index: 1;
+  font-weight: 500;
+  color: #0f172a;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tdMeta {
+  font-weight: 600;
+  color: #6366f1;
+}
+
+.tdTrend {
+  font-size: 1rem;
+}
+
+.trendUp { color: #16a34a; }
+.trendDown { color: #dc2626; }
+.trendNeutral { color: #94a3b8; }
+
+.tdVal {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.76rem;
+}
+
+.cellGreen {
+  background: #dcfce7 !important;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.cellRed {
+  background: #fee2e2 !important;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.cellYellow {
+  background: #fef9c3 !important;
+  color: #a16207;
+  font-weight: 500;
+}
+
+.tdMedia {
+  font-weight: 700;
+  color: #0f172a;
+  background: #f1f5f9 !important;
+}
+
+@media (max-width: 640px) {
+  .card { padding: 0.75rem; }
+  .table { font-size: 0.7rem; }
+  .thSticky, .tdName { min-width: 140px; max-width: 180px; }
+}

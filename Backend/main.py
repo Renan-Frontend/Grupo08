@@ -26,10 +26,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from app_utils import (
     now_iso,
     hash_password,
+    hash_password_bcrypt,
+    verify_password,
+    create_access_token,
+    create_refresh_token,
+    decode_jwt,
     is_valid_email,
     paginated_users_response,
     load_json,
     save_json,
+    get_role_permissions,
+    ROLE_PERMISSIONS,
 )
 from models import Oportunidade, UserOut, User, UserUpdate, Entidade, AuthRequest
 
@@ -696,11 +703,12 @@ def _normalize_gateway_type(value: Any, default: str = "xor") -> str:
 def _conditional_description_from_name(name: str) -> str:
     clean_name = " ".join(str(name or "").strip().strip("?").split())
     if not clean_name:
-        return "Avalia a condicao para decidir o proximo caminho do fluxo."
+        return "Ponto de decisao do processo."
 
-    first = clean_name[:1].lower()
-    remainder = clean_name[1:] if len(clean_name) > 1 else ""
-    return f"Verifica se {first}{remainder}."
+    # Extrair o assunto da decisão sem explicar caminhos SIM/NAO
+    # (o próprio BPMN já mostra os caminhos)
+    normalized = clean_name[:1].upper() + clean_name[1:] if clean_name else ""
+    return f"Decisao: {normalized}."
 
 
 def _infer_gateway_type_from_text(
@@ -827,7 +835,7 @@ def _build_non_data_stage_description(stage_type: str, stage_name: str, summary_
 
     if normalized_summary == normalized_detail:
         if normalized_type == "condicional":
-            return "Avalia a condição para decidir o próximo caminho do fluxo."
+            return f"Decisao: {summary}."
         return "Executa a atividade para avançar o processo."
 
     summary_tokens = {token for token in normalized_summary.split() if token}
@@ -838,7 +846,7 @@ def _build_non_data_stage_description(stage_type: str, stage_name: str, summary_
     # If summary and detail are semantically almost the same, keep only detail.
     if min_size > 0 and overlap >= min_size:
         if normalized_type == "condicional":
-            return "Avalia a condição para decidir o próximo caminho do fluxo."
+            return f"Decisao: {summary}."
         return "Executa a atividade para avançar o processo."
 
     return f"{summary}. {detail}"
@@ -1039,11 +1047,8 @@ def _ensure_bpmn_entity_nodes(
         except Exception:
             max_x = 120.0
 
-    # Limita a 1 node de entidade por BPMN para evitar canvas poluido
     added_count = 0
     for entity_name in entity_names:
-        if added_count >= 1:
-            break
         normalized = _normalize_ai_text(entity_name)
         if not normalized or normalized in existing_entity_names:
             continue
@@ -1061,7 +1066,7 @@ def _ensure_bpmn_entity_nodes(
                 "x": max_x + (added_count * 240),
                 "y": 120,
                 "info": "id",
-                "subtitle": "Entidade de dados",
+                "descricao": "Entidade de dados",
             }
         )
         stages.append(
@@ -1194,8 +1199,26 @@ def _auto_layout_bpmn_nodes(
     if not nodes:
         return nodes
 
-    # Se todos os nodes já têm posições pré-calculadas, respeita-as (layout direto pelo flowOrder)
+    # Se todos os nodes já têm posições pré-calculadas, resolve sobreposições e retorna
     if all("x" in n and "y" in n for n in nodes):
+        _CARD_W_OL = 220.0
+        _CARD_H_OL = 110.0
+        _PAD_X_OL  = 20.0
+        _PAD_Y_OL  = 20.0
+        _all = [n for n in nodes if str(n.get("id") or "")]
+        for _rnd in range(10):
+            _moved = False
+            _all.sort(key=lambda n: (round(float(n.get("x", 0)) / 50), float(n.get("y", 0))))
+            for _i in range(len(_all)):
+                for _j in range(_i + 1, len(_all)):
+                    _na, _nb = _all[_i], _all[_j]
+                    _ax, _ay = float(_na.get("x", 0)), float(_na.get("y", 0))
+                    _bx, _by = float(_nb.get("x", 0)), float(_nb.get("y", 0))
+                    if (abs(_ax - _bx) < _CARD_W_OL + _PAD_X_OL) and (abs(_ay - _by) < _CARD_H_OL + _PAD_Y_OL):
+                        _nb["y"] = _ay + _CARD_H_OL + _PAD_Y_OL
+                        _moved = True
+            if not _moved:
+                break
         return nodes
 
     node_ids = [str(n.get("id") or "") for n in nodes]
@@ -1326,6 +1349,98 @@ def _auto_layout_bpmn_nodes(
         node["x"], node["y"] = pos[nid]
 
     return nodes
+
+
+def _break_consecutive_entity_nodes(
+    nodes: list[dict[str, Any]],
+    connections: list[dict[str, Any]],
+    stages: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+    """Insert bridging task nodes between consecutive entity nodes.
+
+    When the AI places two or more entity (data) nodes in sequence without
+    any activity between them the resulting BPMN looks incorrect — entities
+    should be separated by at least one task/activity.  This pass walks the
+    connection graph and, for every edge A→B where both A and B are entity
+    nodes, inserts a synthetic task node between them.
+    """
+    if not nodes or not connections:
+        return nodes, connections, stages
+
+    node_type_map: dict[str, str] = {
+        str(n.get("id") or ""): str(n.get("nodeType") or "").strip().lower()
+        for n in nodes
+    }
+    node_map: dict[str, dict[str, Any]] = {
+        str(n.get("id") or ""): n for n in nodes
+    }
+
+    new_nodes: list[dict[str, Any]] = []
+    new_conns: list[dict[str, Any]] = []
+    new_stages: list[dict[str, Any]] = []
+    bridge_counter = 0
+
+    for conn in connections:
+        from_id = str(conn.get("from") or "")
+        to_id = str(conn.get("to") or "")
+        from_type = node_type_map.get(from_id, "")
+        to_type = node_type_map.get(to_id, "")
+
+        if from_type == "entidade" and to_type == "entidade":
+            bridge_counter += 1
+            from_node = node_map.get(from_id, {})
+            to_node = node_map.get(to_id, {})
+            from_label = str(from_node.get("entidadeNome") or from_node.get("label") or "").strip()
+            to_label = str(to_node.get("entidadeNome") or to_node.get("label") or "").strip()
+
+            bridge_id = f"ai-bridge-task-{bridge_counter}"
+            bridge_label = f"Processar {from_label}" if from_label else f"Atividade intermediaria {bridge_counter}"
+            bridge_desc = f"Atividade que processa {from_label} antes de {to_label}" if from_label and to_label else "Atividade intermediaria gerada automaticamente"
+
+            from_x = float(from_node.get("x") or 0)
+            to_x = float(to_node.get("x") or 0)
+            from_y = float(from_node.get("y") or 140)
+            to_y = float(to_node.get("y") or 140)
+
+            bridge_node: dict[str, Any] = {
+                "id": bridge_id,
+                "label": bridge_label,
+                "nodeType": "task",
+                "taskNome": bridge_label,
+                "taskDescricao": bridge_desc,
+                "x": (from_x + to_x) / 2,
+                "y": (from_y + to_y) / 2,
+                "info": str(from_node.get("info") or "").strip(),
+            }
+            new_nodes.append(bridge_node)
+            new_stages.append({
+                "id": bridge_id,
+                "nome": bridge_label,
+                "tipo": "task",
+                "participante": "",
+            })
+
+            # Replace original A→B connection with A→bridge and bridge→B
+            new_conns.append({
+                **conn,
+                "id": f"{conn.get('id', '')}-a",
+                "to": bridge_id,
+            })
+            new_conns.append({
+                "id": f"{conn.get('id', '')}-b",
+                "from": bridge_id,
+                "to": to_id,
+                "fromHandle": "right",
+                "toHandle": str(conn.get("toHandle") or "left"),
+                "decision": "",
+            })
+        else:
+            new_conns.append(conn)
+
+    if not new_nodes:
+        return nodes, connections, stages
+
+    return nodes + new_nodes, new_conns, stages + new_stages
 
 
 def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[str, Any]:
@@ -1463,7 +1578,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
         elif node_type == "condicional":
             raw_cond_name = str(raw_node.get("condicionalNome") or raw_label or label).strip()
             cond_name = _sanitize_node_name_by_type(raw_cond_name, "condicional", index)
-            cond_descricao = str(raw_node.get("condicionalDescricao") or raw_node.get("subtitle") or "").strip()
+            cond_descricao = str(raw_node.get("condicionalDescricao") or raw_node.get("descricao") or raw_node.get("subtitle") or "").strip()
 
             if _is_generic_conditional_label(cond_name):
                 cond_name = _sanitize_node_name_by_type(
@@ -1496,10 +1611,10 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 raw_node.get("tipoEntidade"),
                 default=inferred_type,
             )
-            raw_subtitle = str(raw_node.get("subtitle") or raw_node.get("descricao") or "").strip()
-            if not raw_subtitle:
-                raw_subtitle = _default_entity_description(label, node_payload.get("tipoEntidade", ""), "")
-            node_payload["subtitle"] = raw_subtitle
+            raw_desc = str(raw_node.get("descricao") or raw_node.get("subtitle") or "").strip()
+            if not raw_desc:
+                raw_desc = _default_entity_description(label, node_payload.get("tipoEntidade", ""), "")
+            node_payload["descricao"] = raw_desc
             # Preserva campos gerados pela IA
             raw_campos = raw_node.get("campos")
             if isinstance(raw_campos, list) and raw_campos:
@@ -1540,7 +1655,6 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             stage_participant = str(stage.get("participante") or "").strip()
             if stage_type == "dados":
                 node_payload["info"] = "id"
-                node_payload["subtitle"] = stage_name
                 node_payload["entidadeNome"] = _sanitize_node_name_by_type(
                     stage_participant or stage_name,
                     "entidade",
@@ -1561,7 +1675,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                         "condicional",
                         index,
                     )
-                node_payload["subtitle"] = desc
+                node_payload["descricao"] = desc
                 node_payload["condicionalNome"] = cond_name
                 node_payload["condicionalDescricao"] = desc
                 node_payload["gatewayType"] = _infer_gateway_type_from_text(
@@ -1574,7 +1688,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                     node_payload["info"] = f"Raia: {stage_participant}"
                 task_name = _build_non_data_stage_name("task", stage_name, index)
                 desc = _build_non_data_stage_description("task", stage_name, task_name)
-                node_payload["subtitle"] = desc
+                node_payload["descricao"] = desc
                 node_payload["taskNome"] = task_name
                 node_payload["taskDescricao"] = desc
 
@@ -1671,7 +1785,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
         conditional_node = node_lookup.get(conditional_node_id)
         gateway_type = _infer_gateway_type_from_text(
             str((conditional_node or {}).get("condicionalNome") or (conditional_node or {}).get("label") or ""),
-            str((conditional_node or {}).get("condicionalDescricao") or (conditional_node or {}).get("subtitle") or ""),
+            str((conditional_node or {}).get("condicionalDescricao") or (conditional_node or {}).get("descricao") or (conditional_node or {}).get("subtitle") or ""),
             outgoing_count=len(unique_targets),
             explicit_gateway=(conditional_node or {}).get("gatewayType") if conditional_node else "",
         )
@@ -1782,6 +1896,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             task_description = str(
                 node.get("taskDescricao")
                 or node.get("condicionalDescricao")
+                or node.get("descricao")
                 or node.get("subtitle")
                 or ""
             ).strip()
@@ -1825,6 +1940,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             )
 
     nodes, connections = _ensure_terminal_end_node(nodes, connections, fallback_id)
+    nodes, connections, stages = _break_consecutive_entity_nodes(nodes, connections, stages)
     nodes = _auto_layout_bpmn_nodes(nodes, connections)
 
     return {
@@ -2444,13 +2560,13 @@ def _ensure_entity_actions(
     )
 
     entity_actions_to_add: list[dict[str, Any]] = []
-    # Se já há 3 ou mais create_entidade no plano, não adiciona mais
-    if len(existing_create_entities) >= 3:
+    max_entities = len(suggested_entities)
+    if len(existing_create_entities) >= max_entities:
         for index, action in enumerate(sanitized_actions, start=1):
             action["id"] = f"a{index}"
         return sanitized_actions
 
-    needed = 3 - len(existing_create_entities)
+    needed = max_entities - len(existing_create_entities)
     candidate_entities_limited = [c for c in suggested_entities if str(c or "").strip()][:needed]
     full_reference_list = _dedupe_preserve_order([*existing_create_entities, *candidate_entities_limited])
 
@@ -2751,12 +2867,12 @@ def _build_bpmn_payload_from_bpmn_ia_process(process_name: str, process_elements
             node_payload["condicionalNome"] = label
             node_payload["condicionalDescricao"] = cond_desc
             node_payload["gatewayType"] = _gateway_type_from_bpmn_ia_type(raw_type)
-            node_payload["subtitle"] = cond_desc
+            node_payload["descricao"] = cond_desc
         else:
             task_desc = _activity_description_from_text(raw_label, len(nodes) + 1)
             node_payload["taskNome"] = label
             node_payload["taskDescricao"] = task_desc
-            node_payload["subtitle"] = task_desc
+            node_payload["descricao"] = task_desc
 
         nodes.append(node_payload)
         stages.append(
@@ -3072,7 +3188,7 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "(1) O campo 'descricao' e OBRIGATORIO em todo elemento — jamais deixe vazio, nulo ou use 'Gerada por IA'. "
         "(2) ENTIDADE: descreva quem usa a entidade, quando ela e criada/atualizada e qual papel ela cumpre no processo (minimo 1 frase completa). "
         "(3) ATIVIDADE: descreva o que acontece neste passo, quem executa e qual o resultado esperado (minimo 1 frase completa). "
-        "(4) CONDICIONAL: descreva qual criterio e avaliado, quem decide e o que diferencia o caminho SIM do NAO (minimo 1 frase completa). "
+        "(4) CONDICIONAL: descreva qual criterio e avaliado e quem decide (minimo 1 frase completa). NAO explique os caminhos SIM/NAO, o diagrama ja mostra isso. "
         "(5) NUNCA repita nem parafraseie o nome na descricao. "
         "(6) PROIBIDO iniciar com: 'Entidade do processo:', 'Entidade de', 'Representa a entidade', 'Atividade que', 'Condicional que'. "
         "Exemplo ERRADO: nome='Cliente', descricao='Cliente'. "
@@ -3080,7 +3196,7 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "Exemplo ERRADO: nome='Aprovado?', descricao='Verifica aprovacao'. "
         "Exemplo CORRETO (entidade): nome='Cliente', descricao='Pessoa ou empresa que solicita o servico; seus dados sao registrados no inicio do processo e consultados em cada etapa de aprovacao'. "
         "Exemplo CORRETO (atividade): nome='Analisar Pedido', descricao='Responsavel verifica se o pedido atende as politicas internas de prazo e orcamento antes de seguir para aprovacao'. "
-        "Exemplo CORRETO (condicional): nome='Aprovado?', descricao='Gestor avalia se o pedido atende aos criterios financeiros e de prazo; caminho SIM segue para execucao, caminho NAO retorna para revisao'. "
+        "Exemplo CORRETO (condicional): nome='Aprovado?', descricao='Gestor avalia se o pedido atende aos criterios financeiros e de prazo'. "
         "TIPO DA ENTIDADE (campo tipoEntidade): escolha com cuidado — nao use sempre 'apoio'. "
         "  - 'principal': entidade central do processo, geralmente o objeto que inicia e conduz o fluxo (ex: Pedido, Contrato, Solicitacao). "
         "  - 'apoio': entidade de suporte ou referencia usada pelo processo mas nao e o objeto central (ex: Cliente, Fornecedor, Funcionario). "
@@ -3088,10 +3204,11 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "  - 'externa': entidade que pertence a um sistema externo ou dominio fora do processo (ex: NFe, Boleto, EmailExterior). "
         "Identifique o tipo correto com base no papel da entidade no processo descrito. "
         "Quando houver condicional (XOR), gere ramos com sentido de negocio (sim/nao) e evite decisao sem bifurcacao real. "
+        "NUNCA coloque duas condicionais consecutivas no flowOrder — sempre insira pelo menos uma atividade (task) entre duas condicionais. "
         "Sempre inclua acoes para oportunidade e update_bpmn_state com payload completo (nodes, connections, stages). "
         "Use somente tipos suportados no BPMN: task, condicional e entidade. "
-        "IMPORTANTE: gere NO MAXIMO 3 acoes do tipo create_entidade — priorize as entidades principais e de apoio do processo. "
-        "No BPMN (update_bpmn_state), inclua NO MAXIMO 1 node do tipo entidade no diagrama — apenas a entidade central que o fluxo produz ou consome."
+        "IMPORTANTE: gere uma acao create_entidade para CADA entidade sugerida pelo usuario (suggestedEntityNames) — nao omita nenhuma. "
+        "No BPMN (update_bpmn_state), inclua nodes do tipo entidade para as entidades sugeridas pelo usuario."
     )
 
     user_prompt = {
@@ -3125,7 +3242,7 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
             ],
         },
         "constraints": {
-            "maxActions": 4,
+            "maxActions": 2 + len(suggested_entities),
             "requiresHumanApproval": True,
             "nameMaxLengths": {
                 "entityName": AI_ENTITY_NAME_MAX_LENGTH,
@@ -3184,14 +3301,17 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         if action:
             sanitized_actions.append(action)
 
-    # Mantém no máximo 3 create_entidade
-    entidade_count = 0
+    # Dedup create_entidade por nome (sem limite de quantidade)
+    _seen_entity_names: set[str] = set()
     filtered_actions: list[dict[str, Any]] = []
     for _a in sanitized_actions:
         if str(_a.get("type") or "") == "create_entidade":
-            if entidade_count >= 3:
+            _ename = (_a.get("payload") or {}).get("nome") or ""
+            _ekey = str(_ename).strip().lower()
+            if _ekey and _ekey in _seen_entity_names:
                 continue
-            entidade_count += 1
+            if _ekey:
+                _seen_entity_names.add(_ekey)
         filtered_actions.append(_a)
     sanitized_actions = filtered_actions
 
@@ -3552,17 +3672,72 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
                 return t
         return ""
 
+    # Nomes proibidos: nunca devem aparecer como nodes autônomos
+    _FORBIDDEN_NAMES = {"sim", "nao", "não", "yes", "no", "true", "false"}
+
     typed_flow_order = []
     for raw_item in flow_order_raw:
         name = _fo_name(raw_item)
         if not name:
+            continue
+        if name.lower().strip() in _FORBIDDEN_NAMES:
             continue
         fo_type = _fo_type(raw_item) or _classify_flow_item(name)
         desc = _fo_desc(raw_item)
         entry: dict[str, Any] = {"name": name, "type": fo_type}
         if desc:
             entry["desc"] = desc
+        # Preserva branches (sim/nao) se a IA/plan forneceu
+        if isinstance(raw_item, dict) and isinstance(raw_item.get("branches"), dict):
+            entry["branches"] = {
+                "sim": str(raw_item["branches"].get("sim") or "").strip(),
+                "nao": str(raw_item["branches"].get("nao") or "").strip(),
+            }
         typed_flow_order.append(entry)
+
+    # ---------------------------------------------------------------
+    # Garante que toda condicional tenha um nó NAO dedicado no flowOrder.
+    # Se a IA não incluiu, cria automaticamente baseado no contexto.
+    # O nó NAO é inserido logo após o nó SIM (próximo item após a condicional).
+    # ---------------------------------------------------------------
+    _existing_names = {it["name"].lower() for it in typed_flow_order}
+    _insertions: list[tuple[int, dict]] = []  # (insert_after_index, new_item)
+    for _ci, _cfo in enumerate(typed_flow_order):
+        if _cfo.get("type") != "condicional":
+            continue
+        _br = _cfo.get("branches") or {}
+        _nao_name = (_br.get("nao") or "").strip()
+        # Verifica se o NAO target já existe no flowOrder
+        if _nao_name and _nao_name.lower() in _existing_names:
+            continue
+        # Gera nome descritivo para o nó NAO
+        _cond_label = _cfo["name"].rstrip("?").strip()
+        _nao_label = _nao_name if _nao_name else ""
+        # Se vazio ou genérico, cria com base no contexto da condicional
+        if not _nao_label:
+            # Tenta extrair contexto: "Pedido aprovado?" → "Rejeitar Pedido"
+            _cond_words = [w for w in _cond_label.split() if w.lower() not in ("é", "está", "foi", "o", "a", "os", "as")]
+            if len(_cond_words) >= 2:
+                _nao_label = f"Rejeitar {_cond_words[0]}"
+            elif _cond_words:
+                _nao_label = f"Tratar {_cond_words[0]}"
+            else:
+                _nao_label = "Tratar rejeição"
+        # Evita duplicatas
+        if _nao_label.lower() in _existing_names:
+            _nao_label = f"{_nao_label} (NAO)"
+        # Insere logo após o SIM (que é o próximo item depois da condicional)
+        _insert_pos = _ci + 2 if _ci + 1 < len(typed_flow_order) else _ci + 1
+        _nao_item: dict[str, Any] = {"name": _nao_label, "type": "task", "desc": f"Caminho alternativo quando a condição '{_cfo['name']}' não é atendida."}
+        _insertions.append((_insert_pos, _nao_item))
+        # Atualiza branches da condicional
+        _cfo.setdefault("branches", {})
+        _cfo["branches"]["nao"] = _nao_label
+        _existing_names.add(_nao_label.lower())
+
+    # Aplica as inserções de trás para frente (para não invalidar índices)
+    for _ins_pos, _ins_item in reversed(_insertions):
+        typed_flow_order.insert(_ins_pos, _ins_item)
 
     # Few-shot example: ensina o Groq com um exemplo concreto de input → output
     _fs_input = json.dumps({
@@ -3613,7 +3788,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             {"id": "c2", "from": "n2", "to": "n3", "fromHandle": "right", "toHandle": "left", "decision": ""},
             {"id": "c3", "from": "n3", "to": "n4", "fromHandle": "right", "toHandle": "left", "decision": ""},
             {"id": "c4", "from": "n4", "to": "n5", "fromHandle": "bottom", "toHandle": "left", "decision": "nao"},
-            {"id": "c5", "from": "n5", "to": "n6", "fromHandle": "right", "toHandle": "left", "decision": ""},
+            {"id": "c5", "from": "n5", "to": "n7", "fromHandle": "right", "toHandle": "left", "decision": ""},
             {"id": "c6", "from": "n4", "to": "n7", "fromHandle": "right", "toHandle": "left", "decision": "sim"},
             {"id": "c7", "from": "n7", "to": "n8", "fromHandle": "right", "toHandle": "left", "decision": ""},
             {"id": "c8", "from": "n8", "to": "n9", "fromHandle": "right", "toHandle": "left", "decision": ""},
@@ -3626,26 +3801,33 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         "REGRAS FUNDAMENTAIS:\n"
         "- 'flowOrder' é uma lista de objetos {name, type, desc} que define EXATAMENTE a sequência e o tipo de cada node.\n"
         "- Crie UM node por item de flowOrder. Use item.name como label e item.type como nodeType. NAO invente nomes.\n"
-        "- Use item.desc como taskDescricao (tasks) ou condicionalDescricao (condicionais) ou subtitle (entidades). O campo desc e OBRIGATORIO — nunca deixe vazio.\n\n"
+        "- CADA node DEVE ter uma descricao contextual obrigatoria:\n"
+        "  * tasks: campo 'taskDescricao' — descreva o que a atividade faz no processo.\n"
+        "  * condicionais: campo 'condicionalDescricao' — descreva brevemente O QUE esta sendo avaliado (ex: 'Analise do valor e prazo do pedido'). NAO explique os caminhos SIM/NAO, o diagrama ja mostra isso.\n"
+        "  * entidades: campo 'descricao' — descreva o que o dado representa no processo.\n"
+        "- A descricao NUNCA deve repetir o nome do node. Descreva o proposito ou funcao do elemento.\n"
+        "- Se item.desc existir no flowOrder, use-o. Se nao, INVENTE uma descricao curta e relevante baseada no contexto do processo.\n\n"
 
         "PASSO 1 - GERACAO DOS NODES:\n"
         "1. Para cada item em flowOrder, crie um node: label=item.name, nodeType=item.type.\n"
-        "2. NUNCA altere os nomes. NUNCA crie nodes com label 'Sim' ou 'Nao'.\n\n"
+        "2. NUNCA altere os nomes. NUNCA crie nodes com label 'Sim' ou 'Nao'.\n"
+        "   NUNCA coloque duas condicionais consecutivas — sempre deve haver pelo menos uma task entre condicionais.\n\n"
 
         "PASSO 2 - CONEXOES:\n"
         "3. Conecte os nodes em ordem baseada no flowOrder: fromHandle='right', toHandle='left', decision='', label=''.\n"
         "4. Quando nodeType='condicional', crie DUAS conexoes de saida:\n"
         "   - Caminho aprovado: decision='sim', label='\u2714', fromHandle='right', toHandle='left'\n"
         "   - Caminho reprovado: decision='nao', label='\u2718', fromHandle='bottom', toHandle='left'\n"
-        "5. O proximo node na sequencia recebe o caminho SIM (\u2714). O node alternativo recebe o caminho NAO (\u2718).\n\n"
+        "5. O proximo node na sequencia recebe o caminho SIM (\u2714). O node alternativo recebe o caminho NAO (\u2718).\n"
+        "6. IMPORTANTE: O caminho NAO NUNCA deve ser um beco sem saida. Apos o(s) node(s) do caminho NAO, crie uma conexao de volta ao proximo node do caminho SIM (merge/convergencia). Assim ambos os caminhos continuam o processo.\n\n"
 
         "PASSO 3 - ENTIDADES:\n"
-        "6. Nodes com nodeType='entidade' representam dados produzidos/consumidos por uma tarefa. Inclua NO MAXIMO 1 node de entidade no diagrama — apenas o objeto central do processo.\n"
-        "7. Formato de campo: {nome, tipo (texto|numero|email|booleano|data), obrigatorio (bool), keyType (PK|FK|NORMAL), relacionamento (null|nomeEntidade)}\n\n"
+        "7. Nodes com nodeType='entidade' representam dados produzidos/consumidos por uma tarefa. Inclua NO MAXIMO 1 node de entidade no diagrama — apenas o objeto central do processo.\n"
+        "8. Formato de campo: {nome, tipo (texto|numero|email|booleano|data), obrigatorio (bool), keyType (PK|FK|NORMAL), relacionamento (null|nomeEntidade)}\n\n"
 
         "FORMATO:\n"
-        "8. IDs de nodes: 'n1','n2',...; de connections: 'c1','c2',...\n"
-        "9. Retorne: {\"nodes\": [...], \"connections\": [...]}\n\n"
+        "9. IDs de nodes: 'n1','n2',...; de connections: 'c1','c2',...\n"
+        "10. Retorne: {\"nodes\": [...], \"connections\": [...]}\n\n"
 
         f"EXEMPLO INPUT:\n{_fs_input}\n\n"
         f"EXEMPLO OUTPUT:\n{_fs_output}"
@@ -3741,79 +3923,155 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
     def _build_direct_connections_from_fo(fo_list: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Constrói conexões a partir do typed_flow_order.
-        Se um condicional tem `branches: {sim: name, nao: name}`, usa isso diretamente.
-        Caso contrário, usa fallback posicional (item+1 = nao, item+2 = sim).
-        Itens que são destino de um ramo NAO não geram conexão sequencial para o próximo.
+
+        Padrão BPMN: condicional → SIM segue o fluxo sequencial, NAO vai para um nó lateral.
+        O nó lateral (NAO) é extraído do flowOrder e reconecta (merge) ao próximo nó do fluxo principal.
+
+        Regra fundamental: o elemento LOGO APÓS a condicional no flowOrder é o caminho SIM,
+        NUNCA o caminho NAO. O caminho NAO é buscado por branches.nao ou, em fallback,
+        é o SEGUNDO não-condicional após a condicional.
         """
         result: list[dict[str, Any]] = []
         n = len(fo_list)
+        conn_id = 0
 
-        # Monta índice nome→posição para resolução de branches por nome
-        name_to_idx: dict[str, int] = {fo["name"]: i for i, fo in enumerate(fo_list)}
+        def next_conn_id():
+            nonlocal conn_id
+            conn_id += 1
+            return f"c{conn_id}"
 
-        # Identifica índices que são destinos de ramo NAO — não participam da sequência principal
-        nao_target_indices: set[int] = set()
+        # ---------------------------------------------------------------
+        # 1. Identifica NAO targets para cada condicional
+        # ---------------------------------------------------------------
+        # Estratégia: para cada condicional, o NAO target é:
+        #   a) branches.nao se especificado pela IA e válido
+        #   b) Fallback: segundo nó não-condicional após a condicional
+        #      (o primeiro é o SIM, que fica no fluxo principal)
+        # ---------------------------------------------------------------
+        cond_nao_map: dict[int, int] = {}  # cond_idx → nao_target_idx
+        claimed_nao: set[int] = set()
+        name_to_idx_global = {f["name"]: j for j, f in enumerate(fo_list)}
+
         for i, fo in enumerate(fo_list):
             if fo.get("type") != "condicional":
                 continue
+
             br = fo.get("branches") or {}
-            nao_name = br.get("nao") or ""
-            if nao_name and nao_name in name_to_idx:
-                nao_target_indices.add(name_to_idx[nao_name])
-            elif not nao_name and i + 1 < n:
-                # fallback posicional: item imediatamente após é NAO
-                nao_target_indices.add(i + 1)
+            nao_name = (br.get("nao") or "").strip()
 
-        for i, fo in enumerate(fo_list):
-            ntype = fo.get("type", "task")
-            cur = f"n{i + 1}"
+            # Tenta usar branches.nao da IA
+            if nao_name and nao_name in name_to_idx_global:
+                target = name_to_idx_global[nao_name]
+                if fo_list[target].get("type") != "condicional" and target not in claimed_nao:
+                    cond_nao_map[i] = target
+                    claimed_nao.add(target)
+                    continue
 
-            if ntype == "condicional":
-                br = fo.get("branches") or {}
-                sim_name = br.get("sim") or ""
-                nao_name = br.get("nao") or ""
+            # Fallback: coleta TAREFAS (não entidades nem condicionais) entre
+            # esta condicional e a próxima. Só usa NAO se houver exatamente 2
+            # tarefas na faixa — caso contrário não há como distinguir NAO do
+            # fluxo principal sem branches explícitos.
+            next_cond_idx = n
+            for j in range(i + 1, n):
+                if fo_list[j].get("type") == "condicional":
+                    next_cond_idx = j
+                    break
 
-                # Resolve SIM — sai pela alça inferior (continua o fluxo para baixo)
-                sim_idx = name_to_idx.get(sim_name, i + 2) if sim_name else (i + 2 if i + 2 < n else None)
-                if sim_idx is not None and sim_idx < n:
-                    result.append({"id": f"c{i + 1}b", "from": cur, "to": f"n{sim_idx + 1}",
-                                   "fromHandle": "bottom", "toHandle": "top",
-                                   "decision": "sim", "label": "\u2714"})
+            tasks_in_range: list[int] = []
+            for j in range(i + 1, next_cond_idx):
+                if fo_list[j].get("type") == "task" and j not in claimed_nao:
+                    tasks_in_range.append(j)
 
-                # Resolve NAO — sai pela alça direita (ramo lateral)
-                nao_idx = name_to_idx.get(nao_name, i + 1) if nao_name else (i + 1 if i + 1 < n else None)
-                if nao_idx is not None and nao_idx < n:
-                    result.append({"id": f"c{i + 1}a", "from": cur, "to": f"n{nao_idx + 1}",
-                                   "fromHandle": "right", "toHandle": "left",
-                                   "decision": "nao", "label": "\u2718"})
-            elif i not in nao_target_indices:
-                # Conexão sequencial normal — de baixo para cima do próximo
-                if i + 1 < n:
-                    result.append({"id": f"c{i + 1}", "from": cur, "to": f"n{i + 2}",
-                                   "fromHandle": "bottom", "toHandle": "top",
-                                   "decision": "", "label": ""})
+            # Exatamente 2 tarefas: primeira = SIM, segunda = NAO
+            if len(tasks_in_range) == 2:
+                nao_target = tasks_in_range[1]
+            else:
+                continue  # Sem nó NAO dedicado identificável — pula
+
+            cond_nao_map[i] = nao_target
+            claimed_nao.add(nao_target)
+
+        all_nao_indices = set(cond_nao_map.values())
+
+        # ---------------------------------------------------------------
+        # 2. Main flow = todos os índices EXCETO os NAO targets
+        # ---------------------------------------------------------------
+        main_flow = [i for i in range(n) if i not in all_nao_indices]
+
+        # ---------------------------------------------------------------
+        # 3. Conexões sequenciais no main flow
+        # ---------------------------------------------------------------
+        for pos in range(len(main_flow) - 1):
+            cur_idx = main_flow[pos]
+            nxt_idx = main_flow[pos + 1]
+            cur_type = fo_list[cur_idx].get("type", "task")
+
+            if cur_type == "condicional":
+                # SIM goes to next in main flow
+                result.append({
+                    "id": next_conn_id(), "from": f"n{cur_idx + 1}", "to": f"n{nxt_idx + 1}",
+                    "fromHandle": "bottom", "toHandle": "top",
+                    "decision": "sim", "label": "\u2714"
+                })
+                # NAO goes to dedicated target
+                nao_idx = cond_nao_map.get(cur_idx)
+                if nao_idx is not None:
+                    result.append({
+                        "id": next_conn_id(), "from": f"n{cur_idx + 1}", "to": f"n{nao_idx + 1}",
+                        "fromHandle": "right", "toHandle": "left",
+                        "decision": "nao", "label": "\u2718"
+                    })
+                    # Merge: NAO target reconnects APÓS o SIM target no main flow
+                    # (2 posições adiante, para não cair no mesmo nó do SIM)
+                    merge_target_idx = nxt_idx  # fallback: mesmo que SIM
+                    if pos + 2 < len(main_flow):
+                        merge_target_idx = main_flow[pos + 2]
+                    result.append({
+                        "id": next_conn_id(), "from": f"n{nao_idx + 1}", "to": f"n{merge_target_idx + 1}",
+                        "fromHandle": "bottom", "toHandle": "right",
+                        "decision": "merge", "label": ""
+                    })
+            else:
+                result.append({
+                    "id": next_conn_id(), "from": f"n{cur_idx + 1}", "to": f"n{nxt_idx + 1}",
+                    "fromHandle": "bottom", "toHandle": "top",
+                    "decision": "", "label": ""
+                })
+
+        # Handle last conditional in main flow (if it's the last node)
+        if main_flow:
+            last_idx = main_flow[-1]
+            if fo_list[last_idx].get("type") == "condicional":
+                nao_idx = cond_nao_map.get(last_idx)
+                if nao_idx is not None:
+                    result.append({
+                        "id": next_conn_id(), "from": f"n{last_idx + 1}", "to": f"n{nao_idx + 1}",
+                        "fromHandle": "right", "toHandle": "left",
+                        "decision": "nao", "label": "\u2718"
+                    })
+
         return result
 
     def _build_node_from_fo(idx: int, fo: dict[str, Any]) -> dict[str, Any]:
         """Cria um node garantido com nome/tipo correto a partir de um item do typed_flow_order."""
         label = fo["name"]
         ntype = fo["type"]
-        desc = fo.get("desc", "")
+        desc = str(fo.get("desc") or "").strip()
         node: dict[str, Any] = {"id": f"n{idx + 1}", "label": label, "nodeType": ntype}
         if ntype == "entidade":
             node["campos"] = _default_entity_campos(label)
             node["entidadeNome"] = label
-            node.setdefault("subtitle", label)
+            node.setdefault("descricao", desc if desc and desc.lower() != label.lower() else "")
             node.setdefault("info", "id")
         elif ntype == "task":
             node["taskNome"] = label
-            node["taskDescricao"] = desc
-            node.setdefault("subtitle", "")
+            node["taskDescricao"] = desc if desc and desc.lower() != label.lower() else ""
+            node.setdefault("descricao", "")
             node.setdefault("info", "")
         elif ntype == "condicional":
             node["condicionalNome"] = label
-            node["condicionalDescricao"] = desc
-            node.setdefault("subtitle", "")
+            node["condicionalDescricao"] = desc if desc and desc.lower() != label.lower() else ""
+            node.setdefault("descricao", "")
             node.setdefault("gatewayType", "exclusivo")
         return node
 
@@ -3822,8 +4080,66 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         definitive_nodes = [_build_node_from_fo(i, fo) for i, fo in enumerate(typed_flow_order)]
         definitive_node_ids = {f"n{i + 1}" for i in range(len(typed_flow_order))}
 
+        # Enriquecer: mescla descrições geradas pelo Groq nos nós definitivos (sem duplicar nomes).
+        if groq_nodes:
+            _groq_by_norm: dict[str, dict[str, Any]] = {}
+            for _gn in groq_nodes:
+                _gl = _normalize_ai_text(str(_gn.get("label") or ""))
+                if _gl:
+                    _groq_by_norm[_gl] = _gn
+            for _dn in definitive_nodes:
+                _dl = _normalize_ai_text(str(_dn.get("label") or ""))
+                _label = str(_dn.get("label") or "")
+                _gn_match = _groq_by_norm.get(_dl)
+                if not _gn_match:
+                    continue
+                _nt = _dn.get("nodeType")
+                if _nt == "entidade":
+                    _cur = str(_dn.get("descricao") or "").strip()
+                    if not _cur or _cur.startswith("DESCREVA:"):
+                        _groq_val = str(_gn_match.get("descricao") or _gn_match.get("subtitle") or "").strip()
+                        if _groq_val and not _groq_val.startswith("DESCREVA:") and _groq_val.lower() != _label.lower():
+                            _dn["descricao"] = _groq_val
+                        else:
+                            _dn["descricao"] = ""
+                elif _nt == "task":
+                    _cur = str(_dn.get("taskDescricao") or "").strip()
+                    if not _cur or _cur.startswith("DESCREVA:"):
+                        _groq_val = str(_gn_match.get("taskDescricao") or "").strip()
+                        if _groq_val and not _groq_val.startswith("DESCREVA:") and _groq_val.lower() != _label.lower():
+                            _dn["taskDescricao"] = _groq_val
+                        else:
+                            _dn["taskDescricao"] = ""
+                elif _nt == "condicional":
+                    _cur = str(_dn.get("condicionalDescricao") or "").strip()
+                    if not _cur or _cur.startswith("DESCREVA:"):
+                        _groq_val = str(_gn_match.get("condicionalDescricao") or "").strip()
+                        if _groq_val and not _groq_val.startswith("DESCREVA:") and _groq_val.lower() != _label.lower():
+                            _dn["condicionalDescricao"] = _groq_val
+                        else:
+                            _dn["condicionalDescricao"] = ""
+
+        # Fallback: garantir que TODO node tenha uma descrição, mesmo que IA tenha omitido.
+        for _dn in definitive_nodes:
+            _nt = _dn.get("nodeType")
+            _label = str(_dn.get("label") or "")
+            if _nt == "entidade":
+                if not str(_dn.get("descricao") or "").strip():
+                    _dn["descricao"] = _default_entity_description(_label, _dn.get("tipoEntidade", ""), process_name)
+            elif _nt == "task":
+                if not str(_dn.get("taskDescricao") or "").strip():
+                    _dn["taskDescricao"] = _activity_description_from_text(_label, 0)
+            elif _nt == "condicional":
+                if not str(_dn.get("condicionalDescricao") or "").strip():
+                    _dn["condicionalDescricao"] = _conditional_description_from_name(_label)
+
         # Conexões construídas DIRETAMENTE do typed_flow_order — branching garantido correto.
         # Groq e Python fallback ignorados: IDs e ordering deles não são confiáveis.
+        # DEBUG: show typed_flow_order for connection building
+        for _di, _dfo in enumerate(typed_flow_order):
+            _dbr = _dfo.get("branches", {})
+            _dbr_str = f"  branches: sim={_dbr.get('sim','-')} nao={_dbr.get('nao','-')}" if _dbr else ""
+            print(f"  [FO {_di}] {_dfo['name']:35s} ({_dfo['type']}){_dbr_str}")
         base_conns = _build_direct_connections_from_fo(typed_flow_order)
 
         # Layout serpentina (snake): colunas pares descem ↓, colunas ímpares sobem ↑.
@@ -3874,6 +4190,33 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             _nid = str(_node.get("id") or "")
             _node["x"], _node["y"] = _pos.get(_nid, (_X_START, _Y_START))
 
+        # --- Resolução de sobreposições pós-snake ---
+        # Segurança: empurra qualquer nó que se sobreponha a outro para baixo.
+        _PAD_X = 20.0
+        _PAD_Y = 20.0
+        def _rects_overlap(ax: float, ay: float, bx: float, by: float) -> bool:
+            return (abs(ax - bx) < _CARD_W + _PAD_X) and (abs(ay - by) < _CARD_H + _PAD_Y)
+
+        for _round in range(10):
+            _moved = False
+            _sorted_nodes = sorted(definitive_nodes, key=lambda n: (round(float(n.get("x", 0)) / 50), float(n.get("y", 0))))
+            for _i in range(len(_sorted_nodes)):
+                for _j in range(_i + 1, len(_sorted_nodes)):
+                    _na, _nb = _sorted_nodes[_i], _sorted_nodes[_j]
+                    _ax, _ay = float(_na.get("x", 0)), float(_na.get("y", 0))
+                    _bx, _by = float(_nb.get("x", 0)), float(_nb.get("y", 0))
+                    if _rects_overlap(_ax, _ay, _bx, _by):
+                        # Empurra _nb para baixo
+                        _new_by = _ay + _CARD_H + _PAD_Y
+                        _nb["y"] = _new_by
+                        _moved = True
+            if not _moved:
+                break
+        # Atualiza _pos após resolução de sobreposições
+        for _node in definitive_nodes:
+            _nid = str(_node.get("id") or "")
+            _pos[_nid] = (float(_node.get("x", 0)), float(_node.get("y", 0)))
+
         # Pós-processamento de handles: ajusta entrada/saída de cada conexão
         # baseado na posição real dos nós para eliminar cruzamentos.
         #   – Mesma coluna descendo  → bottom → top
@@ -3893,13 +4236,26 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             _tid = str(_conn.get("to") or "")
             _fx, _fy = _id_to_pos.get(_fid, (0.0, 0.0))
             _tx, _ty = _id_to_pos.get(_tid, (0.0, 0.0))
+
+            if _dec == "merge":
+                # Merge: NAO node reconecta ao fluxo principal.
+                # toHandle = "right" para entrar pelo lado direito do alvo,
+                # evitando sobrepor a seta SIM (que entra por top/bottom).
+                # fromHandle depende se o alvo está abaixo ou acima.
+                _conn["toHandle"] = "right"
+                if _ty >= _fy:
+                    _conn["fromHandle"] = "bottom"
+                else:
+                    _conn["fromHandle"] = "top"
+                continue
+
             _cross_col = abs(_fx - _tx) > _CARD_W / 2
             if _cross_col:
                 if _dec == "sim":
-                    # SIM cruzando colunas: mantém bottom→top.
-                    # O frontend roteia a linha ABAIXO do ramo NAO (midY = y1 + CARD_H),
-                    # evitando atravessar o retângulo NAO que fica na mesma Y do condicional.
-                    pass
+                    # SIM cruzando colunas: bottom→top
+                    # O frontend obstacle-aware router desvia automaticamente dos retângulos
+                    _conn["fromHandle"] = "bottom"
+                    _conn["toHandle"]   = "top"
                 else:
                     # Sequencial cruzando colunas → horizontal right→left (mesma Y na junção snake)
                     _conn["fromHandle"] = "right"
@@ -3923,20 +4279,37 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             elif _c.get("decision") == "nao":
                 _cond_has_nao.add(str(_c.get("from") or ""))
         _fo_nao_set: set[int] = set()  # índices que são alvo de NAO (para fallback)
+        # Reconstrói conjunto de índices NAO a partir das conexões geradas
+        _nao_target_idx_set: set[int] = set()
+        for _c in base_conns:
+            if _c.get("decision") == "nao":
+                _tid_str = str(_c.get("to") or "")
+                if _tid_str.startswith("n"):
+                    try:
+                        _nao_target_idx_set.add(int(_tid_str[1:]) - 1)
+                    except ValueError:
+                        pass
         for _ci2, _fo2 in enumerate(typed_flow_order):
             if _fo2.get("type") != "condicional":
                 continue
             _cid2 = f"n{_ci2 + 1}"
             _n2   = len(typed_flow_order)
             if _cid2 not in _cond_has_nao:
+                # NAO fallback: pula condicionais
                 _nao_fb = _ci2 + 1
+                while _nao_fb < _n2 and typed_flow_order[_nao_fb].get("type") == "condicional":
+                    _nao_fb += 1
                 if _nao_fb < _n2:
                     base_conns.append({"id": f"c{_ci2 + 1}a_fb",
                                        "from": _cid2, "to": f"n{_nao_fb + 1}",
                                        "fromHandle": "right", "toHandle": "left",
                                        "decision": "nao", "label": "\u2718"})
+                    _nao_target_idx_set.add(_nao_fb)
             if _cid2 not in _cond_has_sim:
-                _sim_fb = _ci2 + 2
+                # Encontra o próximo nó que não seja destino de NAO
+                _sim_fb = _ci2 + 1
+                while _sim_fb < _n2 and _sim_fb in _nao_target_idx_set:
+                    _sim_fb += 1
                 if _sim_fb < _n2:
                     base_conns.append({"id": f"c{_ci2 + 1}b_fb",
                                        "from": _cid2, "to": f"n{_sim_fb + 1}",
@@ -3956,6 +4329,46 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             base_conns = python_connections if len(python_nodes) >= 2 else (fallback_bpmn_payload.get("connections") or [])
             print(f"[GROQ] Usando fallback Python: {len(base_nodes)} nodes, {len(base_conns)} conns")
     final_nodes = _auto_layout_bpmn_nodes(base_nodes, base_conns)
+
+    # --- Validação de grafo ---
+
+    # 1. Remove nós duplicados (mesmo label+nodeType → mantém o primeiro)
+    _seen_node_keys: set[str] = set()
+    _deduped_nodes: list[dict[str, Any]] = []
+    _removed_node_ids: set[str] = set()
+    for _n in final_nodes:
+        _nkey = f"{str(_n.get('label') or '').strip().lower()}|{str(_n.get('nodeType') or '').strip().lower()}"
+        if _nkey in _seen_node_keys:
+            _removed_node_ids.add(str(_n.get("id") or ""))
+            continue
+        _seen_node_keys.add(_nkey)
+        _deduped_nodes.append(_n)
+    final_nodes = _deduped_nodes
+
+    # 2. Remove conexões inválidas
+    # 2. Remove conexões inválidas
+    _seen_conns: set[str] = set()
+    _valid_node_ids = {str(n.get("id") or "") for n in final_nodes}
+    _cleaned_conns: list[dict[str, Any]] = []
+    for _c in base_conns:
+        _cfrom = str(_c.get("from") or "")
+        _cto = str(_c.get("to") or "")
+        # Remove conexões para nós inexistentes ou removidos por dedup
+        if _cfrom not in _valid_node_ids or _cto not in _valid_node_ids:
+            continue
+        if _cfrom in _removed_node_ids or _cto in _removed_node_ids:
+            continue
+        # Remove auto-loops
+        if _cfrom == _cto:
+            continue
+        # Remove duplicatas (mesma from→to com mesmo decision)
+        _ckey = f"{_cfrom}|{_cto}|{_c.get('decision', '')}"
+        if _ckey in _seen_conns:
+            continue
+        _seen_conns.add(_ckey)
+        _cleaned_conns.append(_c)
+    base_conns = _cleaned_conns
+
     final_bpmn_payload = {
         "name": process_name,
         "nodes": final_nodes,
@@ -3978,8 +4391,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         if str(n or "").strip()
     ])
     entity_actions_groq: list[dict[str, Any]] = []
-    # Limita a 3 entidades para não sobrecarregar o plano
-    for _ei, _cname in enumerate(candidate_entities_groq[:3], start=1):
+    for _ei, _cname in enumerate(candidate_entities_groq, start=1):
         _tipo_raw = fo_entity_tipo.get(_cname.lower()) or goal_entity_type_by_name.get(_normalize_ai_text(_cname), "")
         _desc_fo = next((str(i.get("desc") or "").strip() for i in typed_flow_order if i.get("name") == _cname and i.get("desc")), "")
         _tipo = _normalize_entity_type(_tipo_raw, default="apoio") if _tipo_raw else _entity_type_label("", _ei)
@@ -4428,7 +4840,7 @@ def _build_local_bpmn_payload(
             "x": x,
             "y": y,
             "info": "id" if node_type_resolved == "entidade" else (f"Raia: {participant}" if participant else ""),
-            "subtitle": description,
+            "descricao": description,
         }
         if node_type_resolved == "condicional":
             node["condicionalNome"] = node_label
@@ -4649,6 +5061,106 @@ def _build_local_bpmn_payload(
     return payload, entities
 
 
+# ---------------------------------------------------------------------------
+# Revisão de plano: garante que TODA ação de entidade tenha descricao e campos,
+# e que os nodes do BPMN tenham descrições preenchidas.
+# ---------------------------------------------------------------------------
+def _review_plan_fill_missing_content(plan: dict[str, Any], process_name: str = "") -> dict[str, Any]:
+    """Analisa o plano e preenche conteúdo faltante em entidades e nodes BPMN."""
+    actions = plan.get("actions")
+    if not isinstance(actions, list):
+        return plan
+
+    # Coleta nomes de todas as entidades no plano para referências FK
+    all_entity_names: list[str] = []
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+        if action.get("type") == "create_entidade":
+            p = action.get("payload")
+            if isinstance(p, dict):
+                name = str(p.get("nome") or "").strip()
+                if name:
+                    all_entity_names.append(name)
+
+    all_entity_names = _dedupe_preserve_order(all_entity_names) if all_entity_names else []
+
+    patched_count = 0
+    for action in actions:
+        if not isinstance(action, dict):
+            continue
+
+        # --- Revisão de ações create_entidade ---
+        if action.get("type") == "create_entidade":
+            p = action.get("payload")
+            if not isinstance(p, dict):
+                continue
+
+            entity_name = str(p.get("nome") or "").strip()
+            entity_kind = str(p.get("tipoEntidade") or "Processo").strip()
+
+            # Preencher descricao vazia
+            if not str(p.get("descricao") or "").strip():
+                p["descricao"] = _default_entity_description(
+                    entity_name, entity_kind, process_name
+                )
+                patched_count += 1
+
+            # Preencher campos vazios ou ausentes
+            existing_campos = p.get("campos")
+            if not isinstance(existing_campos, list) or len(existing_campos) == 0:
+                entity_index = (
+                    all_entity_names.index(entity_name) + 1
+                    if entity_name in all_entity_names
+                    else 1
+                )
+                p["campos"] = _sanitize_entity_fields(
+                    [],
+                    entity_name,
+                    _build_default_entity_fields_with_references(
+                        entity_name, entity_index, all_entity_names
+                    ),
+                )
+                patched_count += 1
+
+        # --- Revisão do BPMN state: nodes sem descrição ---
+        if action.get("type") == "update_bpmn_state":
+            p = action.get("payload")
+            if not isinstance(p, dict):
+                continue
+            nodes = p.get("nodes")
+            if not isinstance(nodes, list):
+                continue
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                nt = str(node.get("nodeType") or "").strip()
+                label = str(node.get("label") or "").strip()
+                if nt == "entidade":
+                    if not str(node.get("descricao") or "").strip():
+                        node["descricao"] = _default_entity_description(
+                            label, node.get("tipoEntidade", ""), process_name
+                        )
+                        patched_count += 1
+                elif nt == "task":
+                    if not str(node.get("taskDescricao") or "").strip():
+                        node["taskDescricao"] = _activity_description_from_text(label, 0)
+                        patched_count += 1
+                    if not str(node.get("descricao") or "").strip():
+                        node["descricao"] = node.get("taskDescricao") or _activity_description_from_text(label, 0)
+                elif nt == "condicional":
+                    if not str(node.get("condicionalDescricao") or "").strip():
+                        node["condicionalDescricao"] = _conditional_description_from_name(label)
+                        patched_count += 1
+                    if not str(node.get("descricao") or "").strip():
+                        node["descricao"] = node.get("condicionalDescricao") or _conditional_description_from_name(label)
+
+    if patched_count > 0:
+        plan["_reviewPatched"] = patched_count
+
+    return plan
+
+
 def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, Any] | None = None):
     normalized_goal = " ".join(str(goal or "").strip().split())
     if len(normalized_goal) < 8:
@@ -4690,14 +5202,13 @@ def _build_ai_plan(goal: str, current_user: dict[str, Any], context: dict[str, A
     )
 
     entity_actions: list[dict[str, Any]] = []
-    # Limita a 3 entidades para não sobrecarregar o plano
     candidate_entities = _dedupe_preserve_order(
         [
             str(name or "").strip()
             for name in ([*suggested_entities, *local_entities] or [entity_name, process_name])
             if str(name or "").strip()
         ]
-    )[:3]
+    )
 
     for entity_index, candidate_name in enumerate(candidate_entities, start=1):
         entity_kind = _entity_type_label(
@@ -5106,6 +5617,36 @@ def init_supabase_storage():
                 )
                 cursor.execute(f"ALTER TABLE {AI_AUDIT_TABLE} ENABLE ROW LEVEL SECURITY")
 
+                cursor.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {WORKFLOW_INSTANCES_TABLE} (
+                        id BIGINT PRIMARY KEY,
+                        payload JSONB NOT NULL
+                    )
+                    """
+                )
+                cursor.execute(f"ALTER TABLE {WORKFLOW_INSTANCES_TABLE} ENABLE ROW LEVEL SECURITY")
+
+                cursor.execute(
+                    f"""
+                    CREATE TABLE IF NOT EXISTS {WORKFLOW_TASKS_TABLE} (
+                        id BIGINT PRIMARY KEY,
+                        payload JSONB NOT NULL
+                    )
+                    """
+                )
+                cursor.execute(f"ALTER TABLE {WORKFLOW_TASKS_TABLE} ENABLE ROW LEVEL SECURITY")
+
+                # Secondary tables (webhooks, event_log, delivery_log, sla_violations)
+                for _sec_table in ["webhooks_store", "event_log_store", "delivery_log_store", "sla_violations_store"]:
+                    cursor.execute(f"""
+                        CREATE TABLE IF NOT EXISTS {_sec_table} (
+                            id BIGINT PRIMARY KEY,
+                            payload JSONB NOT NULL
+                        )
+                    """)
+                    cursor.execute(f"ALTER TABLE {_sec_table} ENABLE ROW LEVEL SECURITY")
+
                 cursor.execute(f"SELECT COUNT(*) FROM {USERS_TABLE}")
                 users_row = cursor.fetchone()
                 users_count = int((users_row[0] if users_row else 0) or 0)
@@ -5427,6 +5968,128 @@ def get_app():
 app = get_app()
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Proactive SLA background checker + auto-reassignment
+# ─────────────────────────────────────────────────────────────────────────────
+_sla_checker_started = False
+
+
+async def _sla_background_loop():
+    """Periodically check SLA violations, send email alerts, and auto-reassign
+    tasks that exceed 2x their SLA deadline."""
+    import asyncio
+    while True:
+        try:
+            check_sla_violations()
+            _sla_notify_and_reassign()
+        except Exception as e:
+            print(f"[SLA-BG] Erro no loop SLA: {e}")
+        await asyncio.sleep(int(os.getenv("SLA_CHECK_INTERVAL_SECONDS", "300")))
+
+
+def _sla_notify_and_reassign():
+    """Check overdue tasks: send email alert, auto-reassign if 2x past SLA."""
+    now = datetime.now()
+    tasks = load_workflow_tasks()
+    for t in tasks:
+        if t.get("status") != "pending":
+            continue
+        due = _parse_iso(t.get("dueAt"))
+        if not due or now <= due:
+            continue
+
+        overdue_secs = (now - due).total_seconds()
+        sla_hours = t.get("slaHours") or 0
+
+        # Send email alert if not already notified
+        if not t.get("_slaNotified"):
+            assignee_name = t.get("assignee") or ""
+            if assignee_name:
+                email = _find_user_email_by_name(assignee_name)
+                if email:
+                    label = t.get("label") or "Tarefa"
+                    send_mailgun_email(
+                        email,
+                        f"⚠️ SLA expirado: {label}",
+                        f"Olá {assignee_name},\n\n"
+                        f"A tarefa '{label}' (#{t.get('taskId')}) excedeu o prazo SLA.\n"
+                        f"Prazo: {t.get('dueAt')}\n\n"
+                        f"Por favor, conclua a tarefa o mais rápido possível."
+                    )
+            with _data_lock:
+                all_tasks = load_workflow_tasks()
+                for at in all_tasks:
+                    if at.get("taskId") == t.get("taskId"):
+                        at["_slaNotified"] = True
+                        break
+                save_workflow_tasks(all_tasks)
+
+        # Auto-reassign if overdue > 2x SLA duration
+        if sla_hours and overdue_secs > (sla_hours * 3600 * 2) and not t.get("_autoReassigned"):
+            _auto_reassign_task(t)
+
+
+def _auto_reassign_task(task: dict):
+    """Try to reassign overdue task to another available user with same role or admin."""
+    users = load_users_data()
+    current_assignee = (task.get("assignee") or "").strip().lower()
+
+    # Find another active user (prefer same role, then any admin)
+    candidates = [
+        u for u in users
+        if u.get("ativo", True)
+        and (u.get("nome") or "").strip().lower() != current_assignee
+    ]
+    if not candidates:
+        return
+
+    # Prefer users with matching role
+    assigned_role = task.get("assignedRole") or ""
+    role_matches = [u for u in candidates if u.get("role") == assigned_role] if assigned_role else []
+    new_user = (role_matches or candidates)[0]
+    new_name = new_user.get("nome", "")
+
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        for t in tasks:
+            if t.get("taskId") == task.get("taskId"):
+                t["assignee"] = new_name
+                t["assigneeId"] = new_user.get("id")
+                t["_autoReassigned"] = True
+                t["updatedAt"] = now_iso()
+                break
+        save_workflow_tasks(tasks)
+
+    emit_event("task_assigned", {
+        "taskId": task.get("taskId"),
+        "opportunityId": task.get("opportunityId"),
+        "assignee": new_name,
+        "reason": "auto_reassignment_sla",
+    })
+
+    # Notify new assignee
+    email = _find_user_email_by_name(new_name)
+    if email:
+        label = task.get("label") or "Tarefa"
+        send_mailgun_email(
+            email,
+            f"Tarefa reatribuída automaticamente: {label}",
+            f"Olá {new_name},\n\n"
+            f"A tarefa '{label}' (#{task.get('taskId')}) foi reatribuída a você "
+            f"automaticamente porque o responsável anterior não concluiu dentro do prazo SLA.\n\n"
+            f"Por favor, verifique e conclua a tarefa."
+        )
+
+
+@app.on_event("startup")
+async def _start_sla_checker():
+    global _sla_checker_started
+    if not _sla_checker_started:
+        _sla_checker_started = True
+        import asyncio
+        asyncio.ensure_future(_sla_background_loop())
+
+
 def _unique_opportunity_name(base_name: str) -> str:
     """Returns base_name, or base_name (1), base_name (2) ... if already taken."""
     existing = load_oportunidades_data()
@@ -5463,6 +6126,13 @@ def create_oportunidade(oportunidade: Oportunidade):
         except Exception as e:
             print(f"[ERRO] Falha ao salvar oportunidades: {e}")
             raise HTTPException(status_code=500, detail=f"Falha ao persistir: {e}")
+
+        # Auto-version: snapshot version 1 if BPMN has nodes
+        bpmn = oportunidade_dict.get("bpmn")
+        if isinstance(bpmn, dict) and bpmn.get("nodes"):
+            ver = _create_bpmn_version(new_id, bpmn)
+            oportunidade_dict["bpmn_current_version"] = ver
+
         print(f"[OK] Oportunidade criada: id={new_id}, nome={oportunidade_dict.get('nome')}, total={len(fake_oportunidades)}")
     return oportunidade_dict
 
@@ -5547,7 +6217,7 @@ fake_entidades = []
 fake_oportunidades = []
 # Endpoint para listar oportunidades (fake)
 @app.get("/oportunidades")
-def get_oportunidades(page: int = 1, limit: int = 10, search: str = ""):
+def get_oportunidades(page: int = 1, limit: int = 10, search: str = "", owner: str = "", shared: str = ""):
     global fake_oportunidades
     fake_oportunidades = load_oportunidades_data()
     normalized = [normalize_oportunidade(item) for item in fake_oportunidades]
@@ -5557,6 +6227,14 @@ def get_oportunidades(page: int = 1, limit: int = 10, search: str = ""):
             item for item in normalized
             if search_lower in (item.get("nome") or item.get("name") or "").lower()
         ]
+    if owner.strip():
+        owner_lower = owner.strip().lower()
+        normalized = [
+            item for item in normalized
+            if (item.get("criadoPor") or item.get("owner") or "").lower() == owner_lower
+        ]
+    if shared == "true":
+        normalized = [item for item in normalized if item.get("shared")]
     start = (page - 1) * limit
     end = start + limit
     total = len(normalized)
@@ -5566,6 +6244,20 @@ def get_oportunidades(page: int = 1, limit: int = 10, search: str = ""):
         "page": page,
         "limit": limit
     }
+
+
+@app.put("/oportunidades/{oportunidade_id}/share")
+def toggle_share_oportunidade(oportunidade_id: int, body: dict = Body(...)):
+    """Toggle shared flag on an opportunity."""
+    global fake_oportunidades
+    with _data_lock:
+        fake_oportunidades = load_oportunidades_data()
+        for opp in fake_oportunidades:
+            if opp.get("id") == oportunidade_id:
+                opp["shared"] = bool(body.get("shared", False))
+                save_oportunidades_data(fake_oportunidades)
+                return {"ok": True, "shared": opp["shared"]}
+        raise HTTPException(404, "Oportunidade não encontrada")
 
 @app.put("/oportunidades/{oportunidade_id}")
 def update_oportunidade(oportunidade_id: int, oportunidade: Oportunidade):
@@ -5632,12 +6324,39 @@ def _update_oportunidade_locked(oportunidade_id: int, oportunidade: Oportunidade
                 oportunidade_payload,
             )
 
+            # Auto-version: if BPMN nodes/connections changed, snapshot a new version
+            _bpmn_changed = False
+            if incoming_bpmn and isinstance(incoming_bpmn, dict):
+                old_nodes = (existing_bpmn or {}).get("nodes") if isinstance(existing_bpmn, dict) else []
+                old_conns = (existing_bpmn or {}).get("connections") if isinstance(existing_bpmn, dict) else []
+                new_nodes = merged["bpmn"].get("nodes") or []
+                new_conns = merged["bpmn"].get("connections") or []
+                if json.dumps(old_nodes, sort_keys=True) != json.dumps(new_nodes, sort_keys=True) or \
+                   json.dumps(old_conns, sort_keys=True) != json.dumps(new_conns, sort_keys=True):
+                    _bpmn_changed = True
+
             fake_oportunidades[idx] = merged
             try:
                 save_oportunidades_data(fake_oportunidades)
             except Exception as e:
                 print(f"[ERRO] Falha ao salvar oportunidades (update): {e}")
                 raise HTTPException(status_code=500, detail=f"Falha ao persistir: {e}")
+
+            # Create version snapshot after save (outside main lock to avoid deadlock)
+            if _bpmn_changed and merged.get("bpmn"):
+                ver = _create_bpmn_version(oportunidade_id, merged["bpmn"])
+                merged["bpmn_current_version"] = ver
+                print(f"[OK] BPMN versão {ver} criada para oportunidade {oportunidade_id}")
+                _new_node_count = len(merged["bpmn"].get("nodes") or [])
+                _new_conn_count = len(merged["bpmn"].get("connections") or [])
+                _append_opportunity_timeline(oportunidade_id, [{
+                    "title": "BPMN atualizado",
+                    "description": f"Estrutura do BPMN foi alterada (versão {ver}, {_new_node_count} nós, {_new_conn_count} conexões)",
+                    "actionType": "update",
+                    "elementType": "bpmn",
+                    "itemName": "BPMN",
+                }])
+
             print(f"[OK] Oportunidade atualizada: id={oportunidade_id}, nome={merged.get('nome')}")
             return merged
 
@@ -5669,8 +6388,2834 @@ def delete_oportunidade(oportunidade_id: int):
         save_oportunidades_data(fake_oportunidades)
     return
 
+# ─────────────────────────────────────────────────────────────────────────────
+# SLA & Metrics System
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Default SLA (hours) when a BPMN node does not specify one
+_DEFAULT_SLA_HOURS = 24
+
+SLA_LOG_TABLE = "sla_violations_store"
+SLA_LOG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "sla_violations.json"
+)
+
+
+def load_sla_violations() -> list[dict]:
+    return load_collection(SLA_LOG_FILE, SLA_LOG_TABLE, [])
+
+
+def save_sla_violations(rows: list[dict]):
+    save_collection(SLA_LOG_FILE, SLA_LOG_TABLE, rows)
+
+
+def _parse_iso(s: str | None) -> datetime | None:
+    """Parse an ISO-8601 string (with or without microseconds)."""
+    if not s:
+        return None
+    try:
+        return datetime.fromisoformat(s)
+    except Exception:
+        return None
+
+
+def _compute_sla_hours(node: dict) -> float | None:
+    """Extract SLA hours from a BPMN node definition.
+
+    Looks for slaHours / sla_hours / sla in the node dict.
+    Returns None if no SLA set (infinite time allowed).
+    """
+    for key in ("slaHours", "sla_hours", "sla"):
+        val = node.get(key)
+        if val is not None:
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                continue
+    return None
+
+
+def _compute_due_at(created_at: str, sla_hours: float | None) -> str | None:
+    """Given a creation timestamp and SLA hours, return the deadline ISO string."""
+    if sla_hours is None:
+        return None
+    dt = _parse_iso(created_at)
+    if not dt:
+        return None
+    return (dt + timedelta(hours=sla_hours)).isoformat()
+
+
+def _task_duration_seconds(task: dict) -> float | None:
+    """Compute duration in seconds between createdAt and completedAt."""
+    start = _parse_iso(task.get("createdAt"))
+    end = _parse_iso(task.get("completedAt"))
+    if start and end:
+        return (end - start).total_seconds()
+    return None
+
+
+def _record_sla_violation(task: dict, now_str: str):
+    """Record an SLA violation for a task."""
+    with _data_lock:
+        violations = load_sla_violations()
+        # Avoid duplicates
+        if any(v.get("taskId") == task.get("taskId") for v in violations):
+            return
+        violations.append({
+            "id": max((v.get("id", 0) for v in violations), default=0) + 1,
+            "taskId": task.get("taskId"),
+            "opportunityId": task.get("opportunityId"),
+            "nodeId": task.get("nodeId"),
+            "label": task.get("label"),
+            "dueAt": task.get("dueAt"),
+            "detectedAt": now_str,
+            "assignee": task.get("assignee"),
+            "slaHours": task.get("slaHours"),
+            "status": "open",  # open | resolved | dismissed
+        })
+        save_sla_violations(violations)
+    emit_event("sla_violation", {
+        "taskId": task.get("taskId"),
+        "opportunityId": task.get("opportunityId"),
+        "label": task.get("label"),
+        "dueAt": task.get("dueAt"),
+    })
+
+
+def check_sla_violations():
+    """Scan pending tasks and record violations for any past-due items.
+
+    Called lazily from SLA endpoints (no background scheduler needed).
+    """
+    now = datetime.now()
+    now_str = now.isoformat()
+    tasks = load_workflow_tasks()
+    for t in tasks:
+        if t.get("status") != "pending":
+            continue
+        due = _parse_iso(t.get("dueAt"))
+        if due and now > due:
+            _record_sla_violation(t, now_str)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Task Queue Abstraction (local + Celery/Redis)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class _LocalQueue:
+    """Synchronous in-process task queue (default — no external deps)."""
+
+    def enqueue(self, func, *args, **kwargs):
+        """Execute func immediately in a daemon thread."""
+        t = threading.Thread(target=func, args=args, kwargs=kwargs, daemon=True)
+        t.start()
+        return {"queue": "local", "thread": t.name}
+
+
+class _CeleryQueue:
+    """Celery-backed distributed task queue (activated when CELERY_BROKER_URL is set)."""
+
+    def __init__(self, broker_url: str):
+        try:
+            from celery import Celery  # type: ignore[import-not-found]
+            self.celery_app = Celery("bp_company", broker=broker_url)
+            self.celery_app.conf.update(
+                task_serializer="json",
+                result_serializer="json",
+                accept_content=["json"],
+                timezone="America/Sao_Paulo",
+                enable_utc=True,
+                task_track_started=True,
+                task_acks_late=True,
+                worker_prefetch_multiplier=1,
+            )
+            self._available = True
+            print(f"[QUEUE] Celery conectado ao broker: {broker_url}")
+        except Exception as exc:
+            print(f"[QUEUE] Falha ao conectar Celery: {exc}. Usando fila local.")
+            self._available = False
+            self._fallback = _LocalQueue()
+
+    def enqueue(self, func, *args, **kwargs):
+        if not self._available:
+            return self._fallback.enqueue(func, *args, **kwargs)
+        task_name = f"bp_company.{func.__name__}"
+        # Register the function as a Celery task (idempotent)
+        if task_name not in self.celery_app.tasks:
+            self.celery_app.task(name=task_name)(func)
+        result = self.celery_app.send_task(task_name, args=args, kwargs=kwargs)
+        return {"queue": "celery", "task_id": result.id}
+
+
+def _init_task_queue():
+    """Initialize the task queue based on environment configuration."""
+    broker = os.environ.get("CELERY_BROKER_URL", "").strip()
+    if broker:
+        return _CeleryQueue(broker)
+    return _LocalQueue()
+
+
+task_queue = _init_task_queue()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workflow Execution Service (decoupled from HTTP layer)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class WorkflowExecutor:
+    """Encapsulates workflow execution logic independently of FastAPI.
+
+    Can be invoked from HTTP endpoints, Celery tasks, CLI scripts, or tests.
+    """
+
+    @staticmethod
+    def start(op_id: int, context: dict | None = None) -> dict:
+        """Start a workflow for the given opportunity. Returns engine result."""
+        opp = _find_opportunity(op_id)
+        current_version = _get_current_bpmn_version(opp)
+        bpmn = _get_bpmn(opp)
+        engine = WorkflowEngine(bpmn)
+
+        start_id = engine.find_start_node()
+        if not start_id:
+            raise ValueError("BPMN não possui nó de início")
+
+        if not (opp.get("bpmn_versions") or []):
+            current_version = _create_bpmn_version(op_id, bpmn)
+
+        _cancel_tasks_for_workflow(op_id)
+
+        ctx = context or {}
+        result = engine.run(start_id, ctx)
+
+        _save_workflow_state(op_id, {
+            "currentNodeId": result.get("currentNodeId"),
+            "executed": result.get("executed", []),
+            "context": ctx,
+            "status": result["status"],
+            "bpmn_version": current_version,
+            "startedAt": now_iso(),
+        })
+
+        emit_event("workflow_started", {
+            "opportunityId": op_id,
+            "bpmnVersion": current_version,
+            "status": result["status"],
+        })
+
+        current = result.get("currentNodeId")
+        if current and result.get("paused_reason") == "user_input":
+            node = engine.nodes.get(current, {})
+            _create_user_task(op_id, current, node)
+
+        return {
+            "engine": engine,
+            "result": result,
+            "bpmn_version": current_version,
+        }
+
+    @staticmethod
+    def advance(op_id: int, node_id: str | None = None,
+                decision: str | None = None, completed: bool = False,
+                form_data: dict | None = None) -> dict:
+        """Advance a workflow from its current paused state."""
+        opp = _find_opportunity(op_id)
+        state = _load_workflow_state(op_id)
+        if not state:
+            raise ValueError("Workflow não foi iniciado.")
+
+        inst_version = state.get("bpmn_version")
+        bpmn = _get_bpmn(opp, inst_version)
+
+        if completed and node_id:
+            pending = _get_pending_task(op_id, node_id)
+            if pending:
+                form_schema = pending.get("formSchema") or []
+                if form_schema and form_data:
+                    validation_errors = _validate_form_data(form_data, form_schema)
+                    if validation_errors:
+                        raise ValueError(f"Dados inválidos: {validation_errors}")
+                _complete_user_task(pending["taskId"], form_data=form_data)
+
+        context = dict(state.get("context") or {})
+        if decision:
+            context[f"decision_{node_id}"] = decision
+        if completed:
+            context[f"completed_{node_id}"] = True
+        if form_data:
+            context.update(form_data)
+            form_responses = context.get("form_responses") or {}
+            form_responses[node_id] = form_data
+            context["form_responses"] = form_responses
+
+        engine = WorkflowEngine(bpmn)
+        start_id = engine.find_start_node()
+        result = engine.run(start_id, context)
+
+        _save_workflow_state(op_id, {
+            "currentNodeId": result.get("currentNodeId"),
+            "executed": result.get("executed", []),
+            "context": context,
+            "status": result["status"],
+            "startedAt": state.get("startedAt"),
+        })
+
+        current = result.get("currentNodeId")
+        if current and result.get("paused_reason") == "user_input":
+            existing = _get_pending_task(op_id, current)
+            if not existing:
+                node = engine.nodes.get(current, {})
+                _create_user_task(op_id, current, node)
+
+        stage_index = engine.node_index(current) if current else len(engine.active_node_ids_in_order())
+        with _data_lock:
+            opps = load_oportunidades_data()
+            for o in opps:
+                if o.get("id") == op_id:
+                    o["stageIndex"] = stage_index
+                    o["currentNodeId"] = current
+                    o["bpmnCurrentNodeId"] = current
+                    o["activeNodeId"] = current
+                    if result["status"] == "completed":
+                        o["status"] = "Concluído"
+                    break
+            save_oportunidades_data(opps)
+
+        if result["status"] == "completed":
+            emit_event("workflow_completed", {
+                "opportunityId": op_id,
+                "bpmnVersion": inst_version,
+                "executedCount": len(result.get("executed", [])),
+            })
+        elif result.get("paused_reason"):
+            emit_event("workflow_paused", {
+                "opportunityId": op_id,
+                "currentNodeId": current,
+                "pausedReason": result.get("paused_reason"),
+            })
+        else:
+            emit_event("workflow_advanced", {
+                "opportunityId": op_id,
+                "currentNodeId": current,
+                "status": result["status"],
+            })
+
+        return {
+            "engine": engine,
+            "result": result,
+            "bpmn_version": inst_version,
+        }
+
+
+workflow_executor = WorkflowExecutor()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Event System & Webhooks
+# ─────────────────────────────────────────────────────────────────────────────
+
+WEBHOOKS_TABLE = "webhooks_store"
+WEBHOOKS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "webhooks.json"
+)
+
+EVENT_LOG_TABLE = "event_log_store"
+EVENT_LOG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "event_log.json"
+)
+
+DELIVERY_LOG_TABLE = "delivery_log_store"
+DELIVERY_LOG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "webhook_deliveries.json"
+)
+
+# Maximum event log entries kept in storage
+_EVENT_LOG_MAX = 500
+_DELIVERY_LOG_MAX = 1000
+
+# Default retry config (can be overridden per-webhook)
+_DEFAULT_RETRY_MAX = 3
+_DEFAULT_RETRY_DELAY = 2       # seconds (base for exponential backoff)
+_DEFAULT_RETRY_BACKOFF = 2.0   # multiplier
+
+
+def load_webhooks() -> list[dict]:
+    return load_collection(WEBHOOKS_FILE, WEBHOOKS_TABLE, [])
+
+
+def save_webhooks(rows: list[dict]):
+    save_collection(WEBHOOKS_FILE, WEBHOOKS_TABLE, rows)
+
+
+def load_event_log() -> list[dict]:
+    return load_collection(EVENT_LOG_FILE, EVENT_LOG_TABLE, [])
+
+
+def save_event_log(rows: list[dict]):
+    save_collection(EVENT_LOG_FILE, EVENT_LOG_TABLE, rows)
+
+
+def load_delivery_log() -> list[dict]:
+    return load_collection(DELIVERY_LOG_FILE, DELIVERY_LOG_TABLE, [])
+
+
+def save_delivery_log(rows: list[dict]):
+    save_collection(DELIVERY_LOG_FILE, DELIVERY_LOG_TABLE, rows)
+
+
+def _next_delivery_id() -> int:
+    log = load_delivery_log()
+    return max((d.get("id", 0) for d in log), default=0) + 1
+
+
+def _record_delivery(delivery: dict):
+    """Append a delivery record and trim to max."""
+    with _data_lock:
+        log = load_delivery_log()
+        # Update existing or append
+        existing = next((d for d in log if d.get("id") == delivery["id"]), None)
+        if existing:
+            existing.update(delivery)
+        else:
+            log.append(delivery)
+        if len(log) > _DELIVERY_LOG_MAX:
+            log = log[-_DELIVERY_LOG_MAX:]
+        save_delivery_log(log)
+
+
+def _deliver_webhook(url: str, secret: str, payload: dict,
+                     webhook_id: int = 0,
+                     max_retries: int = _DEFAULT_RETRY_MAX,
+                     retry_delay: float = _DEFAULT_RETRY_DELAY,
+                     retry_backoff: float = _DEFAULT_RETRY_BACKOFF,
+                     delivery_id: int | None = None):
+    """POST to a webhook URL with automatic retry and delivery tracking."""
+    import hashlib, hmac, time as _time
+
+    if delivery_id is None:
+        delivery_id = _next_delivery_id()
+
+    headers = {"Content-Type": "application/json"}
+    body_bytes = json.dumps(payload, default=str).encode()
+    if secret:
+        sig = hmac.new(secret.encode(), body_bytes, hashlib.sha256).hexdigest()
+        headers["X-Webhook-Signature"] = sig
+
+    delivery = {
+        "id": delivery_id,
+        "webhook_id": webhook_id,
+        "event_id": payload.get("id"),
+        "event_type": payload.get("event", ""),
+        "url": url,
+        "status": "pending",
+        "attempts": 0,
+        "max_retries": max_retries,
+        "last_status_code": None,
+        "last_error": None,
+        "created_at": now_iso(),
+        "completed_at": None,
+    }
+    _record_delivery(delivery)
+
+    delay = retry_delay
+    for attempt in range(1, max_retries + 1):
+        delivery["attempts"] = attempt
+        delivery["last_attempt_at"] = now_iso()
+        try:
+            resp = requests.post(url, data=body_bytes, headers=headers, timeout=15)
+            delivery["last_status_code"] = resp.status_code
+            if resp.ok:
+                delivery["status"] = "success"
+                delivery["completed_at"] = now_iso()
+                delivery["last_error"] = None
+                _record_delivery(delivery)
+                print(f"[WEBHOOK] {url} → {resp.status_code} (attempt {attempt})")
+                return
+            else:
+                delivery["last_error"] = f"HTTP {resp.status_code}: {resp.text[:200]}"
+                delivery["status"] = "retrying"
+                _record_delivery(delivery)
+                print(f"[WEBHOOK] {url} → {resp.status_code} (attempt {attempt}/{max_retries})")
+        except Exception as exc:
+            delivery["last_status_code"] = None
+            delivery["last_error"] = str(exc)[:300]
+            delivery["status"] = "retrying"
+            _record_delivery(delivery)
+            print(f"[WEBHOOK] {url} → FAILED (attempt {attempt}/{max_retries}): {exc}")
+
+        # Wait before retry (except on last attempt)
+        if attempt < max_retries:
+            _time.sleep(delay)
+            delay *= retry_backoff
+
+    # All retries exhausted
+    delivery["status"] = "failed"
+    delivery["completed_at"] = now_iso()
+    _record_delivery(delivery)
+    print(f"[WEBHOOK] {url} → PERMANENTLY FAILED after {max_retries} attempts")
+
+
+def emit_event(event_type: str, data: dict | None = None):
+    """Emit a workflow event: log it and dispatch to matching webhooks.
+
+    Supported event types:
+        workflow_started, workflow_advanced, workflow_completed, workflow_paused,
+        task_created, task_completed, task_assigned, task_cancelled
+    """
+    timestamp = now_iso()
+
+    # Persist to event log (trim to _EVENT_LOG_MAX)
+    with _data_lock:
+        log = load_event_log()
+        event_id = max((e.get("id", 0) for e in log), default=0) + 1
+        event = {
+            "id": event_id,
+            "event": event_type,
+            "data": data or {},
+            "timestamp": timestamp,
+        }
+        log.append(event)
+        if len(log) > _EVENT_LOG_MAX:
+            log = log[-_EVENT_LOG_MAX:]
+        save_event_log(log)
+
+    # Dispatch to matching webhooks in background threads
+    webhooks = load_webhooks()
+    for wh in webhooks:
+        if not wh.get("active", True):
+            continue
+        wh_events = wh.get("events") or []
+        if wh_events and event_type not in wh_events and "*" not in wh_events:
+            continue
+        url = wh.get("url", "").strip()
+        if not url:
+            continue
+        secret = wh.get("secret", "")
+        wh_id = wh.get("id", 0)
+        retry_cfg = wh.get("retry_config") or {}
+        t = threading.Thread(
+            target=_deliver_webhook,
+            args=(url, secret, event),
+            kwargs={
+                "webhook_id": wh_id,
+                "max_retries": retry_cfg.get("max_retries", _DEFAULT_RETRY_MAX),
+                "retry_delay": retry_cfg.get("retry_delay", _DEFAULT_RETRY_DELAY),
+                "retry_backoff": retry_cfg.get("retry_backoff", _DEFAULT_RETRY_BACKOFF),
+            },
+            daemon=True,
+        )
+        t.start()
+
+    return event
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workflow Engine endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+from workflow_engine import WorkflowEngine, canonical_node_type
+
+WORKFLOW_INSTANCES_TABLE = "workflow_instances_store"
+WORKFLOW_INSTANCES_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "workflow_instances.json"
+)
+
+WORKFLOW_TASKS_TABLE = "workflow_tasks_store"
+WORKFLOW_TASKS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "workflow_tasks.json"
+)
+
+
+def load_workflow_instances() -> list[dict]:
+    return load_collection(WORKFLOW_INSTANCES_FILE, WORKFLOW_INSTANCES_TABLE, [])
+
+
+def save_workflow_instances(rows: list[dict]):
+    save_collection(WORKFLOW_INSTANCES_FILE, WORKFLOW_INSTANCES_TABLE, rows)
+
+
+def _load_workflow_state(op_id: int) -> dict | None:
+    """Load persisted workflow state for an opportunity."""
+    instances = load_workflow_instances()
+    return next(
+        (inst for inst in instances if inst.get("id") == op_id),
+        None,
+    )
+
+
+def _save_workflow_state(op_id: int, state: dict):
+    """Persist workflow state for an opportunity."""
+    record = {
+        "id": op_id,
+        "currentNodeId": state.get("currentNodeId"),
+        "executed": state.get("executed", []),
+        "context": state.get("context", {}),
+        "status": state.get("status", "not_started"),
+        "bpmn_version": state.get("bpmn_version"),
+        "startedAt": state.get("startedAt") or now_iso(),
+        "updatedAt": now_iso(),
+    }
+    with _data_lock:
+        instances = load_workflow_instances()
+        found = False
+        for i, inst in enumerate(instances):
+            if inst.get("id") == op_id:
+                # Preserve bpmn_version from original run if not set
+                if record["bpmn_version"] is None:
+                    record["bpmn_version"] = inst.get("bpmn_version")
+                instances[i] = record
+                found = True
+                break
+        if not found:
+            instances.append(record)
+        save_workflow_instances(instances)
+
+
+def _delete_workflow_state(op_id: int):
+    """Remove persisted workflow state for an opportunity."""
+    with _data_lock:
+        instances = load_workflow_instances()
+        instances = [inst for inst in instances if inst.get("id") != op_id]
+        save_workflow_instances(instances)
+
+
+# ─── Workflow Tasks (UserTask registry) ──────────────────────────────────────
+
+def load_workflow_tasks() -> list[dict]:
+    return load_collection(WORKFLOW_TASKS_FILE, WORKFLOW_TASKS_TABLE, [])
+
+
+def save_workflow_tasks(rows: list[dict]):
+    save_collection(WORKFLOW_TASKS_FILE, WORKFLOW_TASKS_TABLE, rows)
+
+
+_task_id_counter_lock = threading.Lock()
+
+
+def _next_task_id() -> int:
+    """Generate a monotonically increasing task ID."""
+    with _task_id_counter_lock:
+        tasks = load_workflow_tasks()
+        max_id = max((t.get("taskId", 0) for t in tasks), default=0)
+        return max_id + 1
+
+
+def _extract_form_schema(node: dict) -> list:
+    """Extract a normalized formSchema from a BPMN node definition.
+
+    Looks for ``formSchema`` (explicit), ``selectedEntityFields``, or
+    ``campos`` in the node dict and normalises every entry to:
+    ``{nome, tipo, obrigatorio, label, opcoes, placeholder}``.
+    """
+    raw = node.get("formSchema") or node.get("selectedEntityFields") or node.get("campos") or []
+    schema: list[dict] = []
+    for f in raw:
+        if not isinstance(f, dict):
+            continue
+        entry: dict = {
+            "nome": f.get("nome") or f.get("name") or "",
+            "tipo": f.get("tipo") or f.get("type") or "texto",
+            "obrigatorio": bool(f.get("obrigatorio", f.get("required", False))),
+            "label": f.get("label") or f.get("nome") or f.get("name") or "",
+            "opcoes": f.get("opcoes") or f.get("options") or [],
+            "placeholder": f.get("placeholder") or f.get("descricao") or "",
+        }
+        schema.append(entry)
+    return schema
+
+
+def _validate_form_data(form_data: dict, form_schema: list) -> list[str]:
+    """Validate *form_data* against *form_schema*.
+
+    Returns a list of human-readable error strings (empty == valid).
+    """
+    errors: list[str] = []
+    for field in form_schema:
+        nome = field.get("nome", "")
+        tipo = field.get("tipo", "texto")
+        obrigatorio = field.get("obrigatorio", False)
+        opcoes = field.get("opcoes") or []
+        value = form_data.get(nome)
+
+        # Required check
+        if obrigatorio and (value is None or str(value).strip() == ""):
+            errors.append(f"Campo '{field.get('label') or nome}' é obrigatório.")
+            continue
+
+        if value is None or str(value).strip() == "":
+            continue  # optional and empty – skip type checks
+
+        # Type checks
+        if tipo in ("numero", "number"):
+            try:
+                float(value)
+            except (ValueError, TypeError):
+                errors.append(f"Campo '{field.get('label') or nome}' deve ser numérico.")
+        elif tipo in ("data", "date"):
+            if not isinstance(value, str) or len(value) < 8:
+                errors.append(f"Campo '{field.get('label') or nome}' deve ser uma data válida.")
+        elif tipo in ("email",):
+            if not isinstance(value, str) or "@" not in value:
+                errors.append(f"Campo '{field.get('label') or nome}' deve ser um e-mail válido.")
+        elif tipo in ("boolean", "checkbox"):
+            if not isinstance(value, bool) and str(value).lower() not in ("true", "false", "0", "1"):
+                errors.append(f"Campo '{field.get('label') or nome}' deve ser verdadeiro/falso.")
+
+        # Options check (select / enum)
+        if opcoes and str(value) not in [str(o) for o in opcoes]:
+            errors.append(f"Campo '{field.get('label') or nome}' deve ser uma das opções: {', '.join(str(o) for o in opcoes)}.")
+
+    return errors
+
+
+def _find_user_email_by_name(name: str) -> str | None:
+    """Resolve a user name to their email address."""
+    if not name:
+        return None
+    normalized = name.strip().lower()
+    users = load_users_data()
+    for u in users:
+        if str(u.get("nome") or "").strip().lower() == normalized:
+            return u.get("email")
+        if str(u.get("email") or "").strip().lower() == normalized:
+            return u.get("email")
+    return None
+
+
+def _notify_task_email(task: dict, event: str = "created"):
+    """Send email notification for task creation or assignment (fire-and-forget)."""
+    assignee_name = task.get("assignee") or ""
+    if not assignee_name:
+        return
+    email = _find_user_email_by_name(assignee_name)
+    if not email:
+        return
+    label = task.get("label") or "Tarefa"
+    task_id = task.get("taskId", "")
+    op_id = task.get("opportunityId", "")
+    due = task.get("dueAt") or ""
+    if event == "created":
+        subject = f"Nova tarefa atribuída: {label}"
+        body = (
+            f"Olá {assignee_name},\n\n"
+            f"Uma nova tarefa foi criada e atribuída a você:\n\n"
+            f"  • Tarefa: {label} (#{task_id})\n"
+            f"  • Oportunidade: #{op_id}\n"
+            f"  • Prazo: {due or 'Sem prazo definido'}\n\n"
+            f"Acesse o sistema para mais detalhes."
+        )
+    else:
+        subject = f"Tarefa reatribuída: {label}"
+        body = (
+            f"Olá {assignee_name},\n\n"
+            f"A tarefa abaixo foi atribuída a você:\n\n"
+            f"  • Tarefa: {label} (#{task_id})\n"
+            f"  • Oportunidade: #{op_id}\n"
+            f"  • Prazo: {due or 'Sem prazo definido'}\n\n"
+            f"Acesse o sistema para mais detalhes."
+        )
+    try:
+        send_mailgun_email(email, subject, body)
+    except Exception as e:
+        print(f"[WARN] Falha ao enviar email de notificação: {e}")
+
+
+def _create_user_task(
+    op_id: int,
+    node_id: str,
+    node: dict,
+    assignee: str | None = None,
+    assignee_id: int | None = None,
+) -> dict:
+    """Create a pending UserTask record when engine pauses at a task node."""
+    task_id = _next_task_id()
+    label = (
+        node.get("label")
+        or node.get("taskNome")
+        or node.get("condicionalNome")
+        or node.get("entidadeNome")
+        or node_id
+    )
+    description = node.get("descricao") or node.get("description") or ""
+    participant = node.get("participante") or node.get("participant") or ""
+    assigned_role = node.get("assignedRole") or node.get("role") or None
+    form_schema = _extract_form_schema(node)
+    sla_hours = _compute_sla_hours(node)
+    created_at = now_iso()
+    due_at = _compute_due_at(created_at, sla_hours)
+
+    # Fallback: se nó não tem participante, usa o responsável da oportunidade
+    resolved_assignee = assignee or participant or None
+    if not resolved_assignee:
+        try:
+            opp = _find_opportunity(op_id)
+            resolved_assignee = (
+                str(opp.get("responsavel") or opp.get("assignedTo") or "").strip()
+                or None
+            )
+        except Exception:
+            pass
+
+    record = {
+        "taskId": task_id,
+        "opportunityId": op_id,
+        "nodeId": node_id,
+        "nodeType": node.get("nodeType", "task"),
+        "label": label,
+        "description": description,
+        "status": "pending",          # pending | completed | cancelled
+        "assignee": resolved_assignee,
+        "assigneeId": assignee_id,
+        "assignedRole": assigned_role,
+        "formSchema": form_schema,
+        "formData": {},
+        "slaHours": sla_hours,
+        "dueAt": due_at,
+        "durationSeconds": None,
+        "completedBy": None,
+        "completedAt": None,
+        "createdAt": created_at,
+        "updatedAt": created_at,
+    }
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        tasks.append(record)
+        save_workflow_tasks(tasks)
+    emit_event("task_created", {
+        "taskId": task_id,
+        "opportunityId": op_id,
+        "nodeId": node_id,
+        "label": label,
+        "assignee": record["assignee"],
+        "assignedRole": assigned_role,
+    })
+
+    # Email notification on task creation
+    _notify_task_email(record, event="created")
+
+    return record
+
+
+def _complete_user_task(task_id: int, completed_by: str | None = None, form_data: dict | None = None) -> dict | None:
+    """Mark a UserTask as completed and return it."""
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        task = None
+        for t in tasks:
+            if t.get("taskId") == task_id:
+                task = t
+                break
+        if not task:
+            return None
+        if task["status"] != "pending":
+            return task  # already done
+        task["status"] = "completed"
+        task["completedBy"] = completed_by
+        task["completedAt"] = now_iso()
+        task["updatedAt"] = now_iso()
+        task["durationSeconds"] = _task_duration_seconds(task)
+        if form_data:
+            task["formData"] = form_data
+        # Resolve SLA violation if any
+        was_overdue = False
+        due = _parse_iso(task.get("dueAt"))
+        if due and _parse_iso(task["completedAt"]) and _parse_iso(task["completedAt"]) > due:
+            was_overdue = True
+        task["slaBreached"] = was_overdue
+        save_workflow_tasks(tasks)
+    if task and task["status"] == "completed":
+        # Resolve open SLA violation
+        if was_overdue:
+            with _data_lock:
+                violations = load_sla_violations()
+                for v in violations:
+                    if v.get("taskId") == task_id and v.get("status") == "open":
+                        v["status"] = "resolved"
+                        v["resolvedAt"] = task["completedAt"]
+                        v["durationSeconds"] = task["durationSeconds"]
+                save_sla_violations(violations)
+        emit_event("task_completed", {
+            "taskId": task_id,
+            "opportunityId": task.get("opportunityId"),
+            "nodeId": task.get("nodeId"),
+            "label": task.get("label"),
+            "completedBy": completed_by,
+            "durationSeconds": task.get("durationSeconds"),
+            "slaBreached": was_overdue,
+        })
+        # Eager SLA check: scan remaining pending tasks for new violations
+        check_sla_violations()
+    return task
+
+
+def _cancel_tasks_for_workflow(op_id: int):
+    """Cancel all pending tasks for a workflow (e.g. on restart)."""
+    changed = False
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        for t in tasks:
+            if t.get("opportunityId") == op_id and t.get("status") == "pending":
+                t["status"] = "cancelled"
+                t["updatedAt"] = now_iso()
+                changed = True
+        if changed:
+            save_workflow_tasks(tasks)
+    if changed:
+        emit_event("task_cancelled", {"opportunityId": op_id})
+
+
+def _get_pending_task(op_id: int, node_id: str) -> dict | None:
+    """Find existing pending task for a specific node in a workflow."""
+    tasks = load_workflow_tasks()
+    return next(
+        (t for t in tasks
+         if t.get("opportunityId") == op_id
+         and t.get("nodeId") == node_id
+         and t.get("status") == "pending"),
+        None,
+    )
+
+
+def _find_opportunity(op_id: int) -> dict:
+    """Find opportunity by id or raise 404."""
+    global fake_oportunidades
+    fake_oportunidades = load_oportunidades_data()
+    opp = next((o for o in fake_oportunidades if o.get("id") == op_id), None)
+    if not opp:
+        raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
+    return opp
+
+
+def _append_opportunity_timeline(op_id: int, entries: list[dict]):
+    """Append timeline entries to an opportunity's timelineItems array."""
+    if not entries:
+        return
+    ts = now_iso()
+    fmt = datetime.now().strftime("%d/%m/%Y, %H:%M")
+    base_id = int(datetime.now().timestamp() * 1000)
+    for i, entry in enumerate(entries):
+        entry.setdefault("id", base_id + i)
+        entry.setdefault("autoGenerated", True)
+        entry.setdefault("source", "backend")
+        entry.setdefault("timestamp", ts)
+        entry.setdefault("time", fmt)
+        entry.setdefault("actor", "Sistema")
+        entry.setdefault("actorId", "system")
+    with _data_lock:
+        opps = load_oportunidades_data()
+        for idx, opp in enumerate(opps):
+            if opp.get("id") == op_id:
+                timeline = opp.get("timelineItems") or []
+                opp["timelineItems"] = entries + timeline
+                opps[idx] = opp
+                save_oportunidades_data(opps)
+                return
+
+
+def _find_opportunities_for_entity(entity: dict) -> list[int]:
+    """Find opportunity IDs whose BPMN references this entity."""
+    eid = entity.get("id")
+    nome = (entity.get("nome") or "").strip().lower()
+    cat = (entity.get("categoria") or "").strip().lower()
+    opps = load_oportunidades_data()
+    result = []
+    for opp in opps:
+        opp_nome = (opp.get("nome") or opp.get("titulo") or "").strip().lower()
+        if cat and opp_nome and opp_nome == cat:
+            result.append(opp["id"])
+            continue
+        bpmn = opp.get("bpmn") or {}
+        nodes = bpmn.get("nodes") or []
+        for node in nodes:
+            if node.get("entidadeId") == eid:
+                result.append(opp["id"])
+                break
+            if nome and (node.get("entidadeNome") or node.get("label") or "").strip().lower() == nome:
+                if node.get("nodeType") == "entidade":
+                    result.append(opp["id"])
+                    break
+    return result
+
+
+def _get_bpmn(opp: dict, version: int | None = None) -> dict:
+    """Extract bpmn dict from opportunity, optionally for a specific version.
+
+    If *version* is given, look up the snapshot in ``bpmn_versions``.
+    Otherwise return the current (latest) BPMN.
+    """
+    if version is not None:
+        versions = opp.get("bpmn_versions") or []
+        ver = next((v for v in versions if v.get("version") == version), None)
+        if ver:
+            bpmn = ver.get("bpmn") or {}
+            if isinstance(bpmn, dict) and bpmn.get("nodes"):
+                return bpmn
+        # Fallback to current if version not found (backward compat)
+    bpmn = opp.get("bpmn")
+    if not bpmn or not isinstance(bpmn, dict):
+        raise HTTPException(status_code=400, detail="Oportunidade não possui BPMN definido")
+    nodes = bpmn.get("nodes") or []
+    if not nodes:
+        raise HTTPException(status_code=400, detail="BPMN não possui nós definidos")
+    return bpmn
+
+
+def _get_current_bpmn_version(opp: dict) -> int:
+    """Return the latest BPMN version number for an opportunity."""
+    versions = opp.get("bpmn_versions") or []
+    if versions:
+        return max(v.get("version", 0) for v in versions)
+    return 1  # First implicit version
+
+
+def _create_bpmn_version(opp_id: int, bpmn: dict, author: str = "") -> int:
+    """Snapshot the current BPMN into bpmn_versions and return the new version number."""
+    with _data_lock:
+        opps = load_oportunidades_data()
+        opp = next((o for o in opps if o.get("id") == opp_id), None)
+        if not opp:
+            return 0
+        versions = opp.get("bpmn_versions") or []
+        new_version = max((v.get("version", 0) for v in versions), default=0) + 1
+        versions.append({
+            "version": new_version,
+            "bpmn": json.loads(json.dumps(bpmn)),  # deep copy
+            "created_at": now_iso(),
+            "author": author,
+        })
+        opp["bpmn_versions"] = versions
+        opp["bpmn_current_version"] = new_version
+        save_oportunidades_data(opps)
+    return new_version
+
+
+def _get_bpmn_safe(opp: dict, version: int | None = None) -> dict:
+    """Like _get_bpmn but returns empty dict instead of raising on missing BPMN."""
+    try:
+        return _get_bpmn(opp, version)
+    except HTTPException:
+        return opp.get("bpmn") or {}
+
+
+def _build_response(engine: WorkflowEngine, result: dict, op_id: int, bpmn_version: int | None = None) -> dict:
+    """Normalize workflow engine result to the shape the frontend expects."""
+    total_nodes = len(engine.active_node_ids_in_order())
+    current = result.get("currentNodeId")
+    stage_index = engine.node_index(current) if current else total_nodes
+
+    # Include pending task info if paused at a user task
+    pending_task = None
+    if current and result.get("paused_reason") == "user_input":
+        pending_task = _get_pending_task(op_id, current)
+
+    resp = {
+        "status": result["status"],
+        "workflowStatus": result["status"],
+        "paused_reason": result.get("paused_reason"),
+        "workflowPausedReason": result.get("paused_reason"),
+        "currentNodeId": current,
+        "bpmnVersion": bpmn_version,
+        "stageIndex": stage_index,
+        "totalNodes": total_nodes,
+        "executed": result.get("executed", []),
+    }
+    if pending_task:
+        resp["pendingTask"] = {
+            "taskId": pending_task["taskId"],
+            "nodeId": pending_task["nodeId"],
+            "label": pending_task["label"],
+            "description": pending_task.get("description", ""),
+            "assignee": pending_task.get("assignee"),
+            "assigneeId": pending_task.get("assigneeId"),
+            "status": pending_task["status"],
+            "createdAt": pending_task.get("createdAt"),
+            "formSchema": pending_task.get("formSchema") or [],
+        }
+    return resp
+
+
+@app.get("/workflows")
+def list_workflows(status: str | None = None, owner: str | None = None, shared: str | None = None):
+    """List all workflow instances joined with opportunity metadata."""
+    instances = load_workflow_instances()
+    oportunidades = load_oportunidades_data()
+    opp_map = {o.get("id"): o for o in oportunidades if isinstance(o, dict)}
+
+    result = []
+    for inst in instances:
+        op_id = inst.get("id")
+        wf_status = inst.get("status", "not_started")
+        if status and wf_status != status:
+            continue
+        opp = opp_map.get(op_id) or {}
+        # Filter by owner
+        if owner:
+            opp_owner = (opp.get("criadoPor") or opp.get("owner") or "").lower()
+            if opp_owner != owner.lower():
+                continue
+        # Filter by shared flag
+        if shared == "true" and not opp.get("shared"):
+            continue
+        inst_version = inst.get("bpmn_version")
+        bpmn = _get_bpmn_safe(opp, inst_version)
+        nodes = bpmn.get("nodes") or []
+        executed = inst.get("executed") or []
+
+        # Current node info
+        current_node_id = inst.get("currentNodeId")
+        current_node = next((n for n in nodes if n.get("id") == current_node_id), None)
+
+        total_active = len([n for n in nodes if n.get("active") is not False])
+        completed_count = len([e for e in executed if e.get("status") == "completed"])
+
+        result.append({
+            "opportunityId": op_id,
+            "opportunityName": opp.get("nome") or opp.get("name") or f"Oportunidade #{op_id}",
+            "opportunitySlug": opp.get("slug") or "",
+            "owner": opp.get("criadoPor") or opp.get("owner") or "",
+            "shared": bool(opp.get("shared")),
+            "status": wf_status,
+            "bpmnVersion": inst_version,
+            "currentNodeId": current_node_id,
+            "currentNodeLabel": current_node.get("label", "") if current_node else "",
+            "currentNodeType": current_node.get("nodeType", "") if current_node else "",
+            "totalNodes": total_active,
+            "completedNodes": completed_count,
+            "progress": round(completed_count / total_active * 100) if total_active else 0,
+            "startedAt": inst.get("startedAt"),
+            "updatedAt": inst.get("updatedAt"),
+        })
+
+    # Sort: running/paused first, then by updatedAt desc
+    status_order = {"running": 0, "paused": 0, "not_started": 1, "completed": 2, "stopped": 3}
+    result.sort(key=lambda w: (status_order.get(w["status"], 9), w.get("updatedAt") or "", ), reverse=False)
+    # Reverse updatedAt within same status group
+    result.sort(key=lambda w: (status_order.get(w["status"], 9),))
+
+    return {"data": result, "total": len(result)}
+
+
+@app.post("/workflow/{op_id}/run")
+async def workflow_run(op_id: int, request: Request):
+    """Start (or restart) workflow execution for an opportunity."""
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    # Validate context is a dict if provided
+    context = body.get("context") or {}
+    if not isinstance(context, dict):
+        raise HTTPException(status_code=400, detail="'context' deve ser um objeto (dict).")
+
+    opp = _find_opportunity(op_id)
+    # Lock to current BPMN version so instance survives future edits
+    current_version = _get_current_bpmn_version(opp)
+    bpmn = _get_bpmn(opp)
+    engine = WorkflowEngine(bpmn)
+
+    start_id = engine.find_start_node()
+    if not start_id:
+        raise HTTPException(status_code=400, detail="BPMN não possui nó de início")
+
+    # Ensure a version snapshot exists for this BPMN
+    if not (opp.get("bpmn_versions") or []):
+        current_version = _create_bpmn_version(op_id, bpmn)
+
+    # Cancel any existing pending tasks from previous run
+    _cancel_tasks_for_workflow(op_id)
+
+    result = engine.run(start_id, context)
+
+    _save_workflow_state(op_id, {
+        "currentNodeId": result.get("currentNodeId"),
+        "executed": result.get("executed", []),
+        "context": context,
+        "status": result["status"],
+        "bpmn_version": current_version,
+        "startedAt": now_iso(),
+    })
+
+    # Emit workflow_started event
+    emit_event("workflow_started", {
+        "opportunityId": op_id,
+        "bpmnVersion": current_version,
+        "status": result["status"],
+    })
+
+    # Append workflow start to opportunity timeline
+    _append_opportunity_timeline(op_id, [{
+        "title": "Workflow iniciado",
+        "description": f"Execução do workflow foi iniciada (versão BPMN {current_version})",
+        "actionType": "create",
+        "elementType": "workflow",
+        "itemName": "Workflow",
+    }])
+
+    # If paused at a UserTask, create a pending task record
+    current = result.get("currentNodeId")
+    if current and result.get("paused_reason") == "user_input":
+        node = engine.nodes.get(current, {})
+        _create_user_task(op_id, current, node)
+
+    return _build_response(engine, result, op_id, current_version)
+
+
+@app.post("/workflow/{op_id}/advance")
+async def workflow_advance(op_id: int, request: Request):
+    """Advance workflow from the current paused node."""
+    body = await request.json()
+    node_id = body.get("nodeId")
+    decision = body.get("decision")
+    completed = body.get("completed", False)
+    form_data = body.get("formData") or {}
+
+    opp = _find_opportunity(op_id)
+
+    state = _load_workflow_state(op_id)
+    if not state:
+        raise HTTPException(status_code=400, detail="Workflow não foi iniciado. Use /workflow/{id}/run primeiro.")
+
+    # Block advance on terminal states
+    wf_status = state.get("status", "")
+    if wf_status in ("completed", "cancelled"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workflow está com status '{wf_status}' e não pode avançar.",
+        )
+
+    # Use the BPMN version locked at instance start
+    inst_version = state.get("bpmn_version")
+    bpmn = _get_bpmn(opp, inst_version)
+
+    # Validate node_id exists in BPMN
+    if node_id:
+        bpmn_nodes = bpmn.get("nodes") or []
+        valid_ids = {str(n.get("id") or "") for n in bpmn_nodes}
+        if str(node_id) not in valid_ids:
+            raise HTTPException(
+                status_code=400,
+                detail=f"nodeId '{node_id}' não existe no BPMN desta oportunidade.",
+            )
+
+    # If completing a UserTask, validate and mark the task record as completed
+    if completed and node_id:
+        pending = _get_pending_task(op_id, node_id)
+        if pending:
+            form_schema = pending.get("formSchema") or []
+            if form_schema and form_data:
+                validation_errors = _validate_form_data(form_data, form_schema)
+                if validation_errors:
+                    raise HTTPException(status_code=422, detail={
+                        "message": "Dados do formulário inválidos",
+                        "errors": validation_errors,
+                    })
+            _complete_user_task(pending["taskId"], form_data=form_data)
+
+    # Build context from previous state + new input
+    context = dict(state.get("context") or {})
+
+    if decision:
+        context[f"decision_{node_id}"] = decision
+    if completed:
+        context[f"completed_{node_id}"] = True
+    if form_data:
+        context.update(form_data)
+        # Store form_responses per node for structured access
+        form_responses = context.get("form_responses") or {}
+        form_responses[node_id] = form_data
+        context["form_responses"] = form_responses
+
+    # Re-run engine from start with full accumulated context
+    engine = WorkflowEngine(bpmn)
+    start_id = engine.find_start_node()
+    result = engine.run(start_id, context)
+
+    _save_workflow_state(op_id, {
+        "currentNodeId": result.get("currentNodeId"),
+        "executed": result.get("executed", []),
+        "context": context,
+        "status": result["status"],
+        "startedAt": state.get("startedAt"),
+    })
+
+    # If paused at a new UserTask, create a pending task record
+    current = result.get("currentNodeId")
+    if current and result.get("paused_reason") == "user_input":
+        existing = _get_pending_task(op_id, current)
+        if not existing:
+            node = engine.nodes.get(current, {})
+            _create_user_task(op_id, current, node)
+
+    # Update opportunity stageIndex and currentNodeId
+    stage_index = engine.node_index(current) if current else len(engine.active_node_ids_in_order())
+    with _data_lock:
+        fake_oportunidades = load_oportunidades_data()
+        for o in fake_oportunidades:
+            if o.get("id") == op_id:
+                o["stageIndex"] = stage_index
+                o["currentNodeId"] = current
+                o["bpmnCurrentNodeId"] = current
+                o["activeNodeId"] = current
+                if result["status"] == "completed":
+                    o["status"] = "Concluído"
+                break
+        save_oportunidades_data(fake_oportunidades)
+
+    # Emit workflow event based on result status
+    # Resolve labels for timeline entries
+    _adv_node_label = ""
+    if node_id:
+        _adv_node = engine.nodes.get(node_id) or engine.nodes.get(str(node_id)) or {}
+        _adv_node_label = _adv_node.get("label") or _adv_node.get("taskNome") or _adv_node.get("entidadeNome") or str(node_id)
+    _adv_current_label = ""
+    if current:
+        _adv_cur_node = engine.nodes.get(current) or engine.nodes.get(str(current)) or {}
+        _adv_current_label = _adv_cur_node.get("label") or _adv_cur_node.get("taskNome") or _adv_cur_node.get("entidadeNome") or str(current)
+
+    if result["status"] == "completed":
+        emit_event("workflow_completed", {
+            "opportunityId": op_id,
+            "bpmnVersion": inst_version,
+            "executedCount": len(result.get("executed", [])),
+        })
+        _tl = [{"title": "Workflow concluído", "description": f"Todas as etapas foram finalizadas ({len(result.get('executed', []))} etapas executadas)", "actionType": "update", "elementType": "workflow", "itemName": "Workflow"}]
+        if _adv_node_label:
+            _tl.insert(0, {"title": f"Etapa concluída: {_adv_node_label}", "description": f"A etapa '{_adv_node_label}' foi finalizada", "actionType": "update", "elementType": "workflow", "itemName": _adv_node_label})
+        _append_opportunity_timeline(op_id, _tl)
+    elif result.get("paused_reason"):
+        emit_event("workflow_paused", {
+            "opportunityId": op_id,
+            "currentNodeId": current,
+            "pausedReason": result.get("paused_reason"),
+        })
+        _tl = []
+        if _adv_node_label:
+            _tl.append({"title": f"Etapa concluída: {_adv_node_label}", "description": f"A etapa '{_adv_node_label}' foi finalizada", "actionType": "update", "elementType": "workflow", "itemName": _adv_node_label})
+        _tl.append({"title": f"Aguardando: {_adv_current_label}", "description": f"Workflow pausado na etapa '{_adv_current_label}'", "actionType": "update", "elementType": "workflow", "itemName": _adv_current_label})
+        _append_opportunity_timeline(op_id, _tl)
+    else:
+        emit_event("workflow_advanced", {
+            "opportunityId": op_id,
+            "currentNodeId": current,
+            "status": result["status"],
+        })
+        _tl = []
+        if _adv_node_label:
+            _tl.append({"title": f"Etapa concluída: {_adv_node_label}", "description": f"A etapa '{_adv_node_label}' foi finalizada", "actionType": "update", "elementType": "workflow", "itemName": _adv_node_label})
+        _append_opportunity_timeline(op_id, _tl)
+
+    return _build_response(engine, result, op_id, inst_version)
+
+
+@app.get("/workflow/{op_id}/state")
+def workflow_state(op_id: int):
+    """Get current workflow state for an opportunity. Auto-resumes from persisted state."""
+    opp = _find_opportunity(op_id)
+    state = _load_workflow_state(op_id)
+
+    if not state:
+        return {
+            "status": "not_started",
+            "workflowStatus": "not_started",
+            "paused_reason": None,
+            "workflowPausedReason": None,
+            "currentNodeId": None,
+            "stageIndex": 0,
+            "totalNodes": 0,
+            "executed": [],
+        }
+
+    # Re-run engine with saved context to rehydrate paused_reason
+    inst_version = state.get("bpmn_version")
+    bpmn = _get_bpmn(opp, inst_version)
+    engine = WorkflowEngine(bpmn)
+    start_id = engine.find_start_node()
+    context = state.get("context") or {}
+    result = engine.run(start_id, context) if start_id else {}
+
+    paused_reason = result.get("paused_reason") if result else None
+    current_node = state.get("currentNodeId")
+
+    # Include pending task if paused at a UserTask
+    pending_task = None
+    if current_node and paused_reason == "user_input":
+        pt = _get_pending_task(op_id, current_node)
+        if pt:
+            pending_task = {
+                "taskId": pt["taskId"],
+                "nodeId": pt["nodeId"],
+                "label": pt["label"],
+                "description": pt.get("description", ""),
+                "assignee": pt.get("assignee"),
+                "assigneeId": pt.get("assigneeId"),
+                "status": pt["status"],
+                "createdAt": pt.get("createdAt"),
+                "formSchema": pt.get("formSchema") or [],
+            }
+
+    resp = {
+        "status": state["status"],
+        "workflowStatus": state["status"],
+        "paused_reason": paused_reason,
+        "workflowPausedReason": paused_reason,
+        "currentNodeId": current_node,
+        "bpmnVersion": inst_version,
+        "stageIndex": engine.node_index(current_node) if current_node else 0,
+        "totalNodes": len(engine.active_node_ids_in_order()),
+        "executed": state.get("executed", []),
+    }
+    if pending_task:
+        resp["pendingTask"] = pending_task
+    return resp
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workflow Cancel / Pause / Resume / History
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.post("/workflow/{op_id}/cancel")
+def workflow_cancel(op_id: int):
+    """Cancel a running or paused workflow. Cancels all pending tasks."""
+    _find_opportunity(op_id)
+    state = _load_workflow_state(op_id)
+    if not state:
+        raise HTTPException(status_code=400, detail="Workflow não foi iniciado.")
+    if state.get("status") in ("completed", "cancelled"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workflow já está com status '{state['status']}'.",
+        )
+
+    _cancel_tasks_for_workflow(op_id)
+
+    _save_workflow_state(op_id, {
+        **state,
+        "status": "cancelled",
+        "cancelledAt": now_iso(),
+    })
+
+    emit_event("workflow_cancelled", {
+        "opportunityId": op_id,
+        "previousStatus": state.get("status"),
+    })
+
+    _append_opportunity_timeline(op_id, [{
+        "title": "Workflow cancelado",
+        "description": f"Execução do workflow foi cancelada (status anterior: {state.get('status', '?')})",
+        "actionType": "delete",
+        "elementType": "workflow",
+        "itemName": "Workflow",
+    }])
+
+    return {"status": "cancelled", "opportunityId": op_id}
+
+
+@app.post("/workflow/{op_id}/pause")
+def workflow_pause(op_id: int):
+    """Explicitly pause a running workflow (not waiting on a user task)."""
+    _find_opportunity(op_id)
+    state = _load_workflow_state(op_id)
+    if not state:
+        raise HTTPException(status_code=400, detail="Workflow não foi iniciado.")
+    current_status = state.get("status", "")
+    if current_status not in ("running", "paused"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Só é possível pausar workflows em execução. Status atual: '{current_status}'.",
+        )
+    if current_status == "paused":
+        return {"status": "paused", "opportunityId": op_id, "message": "Workflow já está pausado."}
+
+    _save_workflow_state(op_id, {
+        **state,
+        "status": "paused",
+        "pausedAt": now_iso(),
+        "pausedManually": True,
+    })
+
+    emit_event("workflow_paused", {
+        "opportunityId": op_id,
+        "currentNodeId": state.get("currentNodeId"),
+        "pausedReason": "manual",
+    })
+
+    _append_opportunity_timeline(op_id, [{
+        "title": "Workflow pausado manualmente",
+        "description": "O workflow foi pausado manualmente pelo usuário",
+        "actionType": "update",
+        "elementType": "workflow",
+        "itemName": "Workflow",
+    }])
+
+    return {"status": "paused", "opportunityId": op_id}
+
+
+@app.post("/workflow/{op_id}/resume")
+def workflow_resume(op_id: int):
+    """Resume a manually paused workflow."""
+    _find_opportunity(op_id)
+    state = _load_workflow_state(op_id)
+    if not state:
+        raise HTTPException(status_code=400, detail="Workflow não foi iniciado.")
+    if state.get("status") != "paused":
+        raise HTTPException(
+            status_code=400,
+            detail=f"Workflow não está pausado. Status atual: '{state.get('status')}'.",
+        )
+
+    previous_status = "running"
+    _save_workflow_state(op_id, {
+        **state,
+        "status": previous_status,
+        "resumedAt": now_iso(),
+        "pausedManually": False,
+    })
+
+    emit_event("workflow_resumed", {
+        "opportunityId": op_id,
+        "currentNodeId": state.get("currentNodeId"),
+    })
+
+    _append_opportunity_timeline(op_id, [{
+        "title": "Workflow retomado",
+        "description": "O workflow pausado foi retomado",
+        "actionType": "update",
+        "elementType": "workflow",
+        "itemName": "Workflow",
+    }])
+
+    return {"status": previous_status, "opportunityId": op_id}
+
+
+@app.get("/workflow/{op_id}/history")
+def workflow_history(op_id: int, limit: int = 100):
+    """Return the full execution audit trail for a workflow (events + task changes)."""
+    _find_opportunity(op_id)
+
+    # Collect all events related to this opportunity
+    event_log = load_event_log()
+    related_events = [
+        e for e in event_log
+        if isinstance(e.get("data"), dict)
+        and e["data"].get("opportunityId") == op_id
+    ]
+
+    # Collect task history for this workflow
+    tasks = load_workflow_tasks()
+    related_tasks = [t for t in tasks if t.get("opportunityId") == op_id]
+
+    # Build unified timeline
+    timeline: list[dict] = []
+
+    for event in related_events:
+        timeline.append({
+            "type": "event",
+            "event": event.get("event"),
+            "data": event.get("data"),
+            "timestamp": event.get("timestamp"),
+        })
+
+    for task in related_tasks:
+        timeline.append({
+            "type": "task_created",
+            "taskId": task.get("taskId"),
+            "nodeId": task.get("nodeId"),
+            "label": task.get("label"),
+            "assignee": task.get("assignee"),
+            "status": task.get("status"),
+            "timestamp": task.get("createdAt"),
+        })
+        if task.get("completedAt"):
+            timeline.append({
+                "type": "task_completed",
+                "taskId": task.get("taskId"),
+                "label": task.get("label"),
+                "completedBy": task.get("completedBy"),
+                "durationSeconds": task.get("durationSeconds"),
+                "slaBreached": task.get("slaBreached", False),
+                "timestamp": task.get("completedAt"),
+            })
+
+    # Sort by timestamp ascending
+    timeline.sort(key=lambda x: x.get("timestamp") or "")
+
+    # Workflow state summary
+    state = _load_workflow_state(op_id)
+    summary = {
+        "status": state.get("status", "not_started") if state else "not_started",
+        "startedAt": state.get("startedAt") if state else None,
+        "updatedAt": state.get("updatedAt") if state else None,
+        "executedCount": len(state.get("executed", [])) if state else 0,
+        "totalTasks": len(related_tasks),
+        "completedTasks": len([t for t in related_tasks if t.get("status") == "completed"]),
+        "pendingTasks": len([t for t in related_tasks if t.get("status") == "pending"]),
+        "cancelledTasks": len([t for t in related_tasks if t.get("status") == "cancelled"]),
+    }
+
+    return {
+        "opportunityId": op_id,
+        "summary": summary,
+        "timeline": timeline[-limit:],
+        "total": len(timeline),
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BPMN Versioning endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/oportunidades/{op_id}/versions")
+def list_bpmn_versions(op_id: int):
+    """List all BPMN version snapshots for an opportunity."""
+    opp = _find_opportunity(op_id)
+    versions = opp.get("bpmn_versions") or []
+    current = opp.get("bpmn_current_version")
+
+    # Return metadata only (no full BPMN payload to keep response small)
+    items = []
+    for v in versions:
+        bpmn_snap = v.get("bpmn") or {}
+        items.append({
+            "version": v.get("version"),
+            "created_at": v.get("created_at", ""),
+            "author": v.get("author", ""),
+            "nodeCount": len(bpmn_snap.get("nodes") or []),
+            "connectionCount": len(bpmn_snap.get("connections") or []),
+            "isCurrent": v.get("version") == current,
+        })
+    items.sort(key=lambda x: x["version"], reverse=True)
+    return {"data": items, "currentVersion": current}
+
+
+@app.get("/oportunidades/{op_id}/versions/{version}")
+def get_bpmn_version(op_id: int, version: int):
+    """Return the full BPMN snapshot for a specific version."""
+    opp = _find_opportunity(op_id)
+    versions = opp.get("bpmn_versions") or []
+    ver = next((v for v in versions if v.get("version") == version), None)
+    if not ver:
+        raise HTTPException(status_code=404, detail=f"Versão {version} não encontrada")
+    return {
+        "version": ver["version"],
+        "bpmn": ver.get("bpmn", {}),
+        "created_at": ver.get("created_at", ""),
+        "author": ver.get("author", ""),
+        "isCurrent": ver["version"] == opp.get("bpmn_current_version"),
+    }
+
+
+@app.post("/oportunidades/{op_id}/versions")
+def create_bpmn_version_manual(op_id: int, request_body: dict = Body(default={})):
+    """Manually create a BPMN version snapshot of the current BPMN."""
+    opp = _find_opportunity(op_id)
+    bpmn = opp.get("bpmn")
+    if not bpmn or not isinstance(bpmn, dict) or not bpmn.get("nodes"):
+        raise HTTPException(status_code=400, detail="Oportunidade não possui BPMN com nós para versionar")
+    author = request_body.get("author", "")
+    new_ver = _create_bpmn_version(op_id, bpmn, author)
+    return {"version": new_ver, "message": f"Versão {new_ver} criada com sucesso"}
+
+
+@app.post("/oportunidades/{op_id}/versions/{version}/restore")
+def restore_bpmn_version(op_id: int, version: int):
+    """Restore a previous BPMN version as the current BPMN (creates a new version)."""
+    opp = _find_opportunity(op_id)
+    versions = opp.get("bpmn_versions") or []
+    ver = next((v for v in versions if v.get("version") == version), None)
+    if not ver:
+        raise HTTPException(status_code=404, detail=f"Versão {version} não encontrada")
+
+    old_bpmn = ver.get("bpmn") or {}
+    if not old_bpmn.get("nodes"):
+        raise HTTPException(status_code=400, detail="Versão não possui nós BPMN")
+
+    # Update current BPMN to the old version's snapshot
+    with _data_lock:
+        opps = load_oportunidades_data()
+        target = next((o for o in opps if o.get("id") == op_id), None)
+        if target:
+            target["bpmn"] = json.loads(json.dumps(old_bpmn))
+            save_oportunidades_data(opps)
+
+    # Create a new version for this restoration
+    new_ver = _create_bpmn_version(op_id, old_bpmn, f"restaurado da v{version}")
+    return {
+        "version": new_ver,
+        "restoredFrom": version,
+        "message": f"BPMN restaurado da versão {version}. Nova versão {new_ver} criada.",
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Webhook CRUD & Event Log endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/webhooks")
+def list_webhooks():
+    """List all registered webhooks."""
+    return {"data": load_webhooks()}
+
+
+@app.post("/webhooks", status_code=201)
+def create_webhook(body: dict = Body(...)):
+    """Register a new webhook.
+
+    Body: { url, events?: string[], secret?: string, description?: string,
+            retry_config?: { max_retries?: int, retry_delay?: float, retry_backoff?: float } }
+    """
+    url = (body.get("url") or "").strip()
+    if not url:
+        raise HTTPException(status_code=400, detail="url é obrigatório")
+
+    events = body.get("events") or ["*"]
+    secret = body.get("secret") or ""
+    description = body.get("description") or ""
+    retry_config = body.get("retry_config") or {
+        "max_retries": _DEFAULT_RETRY_MAX,
+        "retry_delay": _DEFAULT_RETRY_DELAY,
+        "retry_backoff": _DEFAULT_RETRY_BACKOFF,
+    }
+
+    with _data_lock:
+        hooks = load_webhooks()
+        new_id = max((h.get("id", 0) for h in hooks), default=0) + 1
+        record = {
+            "id": new_id,
+            "url": url,
+            "events": events,
+            "secret": secret,
+            "description": description,
+            "active": True,
+            "retry_config": retry_config,
+            "created_at": now_iso(),
+        }
+        hooks.append(record)
+        save_webhooks(hooks)
+    return record
+
+
+@app.put("/webhooks/{webhook_id}")
+def update_webhook(webhook_id: int, body: dict = Body(...)):
+    """Update a webhook (url, events, secret, active, description, retry_config)."""
+    with _data_lock:
+        hooks = load_webhooks()
+        hook = next((h for h in hooks if h.get("id") == webhook_id), None)
+        if not hook:
+            raise HTTPException(status_code=404, detail="Webhook não encontrado")
+        for key in ("url", "events", "secret", "active", "description", "retry_config"):
+            if key in body:
+                hook[key] = body[key]
+        hook["updated_at"] = now_iso()
+        save_webhooks(hooks)
+    return hook
+
+
+@app.delete("/webhooks/{webhook_id}", status_code=204)
+def delete_webhook(webhook_id: int):
+    """Delete a webhook registration."""
+    with _data_lock:
+        hooks = load_webhooks()
+        idx = next((i for i, h in enumerate(hooks) if h.get("id") == webhook_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Webhook não encontrado")
+        hooks.pop(idx)
+        save_webhooks(hooks)
+    return
+
+
+@app.post("/webhooks/{webhook_id}/test")
+def test_webhook(webhook_id: int):
+    """Send a test event to a webhook to verify connectivity."""
+    hooks = load_webhooks()
+    hook = next((h for h in hooks if h.get("id") == webhook_id), None)
+    if not hook:
+        raise HTTPException(status_code=404, detail="Webhook não encontrado")
+    test_event = {
+        "id": 0,
+        "event": "webhook_test",
+        "data": {"message": "Teste de conectividade do webhook", "webhookId": webhook_id},
+        "timestamp": now_iso(),
+    }
+    url = hook.get("url", "").strip()
+    secret = hook.get("secret", "")
+    # Synchronous delivery for test so we can report the result
+    import hashlib, hmac
+    headers = {"Content-Type": "application/json"}
+    body_bytes = json.dumps(test_event, default=str).encode()
+    if secret:
+        sig = hmac.new(secret.encode(), body_bytes, hashlib.sha256).hexdigest()
+        headers["X-Webhook-Signature"] = sig
+    try:
+        resp = requests.post(url, data=body_bytes, headers=headers, timeout=10)
+        return {"success": resp.ok, "status_code": resp.status_code, "body": resp.text[:500]}
+    except Exception as exc:
+        return {"success": False, "error": str(exc)}
+
+
+@app.get("/events")
+def list_events(event_type: str | None = None, limit: int = 50):
+    """List recent events from the event log."""
+    log = load_event_log()
+    if event_type:
+        log = [e for e in log if e.get("event") == event_type]
+    log.sort(key=lambda e: e.get("id", 0), reverse=True)
+    return {"data": log[:limit], "total": len(log)}
+
+
+@app.get("/events/types")
+def list_event_types():
+    """Return all supported event types."""
+    return {"types": [
+        "workflow_started",
+        "workflow_advanced",
+        "workflow_paused",
+        "workflow_resumed",
+        "workflow_completed",
+        "workflow_cancelled",
+        "task_created",
+        "task_completed",
+        "task_assigned",
+        "task_cancelled",
+        "sla_violation",
+        "webhook_test",
+    ]}
+
+
+# ─── Delivery log & manual retry ─────────────────────────────────────────────
+
+@app.get("/webhooks/{webhook_id}/deliveries")
+def list_webhook_deliveries(webhook_id: int, status: str | None = None, limit: int = 50):
+    """List delivery attempts for a specific webhook.
+
+    Optional ?status=failed|success|retrying|pending to filter.
+    """
+    hooks = load_webhooks()
+    if not any(h.get("id") == webhook_id for h in hooks):
+        raise HTTPException(status_code=404, detail="Webhook não encontrado")
+    log = load_delivery_log()
+    results = [d for d in log if d.get("webhook_id") == webhook_id]
+    if status:
+        results = [d for d in results if d.get("status") == status]
+    results.sort(key=lambda d: d.get("id", 0), reverse=True)
+    return {"data": results[:limit], "total": len(results)}
+
+
+@app.get("/deliveries")
+def list_all_deliveries(status: str | None = None, webhook_id: int | None = None,
+                        event_type: str | None = None, limit: int = 50):
+    """List all delivery attempts across all webhooks, with optional filters."""
+    log = load_delivery_log()
+    if status:
+        log = [d for d in log if d.get("status") == status]
+    if webhook_id is not None:
+        log = [d for d in log if d.get("webhook_id") == webhook_id]
+    if event_type:
+        log = [d for d in log if d.get("event_type") == event_type]
+    log.sort(key=lambda d: d.get("id", 0), reverse=True)
+    return {"data": log[:limit], "total": len(log)}
+
+
+@app.get("/deliveries/stats")
+def delivery_stats():
+    """Return aggregated delivery statistics."""
+    log = load_delivery_log()
+    total = len(log)
+    by_status = {}
+    for d in log:
+        s = d.get("status", "unknown")
+        by_status[s] = by_status.get(s, 0) + 1
+    return {"total": total, "by_status": by_status}
+
+
+@app.post("/deliveries/{delivery_id}/retry")
+def retry_delivery(delivery_id: int):
+    """Manually retry a specific failed delivery."""
+    log = load_delivery_log()
+    delivery = next((d for d in log if d.get("id") == delivery_id), None)
+    if not delivery:
+        raise HTTPException(status_code=404, detail="Delivery não encontrada")
+    if delivery.get("status") not in ("failed", "retrying"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Só é possível reprocessar deliveries com status 'failed' ou 'retrying'. "
+                   f"Status atual: {delivery.get('status')}",
+        )
+
+    # Retrieve webhook config for retry params
+    hooks = load_webhooks()
+    hook = next((h for h in hooks if h.get("id") == delivery.get("webhook_id")), None)
+    retry_cfg = (hook.get("retry_config") if hook else None) or {}
+
+    # Reconstruct the event payload from the event log
+    event_log = load_event_log()
+    event = next((e for e in event_log if e.get("id") == delivery.get("event_id")), None)
+    if not event:
+        raise HTTPException(
+            status_code=404,
+            detail="Evento original não encontrado no log (pode ter sido removido por rotação).",
+        )
+
+    url = delivery.get("url", "").strip()
+    secret = (hook.get("secret", "") if hook else "")
+
+    # Reset delivery status and re-dispatch in background
+    delivery["status"] = "retrying"
+    delivery["last_error"] = None
+    _record_delivery(delivery)
+
+    t = threading.Thread(
+        target=_deliver_webhook,
+        args=(url, secret, event),
+        kwargs={
+            "webhook_id": delivery.get("webhook_id", 0),
+            "max_retries": retry_cfg.get("max_retries", _DEFAULT_RETRY_MAX),
+            "retry_delay": retry_cfg.get("retry_delay", _DEFAULT_RETRY_DELAY),
+            "retry_backoff": retry_cfg.get("retry_backoff", _DEFAULT_RETRY_BACKOFF),
+            "delivery_id": delivery_id,
+        },
+        daemon=True,
+    )
+    t.start()
+    return {"message": "Reprocessamento iniciado", "delivery_id": delivery_id, "status": "retrying"}
+
+
+@app.post("/events/{event_id}/retry")
+def retry_event_deliveries(event_id: int):
+    """Retry all failed deliveries for a specific event."""
+    log = load_delivery_log()
+    failed = [d for d in log if d.get("event_id") == event_id and d.get("status") in ("failed", "retrying")]
+    if not failed:
+        raise HTTPException(status_code=404, detail="Nenhuma delivery falhada encontrada para este evento")
+
+    retried = []
+    hooks = {h["id"]: h for h in load_webhooks()}
+    event_log = load_event_log()
+    event = next((e for e in event_log if e.get("id") == event_id), None)
+    if not event:
+        raise HTTPException(
+            status_code=404,
+            detail="Evento original não encontrado no log (pode ter sido removido por rotação).",
+        )
+
+    for delivery in failed:
+        hook = hooks.get(delivery.get("webhook_id"))
+        retry_cfg = (hook.get("retry_config") if hook else None) or {}
+        url = delivery.get("url", "").strip()
+        secret = (hook.get("secret", "") if hook else "")
+
+        delivery["status"] = "retrying"
+        delivery["last_error"] = None
+        _record_delivery(delivery)
+
+        t = threading.Thread(
+            target=_deliver_webhook,
+            args=(url, secret, event),
+            kwargs={
+                "webhook_id": delivery.get("webhook_id", 0),
+                "max_retries": retry_cfg.get("max_retries", _DEFAULT_RETRY_MAX),
+                "retry_delay": retry_cfg.get("retry_delay", _DEFAULT_RETRY_DELAY),
+                "retry_backoff": retry_cfg.get("retry_backoff", _DEFAULT_RETRY_BACKOFF),
+                "delivery_id": delivery["id"],
+            },
+            daemon=True,
+        )
+        t.start()
+        retried.append(delivery["id"])
+
+    return {"message": f"{len(retried)} deliveries em reprocessamento", "delivery_ids": retried}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SLA & Metrics Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/sla/alerts")
+def sla_alerts(status: str | None = "open"):
+    """Return SLA violation alerts.
+
+    ?status=open (default) | resolved | dismissed | all
+    """
+    # Lazily scan for new violations
+    check_sla_violations()
+
+    violations = load_sla_violations()
+    if status and status != "all":
+        violations = [v for v in violations if v.get("status") == status]
+    violations.sort(key=lambda v: v.get("id", 0), reverse=True)
+
+    # Enrich with current task info
+    tasks = {t["taskId"]: t for t in load_workflow_tasks()}
+    enriched = []
+    for v in violations:
+        t = tasks.get(v.get("taskId"), {})
+        entry = {**v}
+        entry["taskStatus"] = t.get("status")
+        entry["assignee"] = t.get("assignee") or v.get("assignee")
+        due = _parse_iso(v.get("dueAt"))
+        if due:
+            overdue_secs = (datetime.now() - due).total_seconds()
+            entry["overdueSeconds"] = max(0, overdue_secs)
+            entry["overdueHuman"] = _format_duration(max(0, overdue_secs))
+        enriched.append(entry)
+    return {"data": enriched, "total": len(enriched)}
+
+
+@app.post("/sla/alerts/{violation_id}/dismiss")
+def dismiss_sla_alert(violation_id: int):
+    """Dismiss an SLA alert (acknowledge but don't resolve)."""
+    with _data_lock:
+        violations = load_sla_violations()
+        v = next((v for v in violations if v.get("id") == violation_id), None)
+        if not v:
+            raise HTTPException(status_code=404, detail="Violação não encontrada")
+        v["status"] = "dismissed"
+        v["dismissedAt"] = now_iso()
+        save_sla_violations(violations)
+    return v
+
+
+@app.get("/sla/overdue-tasks")
+def sla_overdue_tasks():
+    """List all pending tasks that are currently past their SLA deadline."""
+    now = datetime.now()
+    tasks = load_workflow_tasks()
+    overdue = []
+    for t in tasks:
+        if t.get("status") != "pending":
+            continue
+        due = _parse_iso(t.get("dueAt"))
+        if not due:
+            continue
+        if now > due:
+            overdue_secs = (now - due).total_seconds()
+            overdue.append({
+                "taskId": t.get("taskId"),
+                "opportunityId": t.get("opportunityId"),
+                "nodeId": t.get("nodeId"),
+                "label": t.get("label"),
+                "assignee": t.get("assignee"),
+                "assignedRole": t.get("assignedRole"),
+                "slaHours": t.get("slaHours"),
+                "dueAt": t.get("dueAt"),
+                "createdAt": t.get("createdAt"),
+                "overdueSeconds": overdue_secs,
+                "overdueHuman": _format_duration(overdue_secs),
+            })
+    overdue.sort(key=lambda x: x["overdueSeconds"], reverse=True)
+    return {"data": overdue, "total": len(overdue)}
+
+
+@app.get("/metrics/tasks")
+def metrics_tasks(opportunity_id: int | None = None):
+    """Per-task time metrics: duration, SLA compliance, etc."""
+    tasks = load_workflow_tasks()
+    if opportunity_id is not None:
+        tasks = [t for t in tasks if t.get("opportunityId") == opportunity_id]
+
+    completed = [t for t in tasks if t.get("status") == "completed"]
+    pending = [t for t in tasks if t.get("status") == "pending"]
+
+    durations = [t.get("durationSeconds") for t in completed if t.get("durationSeconds") is not None]
+    sla_set = [t for t in completed if t.get("slaHours") is not None]
+    sla_breached = [t for t in sla_set if t.get("slaBreached")]
+
+    now = datetime.now()
+    at_risk = []
+    for t in pending:
+        due = _parse_iso(t.get("dueAt"))
+        if due:
+            remaining = (due - now).total_seconds()
+            # At risk if < 25% of SLA time remains
+            sla_secs = (t.get("slaHours") or 0) * 3600
+            if sla_secs > 0 and remaining < sla_secs * 0.25:
+                at_risk.append(t.get("taskId"))
+
+    return {
+        "totalTasks": len(tasks),
+        "completed": len(completed),
+        "pending": len(pending),
+        "cancelled": len([t for t in tasks if t.get("status") == "cancelled"]),
+        "avgDurationSeconds": round(sum(durations) / len(durations), 1) if durations else None,
+        "avgDurationHuman": _format_duration(sum(durations) / len(durations)) if durations else None,
+        "minDurationSeconds": round(min(durations), 1) if durations else None,
+        "maxDurationSeconds": round(max(durations), 1) if durations else None,
+        "slaCompliance": {
+            "total": len(sla_set),
+            "breached": len(sla_breached),
+            "onTime": len(sla_set) - len(sla_breached),
+            "complianceRate": round((len(sla_set) - len(sla_breached)) / len(sla_set) * 100, 1) if sla_set else None,
+        },
+        "atRiskTaskIds": at_risk,
+    }
+
+
+@app.get("/metrics/workflows")
+def metrics_workflows():
+    """Aggregated workflow-level performance metrics."""
+    instances = load_workflow_instances()
+    tasks = load_workflow_tasks()
+
+    total = len(instances)
+    by_status = {}
+    durations = []
+
+    for inst in instances:
+        s = inst.get("status", "unknown")
+        by_status[s] = by_status.get(s, 0) + 1
+
+        if s == "completed":
+            started = _parse_iso(inst.get("startedAt"))
+            updated = _parse_iso(inst.get("updatedAt"))
+            if started and updated:
+                durations.append((updated - started).total_seconds())
+
+    # Per-step average durations across all tasks
+    step_durations: dict[str, list[float]] = {}
+    for t in tasks:
+        if t.get("status") == "completed" and t.get("durationSeconds"):
+            label = t.get("label") or t.get("nodeId") or "unknown"
+            step_durations.setdefault(label, []).append(t["durationSeconds"])
+
+    step_avg = {}
+    for label, durs in step_durations.items():
+        avg = sum(durs) / len(durs)
+        step_avg[label] = {
+            "avgSeconds": round(avg, 1),
+            "avgHuman": _format_duration(avg),
+            "count": len(durs),
+            "minSeconds": round(min(durs), 1),
+            "maxSeconds": round(max(durs), 1),
+        }
+
+    return {
+        "totalWorkflows": total,
+        "byStatus": by_status,
+        "completedWorkflows": {
+            "count": len(durations),
+            "avgDurationSeconds": round(sum(durations) / len(durations), 1) if durations else None,
+            "avgDurationHuman": _format_duration(sum(durations) / len(durations)) if durations else None,
+            "minDurationSeconds": round(min(durations), 1) if durations else None,
+            "maxDurationSeconds": round(max(durations), 1) if durations else None,
+        },
+        "stepPerformance": step_avg,
+    }
+
+
+@app.get("/metrics/dashboard")
+def metrics_dashboard():
+    """Combined performance dashboard with all key indicators."""
+    check_sla_violations()
+
+    tasks_metrics = metrics_tasks()
+    workflow_metrics = metrics_workflows()
+    violations = load_sla_violations()
+    open_violations = [v for v in violations if v.get("status") == "open"]
+
+    now = datetime.now()
+    pending_tasks = [t for t in load_workflow_tasks() if t.get("status") == "pending"]
+    overdue_count = 0
+    at_risk_count = 0
+    for t in pending_tasks:
+        due = _parse_iso(t.get("dueAt"))
+        if due:
+            if now > due:
+                overdue_count += 1
+            else:
+                remaining = (due - now).total_seconds()
+                sla_secs = (t.get("slaHours") or 0) * 3600
+                if sla_secs > 0 and remaining < sla_secs * 0.25:
+                    at_risk_count += 1
+
+    return {
+        "tasks": tasks_metrics,
+        "workflows": workflow_metrics,
+        "sla": {
+            "openViolations": len(open_violations),
+            "overdueTasks": overdue_count,
+            "atRiskTasks": at_risk_count,
+            "totalViolations": len(violations),
+        },
+        "generatedAt": now_iso(),
+    }
+
+
+@app.get("/metrics/task/{task_id}")
+def metrics_single_task(task_id: int):
+    """Detailed metrics for a single task."""
+    tasks = load_workflow_tasks()
+    task = next((t for t in tasks if t.get("taskId") == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+
+    now = datetime.now()
+    elapsed = None
+    remaining = None
+    sla_status = "no_sla"
+
+    created = _parse_iso(task.get("createdAt"))
+    completed = _parse_iso(task.get("completedAt"))
+    due = _parse_iso(task.get("dueAt"))
+
+    if created:
+        end = completed or now
+        elapsed = (end - created).total_seconds()
+
+    if due:
+        if task.get("status") == "completed":
+            sla_status = "breached" if task.get("slaBreached") else "on_time"
+        elif task.get("status") == "pending":
+            remaining = (due - now).total_seconds()
+            sla_secs = (task.get("slaHours") or 0) * 3600
+            if remaining <= 0:
+                sla_status = "overdue"
+            elif sla_secs > 0 and remaining < sla_secs * 0.25:
+                sla_status = "at_risk"
+            else:
+                sla_status = "on_track"
+
+    return {
+        "taskId": task_id,
+        "label": task.get("label"),
+        "status": task.get("status"),
+        "assignee": task.get("assignee"),
+        "slaHours": task.get("slaHours"),
+        "dueAt": task.get("dueAt"),
+        "createdAt": task.get("createdAt"),
+        "completedAt": task.get("completedAt"),
+        "elapsedSeconds": round(elapsed, 1) if elapsed else None,
+        "elapsedHuman": _format_duration(elapsed) if elapsed else None,
+        "remainingSeconds": round(remaining, 1) if remaining is not None else None,
+        "remainingHuman": _format_duration(remaining) if remaining is not None and remaining > 0 else None,
+        "durationSeconds": task.get("durationSeconds"),
+        "durationHuman": _format_duration(task["durationSeconds"]) if task.get("durationSeconds") else None,
+        "slaStatus": sla_status,
+        "slaBreached": task.get("slaBreached", False),
+    }
+
+
+@app.put("/sla/config")
+def update_sla_config(body: dict = Body(...)):
+    """Update SLA hours for specific nodes in a BPMN (per opportunity).
+
+    Body: { opportunityId: int, nodes: { nodeId: slaHours, ... } }
+    """
+    op_id = body.get("opportunityId")
+    nodes_config = body.get("nodes") or {}
+    if not op_id or not nodes_config:
+        raise HTTPException(status_code=400, detail="opportunityId e nodes são obrigatórios")
+
+    opp = _find_opportunity(op_id)
+    bpmn = opp.get("nodes") or opp.get("bpmn", {}).get("nodes") or []
+
+    updated = []
+    with _data_lock:
+        opps = load_oportunidades_data()
+        for o in opps:
+            if o.get("id") != op_id:
+                continue
+            nodes = o.get("nodes") or o.get("bpmn", {}).get("nodes") or []
+            for n in nodes:
+                nid = n.get("id")
+                if nid in nodes_config:
+                    n["slaHours"] = nodes_config[nid]
+                    updated.append(nid)
+            save_oportunidades_data(opps)
+            break
+
+    # Also update pending tasks with new SLA
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        for t in tasks:
+            if t.get("opportunityId") == op_id and t.get("status") == "pending":
+                nid = t.get("nodeId")
+                if nid in nodes_config:
+                    sla_h = nodes_config[nid]
+                    t["slaHours"] = sla_h
+                    t["dueAt"] = _compute_due_at(t["createdAt"], sla_h)
+                    t["updatedAt"] = now_iso()
+        save_workflow_tasks(tasks)
+
+    return {"updated_nodes": updated, "message": f"SLA atualizado para {len(updated)} nó(s)"}
+
+
+@app.get("/queue/status")
+def queue_status():
+    """Return current task queue backend status."""
+    q_type = "celery" if isinstance(task_queue, _CeleryQueue) else "local"
+    info = {"backend": q_type}
+    if q_type == "celery":
+        info["broker_url"] = os.environ.get("CELERY_BROKER_URL", "")[:50] + "..."
+        info["available"] = getattr(task_queue, "_available", False)
+    else:
+        info["description"] = "Fila local em-processo (threads). Para produção, configure CELERY_BROKER_URL."
+    return info
+
+
+def _format_duration(seconds: float | None) -> str | None:
+    """Convert seconds to human-readable duration string."""
+    if seconds is None:
+        return None
+    seconds = abs(seconds)
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    if seconds < 3600:
+        m = int(seconds // 60)
+        s = int(seconds % 60)
+        return f"{m}min {s}s"
+    h = int(seconds // 3600)
+    m = int((seconds % 3600) // 60)
+    if h >= 24:
+        d = h // 24
+        h = h % 24
+        return f"{d}d {h}h {m}min"
+    return f"{h}h {m}min"
+
+
+@app.post("/workflow/{op_id}/generate-objective")
+async def workflow_generate_objective(op_id: int):
+    """Generate an AI objective summary after workflow completion."""
+    opp = _find_opportunity(op_id)
+    state = _load_workflow_state(op_id)
+    if not state:
+        return {"objective": "Workflow não iniciado."}
+
+    executed = state.get("executed", [])
+    labels = [s.get("label", "") for s in executed if s.get("status") == "completed"]
+    opp_name = opp.get("nome") or opp.get("name") or "Oportunidade"
+
+    return {
+        "objective": f"Processo '{opp_name}' concluído com sucesso. "
+                     f"Etapas executadas: {', '.join(labels) if labels else 'nenhuma'}."
+    }
+
+
+@app.post("/workflow/{op_id}/generate-report")
+async def workflow_generate_report(op_id: int, request: Request):
+    """Generate a structured report from executed workflow steps."""
+    body = await request.json()
+    executed = body.get("executed") or []
+    opp = _find_opportunity(op_id)
+    opp_name = opp.get("nome") or opp.get("name") or "Oportunidade"
+
+    sections = []
+    for step in executed:
+        label = step.get("label", "Etapa")
+        status = step.get("status", "")
+        decision = step.get("decision", "")
+        section_body = f"Status: {status}"
+        if decision:
+            section_body += f" | Decisão: {decision}"
+        sections.append({"heading": label, "body": section_body})
+
+    return {
+        "documentTitle": f"Relatório — {opp_name}",
+        "bpmnName": opp_name,
+        "preamble": f"Relatório de execução do processo '{opp_name}'.",
+        "sections": sections,
+        "conclusion": f"O processo foi executado com {len(executed)} etapa(s).",
+    }
+
+
+@app.post("/workflow/{op_id}/suggest")
+async def workflow_suggest(op_id: int, authorization: str = Header(...)):
+    """Suggest next action for a workflow paused at a gateway/task node.
+
+    Returns a recommendation based on the current node type, executed history,
+    and SLA status.
+    """
+    # Lightweight auth check (get_current_user defined later in file)
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido")
+    opp = _find_opportunity(op_id)
+    state = _load_workflow_state(op_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Workflow não iniciado")
+
+    status = state.get("status", "")
+    if status not in ("paused", "running"):
+        return {"suggestion": None, "reason": f"Workflow está '{status}'."}
+
+    current_node_id = state.get("current_node")
+    bpmn = opp.get("bpmn") or {}
+    nodes = bpmn.get("nodes") or []
+    node = next((n for n in nodes if n.get("id") == current_node_id), None)
+
+    if not node:
+        return {"suggestion": None, "reason": "Nó atual não encontrado no BPMN."}
+
+    node_type = node.get("nodeType", "")
+    paused_reason = state.get("paused_reason", "")
+    executed = state.get("executed") or []
+    executed_labels = [s.get("label", "") for s in executed if s.get("status") == "completed"]
+
+    # Build suggestion based on node type
+    if node_type == "condicional":
+        connections = bpmn.get("connections") or []
+        outgoing = [c for c in connections if c.get("from") == current_node_id]
+        options = []
+        for c in outgoing:
+            target = next((n for n in nodes if n.get("id") == c.get("to")), None)
+            lbl = c.get("label") or (target.get("label") if target else "")
+            if lbl:
+                options.append(lbl)
+        return {
+            "suggestion": options[0] if options else "sim",
+            "options": options,
+            "reason": f"Gateway condicional '{node.get('label', '')}'. Opções: {', '.join(options) or 'sim/não'}.",
+            "nodeType": node_type,
+            "currentNode": node.get("label", current_node_id),
+        }
+    elif node_type == "task":
+        # Check SLA urgency
+        tasks = load_workflow_tasks()
+        related = [t for t in tasks if t.get("opportunityId") == op_id and t.get("nodeId") == current_node_id and t.get("status") == "pending"]
+        sla_warning = ""
+        if related:
+            from datetime import datetime as _dt
+            for rt in related:
+                due = _parse_iso(rt.get("dueAt"))
+                if due and _dt.now() > due:
+                    sla_warning = " ⚠️ ATENÇÃO: SLA expirado!"
+                    break
+        return {
+            "suggestion": "complete",
+            "reason": f"Tarefa '{node.get('label', '')}' aguardando conclusão.{sla_warning}",
+            "nodeType": node_type,
+            "currentNode": node.get("label", current_node_id),
+        }
+    elif node_type == "entidade":
+        return {
+            "suggestion": "complete",
+            "reason": f"Preencha os dados da entidade '{node.get('label', '')}' para avançar.",
+            "nodeType": node_type,
+            "currentNode": node.get("label", current_node_id),
+        }
+    else:
+        return {
+            "suggestion": None,
+            "reason": f"Nó '{node.get('label', current_node_id)}' do tipo '{node_type}'.",
+            "nodeType": node_type,
+            "currentNode": node.get("label", current_node_id),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Authentication helpers (JWT with fake-token backward-compatibility)
+# ---------------------------------------------------------------------------
+def get_current_user(authorization: str = Header(...)):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token inválido")
+    token = authorization.split()[1]
+
+    # --- Backward-compatible: accept legacy fake-token-<id> ---
+    if token.startswith("fake-token-"):
+        try:
+            user_id = int(token.replace("fake-token-", ""))
+        except Exception:
+            raise HTTPException(status_code=401, detail="Token inválido")
+        user = get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(status_code=401, detail="Token inválido")
+        user_dict = {k: v for k, v in user.items() if k != "senha"}
+        user_dict["admin"] = user.get("admin", False)
+        user_dict["role"] = user.get("role", "user")
+        user_dict["permissions"] = get_role_permissions(user_dict["role"])
+        return user_dict
+
+    # --- JWT token ---
+    payload = decode_jwt(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Token expirado ou inválido")
+    if payload.get("type") not in ("access", None):
+        raise HTTPException(status_code=401, detail="Token inválido (use access token)")
+
+    user_id = payload.get("sub") or payload.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Token inválido")
+    user = get_user_by_id(int(user_id))
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+    user_dict = {k: v for k, v in user.items() if k != "senha"}
+    user_dict["admin"] = user.get("admin", False)
+    user_dict["role"] = user.get("role", "user")
+    user_dict["permissions"] = get_role_permissions(user_dict["role"])
+    return user_dict
+
+
+def require_permission(*perms: str):
+    """FastAPI dependency factory: check that the current user has ALL given permissions."""
+    def _checker(current_user: dict = Depends(get_current_user)):
+        user_perms = current_user.get("permissions") or get_role_permissions(current_user.get("role", "user"))
+        missing = [p for p in perms if p not in user_perms]
+        if missing:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Permissão insuficiente. Necessário: {', '.join(missing)}",
+            )
+        return current_user
+    return _checker
+
+
+def require_role(*roles: str):
+    """FastAPI dependency factory: check that the current user has one of the given roles."""
+    def _checker(current_user: dict = Depends(get_current_user)):
+        if current_user.get("role", "user") not in roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Acesso restrito aos perfis: {', '.join(roles)}",
+            )
+        return current_user
+    return _checker
+
+
+# Endpoint para retornar o usuário autenticado
+@app.get("/users/me")
+def get_me(current_user: dict = Depends(get_current_user)):
+    return {
+        "id": current_user["id"],
+        "nome": current_user["nome"],
+        "email": current_user["email"],
+        "ativo": current_user.get("ativo", True),
+        "created_at": current_user.get("created_at", ""),
+        "admin": current_user.get("admin", False),
+        "role": current_user.get("role", "user"),
+        "nivel": str(current_user.get("nivel", "1")),
+        "cargo": current_user.get("cargo", ""),
+        "permissions": current_user.get("permissions", []),
+    }
+
+
+@app.get("/users/by-role/{role}")
+def get_users_by_role(role: str, current_user: dict = Depends(get_current_user)):
+    """Return users with a given role (for task assignment dropdowns)."""
+    users = load_users_data()
+    result = []
+    for u in users:
+        u_role = u.get("role", "user")
+        if u_role == role and u.get("ativo", True):
+            result.append({
+                "id": u["id"],
+                "nome": u.get("nome", ""),
+                "email": u.get("email", ""),
+                "role": u_role,
+                "cargo": u.get("cargo", ""),
+            })
+    return {"data": result}
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# UserTask API endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/workflow/tasks")
+def list_all_tasks(
+    status: str | None = None,
+    assignee: str | None = None,
+    assigned_role: str | None = None,
+    opportunity_id: int | None = None,
+    my_tasks: bool = False,
+    search: str | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    current_user: dict = Depends(get_current_user),
+):
+    """List workflow tasks, optionally filtered. Use my_tasks=true to see only tasks
+    assigned to the current user (by name, id, or role)."""
+    tasks = load_workflow_tasks()
+    oportunidades = load_oportunidades_data()
+    opp_map = {o.get("id"): o for o in oportunidades if isinstance(o, dict)}
+
+    user_role = current_user.get("role", "user")
+    user_name = current_user.get("nome", "")
+    user_id = current_user.get("id")
+
+    result = []
+    for t in tasks:
+        if status and t.get("status") != status:
+            continue
+        if assignee and (t.get("assignee") or "").lower() != assignee.lower():
+            continue
+        if assigned_role and (t.get("assignedRole") or "").lower() != assigned_role.lower():
+            continue
+        if opportunity_id is not None and t.get("opportunityId") != opportunity_id:
+            continue
+        # Filter to only tasks relevant to the current user
+        if my_tasks:
+            is_assigned_to_me = (
+                (t.get("assignee") or "").lower() == user_name.lower()
+                or t.get("assigneeId") == user_id
+                or (t.get("assignedRole") and t["assignedRole"] == user_role)
+                or (not t.get("assignee") and not t.get("assignedRole"))  # unassigned = visible to all
+            )
+            if not is_assigned_to_me:
+                continue
+
+        # Text search filter (label, assignee, opportunityName)
+        if search:
+            q = search.strip().lower()
+            opp_name = (opp_map.get(t.get("opportunityId")) or {}).get("nome") or ""
+            searchable = f"{t.get('label','')} {t.get('assignee','')} {opp_name}".lower()
+            if q not in searchable:
+                continue
+
+        # Date range filter on createdAt
+        if date_from:
+            created = t.get("createdAt") or ""
+            if created < date_from:
+                continue
+        if date_to:
+            created = t.get("createdAt") or ""
+            if created[:10] > date_to[:10]:
+                continue
+
+        opp = opp_map.get(t.get("opportunityId")) or {}
+        task_entry = {
+            **t,
+            "opportunityName": opp.get("nome") or opp.get("name") or f"Oportunidade #{t.get('opportunityId')}",
+        }
+        # Backfill assignee from opportunity responsavel if missing
+        if not task_entry.get("assignee") and not task_entry.get("assignedRole"):
+            fallback = (
+                str(opp.get("responsavel") or opp.get("assignedTo") or "").strip()
+            )
+            if fallback and fallback != "N/A":
+                task_entry["assignee"] = fallback
+        result.append(task_entry)
+
+    # pending first, then by updatedAt desc
+    status_order = {"pending": 0, "completed": 1, "cancelled": 2}
+    result.sort(key=lambda x: (
+        status_order.get(x.get("status"), 9),
+        -(x.get("updatedAt") or x.get("createdAt") or "").count(""),
+    ))
+
+    return {"data": result, "total": len(result)}
+
+
+@app.get("/workflow/tasks/{task_id}")
+def get_task(task_id: int):
+    """Get a single task by ID."""
+    tasks = load_workflow_tasks()
+    task = next((t for t in tasks if t.get("taskId") == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    return task
+
+
+@app.post("/workflow/tasks/{task_id}/complete")
+async def complete_task(task_id: int, request: Request):
+    """
+    Complete a UserTask by its task ID. This:
+    1. Validates formData against the task's formSchema
+    2. Marks the task record as completed
+    3. Advances the workflow engine past the completed node
+    4. If engine pauses at a new UserTask, creates a new task record
+    Returns the updated workflow state.
+    """
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    form_data = body.get("formData") or {}
+    completed_by = body.get("completedBy") or body.get("userName") or None
+
+    # 1. Find the task
+    tasks = load_workflow_tasks()
+    task = next((t for t in tasks if t.get("taskId") == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    if task["status"] != "pending":
+        raise HTTPException(status_code=400, detail=f"Task já está com status '{task['status']}'")
+
+    # 1b. Validate formData against formSchema
+    form_schema = task.get("formSchema") or []
+    if form_schema:
+        validation_errors = _validate_form_data(form_data, form_schema)
+        if validation_errors:
+            raise HTTPException(status_code=422, detail={
+                "message": "Dados do formulário inválidos",
+                "errors": validation_errors,
+            })
+    op_id = task["opportunityId"]
+    node_id = task["nodeId"]
+
+    # 2. Mark task as completed
+    _complete_user_task(task_id, completed_by=completed_by, form_data=form_data)
+
+    # 3. Advance the workflow
+    opp = _find_opportunity(op_id)
+
+    state = _load_workflow_state(op_id)
+    if not state:
+        raise HTTPException(status_code=400, detail="Workflow não foi iniciado")
+
+    # Use the BPMN version locked at instance start
+    _task_inst_version = state.get("bpmn_version")
+    bpmn = _get_bpmn(opp, _task_inst_version)
+
+    context = dict(state.get("context") or {})
+    context[f"completed_{node_id}"] = True
+    if form_data:
+        context.update(form_data)
+        # Store form_responses per node for structured access
+        form_responses = context.get("form_responses") or {}
+        form_responses[node_id] = form_data
+        context["form_responses"] = form_responses
+
+    engine = WorkflowEngine(bpmn)
+    start_id = engine.find_start_node()
+    result = engine.run(start_id, context)
+
+    _save_workflow_state(op_id, {
+        "currentNodeId": result.get("currentNodeId"),
+        "executed": result.get("executed", []),
+        "context": context,
+        "status": result["status"],
+        "startedAt": state.get("startedAt"),
+    })
+
+    # 4. If paused at a new UserTask, create task record
+    current = result.get("currentNodeId")
+    if current and result.get("paused_reason") == "user_input":
+        existing = _get_pending_task(op_id, current)
+        if not existing:
+            node = engine.nodes.get(current, {})
+            _create_user_task(op_id, current, node)
+
+    # 5. Update opportunity metadata
+    stage_index = engine.node_index(current) if current else len(engine.active_node_ids_in_order())
+    with _data_lock:
+        fake_oportunidades = load_oportunidades_data()
+        for o in fake_oportunidades:
+            if o.get("id") == op_id:
+                o["stageIndex"] = stage_index
+                o["currentNodeId"] = current
+                o["bpmnCurrentNodeId"] = current
+                o["activeNodeId"] = current
+                if result["status"] == "completed":
+                    o["status"] = "Concluído"
+                break
+        save_oportunidades_data(fake_oportunidades)
+
+    # Emit workflow event for task-complete-driven advancement
+    if result["status"] == "completed":
+        emit_event("workflow_completed", {
+            "opportunityId": op_id,
+            "bpmnVersion": _task_inst_version,
+            "executedCount": len(result.get("executed", [])),
+        })
+    elif result.get("paused_reason"):
+        emit_event("workflow_paused", {
+            "opportunityId": op_id,
+            "currentNodeId": current,
+            "pausedReason": result.get("paused_reason"),
+        })
+
+    return _build_response(engine, result, op_id, _task_inst_version)
+
+
+@app.post("/workflow/tasks/{task_id}/assign")
+async def assign_task(task_id: int, request: Request, current_user: dict = Depends(require_permission("tasks:assign"))):
+    """Assign or reassign a UserTask to a user (by name/id) or to a role."""
+    body = await request.json()
+    assignee = body.get("assignee")
+    assignee_id = body.get("assigneeId")
+    assigned_role = body.get("assignedRole")  # NEW: role-based assignment
+
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        task = next((t for t in tasks if t.get("taskId") == task_id), None)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task não encontrada")
+        if task["status"] != "pending":
+            raise HTTPException(status_code=400, detail="Só é possível atribuir tasks pendentes")
+        task["assignee"] = assignee
+        task["assigneeId"] = assignee_id
+        task["assignedRole"] = assigned_role
+        task["updatedAt"] = now_iso()
+        save_workflow_tasks(tasks)
+
+    emit_event("task_assigned", {
+        "taskId": task_id,
+        "opportunityId": task.get("opportunityId"),
+        "assignee": assignee,
+        "assignedRole": assigned_role,
+    })
+
+    # Email notification on task assignment
+    _notify_task_email(task, event="assigned")
+
+    return task
+
+
+@app.delete("/workflow/tasks/{task_id}", status_code=204)
+async def delete_task(task_id: int, current_user: dict = Depends(get_current_user)):
+    """Delete a workflow task."""
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        idx = next((i for i, t in enumerate(tasks) if t.get("taskId") == task_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Task não encontrada")
+        removed = tasks.pop(idx)
+        save_workflow_tasks(tasks)
+    emit_event("task_deleted", {
+        "taskId": task_id,
+        "opportunityId": removed.get("opportunityId"),
+        "label": removed.get("label"),
+    })
+    return
+
+
+@app.post("/workflow/tasks/{task_id}/comment")
+async def add_task_comment(task_id: int, request: Request, current_user: dict = Depends(get_current_user)):
+    """Add a comment/note to a task. Comments are stored as a list on the task record."""
+    body = await request.json()
+    text = str(body.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Texto do comentário é obrigatório")
+    if len(text) > 2000:
+        raise HTTPException(status_code=400, detail="Comentário excede 2000 caracteres")
+
+    with _data_lock:
+        tasks = load_workflow_tasks()
+        task = next((t for t in tasks if t.get("taskId") == task_id), None)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task não encontrada")
+
+        comments = task.get("comments") or []
+        comment_id = max((c.get("id", 0) for c in comments), default=0) + 1
+        comment = {
+            "id": comment_id,
+            "text": text,
+            "author": current_user.get("nome") or "Anônimo",
+            "authorId": current_user.get("id"),
+            "createdAt": now_iso(),
+        }
+        comments.append(comment)
+        task["comments"] = comments
+        task["updatedAt"] = now_iso()
+        save_workflow_tasks(tasks)
+
+    return comment
+
+
+@app.get("/workflow/tasks/{task_id}/comments")
+def list_task_comments(task_id: int):
+    """List all comments for a task."""
+    tasks = load_workflow_tasks()
+    task = next((t for t in tasks if t.get("taskId") == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task não encontrada")
+    comments = task.get("comments") or []
+    return {"data": comments, "total": len(comments)}
+
+
 @app.get("/entidades")
-def get_entidades():
+def get_entidades(owner: str = ""):
     global fake_entidades, fake_oportunidades
     fake_entidades = load_entidades_data()
     fake_oportunidades = load_oportunidades_data()
@@ -5708,6 +9253,12 @@ def get_entidades():
             enriched_entidades.append(entidade)
             continue
 
+        # Filter by owner if requested
+        if owner.strip():
+            ent_owner = (entidade.get("criadoPor") or "").lower()
+            if ent_owner != owner.strip().lower():
+                continue
+
         entidade_id = str(entidade.get("id") or "").strip()
         entidade_name = str(entidade.get("nome") or "").strip().lower()
 
@@ -5731,9 +9282,22 @@ def create_entidade(entidade: Entidade):
     global fake_entidades
     with _data_lock:
         fake_entidades = load_entidades_data()
+        entidade_dict = entidade.dict()
+        # Prevent duplicates: check if an entity with the same name already exists in the same category
+        incoming_name = (entidade_dict.get("nome") or "").strip().lower()
+        incoming_cat = (entidade_dict.get("categoria") or "").strip().lower()
+        if incoming_name:
+            existing = next(
+                (e for e in fake_entidades
+                 if (e.get("nome") or "").strip().lower() == incoming_name
+                 and (e.get("categoria") or "").strip().lower() == incoming_cat),
+                None,
+            )
+            if existing:
+                # Return existing entity instead of creating a duplicate
+                return existing
         new_id = max([e["id"] for e in fake_entidades], default=0) + 1
         now = now_iso()
-        entidade_dict = entidade.dict()
         if not isinstance(entidade_dict.get("campos"), list):
             entidade_dict["campos"] = []
         entidade_dict["id"] = new_id
@@ -5742,6 +9306,16 @@ def create_entidade(entidade: Entidade):
         entidade_dict["criadoPor"] = entidade_dict.get("criadoPor") or "admin"
         fake_entidades.append(entidade_dict)
         save_entidades_data(fake_entidades)
+    # Log entity creation to related opportunity timelines
+    _ent_name = entidade_dict.get("nome") or "Sem nome"
+    for _oid in _find_opportunities_for_entity(entidade_dict):
+        _append_opportunity_timeline(_oid, [{
+            "title": f"Entidade criada: {_ent_name}",
+            "description": f"A entidade '{_ent_name}' (categoria: {entidade_dict.get('categoria', '?')}) foi adicionada ao catálogo",
+            "actionType": "create",
+            "elementType": "entidade",
+            "itemName": _ent_name,
+        }])
     return entidade_dict
 
 
@@ -5764,6 +9338,16 @@ def update_entidade(entidade_id: int, entidade: Entidade):
                 entidade_dict["criadoPor"] = e["criadoPor"]
                 fake_entidades[idx] = entidade_dict
                 save_entidades_data(fake_entidades)
+                # Log entity update to related opportunity timelines
+                _ent_name = entidade_dict.get("nome") or "Sem nome"
+                for _oid in _find_opportunities_for_entity(entidade_dict):
+                    _append_opportunity_timeline(_oid, [{
+                        "title": f"Entidade atualizada: {_ent_name}",
+                        "description": f"A entidade '{_ent_name}' foi atualizada",
+                        "actionType": "update",
+                        "elementType": "entidade",
+                        "itemName": _ent_name,
+                    }])
                 return entidade_dict
     raise HTTPException(status_code=404, detail="Entidade não encontrada")
 
@@ -5771,13 +9355,25 @@ def update_entidade(entidade_id: int, entidade: Entidade):
 @app.delete("/entidades/{entidade_id}", status_code=204)
 def delete_entidade(entidade_id: int):
     global fake_entidades
+    _deleted_entity = None
     with _data_lock:
         fake_entidades = load_entidades_data()
         idx = next((i for i, e in enumerate(fake_entidades) if e["id"] == entidade_id), None)
         if idx is None:
             raise HTTPException(status_code=404, detail="Entidade não encontrada")
-        fake_entidades.pop(idx)
+        _deleted_entity = fake_entidades.pop(idx)
         save_entidades_data(fake_entidades)
+    # Log entity deletion to related opportunity timelines
+    if _deleted_entity:
+        _ent_name = _deleted_entity.get("nome") or "Sem nome"
+        for _oid in _find_opportunities_for_entity(_deleted_entity):
+            _append_opportunity_timeline(_oid, [{
+                "title": f"Entidade removida: {_ent_name}",
+                "description": f"A entidade '{_ent_name}' foi removida do catálogo",
+                "actionType": "delete",
+                "elementType": "entidade",
+                "itemName": _ent_name,
+            }])
     return
 
 
@@ -5790,6 +9386,7 @@ def batch_sync_entidades(payload: dict = Body(...)):
         raise HTTPException(status_code=400, detail="items deve ser uma lista")
 
     results = []
+    _batch_timeline_notes = []  # collect timeline notes for after lock release
     with _data_lock:
         fake_entidades = load_entidades_data()
         changed = False
@@ -5817,65 +9414,57 @@ def batch_sync_entidades(payload: dict = Body(...)):
                         results.append(data)
                         changed = True
                         found = True
+                        _batch_timeline_notes.append(("update", data))
                         break
                 if not found:
                     results.append({"id": entity_id, "error": "not_found"})
 
             elif action == "upsert" and entity_id is None:
-                # Create new
-                new_id = max([e["id"] for e in fake_entidades], default=0) + 1
-                now = now_iso()
-                if not isinstance(data.get("campos"), list):
-                    data["campos"] = []
-                data["id"] = new_id
-                data["created_at"] = now
-                data["updated_at"] = now
-                data["criadoPor"] = data.get("criadoPor") or "admin"
-                fake_entidades.append(data)
-                results.append(data)
-                changed = True
+                # Create new — but first check for existing with same name+category
+                incoming_name = (data.get("nome") or "").strip().lower()
+                incoming_cat = (data.get("categoria") or "").strip().lower()
+                existing_match = None
+                if incoming_name:
+                    existing_match = next(
+                        (e for e in fake_entidades
+                         if (e.get("nome") or "").strip().lower() == incoming_name
+                         and (e.get("categoria") or "").strip().lower() == incoming_cat),
+                        None,
+                    )
+                if existing_match:
+                    results.append(existing_match)
+                else:
+                    new_id = max([e["id"] for e in fake_entidades], default=0) + 1
+                    now = now_iso()
+                    if not isinstance(data.get("campos"), list):
+                        data["campos"] = []
+                    data["id"] = new_id
+                    data["created_at"] = now
+                    data["updated_at"] = now
+                    data["criadoPor"] = data.get("criadoPor") or "admin"
+                    fake_entidades.append(data)
+                    results.append(data)
+                    changed = True
+                    _batch_timeline_notes.append(("create", data))
 
         if changed:
             save_entidades_data(fake_entidades)
 
+    # Log batch entity changes to related opportunity timelines
+    for _b_action, _b_ent in _batch_timeline_notes:
+        _b_name = _b_ent.get("nome") or "Sem nome"
+        _b_title = f"Entidade criada: {_b_name}" if _b_action == "create" else f"Entidade atualizada: {_b_name}"
+        _b_desc = f"A entidade '{_b_name}' foi {'adicionada ao' if _b_action == 'create' else 'atualizada no'} catálogo (sync)"
+        for _oid in _find_opportunities_for_entity(_b_ent):
+            _append_opportunity_timeline(_oid, [{
+                "title": _b_title,
+                "description": _b_desc,
+                "actionType": _b_action,
+                "elementType": "entidade",
+                "itemName": _b_name,
+            }])
+
     return {"items": results}
-
-
-# Função mock para extrair user_id do token fake
-def get_current_user(authorization: str = Header(...)):
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token inválido")
-    token = authorization.split()[1]
-    # Token fake: fake-token-<id>
-    if not token.startswith("fake-token-"):
-        raise HTTPException(status_code=401, detail="Token inválido")
-    try:
-        user_id = int(token.replace("fake-token-", ""))
-    except Exception:
-        raise HTTPException(status_code=401, detail="Token inválido")
-    user = get_user_by_id(user_id)
-    if not user:
-        raise HTTPException(status_code=401, detail="Token inválido")
-    user_dict = {k: v for k, v in user.items() if k != "senha"}
-    # Garante que role e admin venham do users.json
-    user_dict["admin"] = user.get("admin", False)
-    user_dict["role"] = user.get("role", "user")
-    return user_dict
-
-# Endpoint para retornar o usuário autenticado
-@app.get("/users/me", response_model=UserOut)
-def get_me(current_user: dict = Depends(get_current_user)):
-    return {
-        "id": current_user["id"],
-        "nome": current_user["nome"],
-        "email": current_user["email"],
-        "ativo": current_user.get("ativo", True),
-        "created_at": current_user.get("created_at", ""),
-        "admin": current_user.get("admin", False),
-        "role": current_user.get("role", "user"),
-        "nivel": str(current_user.get("nivel", "1")),
-        "cargo": current_user.get("cargo", ""),
-    }
 
 
 
@@ -5924,6 +9513,133 @@ def update_bpmn_editor_state(payload: dict = Body(...)):
     return bpmn_editor_state
 
 
+@app.post("/ai/detect-spreadsheet-tables")
+def ai_detect_spreadsheet_tables(
+    payload: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Recebe dados brutos de uma planilha (2D array) e identifica tabelas empilhadas.
+    Retorna as fronteiras de cada tabela (linha título, linha header, linhas de dados).
+    """
+    raw_rows = payload.get("rows") or []
+    sheet_name = str(payload.get("sheetName") or "Planilha").strip()
+
+    if not raw_rows or not isinstance(raw_rows, list):
+        raise HTTPException(status_code=422, detail="Envie o campo 'rows' com os dados da planilha.")
+
+    # Limita a amostra para não estourar o contexto da LLM
+    sample = raw_rows[:80]
+
+    if AI_PROVIDER != "groq" or not GROQ_API_KEY:
+        return {"tables": []}
+
+    system_prompt = (
+        "Você é um especialista em análise de planilhas. "
+        "Receba os dados brutos de uma aba de planilha Excel (linhas numeradas) e identifique TODAS as tabelas "
+        "que existem empilhadas verticalmente na mesma aba.\n\n"
+        "Cada tabela segue este padrão:\n"
+        "1. Opcionalmente: uma linha de título (1 célula com texto, ex: 'Operação', 'Comercial', 'Financeiro')\n"
+        "2. Uma linha de cabeçalho (múltiplas colunas com nomes das colunas)\n"
+        "3. Várias linhas de dados\n"
+        "4. Linhas em branco ou nova tabela\n\n"
+        "Retorne JSON com:\n"
+        "{\n"
+        "  \"tables\": [\n"
+        "    {\n"
+        "      \"name\": \"Nome da tabela (do título ou inferido)\",\n"
+        "      \"headerRow\": <índice 0-based da linha de cabeçalho>,\n"
+        "      \"dataStartRow\": <índice 0-based da primeira linha de dados>,\n"
+        "      \"dataEndRow\": <índice 0-based da última linha de dados (inclusive)>\n"
+        "    }\n"
+        "  ]\n"
+        "}\n\n"
+        "Regras:\n"
+        "- Se há apenas 1 tabela, retorne 1 entrada.\n"
+        "- Ignore linhas completamente vazias.\n"
+        "- O nome da tabela deve vir da linha de título. Se não houver título, infira do conteúdo.\n"
+        "- Retorne APENAS JSON, sem explicações."
+    )
+
+    # Formata linhas numeradas para a LLM
+    rows_text = ""
+    for i, row in enumerate(sample):
+        cells = " | ".join(str(c) if c is not None and c != "" else "" for c in (row if isinstance(row, list) else [row]))
+        rows_text += f"Linha {i}: {cells}\n"
+
+    user_prompt = f"Aba: {sheet_name}\n\n{rows_text}"
+
+    _MODEL = "llama-3.1-8b-instant"
+    groq_payload = {
+        "model": _MODEL,
+        "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    }
+    groq_headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=groq_headers,
+            json=groq_payload,
+            timeout=AI_LLM_TIMEOUT_SECONDS,
+        )
+        if resp.status_code == 429:
+            retry_after = int(resp.headers.get("retry-after", 5))
+            time.sleep(min(retry_after, 10))
+            resp = requests.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers=groq_headers,
+                json=groq_payload,
+                timeout=AI_LLM_TIMEOUT_SECONDS,
+            )
+        if resp.status_code == 429:
+            raise HTTPException(status_code=429, detail="Limite de requisições da IA atingido.")
+        if not resp.ok:
+            raise RuntimeError(f"Groq HTTP {resp.status_code}")
+
+        raw_json = resp.json()
+        content = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        parsed = json.loads(content)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"[detect-spreadsheet-tables] Groq falhou: {exc}")
+        return {"tables": []}
+
+    tables = parsed.get("tables") or []
+    # Sanitize
+    sanitized = []
+    for t in tables:
+        if not isinstance(t, dict):
+            continue
+        name = str(t.get("name") or f"Tabela {len(sanitized) + 1}").strip()
+        header_row = t.get("headerRow")
+        data_start = t.get("dataStartRow")
+        data_end = t.get("dataEndRow")
+        if header_row is None or data_start is None or data_end is None:
+            continue
+        try:
+            header_row = int(header_row)
+            data_start = int(data_start)
+            data_end = int(data_end)
+        except (ValueError, TypeError):
+            continue
+        if header_row < 0 or data_start <= header_row or data_end < data_start:
+            continue
+        sanitized.append({
+            "name": name,
+            "headerRow": header_row,
+            "dataStartRow": data_start,
+            "dataEndRow": data_end,
+        })
+
+    return {"tables": sanitized}
+
+
 @app.post("/ai/parse-description")
 def ai_parse_description(
     payload: dict = Body(...),
@@ -5954,25 +9670,31 @@ def ai_parse_description(
         "  - 'apoio': entidades secundárias que participam mas não são o foco (ex: Aprovacao, OrdemDeCompra)\n"
         "  - 'externa': atores/participantes externos, fornecedores e clientes (ex: Cliente, Fornecedor)\n"
         "  - 'associativa': entidade de relacionamento entre outras duas entidades\n"
-        "- 'activities': lista de strings com tarefas (verbos no infinitivo, ex: Analisar Pedido).\n"
+        "- 'activities': lista de strings com tarefas (verbos no infinitivo, ex: Analisar Pedido). "
+        "NUNCA inclua 'Sim', 'Nao' ou 'Não' como atividades — esses são caminhos de decisão, não tarefas.\n"
         "- 'conditionals': lista de strings com decisões exclusivas, SEMPRE terminam com '?' (ex: Pedido aprovado?).\n"
         "- 'flowOrder': sequência ordenada de TODOS os elementos acima — inclua todas as entidades, atividades e condicionais, "
         "sem omitir nenhum. Cada item é {\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", "
         "\"desc\": string (obrigatório — descreva o papel deste elemento no processo em 1 frase), "
         "\"tipoEntidade\": string (só para entidades)}.\n"
+        "  REGRA CRÍTICA DE ORDENAÇÃO: entidades devem aparecer INTERCALADAS no fluxo, logo após a atividade que as cria ou utiliza. "
+        "NUNCA agrupe todas as entidades no final. Exemplo correto: [Solicitar compra, Pedido, Analisar Pedido, ...]. "
+        "Exemplo ERRADO: [Solicitar compra, Analisar Pedido, ..., Pedido, Cliente, Fornecedor].\n"
+        "  Para cada condicional, SEMPRE inclua uma atividade dedicada ao caminho NÃO (rejeição/alternativa). "
+        "Exemplo: após 'Pedido aprovado?', inclua tanto 'Validar orcamento' (SIM) quanto 'Atualizar Pedido' (NÃO).\n"
         "  Para condicionais em flowOrder, adicione 'branches': {\"sim\": \"<próximo elemento se verdadeiro>\", \"nao\": \"<próximo elemento se falso>\"}.\n"
         "- NOMES CURTOS: nomes de atividade devem ter no máximo 2 palavras (ex: 'Aprovar', 'Enviar NF', 'Revisar'); nomes de entidade no máximo 2 palavras (ex: 'Pedido', 'NF Fiscal'); nomes de condicional no máximo 4 palavras + '?'.\n"
         "- 'desc' é OBRIGATÓRIO em TODOS os elementos (entidade, atividade e condicional) — NUNCA deixe vazio. "
         "Para entidades: descreva quem usa a entidade, quando ela é criada/atualizada e qual papel ela cumpre no processo (mínimo 1 frase completa). "
         "Para atividades: descreva o que acontece neste passo, quem executa e qual o resultado esperado (mínimo 1 frase completa). "
-        "Para condicionais: descreva qual critério é avaliado, quem decide e o que diferencia o caminho SIM do NÃO (mínimo 1 frase completa). "
+        "Para condicionais: descreva qual critério é avaliado e quem decide (mínimo 1 frase completa). NÃO explique os caminhos SIM/NÃO, o diagrama já mostra isso. "
         "NUNCA repita nem parafraseie o nome no desc. "
         "Exemplo ruim (atividade): name='Analisar Pedido', desc='Análise do pedido'. "
         "Exemplo bom (atividade): name='Analisar Pedido', desc='Responsável verifica se o pedido atende às políticas internas de prazo e orçamento antes de seguir para aprovação'.\n"
         "Exemplo ruim (entidade): name='Cliente', desc='Cliente'. "
         "Exemplo bom (entidade): name='Cliente', desc='Pessoa ou empresa que origina o processo; seus dados são consultados em cada etapa de aprovação e notificação'.\n"
         "Exemplo ruim (condicional): name='Aprovado?', desc='Verifica aprovação'. "
-        "Exemplo bom (condicional): name='Aprovado?', desc='Gestor avalia se o pedido atende aos critérios financeiros e de prazo; SIM segue para execução, NÃO retorna para revisão'.\n"
+        "Exemplo bom (condicional): name='Aprovado?', desc='Gestor avalia se o pedido atende aos critérios financeiros e de prazo'.\n"
         "- Retorne JSON válido com exatamente estas chaves: processName, entities, activities, conditionals, flowOrder.\n"
         "- Não inclua explicações, apenas o JSON."
     )
@@ -6070,16 +9792,23 @@ def ai_parse_description(
                     fo_item["desc"] = raw_desc
                 flow_order.append(fo_item)
 
+    # Filtra nomes proibidos (Sim, Nao etc.) de todos os outputs
+    _PARSE_FORBIDDEN = {"sim", "nao", "não", "yes", "no", "true", "false"}
+    flow_order = [fo for fo in flow_order if fo.get("name", "").lower().strip() not in _PARSE_FORBIDDEN]
+
     # entities como lista de objetos {name, tipoEntidade}
     entities_out = [
         {"name": name, "tipoEntidade": entity_tipo_map.get(name.lower(), "apoio")}
         for name in parsed_entities_names
+        if name.lower().strip() not in _PARSE_FORBIDDEN
     ]
+
+    activities_clean = [a for a in _to_str_list(parsed.get("activities")) if a.lower().strip() not in _PARSE_FORBIDDEN]
 
     return {
         "processName":  str(parsed.get("processName") or process_name).strip(),
         "entities":     entities_out,
-        "activities":   _to_str_list(parsed.get("activities")),
+        "activities":   activities_clean,
         "conditionals": _to_str_list(parsed.get("conditionals")),
         "flowOrder":    flow_order,
     }
@@ -6114,6 +9843,10 @@ def ai_plan(
     goal = "\n".join(goal_parts).strip() or context_description or context_process_name
 
     plan = _build_ai_plan(goal, current_user, context)
+
+    # Segunda análise: preencher conteúdo faltante em entidades e nodes BPMN
+    _review_plan_fill_missing_content(plan, context_process_name or str(plan.get("goal") or ""))
+
     audit_record = _append_ai_audit_log(
         {
             "user_id": current_user.get("id"),
@@ -6153,6 +9886,12 @@ def ai_execute(
 
     if not actions_to_execute:
         raise HTTPException(status_code=400, detail="Nenhuma acao valida foi selecionada para execucao.")
+
+    # Análise final antes de executar: preencher conteúdo faltante
+    _review_plan_fill_missing_content(
+        {"actions": actions_to_execute},
+        str(plan.get("goal") or ""),
+    )
 
     # Pre-compute unique opportunity names so update_bpmn_state syncs to the right record
     opportunity_name_map: dict[str, str] = {}
@@ -6279,19 +10018,63 @@ def create_user(user: User):
 @app.post("/auth/login")
 def auth_login(auth: AuthRequest):
     user = get_user_by_email(auth.email)
-    senha_hash = hash_password(auth.senha)
-    if not user or user["senha"] != senha_hash:
+    if not user:
         raise HTTPException(status_code=400, detail="Email ou senha inválidos")
 
+    if not verify_password(auth.senha, user["senha"]):
+        raise HTTPException(status_code=400, detail="Email ou senha inválidos")
+
+    # Upgrade legacy SHA256 hash to bcrypt on successful login
+    if not user["senha"].startswith(("$2b$", "$2a$", "$2y$")):
+        new_hash = hash_password_bcrypt(auth.senha)
+        with _data_lock:
+            users = load_users_data()
+            for u in users:
+                if u["id"] == user["id"]:
+                    u["senha"] = new_hash
+                    break
+            save_users_data(users)
+
+    role = user.get("role", "user")
+    token_data = {"sub": str(user["id"]), "role": role}
+    access_token = create_access_token(token_data)
+    refresh_token = create_refresh_token(token_data)
+
     safe_user = {k: v for k, v in user.items() if k != "senha"}
+    safe_user["permissions"] = get_role_permissions(role)
     return {
-        "access_token": f"fake-token-{user['id']}",
+        "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": safe_user,
     }
 
+
+@app.post("/auth/refresh")
+def auth_refresh(request_body: dict = Body(...)):
+    """Exchange a valid refresh token for a new access token."""
+    refresh = request_body.get("refresh_token") or ""
+    payload = decode_jwt(refresh)
+    if not payload or payload.get("type") != "refresh":
+        raise HTTPException(status_code=401, detail="Refresh token inválido ou expirado")
+
+    user_id = payload.get("sub")
+    user = get_user_by_id(int(user_id)) if user_id else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Usuário não encontrado")
+
+    role = user.get("role", "user")
+    new_access = create_access_token({"sub": str(user["id"]), "role": role})
+    return {"access_token": new_access, "token_type": "bearer"}
+
+
+@app.get("/auth/roles")
+def auth_roles():
+    """Return all available roles and their permissions."""
+    return {"roles": ROLE_PERMISSIONS}
+
 @app.put("/users/{user_id}")
-def update_user(user_id: int, user: UserUpdate, current_user: dict = Depends(get_current_user)):
+def update_user(user_id: int, user: UserUpdate, current_user: dict = Depends(require_permission("users:update"))):
     users = load_users_data()
     idx = next((i for i, u in enumerate(users) if u["id"] == user_id), None)
     if idx is None:
@@ -6359,7 +10142,7 @@ def update_user(user_id: int, user: UserUpdate, current_user: dict = Depends(get
     return {k: v for k, v in users[idx].items() if k != "senha"}
 
 @app.delete("/users/{user_id}", status_code=204)
-def delete_user(user_id: int, current_user: dict = Depends(get_current_user)):
+def delete_user(user_id: int, current_user: dict = Depends(require_permission("users:delete"))):
     users = load_users_data()
     idx = next((i for i, u in enumerate(users) if u["id"] == user_id), None)
     if idx is None:

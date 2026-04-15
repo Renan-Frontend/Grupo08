@@ -14,6 +14,8 @@ import {
 } from '../GerarBPMN/../Opportunities/opportunityApi';
 import { getOpportunityName } from '../GerarBPMN/opportunityHelpers';
 import { slugifyBpmnName } from '../GerarBPMN/gerarBpmnCreate.shared';
+import { parseSpreadsheetRaw, parseAllSheets, detectWidgetsForSheets } from './Dashboard/parseSpreadsheet';
+import { API_URL } from '../../Api';
 
 const STORAGE_KEY = 'bp_dashboards_v1';
 
@@ -100,6 +102,7 @@ const MODAL_STEP_NAME = 'name';
 const MODAL_STEP_CONFIG = 'config';
 const MODAL_STEP_BPMN = 'bpmn';
 const MODAL_STEP_DATA = 'data';
+const MODAL_STEP_IMPORT = 'import';
 
 const MONTHS = [
   'Jan',
@@ -180,6 +183,7 @@ const DEFAULT_CHART_DATA = {
     { etapa: 'Negociação', leads: 28, valor: 89000 },
     { etapa: 'Fechamento', leads: 15, valor: 52000 },
   ],
+  kpiTable: [],
 };
 
 const WIDGET_COLUMNS = {
@@ -218,6 +222,7 @@ const WIDGET_COLUMNS = {
     { key: 'leads', label: 'Leads', type: 'number' },
     { key: 'valor', label: 'Valor (R$)', type: 'number' },
   ],
+  kpiTable: [],
 };
 
 const WIDGET_LABELS = {
@@ -228,6 +233,7 @@ const WIDGET_LABELS = {
   expenses: 'Despesas Mensais',
   tasks: 'Tarefas',
   pipeline: 'Pipeline de Vendas',
+  kpiTable: 'Gráficos de Indicadores',
 };
 
 const cloneChartData = (src = DEFAULT_CHART_DATA) => ({
@@ -244,6 +250,7 @@ const cloneChartData = (src = DEFAULT_CHART_DATA) => ({
   pipeline: (src.pipeline || DEFAULT_CHART_DATA.pipeline).map((r) => ({
     ...r,
   })),
+  kpiTable: (src.kpiTable || []).map((r) => ({ ...r, months: { ...(r.months || {}) } })),
 });
 
 const DashboardStart = () => {
@@ -277,6 +284,15 @@ const DashboardStart = () => {
   );
   const [activeDataWidget, setActiveDataWidget] = React.useState('metrics');
   const [dataEditRows, setDataEditRows] = React.useState([]);
+
+  // Spreadsheet import state
+  const [importStep, setImportStep] = React.useState('upload'); // 'upload' | 'preview'
+  const [importLoading, setImportLoading] = React.useState(false);
+  const [importError, setImportError] = React.useState(null);
+  const [importMapping, setImportMapping] = React.useState(null);
+  const [importParsed, setImportParsed] = React.useState(null);
+  const [importName, setImportName] = React.useState('');
+  const importFileRef = React.useRef(null);
 
   // BPMN link picker state
   const [bpmnLinkTarget, setBpmnLinkTarget] = React.useState(null); // dashboard item being linked
@@ -500,6 +516,422 @@ const DashboardStart = () => {
       .includes(createBpmnSearch.toLowerCase()),
   );
 
+  const openImport = () => {
+    setImportStep('upload');
+    setImportLoading(false);
+    setImportError(null);
+    setImportMapping(null);
+    setImportParsed(null);
+    setImportName('');
+    setModalStep(MODAL_STEP_IMPORT);
+  };
+
+  const closeImport = () => {
+    setModalStep(null);
+    if (importFileRef.current) importFileRef.current.value = '';
+  };
+
+  const updateSheetWidget = (sheetName, newWidget) => {
+    // Auto-map spreadsheet headers to widget columns by name similarity
+    const buildAutoMapping = (headers, widgetId) => {
+      if (!widgetId || !headers?.length) return {};
+      const cols = WIDGET_COLUMNS[widgetId] || [];
+      const mapping = {};
+      cols.forEach((col) => {
+        const colNorm = col.key.toLowerCase();
+        const labelNorm = col.label.toLowerCase();
+        const match = headers.find((h) => {
+          const hNorm = String(h).toLowerCase();
+          return hNorm === colNorm || hNorm === labelNorm ||
+            hNorm.includes(colNorm) || colNorm.includes(hNorm) ||
+            hNorm.includes(labelNorm) || labelNorm.includes(hNorm);
+        });
+        if (match) mapping[match] = col.key;
+      });
+      return mapping;
+    };
+
+    setImportMapping((prev) => ({
+      ...prev,
+      sheets: (prev?.sheets || []).map((s) => {
+        if (s.sheetName !== sheetName) return s;
+        const sheetData = (importParsed || []).find((p) => p.sheetName === sheetName);
+        const columnMapping = newWidget
+          ? buildAutoMapping(sheetData?.headers || [], newWidget)
+          : {};
+        return { ...s, widget: newWidget || null, columnMapping };
+      }),
+    }));
+  };
+
+  const handleImportFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (importFileRef.current) importFileRef.current.value = '';
+    if (!file) return;
+    setImportError(null);
+    setImportLoading(true);
+    try {
+      const allSheets = await parseAllSheets(file);
+
+      // Try AI-based table detection for sheets that may contain stacked tables
+      let enrichedSheets = allSheets;
+      try {
+        const token = getAuthToken();
+        if (token) {
+          const sheetsToSplit = [];
+          for (const sheet of allSheets) {
+            // Send raw rows (header + data) to AI for each sheet with enough rows
+            if (sheet.rows && sheet.rows.length >= 2 && sheet.rawRows) {
+              sheetsToSplit.push(sheet);
+            }
+          }
+          if (sheetsToSplit.length > 0) {
+            const aiResults = await Promise.all(
+              sheetsToSplit.map((sheet) => {
+                const ctrl = new AbortController();
+                const timer = setTimeout(() => ctrl.abort(), 12000);
+                return fetch(`${API_URL}/ai/detect-spreadsheet-tables`, {
+                  method: 'POST',
+                  signal: ctrl.signal,
+                  headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    rows: sheet.rawRows,
+                    sheetName: sheet.sheetName,
+                  }),
+                })
+                  .then((r) => { clearTimeout(timer); return r.ok ? r.json() : null; })
+                  .catch(() => { clearTimeout(timer); return null; });
+              }),
+            );
+
+            const newSheets = [];
+            const splitSheetNames = new Set();
+            for (let i = 0; i < sheetsToSplit.length; i++) {
+              const sheet = sheetsToSplit[i];
+              const aiResult = aiResults[i];
+              const tables = aiResult?.tables;
+              if (tables && tables.length > 1) {
+                // AI found multiple tables - split them
+                splitSheetNames.add(sheet.sheetName);
+                for (const tbl of tables) {
+                  const headerRow = sheet.rawRows[tbl.headerRow];
+                  if (!headerRow) continue;
+                  const headers = headerRow
+                    .map((c) => (c != null ? String(c).trim() : ''))
+                    .filter((h) => h);
+                  if (headers.length === 0) continue;
+                  const dataRows = sheet.rawRows.slice(tbl.dataStartRow, tbl.dataEndRow + 1);
+                  const rows = dataRows.map((raw) => {
+                    const obj = {};
+                    headerRow.forEach((h, ci) => {
+                      if (h != null && String(h).trim()) {
+                        obj[String(h).trim()] = raw[ci] ?? '';
+                      }
+                    });
+                    return obj;
+                  });
+                  newSheets.push({
+                    sheetName: tbl.name || `${sheet.sheetName} ${newSheets.length + 1}`,
+                    headers,
+                    rows,
+                    rawRows: [headerRow, ...dataRows],
+                  });
+                }
+              }
+            }
+            if (newSheets.length > 0) {
+              // Keep untouched sheets + add AI-split ones
+              enrichedSheets = allSheets.filter(
+                (s) => !splitSheetNames.has(s.sheetName),
+              );
+              enrichedSheets.push(...newSheets);
+            }
+          }
+        }
+      } catch (_aiErr) {
+        // AI failed — proceed with local detection
+      }
+
+      // Auto-detect widget types locally from sheet names + headers
+      const mapping = detectWidgetsForSheets(enrichedSheets);
+
+      const fileName = file.name.replace(/\.[^/.]+$/, '');
+      setImportParsed(enrichedSheets);
+      setImportMapping(mapping);
+      setImportName(fileName || mapping.dashboardName || 'Dashboard Importado');
+      setImportStep('preview');
+    } catch (err) {
+      setImportError(err.message);
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
+  const handleCreateFromImport = () => {
+    if (!importName.trim() || !importParsed) return;
+    const mappedSheets = (importMapping?.sheets || []);
+    // Build chartData: for each sheet with a detected widget, convert rows
+    const chartData = cloneChartData();
+    const usedWidgets = [];
+
+    // Normalize helper for fuzzy matching
+    const _norm = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+
+    importParsed.forEach((sheetData) => {
+      const sheetMap = mappedSheets.find((s) => s.sheetName === sheetData.sheetName);
+      const widget = sheetMap?.widget;
+      if (!widget) return;
+
+      // ── Special handling for kpiTable: convert indicator rows ──
+      if (widget === 'kpiTable') {
+        const headers = sheetData.headers || [];
+        const headersNorm = headers.map(_norm);
+        // Find key columns
+        const nameIdx = headersNorm.findIndex((h) => h.includes('indicador') || h === 'nome' || h === 'kpi');
+        const metaIdx = headersNorm.findIndex((h) => h === 'meta');
+        const tendIdx = headersNorm.findIndex((h) => h.includes('tendencia') || h.includes('tendência') || h.includes('tend'));
+        const mediaIdx = headersNorm.findIndex((h) => h === 'media' || h === 'média');
+
+        // Detect month columns (anything that looks like a date)
+        const MONTH_NAMES_PT = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+        const MONTH_MAP = { jan: 0, fev: 1, feb: 1, mar: 2, abr: 3, apr: 3, mai: 4, may: 4, jun: 5, jul: 6, ago: 7, aug: 7, set: 8, sep: 8, out: 9, oct: 9, nov: 10, dez: 11, dec: 11 };
+        const monthCols = [];
+        headers.forEach((h, idx) => {
+          if (idx === nameIdx || idx === metaIdx || idx === tendIdx || idx === mediaIdx) return;
+          const s = String(h).trim();
+          let label = null;
+
+          // 1) Excel serial date number (e.g. 45108 → 2023-07-01)
+          if (/^\d{5}$/.test(s)) {
+            const serial = Number(s);
+            const epoch = new Date(1899, 11, 30);
+            const d = new Date(epoch.getTime() + serial * 86400000);
+            if (!isNaN(d.getTime())) {
+              label = `${MONTH_NAMES_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+            }
+          }
+          // 2) ISO date: 2023-05-01 or 2023-05-01T...
+          if (!label) {
+            const iso = s.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+            if (iso) {
+              const m = parseInt(iso[2], 10) - 1;
+              label = `${MONTH_NAMES_PT[m] || iso[2]}/${iso[1].slice(2)}`;
+            }
+          }
+          // 3) Short month labels: jul/25, Mai-23, Aug/2025, May-23, etc.
+          if (!label) {
+            const short = s.match(/^([a-zA-ZÀ-ú]{3,})[-/\s](\d{2,4})$/i);
+            if (short) {
+              const mKey = short[1].toLowerCase().slice(0, 3);
+              const mIdx = MONTH_MAP[mKey];
+              if (mIdx !== undefined) {
+                const yr = short[2].length === 4 ? short[2].slice(2) : short[2];
+                label = `${MONTH_NAMES_PT[mIdx]}/${yr}`;
+              }
+            }
+          }
+          // 4) Patterns like 2023/05, 05-2023
+          if (!label) {
+            const ym = s.match(/(\d{4})[-/](\d{2})/) || s.match(/(\d{2})[-/](\d{4})/);
+            if (ym) {
+              const parts = [ym[1], ym[2]].map(Number);
+              const year = parts.find((p) => p > 100);
+              const mon = parts.find((p) => p >= 1 && p <= 12);
+              if (year && mon) {
+                label = `${MONTH_NAMES_PT[mon - 1]}/${String(year).slice(2)}`;
+              }
+            }
+          }
+
+          if (label) monthCols.push({ idx, label });
+        });
+        console.log('[KPI Import] headers:', headers, 'monthCols:', monthCols.map(c => c.label));
+
+        const sectionName = sheetData.sheetName;
+        const kpiRows = sheetData.rows.map((raw) => {
+          const rawKeys = Object.keys(raw);
+          const name = nameIdx >= 0 ? String(raw[headers[nameIdx]] ?? '') : String(raw[rawKeys[0]] ?? '');
+          const meta = metaIdx >= 0 ? raw[headers[metaIdx]] : '';
+          const tendencia = tendIdx >= 0 ? String(raw[headers[tendIdx]] ?? '') : '';
+          const media = mediaIdx >= 0 ? raw[headers[mediaIdx]] : '';
+
+          const months = {};
+          monthCols.forEach(({ idx, label }) => {
+            let val = raw[headers[idx]];
+            if (val === '' || val === undefined || val === null) return;
+            // Parse percentage strings like "16,30%" or "16.30%"
+            if (typeof val === 'string') {
+              const pctMatch = val.match(/^([\d.,]+)\s*%$/);
+              if (pctMatch) {
+                val = Number(pctMatch[1].replace(',', '.')) / 100;
+              } else {
+                // Try parsing as number with comma decimal
+                const numStr = val.replace(/[^\d.,-]/g, '').replace(',', '.');
+                const n = Number(numStr);
+                if (!isNaN(n) && numStr !== '') val = n;
+                else return; // Skip text values like "Comercial", "sem cursos"
+              }
+            }
+            months[label] = val;
+          });
+
+          // Parse meta: handle "15%", "50%", 0.15, "definir"
+          let parsedMeta = meta;
+          if (typeof meta === 'string') {
+            const metaPct = meta.match(/^([\d.,]+)\s*%$/);
+            if (metaPct) parsedMeta = Number(metaPct[1].replace(',', '.')) / 100;
+            else if (meta !== 'definir' && meta !== '') {
+              const n = Number(meta.replace(',', '.'));
+              if (!isNaN(n)) parsedMeta = n;
+            }
+          }
+
+          // Parse media similarly
+          let parsedMedia = media;
+          if (typeof media === 'string') {
+            const mediaPct = media.match(/^([\d.,]+)\s*%$/);
+            if (mediaPct) parsedMedia = Number(mediaPct[1].replace(',', '.')) / 100;
+            else {
+              const n = Number(media.replace(',', '.'));
+              if (!isNaN(n)) parsedMedia = n;
+            }
+          }
+
+          return { section: sectionName, name, meta: parsedMeta, tendencia, months, media: parsedMedia };
+        });
+
+        // Append to existing kpiTable data (multiple sections)
+        chartData.kpiTable = [...(chartData.kpiTable || []), ...kpiRows];
+        if (!usedWidgets.includes('kpiTable')) usedWidgets.push('kpiTable');
+        return;
+      }
+
+      // ── Standard widget mapping ──
+      const colMap = sheetMap?.columnMapping || {};
+      const cols = WIDGET_COLUMNS[widget] || [];
+      const rows = sheetData.rows.map((raw) => {
+        const row = {};
+        const rawKeys = Object.keys(raw);
+        cols.forEach((col) => {
+          // 1) Try column mapping first
+          const sheetHeader = Object.entries(colMap).find(([, v]) => v === col.key)?.[0];
+          let rawVal = sheetHeader !== undefined ? raw[sheetHeader] ?? raw[col.key] : raw[col.key];
+          // 2) Fuzzy fallback: search raw keys by normalized key/label
+          if (rawVal === undefined || rawVal === '') {
+            const colKeyN = _norm(col.key);
+            const colLabelN = _norm(col.label);
+            const fuzzyKey = rawKeys.find((k) => {
+              const kn = _norm(k);
+              return kn === colKeyN || kn === colLabelN
+                || kn.includes(colKeyN) || colKeyN.includes(kn)
+                || kn.includes(colLabelN) || colLabelN.includes(kn);
+            });
+            if (fuzzyKey !== undefined) rawVal = raw[fuzzyKey];
+          }
+          // 3) Positional fallback for first text col + number cols
+          if (rawVal === undefined || rawVal === '') {
+            const colIdx = cols.indexOf(col);
+            if (colIdx < rawKeys.length) rawVal = raw[rawKeys[colIdx]];
+          }
+          if (col.type === 'number' || col.type === 'currency') {
+            row[col.key] = Number(String(rawVal ?? 0).replace(/[^\d.,-]/g, '').replace(',', '.')) || 0;
+          } else if (col.type === 'boolean') {
+            row[col.key] = rawVal !== false && rawVal !== 'false' && rawVal !== 0 && rawVal !== '';
+          } else {
+            row[col.key] = String(rawVal ?? '');
+          }
+        });
+        return row;
+      }).map((row) => {
+        // Auto-fill icons if missing
+        if (widget === 'tasks' && !row.icon) {
+          const s = String(row.status || '').toLowerCase();
+          if (s.includes('conclu')) row.icon = '✅';
+          else if (s.includes('andamento') || s.includes('progress')) row.icon = '🔄';
+          else if (s.includes('pendent') || s.includes('aguard')) row.icon = '⏳';
+          else if (s.includes('atras') || s.includes('late') || s.includes('overdue')) row.icon = '⚠️';
+          // leave empty — TasksGrid will assign icon by index
+        }
+        if (widget === 'metrics' && !row.icon) {
+          const l = String(row.label || '').toLowerCase();
+          if (l.includes('fatur') || l.includes('receita') || l.includes('revenue')) row.icon = '💰';
+          else if (l.includes('client') || l.includes('customer')) row.icon = '👥';
+          else if (l.includes('venda') || l.includes('sale')) row.icon = '🛒';
+          else if (l.includes('lucro') || l.includes('profit')) row.icon = '📈';
+          else if (l.includes('desp') || l.includes('custo') || l.includes('expense')) row.icon = '💸';
+          else row.icon = '📊';
+        }
+        return row;
+      });
+      chartData[widget] = rows;
+      if (!usedWidgets.includes(widget)) usedWidgets.push(widget);
+    });
+    const widgets = usedWidgets.length ? usedWidgets : ['revenue'];
+    const trimmed = importName.trim();
+
+    // ── If kpiTable has multiple sections, create one dashboard per section ──
+    const kpiRows = chartData.kpiTable || [];
+    const kpiSections = [];
+    const kpiSectionMap = {};
+    kpiRows.forEach((row) => {
+      const sec = row.section || 'Indicadores';
+      if (!kpiSectionMap[sec]) { kpiSectionMap[sec] = []; kpiSections.push(sec); }
+      kpiSectionMap[sec].push(row);
+    });
+
+    if (kpiSections.length > 1) {
+      // Create one dashboard per section
+      const newEntries = [];
+      kpiSections.forEach((sec) => {
+        const sectionName = sec;
+        const sectionSlug = slugify(sectionName);
+        const sectionChartData = cloneChartData();
+        sectionChartData.kpiTable = kpiSectionMap[sec];
+        newEntries.push({
+          id: `${sectionSlug}-${Date.now()}`,
+          slug: sectionSlug,
+          name: sectionName,
+          widgets: ['kpiTable'],
+          linkedBpmn: null,
+          chartData: sectionChartData,
+          originalKpiTable: JSON.parse(JSON.stringify(kpiSectionMap[sec])),
+          createdBy: user?.nome || user?.email || '',
+          createdAt: new Date().toISOString(),
+        });
+      });
+      const slugsToRemove = new Set(newEntries.map((e) => e.slug));
+      const next = [...dashboards.filter((d) => !slugsToRemove.has(d.slug)), ...newEntries];
+      setDashboards(next);
+      saveDashboards(next);
+      closeImport();
+      // Multiple dashboards created — go to the list
+      navigate('/dashboard');
+      return;
+    }
+
+    const slug = slugify(trimmed);
+    const entry = {
+      id: `${slug}-${Date.now()}`,
+      slug,
+      name: trimmed,
+      widgets,
+      linkedBpmn: null,
+      chartData,
+      originalKpiTable: chartData.kpiTable?.length ? JSON.parse(JSON.stringify(chartData.kpiTable)) : undefined,
+      createdBy: user?.nome || user?.email || '',
+      createdAt: new Date().toISOString(),
+    };
+    // Replace any existing dashboard with the same slug
+    const next = [...dashboards.filter((d) => d.slug !== slug), entry];
+    setDashboards(next);
+    saveDashboards(next);
+    closeImport();
+    navigate('/dashboard/' + slug);
+  };
+
   const toggleWidget = (id) => {
     setSelectedWidgets((prev) =>
       prev.includes(id) ? prev.filter((w) => w !== id) : [...prev, id],
@@ -581,13 +1013,22 @@ const DashboardStart = () => {
           </p>
         </div>
         {canCreate && (
-          <button
-            type="button"
-            className={styles.primaryButton}
-            onClick={openCreate}
-          >
-            Criar Dashboard
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={`${styles.secondaryButton}${modalStep === MODAL_STEP_IMPORT ? ' ' + styles.secondaryButtonActive : ''}`}
+              onClick={openImport}
+            >
+              📂 Importar planilha
+            </button>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={openCreate}
+            >
+              Criar Dashboard
+            </button>
+          </div>
         )}
       </div>
 
@@ -612,7 +1053,7 @@ const DashboardStart = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboards.map((item) => (
+                  {[...dashboards].reverse().map((item) => (
                     <tr key={item.id}>
                       <td>
                         <button
@@ -626,6 +1067,7 @@ const DashboardStart = () => {
                       <td>
                         <select
                           className={styles.bpmnSelect}
+                          name={`linkedBpmn_${item.id}`}
                           value={
                             item.linkedBpmn ? String(item.linkedBpmn.id) : ''
                           }
@@ -646,9 +1088,10 @@ const DashboardStart = () => {
                         <div className={styles.widgetBadges}>
                           {(item.widgets || DEFAULT_WIDGETS).map((wid) => {
                             const w = ALL_WIDGETS.find((x) => x.id === wid);
-                            return w ? (
+                            const label = w ? `${w.icon} ${w.label}` : WIDGET_LABELS[wid] ? `📊 ${WIDGET_LABELS[wid]}` : null;
+                            return label ? (
                               <span key={wid} className={styles.badge}>
-                                {w.icon} {w.label}
+                                {label}
                               </span>
                             ) : null;
                           })}
@@ -658,7 +1101,8 @@ const DashboardStart = () => {
                         {item.createdBy || '—'}
                       </td>
                       <td>{formatDate(item.createdAt)}</td>
-                      <td className={styles.tableActions}>
+                      <td className={styles.actionsCell}>
+                        <div className={styles.actions}>
                         <button
                           type="button"
                           className={`${styles.actionButton} ${styles.viewButton}`}
@@ -668,28 +1112,6 @@ const DashboardStart = () => {
                         >
                           👁️
                         </button>
-                        {!isReadOnlyMode && (
-                          <button
-                            type="button"
-                            className={`${styles.actionButton} ${styles.bpmnLinkBtn}`}
-                            onClick={() => openBpmnLink(item)}
-                            title="Vincular BPMN"
-                            aria-label="Vincular BPMN"
-                          >
-                            🔗
-                          </button>
-                        )}
-                        {!isReadOnlyMode && (
-                          <button
-                            type="button"
-                            className={`${styles.actionButton} ${styles.configButton}`}
-                            onClick={() => openConfigure(item)}
-                            title="Configurar dashboard"
-                            aria-label="Configurar dashboard"
-                          >
-                            ⚙️
-                          </button>
-                        )}
                         {canDelete && (
                           <button
                             type="button"
@@ -701,6 +1123,7 @@ const DashboardStart = () => {
                             🗑️
                           </button>
                         )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -881,6 +1304,7 @@ const DashboardStart = () => {
             <input
               type="text"
               className={styles.modalInput}
+              name="createBpmnSearch"
               placeholder="Buscar BPMN..."
               value={createBpmnSearch}
               onChange={(e) => setCreateBpmnSearch(e.target.value)}
@@ -1021,6 +1445,7 @@ const DashboardStart = () => {
                         <td key={c.key} className={styles.dataTd}>
                           {c.type === 'boolean' ? (
                             <select
+                              name={`dataCellBool_${idx}_${c.key}`}
                               value={String(row[c.key])}
                               onChange={(e) =>
                                 updateDataCell(
@@ -1041,6 +1466,7 @@ const DashboardStart = () => {
                                   ? 'number'
                                   : 'text'
                               }
+                              name={`dataCellVal_${idx}_${c.key}`}
                               value={row[c.key] ?? ''}
                               onChange={(e) =>
                                 updateDataCell(idx, c.key, e.target.value)
@@ -1121,6 +1547,7 @@ const DashboardStart = () => {
             <input
               type="text"
               className={styles.modalInput}
+              name="bpmnLinkSearch"
               placeholder="Buscar BPMN..."
               value={bpmnSearch}
               onChange={(e) => setBpmnSearch(e.target.value)}
@@ -1217,6 +1644,147 @@ const DashboardStart = () => {
           </div>
         </div>
       )}
+      {/* Modal: importar planilha */}
+      {modalStep === MODAL_STEP_IMPORT && (
+        <div
+          className={styles.overlay}
+          onClick={closeImport}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Importar planilha"
+        >
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <h2 className={styles.modalTitle}>📂 Importar Planilha</h2>
+
+            {importStep === 'upload' ? (
+              <>
+                <p className={styles.modalText}>
+                  Selecione um arquivo <strong>.csv</strong> ou{' '}
+                  <strong>.xlsx</strong> para criar um dashboard automaticamente.
+                  A IA detecta o tipo de gráfico e mapeia as colunas.
+                </p>
+                {importError && (
+                  <p className={styles.importErrorMsg}>{importError}</p>
+                )}
+                <div
+                  className={`${styles.uploadZone} ${importLoading ? styles.uploadZoneLoading : ''}`}
+                  onClick={() => !importLoading && importFileRef.current?.click()}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) =>
+                    e.key === 'Enter' && !importLoading && importFileRef.current?.click()
+                  }
+                >
+                  {importLoading ? (
+                    <>
+                      <span className={styles.uploadIcon}>🔄</span>
+                      <span>Analisando planilha com IA…</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className={styles.uploadIcon}>📊</span>
+                      <span>Clique para selecionar o arquivo</span>
+                      <span className={styles.uploadHint}>.csv, .xlsx, .xls</span>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  name="importFile"
+                  accept=".csv,.xlsx,.xls"
+                  style={{ display: 'none' }}
+                  onChange={handleImportFile}
+                />
+                <div className={styles.modalActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={closeImport}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.importResult}>
+                  <p className={styles.importMappingTitle}>
+                    Revise os gráficos detectados pela IA e ajuste se necessário
+                  </p>
+                  {(importParsed || []).map((sheetData) => {
+                    const sheetMap = (importMapping?.sheets || []).find(
+                      (s) => s.sheetName === sheetData.sheetName
+                    );
+                    const currentWidget = sheetMap?.widget || '';
+                    return (
+                      <div key={sheetData.sheetName} className={styles.importSheetRow}>
+                        <div className={styles.importSheetInfo}>
+                          <span className={styles.importSheetName}>{sheetData.sheetName}</span>
+                          <span className={styles.importSheetRows}>{sheetData.rows.length} linhas</span>
+                        </div>
+                        {currentWidget === 'kpiTable' ? (
+                          <span className={styles.importWidgetFixed}>📊 Gráficos de Indicadores</span>
+                        ) : (
+                          <select
+                            className={styles.importWidgetSelect}
+                            name={`importWidget_${sheetData.sheetName}`}
+                            value={currentWidget}
+                            onChange={(e) => updateSheetWidget(sheetData.sheetName, e.target.value)}
+                          >
+                            <option value="">— Ignorar esta aba —</option>
+                            {ALL_WIDGETS.map((w) => (
+                              <option key={w.id} value={w.id}>
+                                {w.icon} {w.label}
+                              </option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <label className={styles.modalLabel} htmlFor="import-dash-name">
+                  Nome do dashboard
+                </label>
+                <input
+                  id="import-dash-name"
+                  className={styles.modalInput}
+                  type="text"
+                  value={importName}
+                  onChange={(e) => setImportName(e.target.value)}
+                  autoFocus
+                  maxLength={80}
+                />
+
+                {importError && (
+                  <p className={styles.importErrorMsg}>{importError}</p>
+                )}
+
+                <div className={styles.modalActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={() => setImportStep('upload')}
+                  >
+                    ← Voltar
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.primaryButton}
+                    onClick={handleCreateFromImport}
+                    disabled={!importName.trim()}
+                  >
+                    Criar Dashboard
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
     </section>
   );
 };

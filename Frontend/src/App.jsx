@@ -26,6 +26,7 @@ const CriarUsuario = React.lazy(
   () => import('./Components/Usuários/CriarUsuario'),
 );
 const IA = React.lazy(() => import('./Components/IA/Ia'));
+const Workflows = React.lazy(() => import('./Components/Workflows/Workflows'));
 
 const LazyFallback = () => (
   <div
@@ -130,6 +131,7 @@ function AppContent() {
               element={<Navigate to="/entidades/criar" replace />}
             />
             <Route path="/oportunidades/*" element={<OpportunitiesRoutes />} />
+            <Route path="/workflows" element={<Workflows />} />
             <Route path="/gerar-bpmn/*" element={<GerarBPMN />} />
             <Route
               path="/gerarbpmn/*"

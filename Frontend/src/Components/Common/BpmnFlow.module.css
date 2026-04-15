@@ -10,7 +10,8 @@
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 0;
+  z-index: 10;
+  overflow: visible;
 }
 
 .connectionLine {
@@ -34,11 +35,99 @@
   stroke-width: 2.4;
 }
 
+.connectionLineSim {
+  stroke: #16a34a;
+  stroke-width: 1.8;
+}
+
+.connectionLineNao {
+  stroke: #dc2626;
+  stroke-width: 1.6;
+  stroke-dasharray: 6 4;
+}
+
 .connectionLineDraft {
   stroke: #16a34a;
   stroke-width: 1.8;
   fill: none;
   stroke-dasharray: 5 3;
+}
+
+.connectionDecisionLabel {
+  font-size: 11px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke;
+  stroke: #ffffff;
+  stroke-width: 3px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.connectionDecisionYes {
+  fill: #16a34a;
+}
+
+.connectionDecisionNo {
+  fill: #dc2626;
+}
+
+.connectionDeleteDot {
+  fill: #ef4444;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  cursor: pointer;
+  pointer-events: all;
+  opacity: 0;
+  transition: opacity 150ms ease, r 120ms ease;
+}
+
+.connectionDeleteDot:hover {
+  opacity: 1;
+  r: 7;
+}
+
+.connectionGroup:hover .connectionDeleteDot {
+  opacity: 0.7;
+}
+
+/* Waypoint handles */
+.waypointHandle {
+  fill: #2563eb;
+  stroke: #ffffff;
+  stroke-width: 2;
+  cursor: grab;
+  pointer-events: all;
+  transition: r 100ms ease;
+}
+
+.waypointHandle:hover {
+  r: 8;
+}
+
+.waypointMidHandle {
+  fill: #9ca3af;
+  stroke: #ffffff;
+  stroke-width: 1.5;
+  cursor: crosshair;
+  pointer-events: all;
+  opacity: 0.6;
+  transition: opacity 100ms ease, r 100ms ease;
+}
+
+.waypointMidHandle:hover {
+  opacity: 1;
+  r: 7;
+  fill: #2563eb;
+}
+
+.waypointHandleDragging {
+  fill: #2563eb;
+  stroke: #1d4ed8;
+  stroke-width: 2;
+  opacity: 0.8;
+  pointer-events: none;
 }
 
 .connectionArrow {
@@ -208,6 +297,59 @@
 .connectorNo:hover::before,
 .connectorNo.connectorLinked:hover::before {
   color: #ffffff;
+}
+
+/* Connector dots (4 sides) — visible on card hover */
+.connectorDot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #9ca3af;
+  background: #e5e7eb;
+  padding: 0;
+  cursor: crosshair;
+  z-index: 6;
+  touch-action: none;
+  opacity: 0;
+  transition: opacity 150ms ease, transform 120ms ease, background 120ms ease, border-color 120ms ease;
+  pointer-events: none;
+}
+
+.stageCard:hover .connectorDot,
+.selected .connectorDot {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.connectorDot:hover {
+  background: #3b82f6;
+  border-color: #2563eb;
+  transform: scale(1.4);
+}
+
+.connectorDot_left {
+  left: -6px;
+  top: 50%;
+  margin-top: -5px;
+}
+
+.connectorDot_right {
+  right: -6px;
+  top: 50%;
+  margin-top: -5px;
+}
+
+.connectorDot_top {
+  top: -6px;
+  left: 50%;
+  margin-left: -5px;
+}
+
+.connectorDot_bottom {
+  bottom: -6px;
+  left: 50%;
+  margin-left: -5px;
 }
 
 .selected {
@@ -429,7 +571,7 @@
   font-family: inherit;
 }
 
-.stageSubtitle {
+.stageDescricao {
   font-size: calc(0.73rem * var(--node-text-scale));
   color: #475569;
   width: 100%;
@@ -480,7 +622,7 @@
   }
 
   .stageLabel,
-  .stageSubtitle,
+  .stageDescricao,
   .stageInfo {
     line-clamp: 2;
     -webkit-line-clamp: 2;

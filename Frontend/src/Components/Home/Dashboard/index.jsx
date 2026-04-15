@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useContext } from 'react';
+import React, { useState, useCallback, useContext, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 import { UserContext } from '../../../Context/UserContext';
@@ -10,6 +10,7 @@ import ConversionsChart from './ConversionsChart';
 import ExpensesChart from './ExpensesChart';
 import TasksGrid from './TasksGrid';
 import PipelineChart from './PipelineChart';
+import KpiChart from './KpiTable';
 import DataEditModal from './DataEditModal';
 
 const STORAGE_KEY = 'bp_dashboards_v1';
@@ -96,6 +97,7 @@ const WIDGET_COLUMNS = {
     { key: 'leads', label: 'Leads',      type: 'number' },
     { key: 'valor', label: 'Valor (R$)', type: 'number' },
   ],
+  kpiTable: [],
 };
 
 const WIDGET_TITLES = {
@@ -106,13 +108,24 @@ const WIDGET_TITLES = {
   expenses:    'Editar dados — Despesas Mensais',
   tasks:       'Editar dados — Tarefas',
   pipeline:    'Editar dados — Pipeline de Vendas',
+  kpiTable:    'Editar dados — Indicadores KPI',
 };
 
 const loadEntry = (slug) => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const list = raw ? JSON.parse(raw) : [];
-    return list.find((d) => d.slug === slug) || null;
+    // Find all matching entries; prefer the newest (last in array or latest createdAt)
+    const matches = list.filter((d) => d.slug === slug);
+    if (matches.length <= 1) return matches[0] || null;
+    // Multiple entries with same slug — return the newest and clean up
+    matches.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    const newest = matches[0];
+    // Deduplicate: keep only the newest
+    const deduped = list.filter((d) => d.slug !== slug);
+    deduped.push(newest);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
+    return newest;
   } catch {
     return null;
   }
@@ -145,9 +158,22 @@ const Dashboard = () => {
     expenses:    entry?.chartData?.expenses?.length    ? entry.chartData.expenses    : DEFAULT_EXPENSES,
     tasks:       entry?.chartData?.tasks?.length       ? entry.chartData.tasks       : DEFAULT_TASKS,
     pipeline:    entry?.chartData?.pipeline?.length    ? entry.chartData.pipeline    : DEFAULT_PIPELINE,
+    kpiTable:    entry?.chartData?.kpiTable             || [],
   });
 
+  const originalKpiTable = entry?.originalKpiTable || null;
+
+  // Auto-save originalKpiTable for older dashboards that don't have it
+  useEffect(() => {
+    if (!originalKpiTable && entry?.chartData?.kpiTable?.length && dashboardSlug) {
+      const snapshot = JSON.parse(JSON.stringify(entry.chartData.kpiTable));
+      persistEntry(dashboardSlug, { originalKpiTable: snapshot });
+    }
+  }, [dashboardSlug]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [editingWidget, setEditingWidget] = useState(null);
+  const [editingKpiIndex, setEditingKpiIndex] = useState(null);
+  const [kpiEditForm, setKpiEditForm] = useState({ name: '', meta: '', tendencia: '', media: '', months: {} });
 
   const handleSaveData = useCallback((widget, newRows) => {
     let sanitized = newRows;
@@ -158,6 +184,92 @@ const Dashboard = () => {
     setChartData(updated);
     if (dashboardSlug) persistEntry(dashboardSlug, { chartData: updated });
     setEditingWidget(null);
+  }, [chartData, dashboardSlug]);
+
+  const handleEditKpi = useCallback((index) => {
+    const row = chartData.kpiTable[index];
+    if (!row) return;
+    const monthsCopy = {};
+    if (row.months) {
+      Object.entries(row.months).forEach(([k, v]) => {
+        monthsCopy[k] = v !== undefined && v !== null ? String(v) : '';
+      });
+    }
+    setKpiEditForm({
+      name: row.name || '',
+      meta: row.meta !== undefined && row.meta !== null ? String(row.meta) : '',
+      tendencia: row.tendencia || '',
+      media: row.media !== undefined && row.media !== null ? String(row.media) : '',
+      months: monthsCopy,
+    });
+    setEditingKpiIndex(index);
+  }, [chartData.kpiTable]);
+
+  const handleSaveKpi = useCallback(() => {
+    if (editingKpiIndex === null) return;
+    const updated = [...chartData.kpiTable];
+    const prev = updated[editingKpiIndex];
+    const parsedMonths = {};
+    Object.entries(kpiEditForm.months).forEach(([k, v]) => {
+      const s = String(v).trim();
+      if (s === '') return;
+      const pct = s.match(/^([\d.,]+)\s*%$/);
+      if (pct) { parsedMonths[k] = Number(pct[1].replace(',', '.')) / 100; return; }
+      const n = Number(s.replace(',', '.'));
+      parsedMonths[k] = isNaN(n) ? v : n;
+    });
+    updated[editingKpiIndex] = {
+      ...prev,
+      name: kpiEditForm.name,
+      meta: kpiEditForm.meta,
+      tendencia: kpiEditForm.tendencia,
+      media: kpiEditForm.media,
+      months: parsedMonths,
+    };
+    const newData = { ...chartData, kpiTable: updated };
+    setChartData(newData);
+    if (dashboardSlug) persistEntry(dashboardSlug, { chartData: newData });
+    setEditingKpiIndex(null);
+  }, [editingKpiIndex, kpiEditForm, chartData, dashboardSlug]);
+
+  const handleResetKpi = useCallback(() => {
+    if (editingKpiIndex === null || !originalKpiTable) return;
+    const orig = originalKpiTable[editingKpiIndex];
+    if (!orig) return;
+    const monthsCopy = {};
+    if (orig.months) {
+      Object.entries(orig.months).forEach(([k, v]) => {
+        monthsCopy[k] = v !== undefined && v !== null ? String(v) : '';
+      });
+    }
+    setKpiEditForm({
+      name: orig.name || '',
+      meta: orig.meta !== undefined && orig.meta !== null ? String(orig.meta) : '',
+      tendencia: orig.tendencia || '',
+      media: orig.media !== undefined && orig.media !== null ? String(orig.media) : '',
+      months: monthsCopy,
+    });
+  }, [editingKpiIndex, originalKpiTable]);
+
+  const handleResetKpiDirect = useCallback((index) => {
+    if (!originalKpiTable || !originalKpiTable[index]) return;
+    const orig = originalKpiTable[index];
+    if (!window.confirm(`Resetar "${orig.name}" para os valores originais?`)) return;
+    const updated = [...chartData.kpiTable];
+    updated[index] = JSON.parse(JSON.stringify(orig));
+    const newData = { ...chartData, kpiTable: updated };
+    setChartData(newData);
+    if (dashboardSlug) persistEntry(dashboardSlug, { chartData: newData });
+  }, [chartData, dashboardSlug, originalKpiTable]);
+
+  const handleDeleteKpi = useCallback((index) => {
+    const row = chartData.kpiTable[index];
+    if (!row) return;
+    if (!window.confirm(`Apagar o gráfico "${row.name}"?`)) return;
+    const updated = chartData.kpiTable.filter((_, i) => i !== index);
+    const newData = { ...chartData, kpiTable: updated };
+    setChartData(newData);
+    if (dashboardSlug) persistEntry(dashboardSlug, { chartData: newData });
   }, [chartData, dashboardSlug]);
 
   return (
@@ -174,11 +286,21 @@ const Dashboard = () => {
         <h1 className={styles.pageTitle}>{name}</h1>
       </div>
 
-      {widgets.includes('metrics') && (
-        <MetricsGrid
-          metrics={chartData.metrics}
-          onEditData={isReadOnlyMode ? null : () => setEditingWidget('metrics')}
-        />
+      {(widgets.includes('metrics') || widgets.includes('tasks')) && (
+        <div className={styles.chartsGrid}>
+          {widgets.includes('metrics') && (
+            <MetricsGrid
+              metrics={chartData.metrics}
+              onEditData={isReadOnlyMode ? null : () => setEditingWidget('metrics')}
+            />
+          )}
+          {widgets.includes('tasks') && (
+            <TasksGrid
+              tasks={chartData.tasks}
+              onEditData={isReadOnlyMode ? null : () => setEditingWidget('tasks')}
+            />
+          )}
+        </div>
       )}
 
       {(widgets.includes('revenue') || widgets.includes('sales')) && (
@@ -198,38 +320,38 @@ const Dashboard = () => {
         </div>
       )}
 
-      {(['conversions', 'expenses', 'tasks', 'pipeline']).map((wid) => {
-        if (!widgets.includes(wid)) return null;
-        if (wid === 'conversions') return (
-          <ConversionsChart
-            key="conversions"
-            data={chartData.conversions}
-            onEditData={isReadOnlyMode ? null : () => setEditingWidget('conversions')}
-          />
-        );
-        if (wid === 'expenses') return (
-          <ExpensesChart
-            key="expenses"
-            data={chartData.expenses}
-            onEditData={isReadOnlyMode ? null : () => setEditingWidget('expenses')}
-          />
-        );
-        if (wid === 'tasks') return (
-          <TasksGrid
-            key="tasks"
-            tasks={chartData.tasks}
-            onEditData={isReadOnlyMode ? null : () => setEditingWidget('tasks')}
-          />
-        );
-        if (wid === 'pipeline') return (
-          <PipelineChart
-            key="pipeline"
-            data={chartData.pipeline}
-            onEditData={isReadOnlyMode ? null : () => setEditingWidget('pipeline')}
-          />
-        );
-        return null;
-      })}
+      {(widgets.includes('conversions') || widgets.includes('expenses')) && (
+        <div className={styles.chartsGrid}>
+          {widgets.includes('conversions') && (
+            <ConversionsChart
+              data={chartData.conversions}
+              onEditData={isReadOnlyMode ? null : () => setEditingWidget('conversions')}
+            />
+          )}
+          {widgets.includes('expenses') && (
+            <ExpensesChart
+              data={chartData.expenses}
+              onEditData={isReadOnlyMode ? null : () => setEditingWidget('expenses')}
+            />
+          )}
+        </div>
+      )}
+
+      {widgets.includes('pipeline') && (
+        <PipelineChart
+          data={chartData.pipeline}
+          onEditData={isReadOnlyMode ? null : () => setEditingWidget('pipeline')}
+        />
+      )}
+
+      {widgets.includes('kpiTable') && chartData.kpiTable?.length > 0 && (
+        <KpiChart
+          data={chartData.kpiTable}
+          onEditIndicator={isReadOnlyMode ? null : handleEditKpi}
+          onDeleteIndicator={isReadOnlyMode ? null : handleDeleteKpi}
+          onResetIndicator={isReadOnlyMode || !originalKpiTable ? null : handleResetKpiDirect}
+        />
+      )}
 
       {widgets.length === 0 && (
         <p className={styles.emptyWidgets}>
@@ -252,6 +374,108 @@ const Dashboard = () => {
           onSave={(rows) => handleSaveData(editingWidget, rows)}
           onClose={() => setEditingWidget(null)}
         />
+      )}
+
+      {editingKpiIndex !== null && (
+        <div className={styles.modalOverlay} onClick={() => setEditingKpiIndex(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420 }}>
+            <h2 className={styles.modalTitle}>Editar Indicador</h2>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.2rem' }}>
+              Nome
+            </label>
+            <input
+              type="text"
+              name="kpiName"
+              value={kpiEditForm.name}
+              onChange={(e) => setKpiEditForm((f) => ({ ...f, name: e.target.value }))}
+              style={{ width: '100%', padding: '0.45rem 0.6rem', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: '0.85rem', marginBottom: '0.75rem' }}
+            />
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.2rem' }}>
+              Meta
+            </label>
+            <input
+              type="text"
+              name="kpiMeta"
+              value={kpiEditForm.meta}
+              onChange={(e) => setKpiEditForm((f) => ({ ...f, meta: e.target.value }))}
+              placeholder="Ex: 0.15 ou 15% ou definir"
+              style={{ width: '100%', padding: '0.45rem 0.6rem', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: '0.85rem', marginBottom: '0.75rem' }}
+            />
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.2rem' }}>
+              Tendência
+            </label>
+            <select
+              name="kpiTendencia"
+              value={kpiEditForm.tendencia}
+              onChange={(e) => setKpiEditForm((f) => ({ ...f, tendencia: e.target.value }))}
+              style={{ width: '100%', padding: '0.45rem 0.6rem', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: '0.85rem', marginBottom: '0.75rem' }}
+            >
+              <option value="↑">↑ Subindo</option>
+              <option value="→">→ Estável</option>
+              <option value="↓">↓ Caindo</option>
+            </select>
+            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.2rem' }}>
+              Média
+            </label>
+            <input
+              type="text"
+              name="kpiMedia"
+              value={kpiEditForm.media}
+              onChange={(e) => setKpiEditForm((f) => ({ ...f, media: e.target.value }))}
+              style={{ width: '100%', padding: '0.45rem 0.6rem', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: '0.85rem', marginBottom: '0.75rem' }}
+            />
+            {Object.keys(kpiEditForm.months).length > 0 && (
+              <>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.35rem' }}>
+                  Valores Mensais
+                </label>
+                <div style={{ maxHeight: 200, overflowY: 'auto', border: '1.5px solid #e2e8f0', borderRadius: 6, padding: '0.5rem', marginBottom: '1rem' }}>
+                  {Object.entries(kpiEditForm.months).map(([month, val]) => (
+                    <div key={month} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                      <span style={{ fontSize: '0.78rem', color: '#64748b', minWidth: 60 }}>{month}</span>
+                      <input
+                        type="text"
+                        name={`kpiMonth_${month}`}
+                        value={val}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setKpiEditForm((f) => ({ ...f, months: { ...f.months, [month]: v } }));
+                        }}
+                        style={{ flex: 1, padding: '0.3rem 0.5rem', border: '1px solid #e2e8f0', borderRadius: 4, fontSize: '0.82rem' }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              {originalKpiTable && originalKpiTable[editingKpiIndex] && (
+                <button
+                  type="button"
+                  onClick={handleResetKpi}
+                  title="Restaurar valores originais do import"
+                  style={{ padding: '0.45rem 1rem', border: '1.5px solid #fbbf24', borderRadius: 6, background: '#fffbeb', cursor: 'pointer', fontSize: '0.82rem', color: '#92400e', marginRight: 'auto' }}
+                >
+                  ↩ Resetar
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setEditingKpiIndex(null)}
+                style={{ padding: '0.45rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: 6, background: 'white', cursor: 'pointer', fontSize: '0.82rem' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveKpi}
+                style={{ padding: '0.45rem 1rem', border: 'none', borderRadius: 6, background: '#22c55e', color: 'white', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem' }}
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

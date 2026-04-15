@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1,
+    "url": "https://httpbin.org/post",
+    "events": [
+      "*"
+    ],
+    "secret": "s3cret",
+    "description": "Teste retry",
+    "active": true,
+    "retry_config": {
+      "max_retries": 3,
+      "retry_delay": 1,
+      "retry_backoff": 2
+    },
+    "created_at": "2026-04-14T11:55:41.759382"
+  },
+  {
+    "id": 2,
+    "url": "http://localhost:9999/nonexistent",
+    "events": [
+      "*"
+    ],
+    "secret": "",
+    "description": "Webhook que vai falhar",
+    "active": false,
+    "retry_config": {
+      "max_retries": 2,
+      "retry_delay": 1,
+      "retry_backoff": 1.5
+    },
+    "created_at": "2026-04-14T11:55:50.977010"
+  },
+  {
+    "id": 3,
+    "url": "https://httpbin.org/post",
+    "events": [
+      "*"
+    ],
+    "secret": "s3cret",
+    "description": "Teste OK",
+    "active": true,
+    "retry_config": {
+      "max_retries": 3,
+      "retry_delay": 2,
+      "retry_backoff": 2.0
+    },
+    "created_at": "2026-04-14T12:02:42.527836"
+  },
+  {
+    "id": 4,
+    "url": "http://localhost:9999/fail",
+    "events": [
+      "*"
+    ],
+    "secret": "",
+    "description": "Vai falhar",
+    "active": false,
+    "retry_config": {
+      "max_retries": 2,
+      "retry_delay": 1,
+      "retry_backoff": 1.5
+    },
+    "created_at": "2026-04-14T12:02:42.822098"
+  }
+]

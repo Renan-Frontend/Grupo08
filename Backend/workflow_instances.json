@@ -1,0 +1,139 @@
+[
+  {
+    "id": 1,
+    "currentNodeId": null,
+    "executed": [
+      {
+        "nodeId": "n1",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Solicitar compra",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n2",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Pedido",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n3",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Analisar Pedido",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n4",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Pedido aprovado?",
+        "status": "completed",
+        "decision": "nao"
+      },
+      {
+        "nodeId": "n6",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Rejeitar Pedido",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n7",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Validar orcamento",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n8",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Orcamento aprovado?",
+        "status": "completed",
+        "decision": "nao"
+      },
+      {
+        "nodeId": "n10",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Rejeitar Orcamento",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n11",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Gerar OrdemDeCompra",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n12",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "OrdemDeCompra",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n13",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Enviar OrdemDeCompra ao Fornecedor",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n14",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Fornecedor",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n15",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Fornecedor recebe OrdemDeCompra",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n16",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Aprovacao",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n17",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Cliente",
+        "status": "completed"
+      }
+    ],
+    "context": {
+      "completed_n1": true,
+      "completed_n3": true,
+      "decision_n4": "nao",
+      "completed_n6": true,
+      "completed_n7": true,
+      "decision_n8": "nao",
+      "completed_n10": true,
+      "completed_n11": true,
+      "completed_n13": true,
+      "completed_n15": true
+    },
+    "status": "completed",
+    "bpmn_version": 1,
+    "startedAt": "2026-04-15T17:31:35.653812",
+    "updatedAt": "2026-04-15T17:31:48.930254"
+  }
+]

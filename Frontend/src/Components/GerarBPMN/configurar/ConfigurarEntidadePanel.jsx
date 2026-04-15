@@ -185,6 +185,7 @@ const ConfigurarEntidadePanel = ({
 
           <input
             className={`${panelStyles.fieldInput} ${panelStyles.fieldInputDisabled}`}
+            name="entityNameDisabled"
             value=""
             readOnly
             aria-disabled="true"
@@ -194,6 +195,7 @@ const ConfigurarEntidadePanel = ({
 
           <textarea
             className={`${panelStyles.fieldInput} ${panelStyles.descriptionInput} ${panelStyles.fieldInputDisabled}`}
+            name="entityDescriptionDisabled"
             value=""
             readOnly
             aria-disabled="true"
@@ -238,6 +240,7 @@ const ConfigurarEntidadePanel = ({
           <>
             <input
               className={panelStyles.fieldInput}
+              name="conditionalNameInput"
               value={conditionalForm.nome}
               onChange={(event) =>
                 setConditionalForm((previous) => ({
@@ -250,9 +253,19 @@ const ConfigurarEntidadePanel = ({
               title="Nome da Condicional"
               maxLength={CONDITIONAL_NAME_MAX_LENGTH}
             />
+            {String(conditionalForm.nome || '').length > Math.floor(CONDITIONAL_NAME_MAX_LENGTH * 0.7) ? (
+              <p
+                className={panelStyles.charHint}
+                data-warn={String(conditionalForm.nome || '').length >= Math.floor(CONDITIONAL_NAME_MAX_LENGTH * 0.9) ? 'true' : undefined}
+              >
+                {CONDITIONAL_NAME_MAX_LENGTH - String(conditionalForm.nome || '').length} caracteres restantes — prefira nomes curtos
+              </p>
+            ) : null}
 
+            <p className={panelStyles.descriptionTitle}>Descrição da Condição</p>
             <textarea
               className={`${panelStyles.fieldInput} ${panelStyles.descriptionInput}`}
+              name="conditionalDescriptionInput"
               value={conditionalForm.descricao}
               onChange={(event) =>
                 setConditionalForm((previous) => ({
@@ -263,7 +276,10 @@ const ConfigurarEntidadePanel = ({
               disabled={isReadOnlyMode}
               placeholder="Descrição da Condicional"
               title="Descrição da Condicional"
+              rows={5}
             />
+
+
           </>
         ) : effectiveStageConfigMode === 'entidade' ? (
           <>
@@ -294,6 +310,7 @@ const ConfigurarEntidadePanel = ({
               <>
                 <select
                   className={panelStyles.fieldInput}
+                  name="existingEntitySelect"
                   value={selectedExistingEntityId}
                   onChange={(event) =>
                     setSelectedExistingEntityId(event.target.value)
@@ -318,6 +335,7 @@ const ConfigurarEntidadePanel = ({
 
             <input
               className={panelStyles.fieldInput}
+              name="newEntityNameInput"
               value={newEntityForm.nome}
               onChange={(event) =>
                 setNewEntityForm((previous) => ({
@@ -330,9 +348,19 @@ const ConfigurarEntidadePanel = ({
               title="Nome da Entidade"
               maxLength={ENTITY_NAME_MAX_LENGTH}
             />
+            {String(newEntityForm.nome || '').length > Math.floor(ENTITY_NAME_MAX_LENGTH * 0.7) ? (
+              <p
+                className={panelStyles.charHint}
+                data-warn={String(newEntityForm.nome || '').length >= Math.floor(ENTITY_NAME_MAX_LENGTH * 0.9) ? 'true' : undefined}
+              >
+                {ENTITY_NAME_MAX_LENGTH - String(newEntityForm.nome || '').length} caracteres restantes — prefira nomes curtos
+              </p>
+            ) : null}
 
+            <p className={panelStyles.descriptionTitle}>Descrição da Entidade</p>
             <textarea
               className={`${panelStyles.fieldInput} ${panelStyles.descriptionInput}`}
+              name="newEntityDescriptionInput"
               value={newEntityForm.descricao}
               onChange={(event) =>
                 setNewEntityForm((previous) => ({
@@ -343,6 +371,7 @@ const ConfigurarEntidadePanel = ({
               disabled={isReadOnlyMode}
               placeholder="Descrição"
               title="Descrição"
+              rows={5}
             />
 
             <div className={panelStyles.entityFieldEditorBlock}>
@@ -352,6 +381,7 @@ const ConfigurarEntidadePanel = ({
               <div className={panelStyles.entityFieldEditorGrid}>
                 <input
                   className={panelStyles.fieldInput}
+                  name="entityFieldNameInput"
                   value={String(entityFieldDraft?.nome || '')}
                   onChange={(event) =>
                     setEntityFieldDraft?.((previous) => ({
@@ -365,6 +395,7 @@ const ConfigurarEntidadePanel = ({
                 />
                 <select
                   className={panelStyles.fieldInput}
+                  name="entityFieldTypeSelect"
                   value={String(entityFieldDraft?.tipo || '')}
                   onChange={(event) =>
                     setEntityFieldDraft?.((previous) => ({
@@ -387,6 +418,7 @@ const ConfigurarEntidadePanel = ({
                 </select>
                 <select
                   className={panelStyles.fieldInput}
+                  name="entityFieldRequiredSelect"
                   value={
                     typeof entityFieldDraft?.obrigatorio === 'boolean'
                       ? entityFieldDraft.obrigatorio
@@ -411,6 +443,7 @@ const ConfigurarEntidadePanel = ({
                 </select>
                 <select
                   className={panelStyles.fieldInput}
+                  name="entityFieldKeyTypeSelect"
                   value={String(entityFieldDraft?.keyType || '')}
                   onChange={(event) =>
                     setEntityFieldDraft?.((previous) => ({
@@ -430,6 +463,7 @@ const ConfigurarEntidadePanel = ({
                 </select>
                 <input
                   className={panelStyles.fieldInput}
+                  name="entityFieldReferenceInput"
                   value={String(entityFieldDraft?.referencia || '')}
                   onChange={(event) =>
                     setEntityFieldDraft?.((previous) => ({

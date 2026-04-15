@@ -989,6 +989,7 @@ const Entidades = () => {
               <input
                 type="text"
                 className={styles.configInput}
+                name="campoNome"
                 placeholder="Nome do novo campo"
                 value={campoConfigForm.nome}
                 disabled={isReadOnlyMode}
@@ -1002,6 +1003,7 @@ const Entidades = () => {
 
               <select
                 className={styles.filter}
+                name="campoTipo"
                 value={campoConfigForm.tipo}
                 disabled={isReadOnlyMode}
                 onChange={(event) =>
@@ -1023,6 +1025,7 @@ const Entidades = () => {
 
               <select
                 className={styles.filter}
+                name="campoObrigatorio"
                 value={campoConfigForm.obrigatorio}
                 disabled={isReadOnlyMode}
                 onChange={(event) =>
@@ -1041,6 +1044,7 @@ const Entidades = () => {
 
               <select
                 className={styles.filter}
+                name="campoKeyType"
                 value={campoConfigForm.keyType}
                 disabled={isReadOnlyMode}
                 onChange={(event) =>
@@ -1061,6 +1065,7 @@ const Entidades = () => {
               <input
                 type="text"
                 className={styles.configInput}
+                name="campoReferencia"
                 placeholder="Referência (ex: cliente.id)"
                 value={campoConfigForm.referencia}
                 disabled={isReadOnlyMode}
@@ -1214,6 +1219,7 @@ const Entidades = () => {
                 {!isEntityFieldsView && (
                   <select
                     className={styles.filter}
+                    name="filtroEntidade"
                     value={filtro}
                     onChange={(e) => handleFiltroChange(e.target.value)}
                   >
@@ -1311,6 +1317,7 @@ const Entidades = () => {
             <label className={styles.deleteConfirmOptOut}>
               <input
                 type="checkbox"
+                name="disableDeletePrompt"
                 checked={disableDeleteEntidadePromptDraft}
                 onChange={(event) =>
                   setDisableDeleteEntidadePromptDraft(event.target.checked)

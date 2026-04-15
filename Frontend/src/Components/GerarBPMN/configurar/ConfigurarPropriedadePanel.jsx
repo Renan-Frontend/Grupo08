@@ -17,6 +17,7 @@ const ConfigurarPropriedadePanel = ({
         </label>
         <input
           className={`${panelStyles.fieldInput} ${panelStyles.fieldInputDisabled}`}
+          name="propFieldNameDisabled"
           value=""
           placeholder="Nome do Campo"
           readOnly
@@ -44,6 +45,7 @@ const ConfigurarPropriedadePanel = ({
         </label>
         <input
           className={panelStyles.fieldInput}
+          name="propFieldNameInput"
           value={entityFieldDraft.nome}
           onChange={(event) =>
             setEntityFieldDraft((previous) => ({
@@ -58,6 +60,7 @@ const ConfigurarPropriedadePanel = ({
           className={`${panelStyles.fieldInput} ${
             !entityFieldDraft.tipo ? panelStyles.selectPlaceholder : ''
           }`}
+          name="propFieldTypeSelect"
           value={entityFieldDraft.tipo || ''}
           onChange={(event) =>
             setEntityFieldDraft((previous) => ({
@@ -82,6 +85,7 @@ const ConfigurarPropriedadePanel = ({
               ? panelStyles.selectPlaceholder
               : ''
           }`}
+          name="propFieldRequiredSelect"
           value={
             typeof entityFieldDraft.obrigatorio === 'boolean'
               ? entityFieldDraft.obrigatorio

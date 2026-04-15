@@ -135,6 +135,7 @@ const PipelineRemoveButtonIcon = () => (
 
 const EditablePipeline = ({
   isReadOnlyMode = false,
+  isWorkflowActive = false,
   stages,
   setStages,
   infoRows = [],
@@ -142,6 +143,8 @@ const EditablePipeline = ({
   setPipelineTitle: setControlledPipelineTitle,
   pipelineSubtitle: controlledPipelineSubtitle,
   setPipelineSubtitle: setControlledPipelineSubtitle,
+  workflowSlot = null,
+  noteOverride = null,
 }) => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeStage, setActiveStage] = useState(() => {
@@ -340,6 +343,7 @@ const EditablePipeline = ({
 
   const handleStageClick = (index, stage) => {
     if (isReadOnlyMode) return;
+    if (isWorkflowActive) return;
     if (stage.done) {
       // Desativa esta e todas as seguintes
       setStages(stages.map((s, i) => (i >= index ? { ...s, done: false } : s)));
@@ -359,6 +363,13 @@ const EditablePipeline = ({
   const allCompleted = stages.every((stage) => stage.done);
   const anyCompleted = stages.some((stage) => stage.done);
   const completedCount = stages.filter((stage) => stage.done).length;
+
+  // For manual (non-BPMN) pipelines: reveal stages one by one as each is confirmed.
+  // Only show completed stages + the next pending one.
+  const manualVisibleCount = (!isBpmnDrivenPipeline && !isWorkflowActive)
+    ? (allCompleted ? stages.length : completedCount + 1)
+    : stages.length;
+  const visibleStages = stages.slice(0, manualVisibleCount);
 
   const progressPercentage = anyCompleted
     ? allCompleted
@@ -429,56 +440,66 @@ const EditablePipeline = ({
               </svg>
               <span className={styles.pipelineLeftMetaText}>Pipeline</span>
             </div>
-            <div className={styles.editableField}>
-              <textarea
-                className={styles.leftTitle}
-                value={inputTitle}
-                onChange={(e) => {
-                  if (isReadOnlyMode) return;
-                  setInputTitle(e.target.value);
-                }}
-                onBlur={(e) => {
-                  if (isReadOnlyMode) return;
-                  setPipelineTitleValue(e.target.value);
-                }}
-                onInput={handleTextareaInput}
-                placeholder="Nome da pipeline..."
-                maxLength={80}
-                rows={1}
-                readOnly={isReadOnlyMode}
-              />
-              {!isReadOnlyMode && (
-                <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              )}
-            </div>
-            <div className={styles.editableField}>
-              <textarea
-                className={styles.leftSubtitle}
-                value={inputSubtitle}
-                onChange={(e) => {
-                  if (isReadOnlyMode) return;
-                  setInputSubtitle(e.target.value);
-                }}
-                onBlur={(e) => {
-                  if (isReadOnlyMode) return;
-                  setPipelineSubtitleValue(e.target.value);
-                }}
-                onInput={handleTextareaInput}
-                placeholder="Descrição..."
-                maxLength={160}
-                rows={1}
-                readOnly={isReadOnlyMode}
-              />
-              {!isReadOnlyMode && (
-                <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                </svg>
-              )}
-            </div>
+            {workflowSlot != null ? (
+              <>
+                {workflowSlot}
+              </>
+            ) : (
+              <>
+                <div className={styles.editableField}>
+                  <textarea
+                    className={styles.leftTitle}
+                    name="pipelineTitle"
+                    value={inputTitle}
+                    onChange={(e) => {
+                      if (isReadOnlyMode) return;
+                      setInputTitle(e.target.value);
+                    }}
+                    onBlur={(e) => {
+                      if (isReadOnlyMode) return;
+                      setPipelineTitleValue(e.target.value);
+                    }}
+                    onInput={handleTextareaInput}
+                    placeholder="Nome da pipeline..."
+                    maxLength={80}
+                    rows={1}
+                    readOnly={isReadOnlyMode}
+                  />
+                  {!isReadOnlyMode && (
+                    <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  )}
+                </div>
+                <div className={styles.editableField}>
+                  <textarea
+                    className={styles.leftSubtitle}
+                    name="pipelineSubtitle"
+                    value={inputSubtitle}
+                    onChange={(e) => {
+                      if (isReadOnlyMode) return;
+                      setInputSubtitle(e.target.value);
+                    }}
+                    onBlur={(e) => {
+                      if (isReadOnlyMode) return;
+                      setPipelineSubtitleValue(e.target.value);
+                    }}
+                    onInput={handleTextareaInput}
+                    placeholder="Descrição..."
+                    maxLength={160}
+                    rows={1}
+                    readOnly={isReadOnlyMode}
+                  />
+                  {!isReadOnlyMode && (
+                    <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  )}
+                </div>
+              </>
+            )}
             <div className={styles.pipelineLeftDivider} />
             <div className={styles.pipelineLeftStats}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -502,17 +523,17 @@ const EditablePipeline = ({
         </div>
         <div className={styles.pipelineMain}>
           <div className={styles.stepperTrack}>
-            {stages.map((stage, index) => {
+            {visibleStages.map((stage, index) => {
               const palette = getStagePalette(stage);
               const stageLabelRaw = String(stage?.label || '').trim();
               const stageLabelCompact = stageLabelRaw;
-              const isLastStage = index === stages.length - 1;
+              const isLastStage = index === visibleStages.length - 1;
 
               return (
                 <React.Fragment key={stage.id}>
                   <div className={styles.stepItem}>
                     <div
-                      className={`${styles.stepCard} ${stage.done ? styles.stepCardDone : ''} ${isReadOnlyMode ? styles.stepCardReadOnly : ''}`}
+                      className={`${styles.stepCard} ${stage.done ? styles.stepCardDone : ''} ${stage.pending && !stage.done ? (stage.stageType === 'condicional' ? styles.stepCardPendingBlue : styles.stepCardPending) : ''} ${isReadOnlyMode ? styles.stepCardReadOnly : ''}`}
                       onClick={() => handleStageClick(index, stage)}
                       role="button"
                       tabIndex={0}
@@ -532,6 +553,17 @@ const EditablePipeline = ({
                       {stage.done && (
                         <span className={styles.stepCardDoneBadge} style={{ background: palette.base }}>
                           ✓
+                        </span>
+                      )}
+
+                      {/* Pending badge — visible when workflow is waiting on this stage */}
+                      {stage.pending && !stage.done && (
+                        <span
+                          className={stage.stageType === 'condicional' ? styles.stepPendingBadgeBlue : styles.stepPendingBadge}
+                          title="Passo pendente"
+                          aria-label="Passo pendente"
+                        >
+                          ●
                         </span>
                       )}
 
@@ -593,6 +625,7 @@ const EditablePipeline = ({
                       ) : (
                         <textarea
                           className={styles.stepCardLabel}
+                          name={`stageLabel_${stage.id}`}
                           value={stage.label}
                           onChange={(e) => {
                             e.stopPropagation();
@@ -633,9 +666,13 @@ const EditablePipeline = ({
         </div>
       </div>
       <p className={styles.pipelineNote}>
-        {isBpmnDrivenPipeline
-          ? '* Pipeline sincronizada com o BPMN. *'
-          : '* Clique em um card para completar a etapa. Passe o mouse para remover. Clique em + para adicionar. *'}
+        {noteOverride
+          ? noteOverride
+          : isBpmnDrivenPipeline
+            ? '* Pipeline sincronizada com o BPMN. *'
+            : allCompleted
+              ? '* Todas as etapas concluídas! *'
+              : `* Etapa ${completedCount + 1} de ${stages.length} — confirme cada passo para avançar. *`}
       </p>
       {deleteConfirm && (
         <Close

@@ -1,0 +1,951 @@
+/* ─── Panel ───────────────────────────────────── */
+.panel {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ─── Header ─────────────────────────────────── */
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.875rem;
+  border-bottom: 1px solid #e5e9ee;
+}
+
+.panelTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.panelTitle::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 1rem;
+  background: #2fb36d;
+  border-radius: 2px;
+}
+
+.statusBadge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.statusIdle    { background: #f5f5f5;  color: #888;    border: 1px solid #d1d5db; }
+.statusRunning { background: #e8f5e9;  color: #2e7d32; border: 1px solid #a5d6a7; }
+.statusPaused  { background: #fff8e1;  color: #e65100; border: 1px solid #ffcc80; }
+.statusDone    { background: #e8f5e9;  color: #1b5e20; border: 1px solid #81c784; }
+
+.versionTag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  background: #e0e7ff;
+  color: #3730a3;
+  letter-spacing: 0.02em;
+}
+
+.currentNodeLabel {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin-left: auto;
+}
+
+/* ─── Node card ───────────────────────────────── */
+.nodeCard {
+  border: 1px solid #e5e9ee;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.nodeCardHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 1rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e9ee;
+  flex-wrap: wrap;
+}
+
+.nodeCardTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  flex: 1;
+  min-width: 0;
+}
+
+.nodeTypeBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nodeTypeBadge[data-type="task"]        { background: #fff3e0; color: #e65100; border: 1px solid #ffb74d; }
+.nodeTypeBadge[data-type="condicional"] { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.nodeTypeBadge[data-type="entidade"]    { background: #e8f5e9; color: #1b5e20; border: 1px solid #a5d6a7; }
+
+.primaryBadge {
+  font-size: 0.62rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  background: #fffde7;
+  color: #f57f17;
+  border: 1px solid #ffe082;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.nodeCardBody {
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.detailRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.83rem;
+}
+
+.detailKey {
+  flex-shrink: 0;
+  width: 86px;
+  color: #6b7280;
+  font-weight: 500;
+  padding-top: 1px;
+}
+
+.detailVal {
+  color: #333;
+  flex: 1;
+  line-height: 1.45;
+}
+
+.pathList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.pathItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.81rem;
+  color: #333;
+}
+
+.pathCondition {
+  color: #e65100;
+  font-weight: 600;
+}
+
+.pathArrow {
+  color: #9ca3af;
+}
+
+.fieldsTable {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.78rem;
+  flex: 1;
+}
+
+.fieldsTable th,
+.fieldsTable td {
+  padding: 0.35rem 0.6rem;
+  text-align: left;
+  border: 1px solid #e5e9ee;
+}
+
+.fieldsTable th {
+  background: #f8fafc;
+  color: #6b7280;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.fieldsTable td {
+  color: #333;
+}
+
+/* ─── Actions ─────────────────────────────────── */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.primaryBtn {
+  background: #2fb36d;
+  color: #fff;
+  border: none;
+  border-radius: 0.4rem;
+  padding: 0.55rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.15s;
+  box-shadow: 0 1px 3px rgba(47, 179, 109, 0.25);
+}
+
+.primaryBtn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.primaryBtn:not(:disabled):hover { background: #1e9158; }
+
+.secondaryBtn {
+  background: #fff;
+  color: #333;
+  border: 1px solid #d1d5db;
+  border-radius: 0.4rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.secondaryBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.secondaryBtn:not(:disabled):hover { background: #f8fafc; border-color: #9ca3af; }
+
+.btnYes {
+  border-color: #16a34a;
+  color: #15803d;
+}
+.btnYes:not(:disabled):hover { background: #f0fdf4; }
+
+.btnNo {
+  border-color: #dc2626;
+  color: #b91c1c;
+}
+.btnNo:not(:disabled):hover { background: #fef2f2; }
+
+.btnAi {
+  border-color: #7c3aed;
+  color: #6d28d9;
+  margin-left: auto;
+}
+.btnAi:not(:disabled):hover { background: #f5f3ff; }
+
+/* ─── Suggestion box (AI) ─────────────────────── */
+.suggestionBox {
+  margin-top: 0.5rem;
+  padding: 0.65rem 0.875rem;
+  background: #faf5ff;
+  border: 1px solid #ddd6fe;
+  border-radius: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.suggestionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.suggestionTitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5b21b6;
+}
+
+.suggestionConfidence {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+}
+.conf_high   { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
+.conf_medium { background: #fef9c3; color: #a16207; border: 1px solid #fde047; }
+.conf_low    { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+
+.suggestionDismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.25rem;
+}
+.suggestionDismiss:hover { color: #374151; }
+
+.suggestionExplanation {
+  font-size: 0.8rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.suggestionActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.15rem;
+}
+
+.suggestionDecisionLabel {
+  font-size: 0.79rem;
+  color: #6b7280;
+}
+
+.suggestionDecisionLabel strong {
+  color: #5b21b6;
+}
+
+.decisionGroup,
+.userActionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.decisionPrompt {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.decisionRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.decisionInput {
+  flex: 1;
+  min-width: 160px;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.83rem;
+  color: #333;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.decisionInput:focus {
+  border-color: #2fb36d;
+  box-shadow: 0 0 0 2px rgba(47, 179, 109, 0.12);
+}
+
+.errorMsg {
+  font-size: 0.81rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  margin: 0;
+}
+
+.completedMsg {
+  font-size: 0.84rem;
+  color: #15803d;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Progress bar */
+.progressRow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 1rem 0;
+}
+.progressText {
+  font-size: 0.75rem;
+  color: #6b7280;
+  white-space: nowrap;
+}
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: #2fb36d;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Guidance box */
+.guidanceBox {
+  margin: 0.6rem 1rem 0;
+  padding: 0.6rem 0.85rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.45rem;
+}
+.guidanceTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #15803d;
+  margin: 0 0 0.25rem;
+}
+.guidanceText {
+  font-size: 0.8rem;
+  color: #374151;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ─── Pending task metadata ──────────────────── */
+.taskMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px dashed #bbf7d0;
+}
+.taskMetaLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #15803d;
+  background: #d1fae5;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+}
+.taskMetaAssignee {
+  font-size: 0.78rem;
+  color: #374151;
+}
+.taskMetaDesc {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* History */
+.historyDetails {
+  margin: 0.75rem 1rem 0;
+}
+.historySummary {
+  font-size: 0.8rem;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.25rem 0;
+}
+.historySummary:hover {
+  color: #374151;
+}
+.historyList {
+  list-style: none;
+  padding: 0.4rem 0 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.79rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.3rem;
+  background: #f9fafb;
+}
+.historyItem[data-status="completed"] .historyStatus { color: #16a34a; }
+.historyItem[data-status="waiting_user"] .historyStatus { color: #d97706; }
+.historyItem[data-status="waiting_decision"] .historyStatus { color: #2563eb; }
+.historyStatus {
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+.historyLabel {
+  flex: 1;
+  color: #111827;
+  font-weight: 500;
+}
+.historyType {
+  font-size: 0.73rem;
+  color: #9ca3af;
+}
+
+.pipelineBlockedMsg {
+  font-size: 0.81rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  margin: 0;
+}
+
+/* ─── Compact (embedded) strip ────────────────── */
+.compactStrip {
+  border-top: 1px solid #e5e9ee;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.compactRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.compactLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding-right: 0.75rem;
+  border-right: 1px solid #e5e7eb;
+}
+
+.compactInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.compactRight {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  padding-left: 0.75rem;
+  border-left: 1px solid #e5e7eb;
+  min-width: 4rem;
+}
+
+.compactLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.compactNode {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #374151;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactProgress {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  margin-right: 0.25rem;
+}
+
+.compactActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.compactDangerActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  padding-left: 0.75rem;
+  border-left: 1px solid #e5e7eb;
+}
+
+.compactBtn {
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: 0.3rem;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.compactBtn:disabled { opacity: 0.45; cursor: not-allowed; }
+.compactBtn:not(:disabled):hover { background: #e5e7eb; }
+
+/* ─── inCard: column layout for the green pipeline card ─── */
+.compactStripInCard {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+/* Title label inside the green card */
+.compactStripInCard .compactLabel {
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 0.75rem;
+}
+
+/* Smaller buttons inside the card */
+.compactStripInCard .compactBtn {
+  font-size: 0.7rem;
+  padding: 0.18rem 0.5rem;
+}
+
+/* Current node info row */
+.compactCardInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.compactCardNodeName {
+  color: white;
+  font-weight: 600;
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+
+/* Button group — stacked vertically */
+.compactCardBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.compactCardBtnsSep {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Sim/Não side by side */
+.compactCardDecisionRow {
+  display: flex;
+  gap: 0.3rem;
+}
+
+/* ── Objective block shown on completion ── */
+.compactObjectiveBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.2rem;
+}
+
+.compactObjectiveBusy {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-style: italic;
+}
+
+.compactObjective {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 0.3rem;
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.compactObjectiveBtnRow {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.1rem;
+}
+
+.compactObjectiveTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.97);
+  line-height: 1.3;
+}
+
+.compactObjectiveSummary {
+  font-size: 0.63rem;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.compactPdfBtn {
+  align-self: flex-start;
+  margin-top: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #1e9158;
+  background: rgba(255, 255, 255, 0.92);
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.compactPdfBtn:hover:not(:disabled) {
+  background: #fff;
+}
+.compactPdfBtnBusy {
+  opacity: 0.65;
+  cursor: wait;
+  font-size: 0.62rem;
+}
+
+.compactViewBtn {
+  align-self: flex-start;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+.compactViewBtn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+
+.compactBtnYes {
+  border-color: #16a34a;
+  color: #15803d;
+  background: #f0fdf4;
+}
+.compactBtnYes:not(:disabled):hover { background: #dcfce7; }
+
+.compactBtnNo {
+  border-color: #dc2626;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+.compactBtnNo:not(:disabled):hover { background: #fee2e2; }
+
+.compactBtnAi {
+  border-color: #7c3aed;
+  color: #6d28d9;
+  background: #f5f3ff;
+}
+.compactBtnAi:not(:disabled):hover { background: #ede9fe; }
+
+.compactDecision {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.compactDecisionLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.compactPausedHint {
+  font-size: 0.76rem;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 0.3rem;
+  padding: 0.3rem 0.6rem;
+}
+
+.compactCompletedMsg {
+  font-size: 0.76rem;
+  color: #15803d;
+  font-weight: 600;
+}
+
+.compactError {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.76rem;
+}
+
+/* ── Dynamic task form ─────────────────────────────────────── */
+.taskFormBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+  padding: 0.5rem 0.6rem;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.4rem;
+  margin-bottom: 0.4rem;
+}
+
+.taskFormTitle {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.15rem;
+}
+
+.taskFormField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.taskFormLabel {
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.taskFormRequired {
+  color: #fca5a5;
+}
+
+.taskFormInput {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0.3rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 0.8rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.taskFormInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.taskFormInput:focus {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Full-panel task form (white background context) */
+.userActionGroup .taskFormBlock {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.userActionGroup .taskFormTitle {
+  color: #1f2937;
+}
+
+.userActionGroup .taskFormLabel {
+  color: #374151;
+}
+
+.userActionGroup .taskFormRequired {
+  color: #dc2626;
+}
+
+.userActionGroup .taskFormInput {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+}
+
+.userActionGroup .taskFormInput::placeholder {
+  color: #9ca3af;
+}
+
+.userActionGroup .taskFormInput:focus {
+  border-color: #2563eb;
+  outline: 2px solid #bfdbfe;
+}
+
+/* Dynamic form: textarea */
+.taskFormTextarea {
+  resize: vertical;
+  min-height: 2.4rem;
+}
+
+/* Dynamic form: checkbox */
+.taskFormCheckboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #fff;
+  cursor: pointer;
+}
+.taskFormCheckboxLabel input[type="checkbox"] {
+  accent-color: #60a5fa;
+  width: 1rem;
+  height: 1rem;
+}
+.userActionGroup .taskFormCheckboxLabel {
+  color: #374151;
+}
+
+/* Dynamic form: select */
+.taskFormInput select,
+select.taskFormInput {
+  appearance: auto;
+}
+
+/* Dynamic form: per-field error */
+.taskFormError {
+  font-size: 0.72rem;
+  color: #fca5a5;
+  margin-top: 0.1rem;
+}
+.userActionGroup .taskFormError {
+  color: #dc2626;
+}

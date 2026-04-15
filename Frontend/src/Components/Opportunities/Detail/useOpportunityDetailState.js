@@ -218,6 +218,10 @@ const buildStagesFromBpmn = (opportunity) => {
         nodesById,
       )[0];
 
+  // Follow the PRIMARY path from start to end.
+  // This builds the default pipeline progression. Alternate branches
+  // (e.g. "não" paths) are handled at runtime by effectiveStages when
+  // the workflow engine actually executes them.
   const visited = new Set();
   const orderedNodeIds = [];
   let currentNodeId = startNodeId ? String(startNodeId) : '';
@@ -240,27 +244,33 @@ const buildStagesFromBpmn = (opportunity) => {
     currentNodeId = nextNodeId;
   }
 
-  const orderedStageIds = orderedNodeIds.filter((id) =>
+  const orderedStageIdsRaw = orderedNodeIds.filter((id) =>
     stageNodeIds.includes(String(id)),
   );
 
-  const normalizedStatus = String(
-    opportunity?.status || opportunity?.etapa || '',
-  )
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase();
-
-  const currentNodeCandidate = String(
-    opportunity?.currentNodeId ||
-      opportunity?.activeNodeId ||
-      opportunity?.bpmnNodeId ||
-      opportunity?.bpmnCurrentNodeId ||
-      opportunity?.sourceNodeId ||
-      opportunity?.bpmn?.currentNodeId ||
-      '',
-  ).trim();
+  // Keep entity nodes only if they are followed by a task or conditional
+  // somewhere later in the path. Trailing entities (e.g. Fornecedor,
+  // Aprovacao, Cliente at the end) are data objects, not process steps.
+  // Also deduplicate entity nodes with the same label to avoid repetition.
+  const seenEntityLabels = new Set();
+  const orderedStageIds = orderedStageIdsRaw.filter((id, i) => {
+    const node = nodesById.get(String(id));
+    const type = getBpmnStageType(node);
+    if (type !== 'entidade') return true;
+    // Check if any node after this one is a task or conditional
+    let hasLaterStep = false;
+    for (let j = i + 1; j < orderedStageIdsRaw.length; j++) {
+      const laterNode = nodesById.get(String(orderedStageIdsRaw[j]));
+      const laterType = getBpmnStageType(laterNode);
+      if (laterType === 'task' || laterType === 'condicional') { hasLaterStep = true; break; }
+    }
+    if (!hasLaterStep) return false;
+    // Deduplicate entity stages with the same label
+    const label = String(node?.entidadeNome || node?.label || node?.subtitle || '').trim().toLowerCase();
+    if (label && seenEntityLabels.has(label)) return false;
+    if (label) seenEntityLabels.add(label);
+    return true;
+  });
 
   const stages = orderedStageIds.map((stageNodeId, index) => {
     const node = nodesById.get(String(stageNodeId));
@@ -274,39 +284,9 @@ const buildStagesFromBpmn = (opportunity) => {
     };
   });
 
-  let activeStageIndex = -1;
-
-  if (currentNodeCandidate) {
-    activeStageIndex = stages.findIndex(
-      (stage) => String(stage.sourceNodeId) === currentNodeCandidate,
-    );
-  }
-
-  if (activeStageIndex < 0) {
-    const stageIndex =
-      Number.isFinite(opportunity?.stageIndex) && opportunity.stageIndex >= 0
-        ? Number(opportunity.stageIndex)
-        : -1;
-    if (stageIndex >= 0) {
-      activeStageIndex = Math.min(stageIndex, stages.length - 1);
-    }
-  }
-
-  if (activeStageIndex < 0 && normalizedStatus) {
-    activeStageIndex = stages.findIndex((stage) => {
-      const normalizedLabel = String(stage.label || '')
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim()
-        .toLowerCase();
-      return normalizedLabel && normalizedLabel === normalizedStatus;
-    });
-  }
-
-  return stages.map((stage, index) => ({
-    ...stage,
-    done: activeStageIndex >= 0 ? index <= activeStageIndex : false,
-  }));
+  // All stages start as done:false — the workflow engine controls progress
+  // via handleWorkflowStateChange once the workflow has been started.
+  return stages;
 };
 
 const defaultTimelineItems = [];

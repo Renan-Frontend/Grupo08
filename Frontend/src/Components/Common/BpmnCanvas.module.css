@@ -1,0 +1,27 @@
+.bpmnContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Hide the bpmn-js default palette (app has its own creation UI) */
+.bpmnContainer :global(.djs-palette) {
+  display: none !important;
+}
+
+/* Ensure the canvas fills the container */
+.bpmnContainer :global(.bjs-container) {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Style selected elements with app-consistent color */
+.bpmnContainer :global(.djs-visual) {
+  transition: none;
+}
+
+/* Make connection labels readable */
+.bpmnContainer :global(.djs-label) {
+  font-family: inherit;
+}

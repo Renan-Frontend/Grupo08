@@ -326,6 +326,7 @@ const GerarBPMNStart = () => {
                     <td>
                       <select
                         className={styles.assignedSelect}
+                        name={`assignedUser_${item.id}`}
                         value={getOpportunityAssignedName(item)}
                         disabled={
                           isReadOnlyMode || !canManageOpportunity(user, item)

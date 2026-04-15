@@ -144,9 +144,24 @@ const IaConfigurar = () => {
     });
 
     setFlowOrder(mappedFo);
-    setEntities(
-      mappedFo.filter((i) => i.type === 'entidade').map((i) => i.name),
-    );
+
+    const entitiesFromFo = mappedFo
+      .filter((i) => i.type === 'entidade')
+      .map((i) => i.name);
+    const entitiesFromParse = (
+      Array.isArray(locationParseData.entities)
+        ? locationParseData.entities
+        : []
+    ).map((ent) =>
+      typeof ent === 'object'
+        ? String(ent?.name || '').trim()
+        : String(ent || '').trim(),
+    ).filter(Boolean);
+    const mergedEntities = [
+      ...new Set([...entitiesFromFo, ...entitiesFromParse]),
+    ];
+    setEntities(mergedEntities);
+
     setActivities(mappedFo.filter((i) => i.type === 'task').map((i) => i.name));
     setConditionals(
       mappedFo
@@ -368,12 +383,19 @@ const IaConfigurar = () => {
       : [];
 
     setPlan(nextPlan);
-    setSelectedActionIds(
-      nextActions
-        .map((action) => String(action?.id || '').trim())
-        .filter(Boolean),
-    );
-    setFeedback('Plano gerado. Revise e aprove as ações para executar.');
+    
+    // Auto-select only actions that have valid descriptions
+    const autoSelectedIds = nextActions
+      .map((action) => String(action?.id || '').trim())
+      .filter(Boolean);
+    
+    setSelectedActionIds(autoSelectedIds);
+    
+    const reviewPatched = nextPlan?._reviewPatched || 0;
+    const reviewMsg = reviewPatched > 0
+      ? ` Revisão automática corrigiu ${reviewPatched} item(ns) com conteúdo faltante.`
+      : '';
+    setFeedback(`Plano gerado. Revise e aprove as ações para executar.${reviewMsg}`);
     setIsPlanning(false);
     loadAudit();
   };
@@ -491,6 +513,7 @@ const IaConfigurar = () => {
           <label className={styles.field}>
             <span>Nome do processo</span>
             <input
+              name="processName"
               value={processName}
               onChange={(event) => setProcessName(event.target.value)}
               placeholder="Ex.: Aprovacao de compras"
@@ -501,6 +524,7 @@ const IaConfigurar = () => {
             <span>Atividades do processo</span>
             <div className={styles.chipInputRow}>
               <input
+                name="activityDraft"
                 value={activityDraft}
                 onChange={(e) => setActivityDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -541,6 +565,7 @@ const IaConfigurar = () => {
             <span>Condicionais (decisões)</span>
             <div className={styles.chipInputRow}>
               <input
+                name="conditionalDraft"
                 value={conditionalDraft}
                 onChange={(e) => setConditionalDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -584,6 +609,7 @@ const IaConfigurar = () => {
             <span>Entidades do processo</span>
             <div className={styles.chipInputRow}>
               <input
+                name="entityDraft"
                 value={entityDraft}
                 onChange={(e) => setEntityDraft(e.target.value)}
                 onKeyDown={(e) => {
@@ -695,6 +721,7 @@ const IaConfigurar = () => {
                     {expandedDescIdx === idx && (
                       <input
                         className={styles.flowOrderDescInput}
+                        name={`flowStepDesc_${idx}`}
                         value={item.desc || ''}
                         onChange={(e) =>
                           updateFlowItemDesc(idx, e.target.value)
@@ -712,6 +739,7 @@ const IaConfigurar = () => {
                           </span>
                           <select
                             className={styles.flowOrderBranchSelect}
+                            name={`branchSim_${idx}`}
                             value={item.branches?.sim || ''}
                             onChange={(e) =>
                               updateFlowItemBranch(idx, 'sim', e.target.value)
@@ -733,6 +761,7 @@ const IaConfigurar = () => {
                           </span>
                           <select
                             className={styles.flowOrderBranchSelect}
+                            name={`branchNao_${idx}`}
                             value={item.branches?.nao || ''}
                             onChange={(e) =>
                               updateFlowItemBranch(idx, 'nao', e.target.value)
@@ -859,15 +888,19 @@ const IaConfigurar = () => {
                     const actionId = String(action?.id || '').trim();
                     const checked = selectedActionIds.includes(actionId);
                     const entityPreview = getActionEntityPreview(action);
+                    
+                    // Check if this is an entity creation without description
+                    const actionType = String(action?.type || '').trim();
                     return (
                       <li key={actionId} className={styles.actionItem}>
                         <label className={styles.actionLabel}>
                           <input
                             type="checkbox"
+                            name={`actionCheck_${actionId}`}
                             checked={checked}
                             onChange={() => toggleAction(actionId)}
                           />
-                          <span>{action?.label || 'Ação sem descrição'}</span>
+                          <span>{action?.label || 'Ação'}</span>
                         </label>
                         <span
                           className={styles.riskTag}

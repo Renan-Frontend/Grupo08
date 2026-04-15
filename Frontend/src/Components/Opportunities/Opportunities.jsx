@@ -203,6 +203,7 @@ const Opportunities = () => {
                 <td className={styles.colAssigned}>
                   <select
                     className={styles.assignedSelect}
+                    name={`assignedUser_${opportunity.id}`}
                     value={getOpportunityAssignedName(opportunity)}
                     disabled={
                       isReadOnlyMode || !canManageOpportunity(user, opportunity)

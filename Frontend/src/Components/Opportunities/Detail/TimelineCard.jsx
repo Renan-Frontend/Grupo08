@@ -26,7 +26,12 @@ const parseTimelineDate = (item) => {
   return null;
 };
 
-const getActionTypeLabel = (actionType) => {
+const getActionTypeLabel = (actionType, elementType) => {
+  if (elementType === 'workflow') {
+    if (actionType === 'create') return 'Início';
+    if (actionType === 'delete') return 'Cancelamento';
+    return 'Etapa';
+  }
   if (actionType === 'create') return 'Criação';
   if (actionType === 'delete') return 'Remoção';
   if (actionType === 'comment') return 'Comentário';
@@ -34,12 +39,35 @@ const getActionTypeLabel = (actionType) => {
   return 'Atualização';
 };
 
-const getActionIcon = (actionType) => {
+const getActionIcon = (actionType, elementType) => {
+  if (elementType === 'workflow') {
+    if (actionType === 'create') return '🚀';
+    if (actionType === 'delete') return '🚫';
+    return '⚙️';
+  }
   if (actionType === 'create') return '➕';
   if (actionType === 'delete') return '🗑️';
   if (actionType === 'comment') return '💬';
   if (actionType === 'ia') return '🤖';
   return '✏️';
+};
+
+const getElementTypeLabel = (elementType) => {
+  const map = {
+    workflow: 'Workflow',
+    bpmn: 'BPMN',
+    'elemento-bpmn': 'Elemento BPMN',
+    entidade: 'Entidade',
+    oportunidade: 'Oportunidade',
+    pipeline: 'Pipeline',
+    proprietario: 'Proprietário',
+    status: 'Status',
+    layout: 'Layout',
+    topico: 'Tópico',
+    datas: 'Datas',
+    ia: 'IA',
+  };
+  return map[elementType] || elementType;
 };
 
 const formatTimelineDate = (item) => {
@@ -123,17 +151,20 @@ const TimelineCard = ({
           elementType === 'layout' ||
           elementType === 'topico' ||
           elementType === 'datas' ||
-          elementType === 'ia';
+          elementType === 'ia' ||
+          elementType === 'workflow';
 
         const isEligibleBySourceOrTitle =
           source === 'bpmn-save' ||
           source === 'opportunity-save' ||
+          source === 'backend' ||
           source === 'ia' ||
           title.includes('bpmn') ||
           title.includes('entidade') ||
           title.includes('oportunidade') ||
           title.includes('pipeline') ||
           title.includes('propriet') ||
+          title.includes('workflow') ||
           title.includes('ia executou');
 
         if (!isEligibleByElementType && !isEligibleBySourceOrTitle) {
@@ -197,6 +228,7 @@ const TimelineCard = ({
           <span>Data de atualização</span>
           <input
             type="date"
+            name="timelineFilterDate"
             value={updatedDate}
             onChange={(event) => setUpdatedDate(event.target.value)}
             className={styles.timelineFilterInput}
@@ -206,6 +238,7 @@ const TimelineCard = ({
           <span>Hora</span>
           <input
             type="time"
+            name="timelineFilterTime"
             value={updatedTime}
             onChange={(event) => setUpdatedTime(event.target.value)}
             className={styles.timelineFilterInput}
@@ -239,6 +272,8 @@ const TimelineCard = ({
           filteredTimelineItems.map((item) => {
             const actionType =
               String(item?.actionType || 'update').trim() || 'update';
+            const elementType =
+              String(item?.elementType || '').trim().toLowerCase();
             const canExpand = Boolean(
               String(item?.before || '').trim() ||
               String(item?.after || '').trim() ||
@@ -249,14 +284,14 @@ const TimelineCard = ({
             return (
               <div key={item.id} className={styles.timelineItem}>
                 <div className={styles.timelineAvatar}>
-                  {getActionIcon(actionType)}
+                  {getActionIcon(actionType, elementType)}
                 </div>
                 <div className={styles.timelineContent}>
                   <strong>{item.title}</strong>
                   <span className={styles.timelineActionTag}>
-                    {getActionTypeLabel(actionType)}
-                    {item?.elementType
-                      ? ` • ${String(item.elementType).trim()}`
+                    {getActionTypeLabel(actionType, elementType)}
+                    {elementType
+                      ? ` • ${getElementTypeLabel(elementType)}`
                       : ''}
                   </span>
                   {item?.itemName ? (

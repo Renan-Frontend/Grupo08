@@ -11,6 +11,7 @@ import {
 import { EntidadesContext } from '../../Context/EntidadesContext';
 import { UserContext } from '../../Context/UserContext';
 import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
+import { applyBpmnAutoLayout } from '../../Utils/bpmnAutoLayout';
 import BpmnFlow from '../Common/BpmnFlow';
 import Close from '../Helper/Close';
 import GerarBPMNContextSidebar from './contextSidebar/GerarBPMNContextSidebar';
@@ -25,8 +26,8 @@ import {
   bpmnNameFromSlug,
   createNode,
   generateUniqueId,
-  getEntidadeDescricao,
   getEntidadeId,
+  getEntidadeDescricao,
   getEntidadeNome,
   normalizeBpmnName,
   normalizeEditorConnection,
@@ -114,10 +115,10 @@ const extractNodeParticipant = (node) => {
     return String(infoMatch[1] || '').trim();
   }
 
-  const subtitle = String(node?.subtitle || '').trim();
-  const subtitleMatch = subtitle.match(/Participante:\s*(.+)$/i);
-  if (subtitleMatch) {
-    return String(subtitleMatch[1] || '').trim();
+  const descricaoValue = String(node?.descricao || '').trim();
+  const descricaoMatch = descricaoValue.match(/Participante:\s*(.+)$/i);
+  if (descricaoMatch) {
+    return String(descricaoMatch[1] || '').trim();
   }
 
   return '';
@@ -173,12 +174,33 @@ const normalizeAiCanvasDraft = (rawDraft) => {
           const stageTypeRaw = String(stage.tipo || stage.type || 'task')
             .trim()
             .toLowerCase();
-          const nodeType =
-            stageTypeRaw === 'condicional'
-              ? 'condicional'
-              : stageTypeRaw === 'entidade' || stageTypeRaw === 'dados'
-                ? 'entidade'
-                : 'task';
+          const normalizedStageType = stageTypeRaw
+            .replace(/[^a-z0-9]+/g, ' ')
+            .trim();
+          const isConditionalType = [
+            'condicional',
+            'conditional',
+            'gateway',
+            'gate',
+            'decision',
+            'decisao',
+            'decisão',
+          ].includes(normalizedStageType);
+          const isEntityType = [
+            'entidade',
+            'dados',
+            'data',
+            'data entity',
+            'dataentity',
+            'entity',
+            'entidade de dados',
+            'data record',
+          ].includes(normalizedStageType);
+          const nodeType = isConditionalType
+            ? 'condicional'
+            : isEntityType
+              ? 'entidade'
+              : 'task';
 
           const participant = String(
             stage.participante ||
@@ -248,7 +270,7 @@ const normalizeAiCanvasDraft = (rawDraft) => {
 
     if (!matchedStage || !matchedStage.participant) {
       return node;
-      // For entity nodes, info = atributoChave and subtitle = description.
+      // For entity nodes, info = atributoChave and descricao = description.
       // don't override them with participant lane data.
       if (node?.nodeType === 'entidade') {
         return node;
@@ -266,8 +288,8 @@ const normalizeAiCanvasDraft = (rawDraft) => {
     return {
       ...node,
       info: nextInfo,
-      subtitle:
-        String(node?.subtitle || '').trim() ||
+      descricao:
+        String(node?.descricao || '').trim() ||
         `Participante: ${matchedStage.participant}`,
     };
   });
@@ -729,8 +751,8 @@ const GerarBPMNCreate = () => {
     const maxY = Math.max(...nodes.map((node) => (node.y || 0) + 240));
 
     return {
-      canvasWidth: Math.max(baseCanvasWidth, maxX + 240),
-      canvasHeight: Math.max(baseCanvasHeight, maxY + 240),
+      canvasWidth: Math.max(baseCanvasWidth, maxX + 480),
+      canvasHeight: Math.max(baseCanvasHeight, maxY + 400),
     };
   }, [nodes]);
 
@@ -838,15 +860,37 @@ const GerarBPMNCreate = () => {
     [entidadesById, resolveLinkedEntityFromNode],
   );
 
+  // REMOVED: The effect that was auto-filling descricao with catalog descriptions.
+  // Descriptions should only come from the contextual panel form, not auto-populated.
+  // This prevents descriptions from appearing outside the panel on unselected nodes.
+
   const nodesForCanvas = React.useMemo(
     () =>
       nodes.map((node) => {
         if (node.nodeType === 'task') {
+          const taskLabel = String(node.taskNome || '').trim() || 'Atividade';
+
+          // Priority: form (selected) > draft (saved) > AI-generated (node data)
+          const taskDraftDesc = String(
+            entityDraftsByNodeId[node.id]?.taskForm?.descricao || '',
+          ).trim();
+          const aiDesc = String(node.taskDescricao || '').trim();
+          const stripTask = (t) =>
+            t && t.toLowerCase() !== taskLabel.toLowerCase() ? t : '';
+
+          let descricao = '';
+          if (selectedNodeId === node.id) {
+            descricao = stripTask(String(taskForm.descricao || '').trim());
+          } else if (taskDraftDesc) {
+            descricao = stripTask(taskDraftDesc);
+          } else {
+            descricao = stripTask(aiDesc);
+          }
+
           return {
             ...node,
-            label: String(node.taskNome || '').trim() || 'Atividade',
-            subtitle:
-              String(node.taskDescricao || '').trim() || 'Sem descrição',
+            label: taskLabel,
+            descricao,
             info: 'Configuração da atividade',
           };
         }
@@ -854,80 +898,95 @@ const GerarBPMNCreate = () => {
         if (node.nodeType === 'condicional') {
           let label =
             String(node.condicionalNome || '').trim() || 'Condicional';
-          let subtitle =
-            String(node.condicionalDescricao || '').trim() || 'Sem descrição';
 
+          // Priority: form (selected) > draft (saved) > AI-generated (node data)
+          const condDraftDesc = String(
+            entityDraftsByNodeId[node.id]?.conditionalForm?.descricao || '',
+          ).trim();
+          const aiDesc = String(node.condicionalDescricao || '').trim();
+          const stripCond = (t) =>
+            t && t.toLowerCase() !== label.toLowerCase() ? t : '';
+
+          let descricao = '';
           if (selectedNodeId === node.id && stageConfigMode === 'condicional') {
             label = String(conditionalForm.nome || '').trim() || 'Condicional';
-            subtitle =
-              String(conditionalForm.descricao || '').trim() || 'Sem descrição';
+            descricao = stripCond(String(conditionalForm.descricao || '').trim());
+          } else if (condDraftDesc) {
+            descricao = stripCond(condDraftDesc);
+          } else {
+            descricao = stripCond(aiDesc);
           }
 
           return {
             ...node,
             label,
-            subtitle,
+            descricao,
             info: `Decisão ${String(node.gatewayType || 'xor').toUpperCase()}`,
           };
         }
 
-        const linkedEntity = resolveLinkedEntityFromNode(node);
-        const nodeDraftDesc = String(
-          entityDraftsByNodeId[node.id]?.newEntityForm?.descricao || '',
-        ).trim();
+        const linkedEntity = resolveLinkedEntityFromNode(node)
+          || (Array.isArray(entidades) ? entidades : []).find((e) => {
+            const eId = getEntidadeId(e);
+            const eName = normalizeEntityName(getEntidadeNome(e));
+            const nodeEntidadeId =
+              node.entidadeId !== null && node.entidadeId !== undefined
+                ? String(node.entidadeId)
+                : '';
+            const nodeEntidadeName = normalizeEntityName(node.entidadeNome || '');
+            return (
+              (nodeEntidadeId && String(eId) === nodeEntidadeId) ||
+              (nodeEntidadeName && eName === nodeEntidadeName)
+            );
+          }) || null;
         const entityName = linkedEntity
           ? getEntidadeNome(linkedEntity)
           : String(node.entidadeNome || node.label || '').trim();
-        // node.subtitle set by AI is sometimes the entity name, not a description.
-        // Only treat it as a description when it differs from the entity name.
-        const nodeSavedSubtitle = String(node.subtitle || '').trim();
-        const subtitleIsRealDesc =
-          nodeSavedSubtitle &&
-          nodeSavedSubtitle.toLowerCase() !== entityName.toLowerCase();
         let label = entityName || 'Entidade';
-        // Priority: linkedEntity.descricao > draft desc > saved subtitle (only when it's a real desc)
-        let subtitle = linkedEntity
-          ? getEntidadeDescricao(linkedEntity) ||
-            nodeDraftDesc ||
-            (subtitleIsRealDesc ? nodeSavedSubtitle : '') ||
-            ''
-          : (subtitleIsRealDesc ? nodeSavedSubtitle : '') ||
-            nodeDraftDesc ||
-            '';
-        // Fallback for nodes stored without subtitle (e.g. generated before the AI fill rule)
-        if (!subtitle && label && label !== 'Entidade') {
-          const tipo = String(node?.tipoEntidade || '').trim().toLowerCase();
-          if (tipo === 'principal') subtitle = 'Objeto central do processo; inicia e conduz o fluxo.';
-          else if (tipo === 'associativa') subtitle = 'Relaciona entidades do processo.';
-          else if (tipo === 'externa') subtitle = 'Entidade externa que interage com o processo.';
-          else subtitle = 'Participa do processo como elemento de suporte.';
-        }
-        let info = getEntityTypeInfoLabel(node?.tipoEntidade);
 
-        if (linkedEntity) {
-          info = getEntityTypeInfoLabel(
-            String(node?.tipoEntidade || '').trim() ||
-              linkedEntity?.tipoEntidade,
-          );
-        }
+        // Helper: return empty string when text is just the entity name repeated
+        const stripIfName = (text) => {
+          const t = String(text || '').trim();
+          return t.toLowerCase() === label.toLowerCase() ? '' : t;
+        };
+
+        const catalogDesc = stripIfName(
+          linkedEntity ? getEntidadeDescricao(linkedEntity) : '',
+        );
+        const nodeDraftDesc = stripIfName(
+          String(entityDraftsByNodeId[node.id]?.newEntityForm?.descricao || '').trim(),
+        );
+        const aiDesc = stripIfName(node.descricao);
+        let descricao = nodeDraftDesc || catalogDesc || aiDesc;
+
+        // Prefer catalog entity type as source of truth over AI-assigned type
+        let info = getEntityTypeInfoLabel(
+          (linkedEntity?.tipoEntidade) ||
+            String(node?.tipoEntidade || '').trim(),
+        );
 
         if (selectedNodeId === node.id && entityMode === 'nova') {
-          label = String(newEntityForm.nome || '').trim() || 'Entidade';
-          subtitle =
-            String(newEntityForm.descricao || '').trim() || '';
-          info = getEntityTypeInfoLabel(node?.tipoEntidade);
+          const formNome = String(newEntityForm.nome || '').trim();
+          label = formNome || entityName || 'Entidade';
+          const formDesc = stripIfName(String(newEntityForm.descricao || '').trim());
+          descricao = formDesc || nodeDraftDesc || catalogDesc || aiDesc;
+          info = getEntityTypeInfoLabel(
+            (linkedEntity?.tipoEntidade) ||
+              String(node?.tipoEntidade || '').trim(),
+          );
         }
 
         return {
           ...node,
           label,
-          subtitle,
+          descricao,
           info,
         };
       }),
     [
       conditionalForm.descricao,
       conditionalForm.nome,
+      entidades,
       entityMode,
       entityDraftsByNodeId,
       newEntityForm.descricao,
@@ -936,6 +995,7 @@ const GerarBPMNCreate = () => {
       resolveLinkedEntityFromNode,
       stageConfigMode,
       selectedNodeId,
+      taskForm.descricao,
     ],
   );
 
@@ -1079,6 +1139,7 @@ const GerarBPMNCreate = () => {
       selectedExistingEntityId,
       newEntityForm,
       conditionalForm,
+      taskForm,
       newEntityFields,
       selectedDataFieldIds,
     };
@@ -1116,6 +1177,7 @@ const GerarBPMNCreate = () => {
     selectedExistingEntityId,
     selectedNodeId,
     stageConfigMode,
+    taskForm,
   ]);
 
   React.useEffect(() => {
@@ -1208,14 +1270,33 @@ const GerarBPMNCreate = () => {
       setConditionalForm(EMPTY_CONDITIONAL_FORM);
     }
 
+    const stripIfName = (text, nodeLabel) => {
+      const value = String(text || '').trim();
+      if (!value) return '';
+      if (!nodeLabel) return value;
+      return value.toLowerCase() === String(nodeLabel || '').trim().toLowerCase()
+        ? ''
+        : value;
+    };
+
     if (selectedNodeLinkedEntity) {
       setSelectedExistingEntityId('');
       setEntityMode('nova');
+      
+      const linkedEntityDesc = String(
+        selectedNodeLinkedEntity.descricao || '',
+      ).trim();
+      const nodeDescValue = String(selectedNode.descricao || '').trim();
+      const nodeLabel =
+        String(selectedNodeLinkedEntity.nome || '').trim() ||
+        String(selectedNode.entidadeNome || selectedNode.label || '').trim();
+      
+      const isSameAsLabel = nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
+      const finalDesc = linkedEntityDesc || (isSameAsLabel ? '' : nodeDescValue);
+      
       setNewEntityForm({
         nome: String(selectedNodeLinkedEntity.nome || '').trim(),
-        descricao:
-          String(selectedNodeLinkedEntity.descricao || '').trim() ||
-          String(selectedNode.subtitle || '').trim(),
+        descricao: finalDesc,
         atributoChave: String(
           selectedNodeLinkedEntity.atributoChave || '',
         ).trim(),
@@ -1256,11 +1337,16 @@ const GerarBPMNCreate = () => {
     } else if (hasNodeChanged) {
       setSelectedExistingEntityId('');
       setEntityMode('nova');
+      const nodeLabel =
+        String(selectedNode.entidadeNome || '').trim() ||
+        String(selectedNode.label || '').trim();
+      const nodeDescValue = String(selectedNode.descricao || '').trim();
+      
+      const isSameAsLabel = nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
+      
       setNewEntityForm({
-        nome:
-          String(selectedNode.entidadeNome || '').trim() ||
-          String(selectedNode.label || '').trim(),
-        descricao: String(selectedNode.subtitle || '').trim(),
+        nome: nodeLabel,
+        descricao: isSameAsLabel ? '' : nodeDescValue,
         atributoChave: String(selectedNode.info || '').trim(),
       });
       const restoredNodeFields = Array.isArray(
@@ -1329,6 +1415,20 @@ const GerarBPMNCreate = () => {
           }
           return node;
         }),
+      );
+    },
+    [isReadOnlyMode],
+  );
+
+  const handleConnectionWaypointChange = React.useCallback(
+    (connectionId, newWaypoints) => {
+      if (isReadOnlyMode) return;
+      setConnections((prev) =>
+        prev.map((c) =>
+          c.id === connectionId
+            ? { ...c, waypoints: newWaypoints }
+            : c,
+        ),
       );
     },
     [isReadOnlyMode],
@@ -1788,12 +1888,15 @@ const GerarBPMNCreate = () => {
         }
       }
 
+      const nextConnectionId = `conn-${Date.now()}-${fromId}-${nextId}`;
+      const isSourceConditional = sourceNode?.nodeType === 'condicional';
+
       setNodes((previous) => [...previous, nextNode]);
 
       setConnections((previous) => [
         ...previous,
         {
-          id: `conn-${Date.now()}-${fromId}-${nextId}`,
+          id: nextConnectionId,
           from: fromId,
           to: nextId,
           fromHandle: normalizedFromHandle,
@@ -1802,8 +1905,17 @@ const GerarBPMNCreate = () => {
         },
       ]);
 
-      setSelectedNodeId(nextId);
-      setIsSidebarHidden(false);
+      if (isSourceConditional) {
+        setSelectedNodeId(fromId);
+        setPendingDecisionConnectionId(nextConnectionId);
+        setDecisionPromptCustomValue('');
+        setDecisionPromptPosition({ x: null, y: null });
+        setIsDecisionPromptOpen(true);
+        setIsSidebarHidden(false);
+      } else {
+        setSelectedNodeId(nextId);
+        setIsSidebarHidden(false);
+      }
     },
     [canvasHeight, canvasWidth, isReadOnlyMode, nodeLayoutMetrics, nodes],
   );
@@ -1963,56 +2075,56 @@ const GerarBPMNCreate = () => {
     ) => {
       if (!fromId || !toId || fromId === toId) return;
 
-      setConnections((previous) => {
-        const exists = previous.some(
-          (connection) =>
-            connection.from === fromId &&
-            connection.to === toId &&
-            (connection.fromHandle || 'right') === fromHandle &&
-            (connection.toHandle || 'left') === toHandle,
-        );
-        if (exists) return previous;
+      // Não permite ligação entre duas condições
+      const sourceNode = nodes.find((node) => node.id === fromId) || null;
+      const targetNode = nodes.find((node) => node.id === toId) || null;
+      if (sourceNode?.nodeType === 'condicional' && targetNode?.nodeType === 'condicional') return;
 
-        const nextConnectionId = `conn-${Date.now()}-${fromId}-${toId}`;
-        const sourceNode = nodes.find((node) => node.id === fromId) || null;
-        const isSourceConditional = sourceNode?.nodeType === 'condicional';
+      const exists = connections.some(
+        (connection) =>
+          connection.from === fromId &&
+          connection.to === toId,
+      );
+      if (exists) return;
 
-        if (isSourceConditional) {
-          setSelectedNodeId(fromId);
-          setIsSidebarHidden(false);
-          setPendingDecisionConnectionId(nextConnectionId);
-          setDecisionPromptCustomValue('');
-          if (
-            pointerClientPosition &&
-            Number.isFinite(pointerClientPosition.clientX) &&
-            Number.isFinite(pointerClientPosition.clientY)
-          ) {
-            setDecisionPromptPosition({
-              x: pointerClientPosition.clientX,
-              y: pointerClientPosition.clientY,
-            });
-          } else {
-            setDecisionPromptPosition({ x: null, y: null });
-          }
-          setIsDecisionPromptOpen(true);
+      const nextConnectionId = `conn-${Date.now()}-${fromId}-${toId}`;
+      const isSourceConditional = sourceNode?.nodeType === 'condicional';
+
+      setConnections((previous) => [
+        ...previous,
+        {
+          id: nextConnectionId,
+          from: fromId,
+          to: toId,
+          fromHandle,
+          toHandle,
+          decision: '',
+        },
+      ]);
+
+      if (isSourceConditional) {
+        setSelectedNodeId(fromId);
+        setIsSidebarHidden(false);
+        setPendingDecisionConnectionId(nextConnectionId);
+        setDecisionPromptCustomValue('');
+        if (
+          pointerClientPosition &&
+          Number.isFinite(pointerClientPosition.clientX) &&
+          Number.isFinite(pointerClientPosition.clientY)
+        ) {
+          setDecisionPromptPosition({
+            x: pointerClientPosition.clientX,
+            y: pointerClientPosition.clientY,
+          });
         } else {
-          setSelectedConnectionId('');
+          setDecisionPromptPosition({ x: null, y: null });
         }
-
-        return [
-          ...previous,
-          {
-            id: nextConnectionId,
-            from: fromId,
-            to: toId,
-            fromHandle,
-            toHandle,
-            decision: '',
-          },
-        ];
-      });
+        setIsDecisionPromptOpen(true);
+      } else {
+        setSelectedConnectionId('');
+      }
     },
-    [nodes],
+    [connections, nodes],
   );
 
   const handleRemoveConnection = React.useCallback((connectionId) => {
@@ -2961,7 +3073,7 @@ const GerarBPMNCreate = () => {
       entidadeId: null,
       entidadeNome: nome,
       label: nome,
-      subtitle: descricao,
+      descricao,
       info: atributoChave,
       condicionalNome: '',
       condicionalDescricao: '',
@@ -3046,7 +3158,7 @@ const GerarBPMNCreate = () => {
             String(selectedNode.label || '').trim(),
           taskDescricao:
             String(selectedNode.taskDescricao || '').trim() ||
-            String(selectedNode.subtitle || '').trim(),
+            String(selectedNode.descricao || '').trim(),
         });
         return;
       }
@@ -3291,7 +3403,7 @@ const GerarBPMNCreate = () => {
           : stageNodeType === 'task'
             ? String(task.nome || '').trim()
             : String(conditional.nome || '').trim(),
-      subtitle:
+      descricao:
         stageNodeType === 'entidade'
           ? String(newEntity.descricao || '').trim()
           : stageNodeType === 'task'
@@ -3571,10 +3683,20 @@ const GerarBPMNCreate = () => {
     if (entityMode !== 'existente') return;
     if (!selectedExistingEntity) return;
 
+    const existingName = String(selectedExistingEntity.nome || '').trim();
+    const existingDesc = String(selectedExistingEntity.descricao || '').trim();
+    const nodeDescValue = String(selectedNode?.descricao || '').trim();
+    const nodeLabel =
+      existingName ||
+      String(selectedNode?.entidadeNome || selectedNode?.label || '').trim();
+    
+    const isSameAsLabel = nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
+    const descFallback = isSameAsLabel ? '' : nodeDescValue;
+
     setNewEntityForm((previous) => ({
       ...previous,
-      nome: String(selectedExistingEntity.nome || '').trim(),
-      descricao: String(selectedExistingEntity.descricao || '').trim(),
+      nome: existingName,
+      descricao: existingDesc || descFallback,
       atributoChave: String(selectedExistingEntity.atributoChave || '').trim(),
     }));
 
@@ -3600,6 +3722,9 @@ const GerarBPMNCreate = () => {
     getCamposEntidade,
     selectedExistingEntity,
     selectedNode?.selectedEntityFields,
+    selectedNode?.descricao,
+    selectedNode?.entidadeNome,
+    selectedNode?.label,
   ]);
 
   const handleSaveLinkedField = React.useCallback(async () => {
@@ -4125,11 +4250,11 @@ const GerarBPMNCreate = () => {
 
     const minX = Math.min(...nodes.map((node) => node.x || 0));
     const minY = Math.min(...nodes.map((node) => node.y || 0));
-    const maxX = Math.max(...nodes.map((node) => (node.x || 0) + 220));
-    const maxY = Math.max(...nodes.map((node) => (node.y || 0) + 110));
+    const maxX = Math.max(...nodes.map((node) => (node.x || 0) + 280));
+    const maxY = Math.max(...nodes.map((node) => (node.y || 0) + 160));
 
-    const horizontalPadding = 220;
-    const verticalPadding = 180;
+    const horizontalPadding = 280;
+    const verticalPadding = 240;
     const contentWidth = Math.max(320, maxX - minX + horizontalPadding);
     const contentHeight = Math.max(180, maxY - minY + verticalPadding);
 
@@ -4289,7 +4414,7 @@ const GerarBPMNCreate = () => {
           const matchesByName =
             !rawEntityId &&
             normalizeEntityName(
-              node?.entidadeNome || node?.label || node?.subtitle || '',
+              node?.entidadeNome || node?.label || node?.descricao || '',
             ) === normalizedName;
 
           if (!matchesById && !matchesByName) return;
@@ -4302,14 +4427,17 @@ const GerarBPMNCreate = () => {
       };
       const getNodeNome = (node) => {
         return String(
-          node?.entidadeNome || node?.label || node?.subtitle || '',
+          node?.entidadeNome || node?.label || node?.descricao || '',
         ).trim();
       };
 
       const getNodeDescricao = (node) => {
-        return String(
-          node?.descricao || node?.subtitle || 'Entidade gerada pelo BPMN',
-        ).trim();
+        const rawDescricao = String(node?.descricao || '').trim();
+        const rawLabel = String(node?.label || '').trim();
+        if (rawDescricao && rawDescricao.toLowerCase() !== rawLabel.toLowerCase()) {
+          return rawDescricao;
+        }
+        return '';
       };
 
       const getNodeCampos = (node) => {
@@ -4580,7 +4708,7 @@ const GerarBPMNCreate = () => {
           entidadeNome:
             draftName || String(node?.entidadeNome || node?.label || '').trim(),
           label: draftName || String(node?.label || '').trim(),
-          subtitle: draftDescricao || String(node?.subtitle || '').trim(),
+          descricao: draftDescricao || String(node?.descricao || '').trim(),
           info: draftAtributoChave || String(node?.info || '').trim(),
           selectedEntityFieldIds: selectedFields
             .map((field) => String(field?.id || '').trim())
@@ -4622,7 +4750,7 @@ const GerarBPMNCreate = () => {
           String(
             nodeWithoutEntity.entidadeNome ||
               nodeWithoutEntity.label ||
-              nodeWithoutEntity.subtitle ||
+              nodeWithoutEntity.descricao ||
               '',
           ).trim() || `ID ${String(nodeWithoutEntity.id || '').trim()}`;
 
@@ -5313,16 +5441,32 @@ const GerarBPMNCreate = () => {
         }
 
         if (Array.isArray(pendingAiCanvasDraft.nodes)) {
-          setNodes(pendingAiCanvasDraft.nodes.map(normalizeEditorNode));
+          // Run bpmn-auto-layout to compute optimal positions
+          let _finalNodes = pendingAiCanvasDraft.nodes.map(normalizeEditorNode);
+          let _finalConns = Array.isArray(pendingAiCanvasDraft.connections)
+            ? pendingAiCanvasDraft.connections.map(normalizeEditorConnection)
+            : [];
+
+          try {
+            const _layoutResult = await applyBpmnAutoLayout(_finalNodes, _finalConns);
+            _finalNodes = _layoutResult.nodes;
+            _finalConns = _layoutResult.connections;
+          } catch (_layoutErr) {
+            console.warn('[GerarBPMN] auto-layout falhou, usando posições do backend:', _layoutErr);
+          }
+
+          setNodes(_finalNodes);
+          setConnections(_finalConns);
+
           const firstNodeId = String(
-            pendingAiCanvasDraft.nodes[0]?.id || '',
+            _finalNodes[0]?.id || '',
           ).trim();
           if (firstNodeId) {
             setSelectedNodeId(firstNodeId);
           }
 
           // Zoom-to-fit: calcula zoom para caber todos os nós na janela visível
-          const _aiNodes = pendingAiCanvasDraft.nodes;
+          const _aiNodes = _finalNodes;
           if (_aiNodes.length > 0) {
             requestAnimationFrame(() => {
               const viewport = viewportRef.current;
@@ -5361,9 +5505,7 @@ const GerarBPMNCreate = () => {
               });
             });
           }
-        }
-
-        if (Array.isArray(pendingAiCanvasDraft.connections)) {
+        } else if (Array.isArray(pendingAiCanvasDraft.connections)) {
           setConnections(
             pendingAiCanvasDraft.connections.map(normalizeEditorConnection),
           );
@@ -5729,7 +5871,7 @@ const GerarBPMNCreate = () => {
       window.removeEventListener('popstate', handlePopState);
       window.history.pushState = originalPushState;
     };
-  }, [openLeavePageModal]);
+  }, [openLeavePageModal, navigate]);
 
   React.useEffect(() => {
     return () => {
@@ -5756,6 +5898,8 @@ const GerarBPMNCreate = () => {
       });
     });
   }, [fitNodesToViewport, nodes.length]);
+
+
 
   const applyZoomStep = React.useCallback(
     (direction) => {
@@ -6318,6 +6462,7 @@ const GerarBPMNCreate = () => {
               <input
                 className={styles.nameInput}
                 data-tutorial-id="process-name"
+                name="bpmnProcessName"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 disabled={isReadOnlyMode}
@@ -6615,6 +6760,7 @@ const GerarBPMNCreate = () => {
                 connectorsEnabled
                 connectorRevealMode={connectorRevealMode}
                 onNodeLabelChange={handleNodeLabelChange}
+                onConnectionWaypointChange={handleConnectionWaypointChange}
               />
             </div>
           </div>
@@ -6867,6 +7013,7 @@ const GerarBPMNCreate = () => {
             <input
               className={styles.decisionPromptInput}
               type="text"
+              name="decisionPromptCustom"
               value={decisionPromptCustomValue}
               onChange={(event) =>
                 setDecisionPromptCustomValue(event.target.value)
@@ -6921,6 +7068,7 @@ const GerarBPMNCreate = () => {
           <label className={styles.createNodePromptCheckboxRow}>
             <input
               type="checkbox"
+              name="disableCreateNodePrompt"
               checked={disableCreateNodeConnectionPromptDraft}
               onChange={(event) =>
                 setDisableCreateNodeConnectionPromptDraft(event.target.checked)
@@ -6942,6 +7090,7 @@ const GerarBPMNCreate = () => {
           <label className={styles.createNodePromptCheckboxRow}>
             <input
               type="checkbox"
+              name="disableDeleteEntityPrompt"
               checked={disableDeleteSuggestedEntityPromptDraft}
               onChange={(event) =>
                 setDisableDeleteSuggestedEntityPromptDraft(event.target.checked)
@@ -6963,6 +7112,7 @@ const GerarBPMNCreate = () => {
           <label className={styles.createNodePromptCheckboxRow}>
             <input
               type="checkbox"
+              name="disableDeleteSelectionPrompt"
               checked={disableDeleteSelectionPromptDraft}
               onChange={(event) =>
                 setDisableDeleteSelectionPromptDraft(event.target.checked)

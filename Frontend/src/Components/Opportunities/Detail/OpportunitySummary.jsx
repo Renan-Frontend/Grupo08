@@ -24,6 +24,7 @@ const OpportunitySummary = ({
           <span className={styles.infoLabel}>Informacoes da oportunidade</span>
           <textarea
             className={styles.title}
+            name="opportunityTitle"
             value={title}
             onChange={(e) => {
               if (isReadOnlyMode) return;
@@ -52,6 +53,7 @@ const OpportunitySummary = ({
           <input
             type="text"
             className={styles.dateInput}
+            name="opportunityCreatedDate"
             value={createdDate}
             onChange={(e) => {
               if (isReadOnlyMode) return;
@@ -68,6 +70,7 @@ const OpportunitySummary = ({
           <input
             type="text"
             className={styles.dateInput}
+            name="opportunityEndDate"
             value={endDate}
             onChange={(e) => {
               if (isReadOnlyMode) return;
@@ -89,6 +92,7 @@ const OpportunitySummary = ({
             <input
               type="text"
               className={styles.dateInput}
+              name="opportunityManualStatus"
               value={manualStatus}
               onChange={(e) => {
                 if (isReadOnlyMode) return;
@@ -104,6 +108,7 @@ const OpportunitySummary = ({
           <input
             type="text"
             className={styles.dateInput}
+            name="opportunityOwner"
             value={selectedOwner}
             onChange={(e) => {
               if (isReadOnlyMode) return;

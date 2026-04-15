@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1,
+    "taskId": 4,
+    "opportunityId": 1,
+    "nodeId": "n1",
+    "label": "Solicitar compra",
+    "dueAt": "2026-04-14T12:12:18.504534",
+    "detectedAt": "2026-04-14T12:12:43.345911",
+    "assignee": null,
+    "slaHours": 0.001,
+    "status": "resolved",
+    "resolvedAt": "2026-04-14T13:14:02.068042",
+    "durationSeconds": 3707.163508
+  }
+]

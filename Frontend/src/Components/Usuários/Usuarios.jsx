@@ -195,6 +195,7 @@ function Usuarios() {
                       {editingId === usuario.id ? (
                         <select
                           className={styles.select}
+                          name="nivelEdit"
                           value={nivelEdit}
                           onChange={(e) => setNivelEdit(e.target.value)}
                         >
@@ -215,6 +216,7 @@ function Usuarios() {
                       {editingId === usuario.id ? (
                         <select
                           className={styles.select}
+                          name="adminEdit"
                           value={adminEdit ? 'sim' : 'nao'}
                           onChange={(e) =>
                             setAdminEdit(e.target.value === 'sim')

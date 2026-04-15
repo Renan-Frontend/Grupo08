@@ -26,14 +26,18 @@ const DEFAULT_METRICS = [
 ];
 
 const MetricsGrid = ({ metrics = DEFAULT_METRICS, onEditData }) => (
-  <div className={styles.metricsWrapper}>
-    {onEditData && (
-      <div className={styles.metricsActions}>
-        <button type="button" className={styles.editBtn} onClick={onEditData}>
-          ✏️ Editar métricas
-        </button>
+  <div className={styles.wrapper}>
+    <div className={styles.headerRow}>
+      <div>
+        <h2 className={styles.title}>Métricas KPI</h2>
+        <p className={styles.subtitle}>{metrics.length} indicadores</p>
       </div>
-    )}
+      {onEditData && (
+        <button type="button" className={styles.editBtn} onClick={onEditData}>
+          ✏️ Editar
+        </button>
+      )}
+    </div>
     <div className={styles.metricsGrid}>
       {metrics.map((metric, i) => (
         <div key={i} className={styles.metricCard}>

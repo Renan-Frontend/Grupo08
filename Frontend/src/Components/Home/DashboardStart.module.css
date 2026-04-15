@@ -70,9 +70,9 @@
 }
 
 .secondaryButton {
-  border: 1px solid #d1d5db;
+  border: 1px solid #2fac66;
   background: #fff;
-  color: #374151;
+  color: #2fac66;
   border-radius: 8px;
   padding: 0.55rem 1rem;
   font-size: 0.9rem;
@@ -82,8 +82,16 @@
 }
 
 .secondaryButton:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #f0fdf4;
+  border-color: #229954;
+  color: #229954;
+}
+
+.secondaryButtonActive {
+  background: #f0fdf4;
+  border-color: #229954;
+  color: #229954;
+  font-weight: 600;
 }
 
 .dangerButton {
@@ -178,10 +186,17 @@
   text-decoration: underline;
 }
 
-.tableActions {
+.actionsCell {
+  width: 10rem;
+  min-width: 10rem;
+}
+
+.actions {
   display: flex;
   gap: 0.45rem;
   align-items: center;
+  white-space: nowrap;
+  min-width: max-content;
 }
 
 .actionButton {
@@ -594,7 +609,245 @@
   justify-content: flex-end;
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* ==================== HEADER ACTIONS ==================== */
+.headerActions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ==================== IMPORT MODAL ==================== */
+.uploadZone {
+  border: 2px dashed #d1d5db;
+  border-radius: 10px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 1.25rem;
+  color: #6b7280;
+  font-size: 0.9rem;
+  transition: border-color 150ms, background 150ms, color 150ms;
+  user-select: none;
+}
+
+.uploadZone:hover:not(.uploadZoneLoading) {
+  border-color: #2fa866;
+  background: #f0fdf4;
+  color: #2fa866;
+}
+
+.uploadZoneLoading {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.uploadIcon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.uploadHint {
+  font-size: 0.76rem;
+  color: #9ca3af;
+}
+
+.importErrorMsg {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 7px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.83rem;
+  color: #dc2626;
+  margin-bottom: 1rem;
+}
+
+.importResult {
+  margin-bottom: 1rem;
+}
+
+.importDetectedList {
+  margin-bottom: 0.85rem;
+}
+
+.importDetected {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 9px;
+  padding: 0.65rem 0.9rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.importDetectedIcon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.importDetectedLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.15rem;
+}
+
+.importDetectedValue {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.importWarning {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 9px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.84rem;
+  color: #92400e;
+  margin-bottom: 0.85rem;
+}
+
+.importMappingInline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  width: 100%;
+}
+
+.importMappingPill {
+  background: #dcfce7;
+  color: #166534;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.importMappingBox {
+  margin-bottom: 0.75rem;
+}
+
+.importMappingTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.4rem;
+}
+
+.importTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.83rem;
+}
+
+.importTable th {
+  text-align: left;
+  color: #9ca3af;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.importTable td {
+  padding: 0.25rem 0.5rem;
+  color: #374151;
+}
+
+.importTable tr:nth-child(even) {
+  background: #fafafa;
+}
+
+.importRowsInfo {
+  font-size: 0.8rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.importSheetRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.importSheetRow:last-child {
+  border-bottom: none;
+}
+
+.importSheetInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.importSheetName {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.importSheetRows {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.importWidgetSelect {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.88rem;
+  color: #374151;
+  background: #fff;
+  cursor: pointer;
+  min-width: 200px;
+  font-family: inherit;
+  transition: border-color 120ms;
+}
+
+.importWidgetSelect:focus {
+  outline: none;
+  border-color: #2fac66;
+}
+
+.importWidgetFixed {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.88rem;
+  color: #374151;
+  background: #f3f4f6;
+  min-width: 200px;
+  font-family: inherit;
+}
+
+
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
@@ -689,13 +942,16 @@
     content: 'Data de Criação';
   }
 
-  .table td.tableActions {
-    display: flex;
-    gap: 0.4rem;
+  .table td.actionsCell {
     padding-top: 0.5rem;
   }
 
-  .table td.tableActions::before {
+  .table td.actionsCell .actions {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .table td.actionsCell::before {
     content: 'Ações';
     font-size: 0.68rem;
     font-weight: 700;

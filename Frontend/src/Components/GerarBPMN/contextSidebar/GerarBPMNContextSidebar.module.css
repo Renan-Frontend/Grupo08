@@ -5,6 +5,18 @@
   min-width: 220px;
 }
 
+.descriptionInput {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.descriptionTitle {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0.5rem 0 0.25rem;
+}
+
 .sidebarTabs {
   display: flex;
   flex-direction: row;
@@ -86,6 +98,26 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.charHint {
+  margin: 0;
+  font-size: 0.73rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+.charHint[data-warn] {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.taskDescReadonly {
+  margin: 6px 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+  font-style: italic;
 }
 
 .mobileDualFieldRow {

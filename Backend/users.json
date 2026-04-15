@@ -3,7 +3,7 @@
     "id": 1,
     "nome": "Renan",
     "email": "renan1395@hotmail.com",
-    "senha": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "senha": "$2b$12$rpO7aEAd0efXhhXD52EKp.0a1Zi9ZE3f3gmeu9igwUXdrU2NP7Cmm",
     "ativo": true,
     "admin": true,
     "role": "admin",

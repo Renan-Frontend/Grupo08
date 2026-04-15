@@ -36,8 +36,20 @@
 
 .chartsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  align-items: stretch;
+}
+
+.chartsGrid > *:only-child {
+  grid-column: 1 / -1;
+}
+
+/* Remove margin-bottom from cards inside the grid since gap handles spacing */
+.chartsGrid > .chartCard,
+.chartsGrid > * > .chartCard {
+  margin-bottom: 0;
 }
 
 /* Placeholder cards for upcoming widgets */
@@ -111,6 +123,7 @@
 
   .chartsGrid {
     gap: 1rem;
+    margin-bottom: 1rem;
   }
 }
 
@@ -138,4 +151,31 @@
 
 .configureLink:hover {
   text-decoration: underline;
+}
+
+/* ── KPI Edit Modal ── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+}
+
+.modalTitle {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 1rem;
 }

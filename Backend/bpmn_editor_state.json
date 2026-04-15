@@ -1,13 +1,13 @@
 {
-  "name": "Aprovação de Pedido de Compra (10)",
+  "name": "Aprovação de Pedido de Compra",
   "nodes": [
     {
       "id": "n1",
       "label": "Solicitar compra",
       "nodeType": "task",
       "taskNome": "Solicitar compra",
-      "taskDescricao": "O Cliente executa a atividade de solicitar compra, gerando um Pedido.",
-      "subtitle": "",
+      "taskDescricao": "O cliente solicita compra e gera um novo pedido; o pedido é criado com as informações fornecidas pelo cliente.",
+      "descricao": "O cliente solicita compra e gera um novo pedido; o pedido é criado com as informações fornecidas pelo cliente.",
       "info": "",
       "x": 60,
       "y": 80
@@ -47,7 +47,7 @@
         }
       ],
       "entidadeNome": "Pedido",
-      "subtitle": "Pedido",
+      "descricao": "Documento que contém as informações do pedido de compra; é gerado quando o cliente solicita compra e é atualizado ao longo do processo de aprovação.",
       "info": "id",
       "x": 60,
       "y": 250
@@ -57,8 +57,8 @@
       "label": "Analisar Pedido",
       "nodeType": "task",
       "taskNome": "Analisar Pedido",
-      "taskDescricao": "O responsável verifica se o Pedido atende às políticas internas de prazo e orçamento antes de seguir para aprovação.",
-      "subtitle": "",
+      "taskDescricao": "Responsável verifica se o pedido atende às políticas internas de prazo e orçamento antes de seguir para aprovação.",
+      "descricao": "Responsável verifica se o pedido atende às políticas internas de prazo e orçamento antes de seguir para aprovação.",
       "info": "",
       "x": 60,
       "y": 420
@@ -68,8 +68,8 @@
       "label": "Pedido aprovado?",
       "nodeType": "condicional",
       "condicionalNome": "Pedido aprovado?",
-      "condicionalDescricao": "O gestor avalia se o Pedido atende aos critérios financeiros e de prazo; SIM segue para execução, NÃO retorna para revisão.",
-      "subtitle": "",
+      "condicionalDescricao": "Gestor avalia se o pedido atende aos critérios financeiros e de prazo.",
+      "descricao": "Gestor avalia se o pedido atende aos critérios financeiros e de prazo.",
       "gatewayType": "exclusivo",
       "x": 60,
       "y": 590
@@ -79,59 +79,30 @@
       "label": "Registrar Aprovacao",
       "nodeType": "task",
       "taskNome": "Registrar Aprovacao",
-      "taskDescricao": "O registro de Aprovacao é criado quando o Pedido não é aprovado.",
-      "subtitle": "",
+      "taskDescricao": "O pedido não é aprovado e um registro de aprovação é criado; o registro é utilizado para notificar o cliente.",
+      "descricao": "O pedido não é aprovado e um registro de aprovação é criado; o registro é utilizado para notificar o cliente.",
       "info": "",
-      "x": 340,
-      "y": 590
+      "x": 60,
+      "y": 760
     },
     {
       "id": "n6",
-      "label": "Aprovacao",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_aprovacao",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Aprovacao",
-      "subtitle": "Aprovacao",
-      "info": "id",
-      "x": 60,
-      "y": 760
+      "label": "Rejeitar Pedido",
+      "nodeType": "task",
+      "taskNome": "Rejeitar Pedido",
+      "taskDescricao": "Caminho alternativo quando a condição 'Pedido aprovado?' não é atendida.",
+      "descricao": "Caminho alternativo quando a condição 'Pedido aprovado?' não é atendida.",
+      "info": "",
+      "x": 340,
+      "y": 590
     },
     {
       "id": "n7",
       "label": "Validar orcamento",
       "nodeType": "task",
       "taskNome": "Validar orcamento",
-      "taskDescricao": "O responsável verifica se o orçamento do Pedido está de acordo com as políticas internas.",
-      "subtitle": "",
+      "taskDescricao": "O pedido é aprovado e o orçamento é validado; se o orçamento for aprovado, o processo segue para a próxima etapa.",
+      "descricao": "O pedido é aprovado e o orçamento é validado; se o orçamento for aprovado, o processo segue para a próxima etapa.",
       "info": "",
       "x": 640,
       "y": 760
@@ -141,8 +112,8 @@
       "label": "Orcamento aprovado?",
       "nodeType": "condicional",
       "condicionalNome": "Orcamento aprovado?",
-      "condicionalDescricao": "O gestor avalia se o orçamento do Pedido está de acordo com as políticas internas; SIM segue para execução, NÃO retorna para revisão.",
-      "subtitle": "",
+      "condicionalDescricao": "Gestor avalia se o orçamento é aprovado e se o pedido pode ser enviado ao fornecedor.",
+      "descricao": "Gestor avalia se o orçamento é aprovado e se o pedido pode ser enviado ao fornecedor.",
       "gatewayType": "exclusivo",
       "x": 640,
       "y": 590
@@ -152,25 +123,36 @@
       "label": "Atualizar Pedido",
       "nodeType": "task",
       "taskNome": "Atualizar Pedido",
-      "taskDescricao": "O Pedido é atualizado com as informações necessárias para a aprovação.",
-      "subtitle": "",
-      "info": "",
-      "x": 920,
-      "y": 590
-    },
-    {
-      "id": "n10",
-      "label": "Gerar OrdemDeCompra",
-      "nodeType": "task",
-      "taskNome": "Gerar OrdemDeCompra",
-      "taskDescricao": "O documento OrdemDeCompra é gerado automaticamente quando o Pedido é aprovado.",
-      "subtitle": "",
+      "taskDescricao": "O orçamento não é aprovado e o pedido é atualizado com as informações necessárias para a próxima etapa.",
+      "descricao": "O orçamento não é aprovado e o pedido é atualizado com as informações necessárias para a próxima etapa.",
       "info": "",
       "x": 640,
       "y": 420
     },
     {
+      "id": "n10",
+      "label": "Rejeitar Orcamento",
+      "nodeType": "task",
+      "taskNome": "Rejeitar Orcamento",
+      "taskDescricao": "Caminho alternativo quando a condição 'Orcamento aprovado?' não é atendida.",
+      "descricao": "Caminho alternativo quando a condição 'Orcamento aprovado?' não é atendida.",
+      "info": "",
+      "x": 920,
+      "y": 590
+    },
+    {
       "id": "n11",
+      "label": "Gerar OrdemDeCompra",
+      "nodeType": "task",
+      "taskNome": "Gerar OrdemDeCompra",
+      "taskDescricao": "O orçamento é aprovado e uma ordem de compra é gerada; a ordem de compra é enviada ao fornecedor.",
+      "descricao": "O orçamento é aprovado e uma ordem de compra é gerada; a ordem de compra é enviada ao fornecedor.",
+      "info": "",
+      "x": 640,
+      "y": 250
+    },
+    {
+      "id": "n12",
       "label": "OrdemDeCompra",
       "nodeType": "entidade",
       "campos": [
@@ -204,24 +186,24 @@
         }
       ],
       "entidadeNome": "OrdemDeCompra",
-      "subtitle": "OrdemDeCompra",
+      "descricao": "Documento que contém as informações da ordem de compra; é gerado quando o pedido é aprovado e é enviado ao fornecedor.",
       "info": "id",
-      "x": 640,
-      "y": 250
-    },
-    {
-      "id": "n12",
-      "label": "Enviar OrdemDeCompra ao Fornecedor",
-      "nodeType": "task",
-      "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
-      "taskDescricao": "O OrdemDeCompra é enviado ao Fornecedor para execução.",
-      "subtitle": "",
-      "info": "",
       "x": 640,
       "y": 80
     },
     {
       "id": "n13",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "nodeType": "task",
+      "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+      "taskDescricao": "A ordem de compra é enviada ao fornecedor e o fornecedor recebe a ordem de compra.",
+      "descricao": "A ordem de compra é enviada ao fornecedor e o fornecedor recebe a ordem de compra.",
+      "info": "",
+      "x": 1220,
+      "y": 80
+    },
+    {
+      "id": "n14",
       "label": "Fornecedor",
       "nodeType": "entidade",
       "campos": [
@@ -255,24 +237,64 @@
         }
       ],
       "entidadeNome": "Fornecedor",
-      "subtitle": "Fornecedor",
+      "descricao": "Pessoa ou empresa que fornece os produtos ou serviços solicitados pelo cliente; recebe a ordem de compra e executa as atividades necessárias para atendê-la.",
       "info": "id",
-      "x": 1220,
-      "y": 80
-    },
-    {
-      "id": "n14",
-      "label": "Fornecedor recebe OrdemDeCompra",
-      "nodeType": "task",
-      "taskNome": "Fornecedor recebe OrdemDeCompra",
-      "taskDescricao": "O Fornecedor recebe a OrdemDeCompra e executa as atividades necessárias para atendê-la.",
-      "subtitle": "",
-      "info": "",
       "x": 1220,
       "y": 250
     },
     {
       "id": "n15",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "nodeType": "task",
+      "taskNome": "Fornecedor recebe OrdemDeCompra",
+      "taskDescricao": "O fornecedor recebe a ordem de compra e executa as atividades necessárias para atendê-la.",
+      "descricao": "O fornecedor recebe a ordem de compra e executa as atividades necessárias para atendê-la.",
+      "info": "",
+      "x": 1220,
+      "y": 420
+    },
+    {
+      "id": "n16",
+      "label": "Aprovacao",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_aprovacao",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Aprovacao",
+      "descricao": "Participa do processo de Aprovação de Pedido de Compra como elemento de suporte.",
+      "info": "id",
+      "x": 1220,
+      "y": 590
+    },
+    {
+      "id": "n17",
       "label": "Cliente",
       "nodeType": "entidade",
       "campos": [
@@ -306,10 +328,10 @@
         }
       ],
       "entidadeNome": "Cliente",
-      "subtitle": "Cliente",
+      "descricao": "Pessoa ou empresa que solicita o serviço no processo de Aprovação de Pedido de Compra.",
       "info": "id",
       "x": 1220,
-      "y": 420
+      "y": 760
     }
   ],
   "connections": [
@@ -341,18 +363,18 @@
       "label": ""
     },
     {
-      "id": "c4b",
+      "id": "c4",
       "from": "n4",
-      "to": "n6",
+      "to": "n5",
       "fromHandle": "bottom",
       "toHandle": "top",
       "decision": "sim",
       "label": "✔"
     },
     {
-      "id": "c4a",
+      "id": "c5",
       "from": "n4",
-      "to": "n5",
+      "to": "n6",
       "fromHandle": "right",
       "toHandle": "left",
       "decision": "nao",
@@ -362,13 +384,22 @@
       "id": "c6",
       "from": "n6",
       "to": "n7",
+      "fromHandle": "bottom",
+      "toHandle": "right",
+      "decision": "merge",
+      "label": ""
+    },
+    {
+      "id": "c7",
+      "from": "n5",
+      "to": "n7",
       "fromHandle": "right",
       "toHandle": "left",
       "decision": "",
       "label": ""
     },
     {
-      "id": "c7",
+      "id": "c8",
       "from": "n7",
       "to": "n8",
       "fromHandle": "top",
@@ -377,26 +408,35 @@
       "label": ""
     },
     {
-      "id": "c8b",
+      "id": "c9",
       "from": "n8",
-      "to": "n10",
+      "to": "n9",
       "fromHandle": "top",
       "toHandle": "bottom",
       "decision": "sim",
       "label": "✔"
     },
     {
-      "id": "c8a",
+      "id": "c10",
       "from": "n8",
-      "to": "n9",
+      "to": "n10",
       "fromHandle": "right",
       "toHandle": "left",
       "decision": "nao",
       "label": "✘"
     },
     {
-      "id": "c10",
+      "id": "c11",
       "from": "n10",
+      "to": "n11",
+      "fromHandle": "top",
+      "toHandle": "right",
+      "decision": "merge",
+      "label": ""
+    },
+    {
+      "id": "c12",
+      "from": "n9",
       "to": "n11",
       "fromHandle": "top",
       "toHandle": "bottom",
@@ -404,7 +444,7 @@
       "label": ""
     },
     {
-      "id": "c11",
+      "id": "c13",
       "from": "n11",
       "to": "n12",
       "fromHandle": "top",
@@ -413,7 +453,7 @@
       "label": ""
     },
     {
-      "id": "c12",
+      "id": "c14",
       "from": "n12",
       "to": "n13",
       "fromHandle": "right",
@@ -422,7 +462,7 @@
       "label": ""
     },
     {
-      "id": "c13",
+      "id": "c15",
       "from": "n13",
       "to": "n14",
       "fromHandle": "bottom",
@@ -431,14 +471,32 @@
       "label": ""
     },
     {
-      "id": "c14",
+      "id": "c16",
       "from": "n14",
       "to": "n15",
       "fromHandle": "bottom",
       "toHandle": "top",
       "decision": "",
       "label": ""
+    },
+    {
+      "id": "c17",
+      "from": "n15",
+      "to": "n16",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c18",
+      "from": "n16",
+      "to": "n17",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
     }
   ],
-  "updated_at": "2026-04-01T08:48:11.217845"
+  "updated_at": "2026-04-15T17:06:58.521634"
 }

@@ -258,18 +258,25 @@ export const sanitizeNodeForPersistence = (node) => {
       : node.nodeType === 'condicional'
         ? 'condicional'
         : 'entidade';
+  const rawTaskNomePersist = node?.taskNome || (node.nodeType === 'task' ? node?.label : undefined);
   const taskNome = sanitizeStageNameByNodeType(
-    node?.taskNome,
+    rawTaskNomePersist,
     'task',
     'Atividade',
   );
+  const rawCondicionalNomePersist =
+    node?.condicionalNome || (node.nodeType === 'condicional' ? node?.label : undefined);
   const condicionalNome = sanitizeStageNameByNodeType(
-    node?.condicionalNome,
+    rawCondicionalNomePersist,
     'condicional',
     'Condicional',
   );
+  const rawEntidadeNomePersist =
+    node?.nodeType === 'start' || node?.nodeType === 'end'
+      ? node?.entidadeNome || node?.label
+      : node?.entidadeNome;
   const entidadeNome = sanitizeStageNameByNodeType(
-    node?.entidadeNome,
+    rawEntidadeNomePersist,
     'entidade',
     'Entidade',
   );
@@ -317,21 +324,30 @@ export const sanitizeNodeForPersistence = (node) => {
       nodeType,
       fallbackLabel,
     ),
-    subtitle: String(node?.subtitle || '').trim(),
+    descricao: String(node?.descricao || node?.subtitle || '').trim(),
     info: String(node?.info || '').trim(),
     x: Number.isFinite(node?.x) ? node.x : 0,
     y: Number.isFinite(node?.y) ? node.y : 0,
   };
 };
 
-export const sanitizeConnectionForPersistence = (connection) => ({
-  id: connection.id,
-  from: connection.from,
-  to: connection.to,
-  fromHandle: connection.fromHandle || 'right',
-  toHandle: connection.toHandle || 'left',
-  decision: normalizeDecisionValue(connection?.decision),
-});
+export const sanitizeConnectionForPersistence = (connection) => {
+  const result = {
+    id: connection.id,
+    from: connection.from,
+    to: connection.to,
+    fromHandle: connection.fromHandle || 'right',
+    toHandle: connection.toHandle || 'left',
+    decision: normalizeDecisionValue(connection?.decision),
+  };
+  if (connection.waypoints?.length) {
+    result.waypoints = connection.waypoints.map((wp) => ({
+      x: Math.round(wp.x),
+      y: Math.round(wp.y),
+    }));
+  }
+  return result;
+};
 
 export const normalizeEditorNode = (node, index = 0) => {
   const nodeType =
@@ -340,18 +356,27 @@ export const normalizeEditorNode = (node, index = 0) => {
       : node?.nodeType === 'condicional'
         ? 'condicional'
         : 'entidade';
+  const rawTaskNome = node?.taskNome || (node?.nodeType === 'task' ? node?.label : undefined);
   const taskNome = sanitizeStageNameByNodeType(
-    node?.taskNome,
+    rawTaskNome,
     'task',
     `Atividade ${index + 1}`,
   );
+  const rawCondicionalNome =
+    node?.condicionalNome || (node?.nodeType === 'condicional' ? node?.label : undefined);
   const condicionalNome = sanitizeStageNameByNodeType(
-    node?.condicionalNome,
+    rawCondicionalNome,
     'condicional',
     `Condicional ${index + 1}`,
   );
+  // Para nós start/end gerados pela IA, usar o label ('Início'/'Fim') como nome da entidade
+  // para que nodesForCanvas exiba o título correto em vez de "Entidade N".
+  const rawEntidadeNome =
+    node?.nodeType === 'start' || node?.nodeType === 'end'
+      ? node?.entidadeNome || node?.label
+      : node?.entidadeNome;
   const entidadeNome = sanitizeStageNameByNodeType(
-    node?.entidadeNome,
+    rawEntidadeNome,
     'entidade',
     `Entidade ${index + 1}`,
   );
@@ -399,7 +424,7 @@ export const normalizeEditorNode = (node, index = 0) => {
       nodeType,
       fallbackLabel,
     ),
-    subtitle: String(node?.subtitle || '').trim(),
+    descricao: String(node?.descricao || node?.subtitle || '').trim(),
     info: String(node?.info || '').trim(),
     x: Number.isFinite(node?.x) ? node.x : 0,
     y: Number.isFinite(node?.y) ? node.y : 0,

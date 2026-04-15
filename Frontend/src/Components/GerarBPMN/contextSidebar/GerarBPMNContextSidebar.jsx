@@ -161,6 +161,7 @@ const GerarBPMNContextSidebar = ({
                     <select
                       className={styles.nameInput}
                       data-tutorial-id="sidebar-stage-category"
+                      name="mobileStageCategorySelect"
                       value={selectedNodeTypeSelectorValue}
                       onChange={(event) =>
                         handleChangeSelectedNodeType(event.target.value)
@@ -178,6 +179,7 @@ const GerarBPMNContextSidebar = ({
                     <p className={styles.contextPanelTitle}>Tipo da entidade</p>
                     <select
                       className={styles.nameInput}
+                      name="mobileEntityTypeSelect"
                       value={selectedNodeEntityType || 'apoio'}
                       onChange={(event) =>
                         onSetSelectedNodeEntityType(event.target.value)
@@ -198,6 +200,7 @@ const GerarBPMNContextSidebar = ({
                   <select
                     className={styles.nameInput}
                     data-tutorial-id="sidebar-stage-category"
+                    name="stageCategorySelect"
                     value={selectedNodeTypeSelectorValue}
                     onChange={(event) =>
                       handleChangeSelectedNodeType(event.target.value)
@@ -218,6 +221,7 @@ const GerarBPMNContextSidebar = ({
                       </p>
                       <select
                         className={styles.nameInput}
+                        name="entityTypeSelect"
                         value={selectedNodeEntityType || 'apoio'}
                         onChange={(event) =>
                           onSetSelectedNodeEntityType(event.target.value)
@@ -276,6 +280,7 @@ const GerarBPMNContextSidebar = ({
               </p>
               <input
                 className={styles.nameInput}
+                name="connectionConditionInput"
                 value={sidebarConnectionDecisionDraft}
                 onChange={(event) =>
                   setSidebarConnectionDecisionDraft(event.target.value)
@@ -341,6 +346,7 @@ const GerarBPMNContextSidebar = ({
               </p>
               <input
                 className={styles.nameInput}
+                name="taskNameInput"
                 value={taskForm.nome}
                 onChange={(event) =>
                   setTaskForm((previous) => ({
@@ -353,8 +359,18 @@ const GerarBPMNContextSidebar = ({
                 title="Nome da atividade"
                 maxLength={TASK_NAME_MAX_LENGTH}
               />
+              {String(taskForm.nome || '').length > Math.floor(TASK_NAME_MAX_LENGTH * 0.7) ? (
+                <p
+                  className={styles.charHint}
+                  data-warn={String(taskForm.nome || '').length >= Math.floor(TASK_NAME_MAX_LENGTH * 0.9) ? 'true' : undefined}
+                >
+                  {TASK_NAME_MAX_LENGTH - String(taskForm.nome || '').length} caracteres restantes — prefira nomes curtos
+                </p>
+              ) : null}
+              <p className={styles.descriptionTitle}>Descrição da Atividade</p>
               <textarea
-                className={styles.contextPanelTextarea}
+                className={`${styles.nameInput} ${styles.descriptionInput}`}
+                name="taskDescriptionInput"
                 value={taskForm.descricao}
                 onChange={(event) =>
                   setTaskForm((previous) => ({
@@ -365,6 +381,7 @@ const GerarBPMNContextSidebar = ({
                 disabled={isReadOnlyMode}
                 placeholder="Descrição da atividade"
                 title="Descrição da atividade"
+                rows={5}
               />
             </div>
           ) : activeSidebarTab === 'gateway' ? (
@@ -373,6 +390,7 @@ const GerarBPMNContextSidebar = ({
                 <p className={styles.contextPanelTitle}>Tipo da decisão</p>
                 <select
                   className={styles.nameInput}
+                  name="gatewayTypeSelect"
                   value={gatewayTypeDraft}
                   onChange={(event) => setGatewayTypeDraft(event.target.value)}
                   disabled={isReadOnlyMode}
@@ -489,6 +507,7 @@ const GerarBPMNContextSidebar = ({
                 <strong>Descrição:</strong>{' '}
                 {String(suggestedEntity?.descricao || '').trim() || '-'}
               </p>
+
               <div className={styles.entitySuggestionActions}>
                 <button
                   type="button"

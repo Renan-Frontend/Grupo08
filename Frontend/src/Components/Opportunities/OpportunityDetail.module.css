@@ -373,9 +373,10 @@
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow-x: visible;
   white-space: normal;
-  word-break: break-all;
+  word-break: break-word;
+  overflow-wrap: break-word;
   direction: ltr;
 }
 
@@ -465,7 +466,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 0.9rem auto;
   align-items: center;
-  column-gap: 0.7rem;
+  column-gap: 0.5rem;
   width: 100%;
 }
 
@@ -806,6 +807,329 @@
 .fullContentTextarea:focus {
   outline: none;
   border-color: #2fb36d;
+}
+
+/* ── Topic progress, filters, icons ── */
+
+.topicProgressBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.topicProgressBarContainer {
+  width: 100%;
+  height: 3px;
+  background: #e5e9ee;
+  overflow: hidden;
+}
+
+.topicProgressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #2fb36d, #16a34a);
+  border-radius: 0 2px 2px 0;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.topicFilterBar {
+  display: flex;
+  gap: 0;
+  padding: 0.35rem 0.9rem 0;
+  border-bottom: 1px solid #e5e9ee;
+}
+
+.topicFilterTab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0.3rem 0.7rem 0.35rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #8c939b;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.topicFilterTab:hover {
+  color: #2c3e50;
+}
+
+.topicFilterTabActive {
+  color: #1e9158;
+  border-bottom-color: #2fb36d;
+}
+
+.topicEmptyFilter {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.topicTypeIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background: #f1f5f9;
+  line-height: 1;
+}
+
+.topicRowLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.topicRowTextGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  gap: 0.1rem;
+}
+
+.topicPreviewText {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+  max-width: 100%;
+}
+
+.infoRowDone {
+  opacity: 0.65;
+}
+
+.infoRowDone .topicRowTitleInput {
+  text-decoration: line-through;
+}
+
+/* ── View Toggle (Checklist / CRM) ── */
+
+.topicViewToggle {
+  display: inline-flex;
+  gap: 0;
+  border: 1px solid #d5dbe1;
+  border-radius: 6px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.topicViewToggleBtn {
+  background: #fff;
+  border: none;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: #8c939b;
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+
+.topicViewToggleBtn:hover {
+  background: #f1f5f9;
+}
+
+.topicViewToggleBtnActive {
+  background: #1e9158;
+  color: #fff;
+}
+
+.topicViewToggleBtnActive:hover {
+  background: #178a4f;
+}
+
+/* ── CRM View ── */
+
+.crmViewGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.7rem;
+  padding: 0.7rem 0.75rem;
+}
+
+.crmCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid #e5e9ee;
+  border-radius: 8px;
+  background: #fff;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.crmCard:hover {
+  border-color: #c4cdd5;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.crmCardDone {
+  opacity: 0.6;
+  background: #fafbfc;
+}
+
+.crmCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.crmCardTypeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+  padding: 0.12rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.crmCardStatusBadge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 0.1rem 0.35rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.crmCardStatusPending {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+
+.crmCardStatusDone {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.crmCardTitle {
+  margin-top: 0.1rem;
+}
+
+.crmCardTitleInput {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2c3e50;
+  outline: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crmCardTitleInput:focus {
+  border-bottom: 1px solid #d5dbe1;
+}
+
+.crmCardFields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.35rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.crmCardField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.crmCardFieldLabel {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: #7b8794;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.crmCardFieldValue {
+  font-size: 0.76rem;
+  color: #2c3e50;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+.crmCardDescription {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+  padding: 0.2rem 0;
+  border-top: 1px solid #f1f5f9;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.crmCardFooter {
+  padding-top: 0.15rem;
+}
+
+.crmCardFlowBadge {
+  font-size: 0.6rem;
+  font-weight: 600;
+  padding: 0.08rem 0.35rem;
+  border-radius: 4px;
+}
+
+.crmCardFlowYes {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.crmCardFlowNo {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.crmCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
 }
 
 .infoRow:last-child {
@@ -1246,6 +1570,53 @@
     font-size: 0.72rem;
   }
 
+  .topicFilterBar {
+    padding: 0.25rem 0.65rem 0;
+  }
+
+  .topicFilterTab {
+    font-size: 0.64rem;
+    padding: 0.25rem 0.5rem 0.3rem;
+  }
+
+  .topicTypeIcon {
+    width: 1.2rem;
+    height: 1.2rem;
+    font-size: 0.7rem;
+  }
+
+  .topicPreviewText {
+    font-size: 0.62rem;
+  }
+
+  .topicProgressBadge {
+    font-size: 0.62rem;
+    padding: 0.08rem 0.4rem;
+  }
+
+  .topicViewToggleBtn {
+    font-size: 0.68rem;
+    padding: 0.12rem 0.35rem;
+  }
+
+  .crmViewGrid {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .crmCardTitleInput {
+    font-size: 0.76rem;
+  }
+
+  .crmCardFieldLabel {
+    font-size: 0.55rem;
+  }
+
+  .crmCardFieldValue {
+    font-size: 0.72rem;
+  }
+
   .infoRow {
     display: flex;
     flex-direction: column;
@@ -1464,6 +1835,20 @@
 
 .editButton:hover {
   background: #26a35f;
+}
+
+.pipelineSaveRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0 0.25rem;
+}
+
+.pipelineSaveFeedback {
+  font-size: 0.8rem;
+  color: #2fb36d;
+  font-weight: 500;
 }
 
 .editButtonSmall {
