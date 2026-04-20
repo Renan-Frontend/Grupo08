@@ -233,6 +233,15 @@ const Sidebar = ({ onNavigateItem }) => {
               Workflows
             </div>
           </li>
+          <li className={`${styles.menuItem} ${isActive('/documentos')}`}>
+            <div
+              className={styles.menuItemContent}
+              onClick={() => handleNavigation('/documentos')}
+            >
+              <span className={styles.icon}>📄</span>
+              Documentos
+            </div>
+          </li>
         </ul>
       </div>
 

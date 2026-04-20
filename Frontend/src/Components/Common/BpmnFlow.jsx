@@ -544,19 +544,41 @@ const BpmnFlow = ({
     const containerRect = container.getBoundingClientRect();
     const safeZoom = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
 
+    // O(1) lookups instead of O(N) .find() per connection
+    const nodeMap = new Map();
+    for (const n of nodes) nodeMap.set(n.id, n);
+
     const lines = connections
       .map((connection) => {
         const fromElement = nodeRefs.current[connection.from];
         const toElement = nodeRefs.current[connection.to];
         if (!fromElement || !toElement) return null;
 
-        const fromNode = nodes.find((n) => n.id === connection.from);
-        const toNode = nodes.find((n) => n.id === connection.to);
+        const fromNode = nodeMap.get(connection.from);
+        const toNode = nodeMap.get(connection.to);
         // Always compute optimal handles based on actual node positions.
         // Backend-generated handles (e.g. always "right"→"left") don't account
         // for the real layout, causing lines to cross through unrelated nodes.
+        // Exception: NAO and merge connections always use sideways handles.
         let fromHandle, toHandle;
-        if (fromNode && toNode) {
+        const connDecision = String(connection.decision || '').toLowerCase();
+        if (connDecision === 'nao' && fromNode && toNode) {
+          // NAO: always sideways — from right/left depending on relative X
+          const dx = (toNode.x || 0) - (fromNode.x || 0);
+          fromHandle = dx >= 0 ? 'right' : 'left';
+          toHandle = dx >= 0 ? 'left' : 'right';
+        } else if (connDecision === 'merge' && fromNode && toNode) {
+          // Merge: NAO target reconnects — use bottom→top or side depending on position
+          const dx = (toNode.x || 0) - (fromNode.x || 0);
+          const dy = (toNode.y || 0) - (fromNode.y || 0);
+          if (Math.abs(dx) > Math.abs(dy)) {
+            fromHandle = dx >= 0 ? 'right' : 'left';
+            toHandle = dx >= 0 ? 'left' : 'right';
+          } else {
+            fromHandle = dy >= 0 ? 'bottom' : 'top';
+            toHandle = dy >= 0 ? 'top' : 'bottom';
+          }
+        } else if (fromNode && toNode) {
           const computed = computeBestHandles(fromNode, toNode);
           fromHandle = computed.fromHandle;
           toHandle = computed.toHandle;
@@ -656,6 +678,8 @@ const BpmnFlow = ({
   React.useEffect(() => {
     if (!dragState || !draggable) return;
 
+    // During drag, move the node via direct DOM manipulation (no React re-render).
+    // Connections are NOT recalculated until pointerup for 60fps dragging.
     const handlePointerMove = (event) => {
       if (
         dragState.pointerId !== null &&
@@ -685,7 +709,11 @@ const BpmnFlow = ({
       nextX = Math.max(0, Math.min(nextX, maxX));
       nextY = Math.max(0, Math.min(nextY, maxY));
 
-      onNodePositionChange?.(dragState.id, { x: nextX, y: nextY });
+      // Direct DOM positioning — avoids React re-render of 30+ nodes per frame
+      nodeElement.style.left = `${nextX}px`;
+      nodeElement.style.top = `${nextY}px`;
+      dragState._lastX = nextX;
+      dragState._lastY = nextY;
     };
 
     const handlePointerUp = (event) => {
@@ -697,6 +725,10 @@ const BpmnFlow = ({
         return;
       }
 
+      // Commit final position to React state (triggers single re-render + connection recalc)
+      if (dragState._lastX !== undefined && dragState._lastY !== undefined) {
+        onNodePositionChange?.(dragState.id, { x: dragState._lastX, y: dragState._lastY });
+      }
       setDragState(null);
     };
 

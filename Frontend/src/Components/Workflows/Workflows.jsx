@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './Workflows.module.css';
+import Close from '../Helper/Close';
 import {
   WORKFLOWS_LIST,
   WORKFLOW_TASKS_LIST,
@@ -15,6 +16,8 @@ import {
   OPORTUNIDADES_LIST,
   OPORTUNIDADE_SHARE,
   ENTIDADES_GET,
+  WORKFLOW_GENERATE_DOCUMENT,
+  DOCUMENTO_CREATE,
 } from '../../Api';
 import { getAuthToken } from '../Opportunities/opportunityApi';
 import { toOpportunitySlug } from '../Opportunities/opportunityFormatters';
@@ -416,46 +419,146 @@ const Workflows = () => {
     } catch { /* silent */ }
   };
 
-  /* ─── Export CSV ─── */
-  const handleExportCSV = (dataType) => {
-    let rows = [];
-    let filename = '';
-    if (dataType === 'tasks') {
-      filename = 'tarefas.csv';
-      rows = [['#', 'Tarefa', 'Oportunidade', 'Atribuído', 'Status', 'Criado', 'Prazo'].join(';')];
-      for (const t of filteredTasks) {
-        rows.push([
-          t.taskId,
-          `"${(t.label || '').replace(/"/g, '""')}"`,
-          `"${(t.opportunityName || '').replace(/"/g, '""')}"`,
-          t.assignee || '',
-          TASK_STATUS_LABEL[t.status] || t.status,
-          t.createdAt || '',
-          t.dueAt || '',
-        ].join(';'));
-      }
-    } else {
-      filename = 'workflows.csv';
-      rows = [['Oportunidade', 'Status', 'Etapa Atual', 'Progresso', 'Versão', 'Atualizado'].join(';')];
-      for (const wf of filteredWorkflows) {
-        rows.push([
-          `"${(wf.opportunityName || '').replace(/"/g, '""')}"`,
-          STATUS_LABEL[wf.status] || wf.status,
-          wf.currentNodeLabel || '',
-          `${wf.progress}%`,
-          wf.bpmnVersion || '',
-          wf.updatedAt || '',
-        ].join(';'));
-      }
+  /* ─── Document generation state ─── */
+  const [docData, setDocData] = React.useState(null);
+  const [docBusy, setDocBusy] = React.useState(null); // holds opId while loading
+  const [docSaved, setDocSaved] = React.useState(false);
+  const docCacheRef = React.useRef({}); // cache by opId
+  const [confirmRegen, setConfirmRegen] = React.useState(false);
+
+  /* ─── Generate contextual document ─── */
+  const handleGenerateDocument = async (opId) => {
+    const token = getAuthToken();
+    if (!token || docBusy) return;
+    // If cached, just reopen
+    if (docCacheRef.current[opId]) {
+      setDocData(docCacheRef.current[opId]);
+      return;
     }
-    const BOM = '\uFEFF';
-    const blob = new Blob([BOM + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+    setDocBusy(opId);
+    try {
+      const req = WORKFLOW_GENERATE_DOCUMENT(opId, token);
+      const res = await fetch(req.url, req.options);
+      if (res.ok) {
+        const data = await res.json();
+        data._opId = opId;
+        docCacheRef.current[opId] = data;
+        setDocData(data);
+        setDocSaved(false);
+      } else {
+        let errMsg = 'Erro ao gerar documento.';
+        try {
+          const errData = await res.json();
+          if (errData.detail) errMsg = errData.detail;
+        } catch { /* ignore */ }
+        alert(errMsg);
+      }
+    } catch {
+      alert('Erro de conexão ao gerar documento. Tente novamente.');
+    } finally {
+      setDocBusy(null);
+    }
+  };
+
+  /* ─── Discard document (trash) ─── */
+  const handleDiscardDocument = () => {
+    if (!docData?._opId) return;
+    setConfirmRegen(true);
+  };
+
+  const confirmDiscardDocument = () => {
+    if (!docData?._opId) return;
+    const opId = docData._opId;
+    delete docCacheRef.current[opId];
+    setConfirmRegen(false);
+    setDocData(null);
+    setDocSaved(false);
+  };
+
+  /* ─── Save document manually ─── */
+  const handleSaveDocument = async () => {
+    if (!docData) return;
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const saveReq = DOCUMENTO_CREATE({
+        opportunityId: docData._opId || '',
+        documentType: docData.documentType || 'Documento',
+        documentTitle: docData.documentTitle || 'Sem título',
+        header: docData.header || {},
+        sections: docData.sections || [],
+        footer: docData.footer || '',
+        signatureFields: docData.signatureFields || [],
+        owner: ownerName,
+        processName: docData._meta?.processName || '',
+        aiGenerated: docData._meta?.aiGenerated || false,
+      }, token);
+      const res = await fetch(saveReq.url, saveReq.options);
+      if (res.ok) {
+        const saved = await res.json();
+        setDocData(null);
+        navigate('/documentos', { state: { openDocId: saved.id } });
+      } else {
+        alert('Erro ao salvar documento.');
+      }
+    } catch {
+      alert('Erro ao salvar documento.');
+    }
+  };
+
+  const handlePrintDocument = () => {
+    if (!docData) return;
+    const esc = (s) =>
+      String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const now = new Date().toLocaleString('pt-BR');
+    const headerFieldsHtml = (docData.header?.fields || [])
+      .map((f) => `<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:#374151;white-space:nowrap">${esc(f.label)}</td><td style="padding:4px 0;color:#1a1a1a">${esc(f.value)}</td></tr>`)
+      .join('');
+    const sectionsHtml = (docData.sections || [])
+      .map((s) => `<div class="section"><h2>${esc(s.heading)}</h2><p>${esc(s.body)}</p></div>`)
+      .join('');
+    const signaturesHtml = (docData.signatureFields || [])
+      .map((s) => `<div class="signature-block"><div class="signature-line"></div><span>${esc(s)}</span></div>`)
+      .join('');
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(docData.documentTitle)}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Georgia,'Times New Roman',serif;max-width:720px;margin:48px auto;color:#1a1a1a;font-size:11pt;line-height:1.7}
+.letterhead{display:flex;align-items:center;gap:1rem;border-bottom:2px solid #1e9158;padding-bottom:.75rem;margin-bottom:.5rem}
+.letterhead-brand{font-family:Arial,sans-serif;font-size:.8rem;font-weight:700;color:#1e9158;letter-spacing:.05em;text-transform:uppercase}
+.letterhead-sub{font-family:Arial,sans-serif;font-size:.7rem;color:#888}
+.doc-type{font-family:Arial,sans-serif;font-size:.7rem;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.15rem}
+h1{font-family:Arial,sans-serif;font-size:1.45rem;color:#111;margin-bottom:.15rem;font-weight:700}
+.doc-meta{font-family:Arial,sans-serif;font-size:.78rem;color:#666;margin-bottom:1.2rem}
+.header-table{width:100%;border-collapse:collapse;margin-bottom:1.4rem;border:1px solid #e5e7eb;border-radius:4px}
+.header-table td{font-size:.88rem;border-bottom:1px solid #f3f4f6}
+.section{margin-bottom:1.3rem}
+.section h2{font-family:Arial,sans-serif;font-size:.95rem;font-weight:700;color:#1e9158;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.4rem;border-bottom:1px solid #d1fae5;padding-bottom:.2rem}
+.section p{font-size:10.5pt;white-space:pre-wrap}
+.footer-text{margin-top:2rem;font-family:Arial,sans-serif;font-size:.72rem;color:#aaa;border-top:1px solid #eee;padding-top:.5rem}
+.signatures{display:flex;gap:3rem;justify-content:center;margin-top:3rem;flex-wrap:wrap}
+.signature-block{text-align:center;min-width:180px}
+.signature-line{border-top:1px solid #aaa;margin-bottom:.3rem;width:100%}
+.signature-block span{font-family:Arial,sans-serif;font-size:.8rem;color:#555}
+@media print{body{margin:24px 32px}}
+</style></head><body>
+<div class="letterhead"><div><div class="letterhead-brand">BP-Company</div><div class="letterhead-sub">Sistema de Gestão de Processos</div></div></div>
+${docData.documentType ? `<div class="doc-type">${esc(docData.documentType)}</div>` : ''}
+<h1>${esc(docData.documentTitle)}</h1>
+<div class="doc-meta">Emitido em: ${now}</div>
+${headerFieldsHtml ? `<table class="header-table">${headerFieldsHtml}</table>` : ''}
+${sectionsHtml}
+${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
+<div class="footer-text">${esc(docData.footer || 'Documento gerado automaticamente · BP-Company')} &middot; ${now}</div>
+</body></html>`;
+    const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
+    const win = window.open(url, '_blank');
+    if (win) {
+      win.addEventListener('load', () => { win.print(); URL.revokeObjectURL(url); });
+    } else {
+      URL.revokeObjectURL(url);
+    }
   };
 
   /* ─── Derived data ─── */
@@ -465,26 +568,56 @@ const Workflows = () => {
     return src.filter((w) => w.status === wfFilter);
   }, [workflows, sharedWorkflows, page, wfFilter]);
 
+  // Sets of completed workflow opportunity IDs and names
+  const completedWfOpIds = React.useMemo(
+    () => new Set(workflows.filter((w) => w.status === 'completed').map((w) => w.opportunityId)),
+    [workflows],
+  );
+  const completedWfOpNames = React.useMemo(
+    () => new Set(
+      workflows
+        .filter((w) => w.status === 'completed')
+        .map((w) => (w.opportunityName || '').trim().toLowerCase())
+        .filter(Boolean),
+    ),
+    [workflows],
+  );
+
+  // Entities filtered to only those from completed workflows
+  const completedEntities = React.useMemo(
+    () => myEntities.filter((e) => {
+      const cat = (e.categoria || '').trim().toLowerCase();
+      return cat && completedWfOpNames.has(cat);
+    }),
+    [myEntities, completedWfOpNames],
+  );
+
+  // Tasks filtered to only those from completed workflows
+  const completedTasks = React.useMemo(
+    () => tasks.filter((t) => completedWfOpIds.has(t.opportunityId)),
+    [tasks, completedWfOpIds],
+  );
+
   const filteredTasks = React.useMemo(() => {
-    if (!taskFilter) return tasks;
-    return tasks.filter((t) => t.status === taskFilter);
-  }, [tasks, taskFilter]);
+    if (!taskFilter) return completedTasks;
+    return completedTasks.filter((t) => t.status === taskFilter);
+  }, [completedTasks, taskFilter]);
 
   const pendingCount = React.useMemo(
-    () => tasks.filter((t) => t.status === 'pending').length,
-    [tasks],
+    () => completedTasks.filter((t) => t.status === 'pending').length,
+    [completedTasks],
   );
 
   // Group entities by categoria
   const entitiesByCat = React.useMemo(() => {
     const map = {};
-    for (const e of myEntities) {
+    for (const e of completedEntities) {
       const cat = e.categoria || 'Sem categoria';
       if (!map[cat]) map[cat] = [];
       map[cat].push(e);
     }
     return map;
-  }, [myEntities]);
+  }, [completedEntities]);
 
   // Check if user can see "Meus Workflows" (is owner or admin)
   const canSeeMine = user?.admin || hasRole?.('admin', 'gestor') || true; // always visible for account owner
@@ -528,7 +661,6 @@ const Workflows = () => {
               <th className={styles.colStatus}>Status</th>
               <th className={styles.colStep}>Etapa Atual</th>
               <th className={styles.colProgress}>Progresso</th>
-              <th className={styles.colVersion}>Versão</th>
               <th className={styles.colUpdated}>Atualizado</th>
               <th className={styles.colActions}>Ações</th>
             </tr>
@@ -587,13 +719,6 @@ const Workflows = () => {
                     </span>
                   </div>
                 </td>
-                <td className={styles.colVersion}>
-                  {wf.bpmnVersion ? (
-                    <span className={styles.versionBadge}>v{wf.bpmnVersion}</span>
-                  ) : (
-                    <span style={{ color: '#9ca3af' }}>—</span>
-                  )}
-                </td>
                 <td className={styles.colUpdated}>
                   {formatDate(wf.updatedAt)}
                 </td>
@@ -610,6 +735,15 @@ const Workflows = () => {
                         {wf.shared ? '🔒' : '🔗'}
                       </button>
                     )}
+                    <button
+                      type="button"
+                      className={`${styles.actionButton} ${styles.docBtn}`}
+                      title="Gerar Documento"
+                      disabled={docBusy === wf.opportunityId}
+                      onClick={() => handleGenerateDocument(wf.opportunityId)}
+                    >
+                      {docBusy === wf.opportunityId ? '⏳' : '📄'}
+                    </button>
                     <button
                       type="button"
                       className={`${styles.actionButton} ${styles.openButton}`}
@@ -838,11 +972,24 @@ const Workflows = () => {
           const taskCount = nodes.filter((n) => n.nodeType === 'task').length;
           const condCount = nodes.filter((n) => n.nodeType === 'condicional').length;
           const entCount = nodes.filter((n) => n.nodeType === 'entidade').length;
+          const isCompleted = completedWfOpIds.has(opp.id);
+          const hasWorkflow = workflows.some((w) => w.opportunityId === opp.id);
           return (
             <div key={opp.id} className={styles.card} onClick={() => handleOpenOpp(opp)}>
               <div className={styles.cardHeader}>
                 <h3 className={styles.cardTitle}>{bpmn.name || opp.nome || opp.name}</h3>
-                {opp.shared && <span className={styles.sharedBadge}>compartilhado</span>}
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  {isCompleted && (
+                    <span className={styles.bpmnBadgeCompleted}>✔ Concluído</span>
+                  )}
+                  {!isCompleted && hasWorkflow && (
+                    <span className={styles.bpmnBadgeRunning}>Em andamento</span>
+                  )}
+                  {!hasWorkflow && (
+                    <span className={styles.bpmnBadgePending}>Sem workflow</span>
+                  )}
+                  {opp.shared && <span className={styles.sharedBadge}>compartilhado</span>}
+                </div>
               </div>
               <div className={styles.cardMeta}>
                 <span className={styles.cardStat}>{nodes.length} nós</span>
@@ -873,7 +1020,7 @@ const Workflows = () => {
   };
 
   const renderEntities = () => {
-    if (myEntities.length === 0) {
+    if (completedEntities.length === 0) {
       return (
         <div className={styles.tableWrapper}>
           <div className={styles.emptyState}>
@@ -927,16 +1074,6 @@ const Workflows = () => {
           >
             📊 Métricas
           </button>
-          {view === 'workflows' && (
-            <button
-              type="button"
-              className={`${styles.actionButton} ${styles.exportBtn}`}
-              onClick={() => handleExportCSV('workflows')}
-              title="Exportar CSV"
-            >
-              📥 CSV
-            </button>
-          )}
           <div className={styles.pageTabs}>
             {PAGES.map((p) => (
               <button
@@ -980,8 +1117,8 @@ const Workflows = () => {
                     {myOpportunities.filter((o) => o.bpmn && (o.bpmn.nodes || []).length > 0).length}
                   </span>
                 )}
-                {s.key === 'entidades' && myEntities.length > 0 && (
-                  <span className={styles.sectionCount}>{myEntities.length}</span>
+                {s.key === 'entidades' && completedEntities.length > 0 && (
+                  <span className={styles.sectionCount}>{completedEntities.length}</span>
                 )}
               </button>
             ))}
@@ -1069,14 +1206,6 @@ const Workflows = () => {
                       ✕ Limpar
                     </button>
                   )}
-                  <button
-                    type="button"
-                    className={`${styles.actionButton} ${styles.exportBtn}`}
-                    onClick={() => handleExportCSV('tasks')}
-                    title="Exportar CSV"
-                  >
-                    📥 CSV
-                  </button>
                 </div>
               )}
 
@@ -1231,6 +1360,93 @@ const Workflows = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════
+          DOCUMENT MODAL
+         ═══════════════════════════════════════════════ */}
+      {docData && (
+        <div className={styles.modalOverlay} onClick={() => setDocData(null)}>
+          <div className={`${styles.modalContent} ${styles.docModalContent}`} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h3>📄 {docData.documentTitle || 'Documento'}</h3>
+              <button className={styles.modalClose} onClick={() => setDocData(null)}>✕</button>
+            </div>
+            <div className={styles.docPreview}>
+              {docData.documentType && (
+                <div className={styles.docType}>{docData.documentType}</div>
+              )}
+              {docData.header?.fields?.length > 0 && (
+                <table className={styles.docHeaderTable}>
+                  <tbody>
+                    {docData.header.fields.map((f, i) => (
+                      <tr key={i}>
+                        <td className={styles.docHeaderLabel}>{f.label}</td>
+                        <td className={styles.docHeaderValue}>{f.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              {(docData.sections || []).map((s, i) => (
+                <div key={i} className={styles.docSection}>
+                  <h4 className={styles.docSectionTitle}>{s.heading}</h4>
+                  <p className={styles.docSectionBody}>{s.body}</p>
+                </div>
+              ))}
+              {docData.signatureFields?.length > 0 && (
+                <div className={styles.docSignatures}>
+                  {docData.signatureFields.map((s, i) => (
+                    <div key={i} className={styles.docSignatureBlock}>
+                      <div className={styles.docSignatureLine} />
+                      <span>{s}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {docData.footer && (
+                <div className={styles.docFooter}>{docData.footer}</div>
+              )}
+            </div>
+            <div className={styles.docActions}>
+              <button
+                type="button"
+                className={styles.docSaveBtn}
+                onClick={handleSaveDocument}
+                title="Salvar documento"
+              >
+                💾
+              </button>
+              <button
+                type="button"
+                className={styles.docPrintBtn}
+                onClick={handlePrintDocument}
+                title="Imprimir / PDF"
+              >
+                🖨️
+              </button>
+              <button
+                type="button"
+                className={styles.docCloseBtn}
+                onClick={handleDiscardDocument}
+                title="Descartar documento"
+              >
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmRegen && (
+        <Close
+          title="Descartar Documento"
+          message="Este documento será descartado. Um novo será gerado ao acionar o Gerador de Documento novamente."
+          confirmLabel="Descartar"
+          cancelLabel="Cancelar"
+          onConfirm={confirmDiscardDocument}
+          onCancel={() => setConfirmRegen(false)}
+        />
       )}
     </div>
   );

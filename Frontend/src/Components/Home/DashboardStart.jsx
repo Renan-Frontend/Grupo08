@@ -15,6 +15,7 @@ import {
 import { getOpportunityName } from '../GerarBPMN/opportunityHelpers';
 import { slugifyBpmnName } from '../GerarBPMN/gerarBpmnCreate.shared';
 import { parseSpreadsheetRaw, parseAllSheets, detectWidgetsForSheets } from './Dashboard/parseSpreadsheet';
+import { exportDashboardXlsx } from '../../Utils/exportXlsx';
 import { API_URL } from '../../Api';
 
 const STORAGE_KEY = 'bp_dashboards_v1';
@@ -62,9 +63,15 @@ const ALL_WIDGETS = [
     description: 'Funil de oportunidades por etapa',
     icon: '🔽',
   },
+  {
+    id: 'kpiTable',
+    label: 'Tabela de Indicadores',
+    description: 'Indicadores com meta, tendência e média por mês',
+    icon: '📋',
+  },
 ];
 
-const DEFAULT_WIDGETS = ALL_WIDGETS.map((w) => w.id);
+const DEFAULT_WIDGETS = ALL_WIDGETS.filter((w) => w.id !== 'kpiTable').map((w) => w.id);
 
 const slugify = (value = '') =>
   String(value)
@@ -285,6 +292,10 @@ const DashboardStart = () => {
   const [activeDataWidget, setActiveDataWidget] = React.useState('metrics');
   const [dataEditRows, setDataEditRows] = React.useState([]);
 
+  // KPI Table creation state
+  const [kpiTableSections, setKpiTableSections] = React.useState([]); // [{name, rows: [{name, meta, tendencia, months:{}, media}]}]
+  const [kpiNewSectionName, setKpiNewSectionName] = React.useState('');
+
   // Spreadsheet import state
   const [importStep, setImportStep] = React.useState('upload'); // 'upload' | 'preview'
   const [importLoading, setImportLoading] = React.useState(false);
@@ -404,6 +415,8 @@ const DashboardStart = () => {
     setCreateBpmnSearch('');
     setInitChartData(cloneChartData());
     setActiveDataWidget('metrics');
+    setKpiTableSections([]);
+    setKpiNewSectionName('');
     setModalStep(MODAL_STEP_NAME);
     if (!location.pathname.endsWith('/criar')) {
       navigate('/dashboard/criar', { replace: true });
@@ -428,6 +441,8 @@ const DashboardStart = () => {
     setInitChartData(cloneChartData());
     setActiveDataWidget('metrics');
     setDataEditRows([]);
+    setKpiTableSections([]);
+    setKpiNewSectionName('');
     if (location.pathname.endsWith('/criar'))
       navigate('/dashboard', { replace: true });
   };
@@ -457,19 +472,27 @@ const DashboardStart = () => {
   };
 
   const goToData = () => {
-    // pick first active widget as default tab
-    const first = selectedWidgets[0] || 'metrics';
+    // pick first active non-kpi widget as default tab, or kpiTable if it's the only one
+    const first = selectedWidgets.find((w) => w !== 'kpiTable') || selectedWidgets[0] || 'metrics';
     setActiveDataWidget(first);
-    setDataEditRows(initChartData[first].map((r, i) => ({ ...r, _id: i })));
+    if (first === 'kpiTable') {
+      setDataEditRows([]);
+    } else {
+      setDataEditRows(initChartData[first].map((r, i) => ({ ...r, _id: i })));
+    }
     setModalStep(MODAL_STEP_DATA);
   };
 
   const switchDataWidget = (wid) => {
     // save current rows before switching tab
-    saveDataRows();
-    const rows = initChartData[wid].map((r, i) => ({ ...r, _id: i }));
+    if (activeDataWidget !== 'kpiTable') saveDataRows();
+    if (wid === 'kpiTable') {
+      setDataEditRows([]);
+    } else {
+      const rows = initChartData[wid].map((r, i) => ({ ...r, _id: i }));
+      setDataEditRows(rows);
+    }
     setActiveDataWidget(wid);
-    setDataEditRows(rows);
   };
 
   const saveDataRows = () => {
@@ -704,13 +727,15 @@ const DashboardStart = () => {
           const s = String(h).trim();
           let label = null;
 
-          // 1) Excel serial date number (e.g. 45108 → 2023-07-01)
-          if (/^\d{5}$/.test(s)) {
-            const serial = Number(s);
-            const epoch = new Date(1899, 11, 30);
-            const d = new Date(epoch.getTime() + serial * 86400000);
-            if (!isNaN(d.getTime())) {
-              label = `${MONTH_NAMES_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+          // 1) Excel serial date number (e.g. 45108 → 2023-07-01) — also accept decimals
+          if (/^\d{4,5}(\.\d+)?$/.test(s)) {
+            const serial = Math.floor(Number(s));
+            if (serial > 25569 && serial < 60000) {
+              const epoch = new Date(1899, 11, 30);
+              const d = new Date(epoch.getTime() + serial * 86400000);
+              if (!isNaN(d.getTime())) {
+                label = `${MONTH_NAMES_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+              }
             }
           }
           // 2) ISO date: 2023-05-01 or 2023-05-01T...
@@ -745,26 +770,58 @@ const DashboardStart = () => {
               }
             }
           }
+          // 5) Formatted dates like "5/1/2023", "01/05/23", "5/1/23" (M/D/Y or D/M/Y)
+          if (!label) {
+            const mdy = s.match(/^(\d{1,2})[/\-](\d{1,2})[/\-](\d{2,4})$/);
+            if (mdy) {
+              const a = Number(mdy[1]), b = Number(mdy[2]);
+              let yr = Number(mdy[3]); if (yr < 100) yr += 2000;
+              const mon = a <= 12 ? a - 1 : b - 1;
+              if (mon >= 0 && mon < 12 && yr >= 2000 && yr <= 2100) {
+                label = `${MONTH_NAMES_PT[mon]}/${String(yr).slice(2)}`;
+              }
+            }
+          }
+          // 6) Fallback: try JS Date.parse for any other date format
+          if (!label) {
+            const d = new Date(s);
+            if (!isNaN(d.getTime()) && d.getFullYear() >= 2000 && d.getFullYear() <= 2100) {
+              label = `${MONTH_NAMES_PT[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`;
+            }
+          }
 
           if (label) monthCols.push({ idx, label });
         });
         console.log('[KPI Import] headers:', headers, 'monthCols:', monthCols.map(c => c.label));
 
         const sectionName = sheetData.sheetName;
-        const kpiRows = sheetData.rows.map((raw) => {
+        const kpiRows = sheetData.rows.map((raw, rowIdx) => {
+          // fmtRow has the formatted (display) text from xlsx for each cell
+          // e.g. a cell with value 0.76 and format "0%" → fmtRow has "76%"
+          // a cell with value 3.2 and format "General" → fmtRow has "3.2"
+          const fmtRow = sheetData.fmtRows?.[rowIdx];
           const rawKeys = Object.keys(raw);
           const name = nameIdx >= 0 ? String(raw[headers[nameIdx]] ?? '') : String(raw[rawKeys[0]] ?? '');
           const meta = metaIdx >= 0 ? raw[headers[metaIdx]] : '';
-          const tendencia = tendIdx >= 0 ? String(raw[headers[tendIdx]] ?? '') : '';
+          // Read tendência — prefer formatted text from xlsx (e.g. "↑", "Subir")
+          const rawTend = tendIdx >= 0 ? raw[headers[tendIdx]] : '';
+          const fmtTend = fmtRow && tendIdx >= 0 ? String(fmtRow[headers[tendIdx]] ?? '').trim() : '';
+          let tendencia = fmtTend || String(rawTend ?? '').trim();
+          // Normalize tendência arrows
+          if (/↑|⬆|🔼|up|cima|subir|sobe/i.test(tendencia)) tendencia = '↑';
+          else if (/↓|⬇|🔽|down|baixo|cair|desce/i.test(tendencia)) tendencia = '↓';
+          else if (/→|➡|⮕|lateral|estável|estavel|mantém|mantem/i.test(tendencia)) tendencia = '→';
+          else if (tendencia && !/^[↑↓→]$/.test(tendencia)) tendencia = '→';
           const media = mediaIdx >= 0 ? raw[headers[mediaIdx]] : '';
 
           const months = {};
+          const monthsRaw = {};
           monthCols.forEach(({ idx, label }) => {
             let val = raw[headers[idx]];
             if (val === '' || val === undefined || val === null) return;
-            // Parse percentage strings like "16,30%" or "16.30%"
+            // Parse percentage strings like "16,30%", "16.30%", "-7%"
             if (typeof val === 'string') {
-              const pctMatch = val.match(/^([\d.,]+)\s*%$/);
+              const pctMatch = val.match(/^(-?[\d.,]+)\s*%$/);
               if (pctMatch) {
                 val = Number(pctMatch[1].replace(',', '.')) / 100;
               } else {
@@ -776,21 +833,54 @@ const DashboardStart = () => {
               }
             }
             months[label] = val;
+            // Use xlsx formatted text (e.g. "76%", "3,2") for lossless export round-trip
+            // This preserves the EXACT cell format: percentage cells stay "76%", plain numbers stay "3,2"
+            const fmtVal = fmtRow?.[headers[idx]];
+            if (fmtVal !== undefined && fmtVal !== null && fmtVal !== '') {
+              monthsRaw[label] = String(fmtVal);
+            }
           });
+
+          // Auto-calculate tendência when column is empty
+          if (!tendencia || !tendencia.trim() || tendencia === 'undefined') {
+            const monthVals = Object.values(months).filter(v => v != null && !isNaN(v));
+            if (monthVals.length >= 2) {
+              // Use only the last few values for trend, normalize to same scale
+              const recent = monthVals.slice(-4);
+              // Normalize: if values are mixed (some <=1.5, some >1.5), use raw diffs on original scale
+              const diffs = [];
+              for (let i = 1; i < recent.length; i++) diffs.push(recent[i] - recent[i - 1]);
+              const avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
+              // Use relative threshold based on data magnitude
+              const maxAbs = Math.max(...recent.map(v => Math.abs(v)), 1);
+              const threshold = maxAbs * 0.001;
+              if (avgDiff > threshold) tendencia = '↑';
+              else if (avgDiff < -threshold) tendencia = '↓';
+              else tendencia = '→';
+            }
+          }
 
           // Parse meta: handle "15%", "50%", 0.15, "definir"
           let parsedMeta = meta;
+          let metaType = 'value';
           if (typeof meta === 'string') {
             const metaPct = meta.match(/^([\d.,]+)\s*%$/);
-            if (metaPct) parsedMeta = Number(metaPct[1].replace(',', '.')) / 100;
-            else if (meta !== 'definir' && meta !== '') {
+            if (metaPct) {
+              parsedMeta = Number(metaPct[1].replace(',', '.')) / 100;
+              metaType = 'percent';
+            } else if (meta !== 'definir' && meta !== '') {
               const n = Number(meta.replace(',', '.'));
               if (!isNaN(n)) parsedMeta = n;
             }
           }
+          // If meta is a small decimal (≤1), treat as percent
+          if (metaType === 'value' && typeof parsedMeta === 'number' && parsedMeta > 0 && parsedMeta <= 1) {
+            metaType = 'percent';
+          }
 
-          // Parse media similarly
+          // Parse media: from Media column or auto-calculate from months
           let parsedMedia = media;
+          let mediaAutoCalc = false;
           if (typeof media === 'string') {
             const mediaPct = media.match(/^([\d.,]+)\s*%$/);
             if (mediaPct) parsedMedia = Number(mediaPct[1].replace(',', '.')) / 100;
@@ -799,8 +889,29 @@ const DashboardStart = () => {
               if (!isNaN(n)) parsedMedia = n;
             }
           }
+          // Auto-calculate media if not provided
+          if (parsedMedia === '' || parsedMedia === undefined || parsedMedia === null || (typeof parsedMedia === 'string' && isNaN(Number(parsedMedia)))) {
+            const monthVals = Object.values(months).filter(v => v != null && !isNaN(v));
+            if (monthVals.length > 0) {
+              parsedMedia = monthVals.reduce((a, b) => a + b, 0) / monthVals.length;
+              mediaAutoCalc = true;
+            }
+          }
+          // Don't round media — keep full precision (14.90% must stay 0.149, not round to 0.15)
 
-          return { section: sectionName, name, meta: parsedMeta, tendencia, months, media: parsedMedia };
+          // Use xlsx formatted text for meta raw (e.g. "0%", "76%", "definir")
+          const fmtMeta = fmtRow && metaIdx >= 0 ? fmtRow[headers[metaIdx]] : undefined;
+          const finalMetaRaw = (fmtMeta !== undefined && fmtMeta !== null && fmtMeta !== '')
+            ? String(fmtMeta)
+            : (typeof meta === 'string' ? meta : undefined);
+
+          // Use xlsx formatted text for media raw — only when media came from the spreadsheet (not auto-calc)
+          const fmtMedia = fmtRow && mediaIdx >= 0 ? fmtRow[headers[mediaIdx]] : undefined;
+          const finalMediaRaw = !mediaAutoCalc && fmtMedia !== undefined && fmtMedia !== null && fmtMedia !== ''
+            ? String(fmtMedia)
+            : undefined;
+
+          return { section: sectionName, name, meta: parsedMeta, tendencia, months, monthsRaw, media: parsedMedia, metaRaw: finalMetaRaw, mediaRaw: finalMediaRaw, metaType };
         });
 
         // Append to existing kpiTable data (multiple sections)
@@ -872,46 +983,7 @@ const DashboardStart = () => {
     const widgets = usedWidgets.length ? usedWidgets : ['revenue'];
     const trimmed = importName.trim();
 
-    // ── If kpiTable has multiple sections, create one dashboard per section ──
-    const kpiRows = chartData.kpiTable || [];
-    const kpiSections = [];
-    const kpiSectionMap = {};
-    kpiRows.forEach((row) => {
-      const sec = row.section || 'Indicadores';
-      if (!kpiSectionMap[sec]) { kpiSectionMap[sec] = []; kpiSections.push(sec); }
-      kpiSectionMap[sec].push(row);
-    });
-
-    if (kpiSections.length > 1) {
-      // Create one dashboard per section
-      const newEntries = [];
-      kpiSections.forEach((sec) => {
-        const sectionName = sec;
-        const sectionSlug = slugify(sectionName);
-        const sectionChartData = cloneChartData();
-        sectionChartData.kpiTable = kpiSectionMap[sec];
-        newEntries.push({
-          id: `${sectionSlug}-${Date.now()}`,
-          slug: sectionSlug,
-          name: sectionName,
-          widgets: ['kpiTable'],
-          linkedBpmn: null,
-          chartData: sectionChartData,
-          originalKpiTable: JSON.parse(JSON.stringify(kpiSectionMap[sec])),
-          createdBy: user?.nome || user?.email || '',
-          createdAt: new Date().toISOString(),
-        });
-      });
-      const slugsToRemove = new Set(newEntries.map((e) => e.slug));
-      const next = [...dashboards.filter((d) => !slugsToRemove.has(d.slug)), ...newEntries];
-      setDashboards(next);
-      saveDashboards(next);
-      closeImport();
-      // Multiple dashboards created — go to the list
-      navigate('/dashboard');
-      return;
-    }
-
+    // ── All kpiTable sections stay in one dashboard ──
     const slug = slugify(trimmed);
     const entry = {
       id: `${slug}-${Date.now()}`,
@@ -1106,11 +1178,11 @@ const DashboardStart = () => {
                         <button
                           type="button"
                           className={`${styles.actionButton} ${styles.viewButton}`}
-                          onClick={() => navigate(item.slug)}
-                          title="Visualizar dashboard"
-                          aria-label="Visualizar dashboard"
+                          onClick={() => exportDashboardXlsx({ widgets: item.widgets || [], chartData: item.chartData || {}, name: item.name || 'Dashboard' })}
+                          title="Exportar Excel"
+                          aria-label="Exportar Excel"
                         >
-                          👁️
+                          📥
                         </button>
                         {canDelete && (
                           <button

@@ -1,0 +1,650 @@
+.container {
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 0.2rem;
+}
+
+.subtitle {
+  font-size: 0.82rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.headerInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.countBadge {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.loadingText {
+  text-align: center;
+  color: #9ca3af;
+  padding: 2rem 0;
+}
+
+/* ─── Empty state ─── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1rem;
+  gap: 0.5rem;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  opacity: 0.6;
+}
+
+.emptyText {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 600;
+  margin: 0;
+}
+
+.emptyHint {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ─── Document cards grid ─── */
+
+.docGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.docCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.docCard:hover {
+  border-color: #86efac;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+
+.docCardActive {
+  border-color: #1e9158;
+  box-shadow: 0 0 0 2px rgba(30, 145, 88, 0.15);
+}
+
+.docCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
+.docCardType {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.aiBadge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #7c3aed;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  border-radius: 4px;
+  padding: 0.08rem 0.35rem;
+}
+
+.docCardTitle {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.docCardMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  gap: 0.5rem;
+}
+
+.docCardActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding-top: 0.3rem;
+  border-top: 1px solid #f3f4f6;
+}
+
+.docCardBtn {
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.docCardBtn:hover {
+  background: #f3f4f6;
+}
+
+.docCardBtnView {
+  border-color: #16a34a;
+  color: #15803d;
+}
+.docCardBtnView:hover {
+  background: #ecfdf3;
+}
+
+.docCardBtnPrint {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+.docCardBtnPrint:hover {
+  background: #eff6ff;
+}
+
+.docCardBtnDanger {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+.docCardBtnDanger:hover {
+  background: #fef2f2;
+}
+
+/* ─── Modal ─── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 12px;
+  width: 92%;
+  max-width: 680px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #1a1a2e;
+}
+
+.modalClose {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 0.2rem;
+}
+
+.modalClose:hover {
+  color: #111;
+}
+
+/* ─── Document preview (inside modal) ─── */
+
+.docPreview {
+  padding: 1.2rem 1.4rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.docType {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.docHeaderTable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.docHeaderTable tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+.docHeaderTable tr:last-child {
+  border-bottom: none;
+}
+
+.docHeaderLabel {
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  color: #374151;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  background: #f9fafb;
+  width: 30%;
+}
+
+.docHeaderValue {
+  padding: 0.4rem 0.75rem;
+  color: #1a1a1a;
+  font-size: 0.82rem;
+}
+
+.docSection {
+  border-left: 3px solid #d1fae5;
+  padding-left: 0.8rem;
+}
+
+.docSectionTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e9158;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.3rem;
+}
+
+.docSectionBody {
+  font-size: 0.82rem;
+  color: #2c3e50;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin: 0;
+}
+
+.docSignatures {
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.docSignatureBlock {
+  text-align: center;
+  min-width: 150px;
+}
+
+.docSignatureLine {
+  border-top: 1px solid #aaa;
+  margin-bottom: 0.3rem;
+  width: 100%;
+}
+
+.docSignatureBlock span {
+  font-size: 0.75rem;
+  color: #555;
+}
+
+.docFooter {
+  font-size: 0.7rem;
+  color: #aaa;
+  border-top: 1px solid #eee;
+  padding-top: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.docActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  padding: 0.75rem 1.2rem;
+  border-top: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background: #fff;
+  border-radius: 0 0 12px 12px;
+}
+
+.docPrintBtn {
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  background: #fff;
+  border: 1px solid #2563eb;
+  color: #1d4ed8;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.docPrintBtn:hover {
+  background: #eff6ff;
+}
+
+.docCloseBtn {
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  color: #374151;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.docCloseBtn:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* ─── Responsive ─── */
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem;
+  }
+  .docGrid {
+    grid-template-columns: 1fr;
+  }
+  .modalContent {
+    width: 95%;
+    max-height: 85vh;
+  }
+}
+
+/* ─── Edit mode ─────────────────────────────────── */
+.modalContentWide {
+  max-width: 780px;
+}
+
+.editTitleInput {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  outline: none;
+  background: #fafafa;
+}
+.editTitleInput:focus {
+  border-color: #1e9158;
+  box-shadow: 0 0 0 2px rgba(30, 145, 88, 0.12);
+}
+
+.editTypeInput {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  outline: none;
+  margin-bottom: 0.6rem;
+  background: #fafafa;
+  width: fit-content;
+}
+.editTypeInput:focus {
+  border-color: #1e9158;
+}
+
+.editInlineInput {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.85rem;
+  outline: none;
+  background: #fafafa;
+}
+.editInlineInput:focus {
+  border-color: #1e9158;
+}
+
+.editSections {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.editSectionBlock {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.6rem;
+  background: #fafbfc;
+}
+
+.editSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.editSectionTitleInput {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e9158;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  outline: none;
+  background: #fff;
+}
+.editSectionTitleInput:focus {
+  border-color: #1e9158;
+}
+
+.editSectionBodyInput {
+  width: 100%;
+  font-size: 0.85rem;
+  line-height: 1.55;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 0.4rem 0.5rem;
+  outline: none;
+  resize: vertical;
+  background: #fff;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.editSectionBodyInput:focus {
+  border-color: #1e9158;
+}
+
+.editRemoveBtn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.editRemoveBtn:hover {
+  background: #fecaca;
+}
+
+.editAddSectionBtn {
+  border: 1px dashed #9ca3af;
+  background: transparent;
+  color: #6b7280;
+  padding: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+.editAddSectionBtn:hover {
+  border-color: #1e9158;
+  color: #1e9158;
+}
+
+.editFooterInput {
+  width: 100%;
+  font-size: 0.72rem;
+  color: #9ca3af;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  padding: 0.3rem 0.5rem;
+  outline: none;
+  margin-top: 1rem;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+.editFooterInput:focus {
+  border-color: #1e9158;
+}
+
+.editSaveBtn {
+  background: #1e9158;
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.editSaveBtn:hover {
+  background: #177a4a;
+}
+.editSaveBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editCancelBtn {
+  background: transparent;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.editCancelBtn:hover {
+  background: #f3f4f6;
+}
+
+.docEditBtn {
+  width: 2.1rem;
+  height: 2.1rem;
+  min-width: 2.1rem;
+  min-height: 2.1rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  line-height: 1;
+  background: #fff;
+  border: 1px solid #f59e0b;
+  color: #d97706;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.docEditBtn:hover {
+  background: #fffbeb;
+}

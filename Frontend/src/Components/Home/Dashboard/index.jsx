@@ -12,6 +12,7 @@ import TasksGrid from './TasksGrid';
 import PipelineChart from './PipelineChart';
 import KpiChart from './KpiTable';
 import DataEditModal from './DataEditModal';
+import { downloadXlsx, exportDashboardXlsx } from '../../../Utils/exportXlsx';
 
 const STORAGE_KEY = 'bp_dashboards_v1';
 
@@ -161,6 +162,25 @@ const Dashboard = () => {
     kpiTable:    entry?.chartData?.kpiTable             || [],
   });
 
+  const [widgetMetas, setWidgetMetas] = useState(() => entry?.widgetMetas || {});
+  const [widgetMetaTypes, setWidgetMetaTypes] = useState(() => entry?.widgetMetaTypes || {});
+
+  const handleMetaChange = useCallback((widget, value) => {
+    setWidgetMetas((prev) => {
+      const next = { ...prev, [widget]: value };
+      if (dashboardSlug) persistEntry(dashboardSlug, { widgetMetas: next });
+      return next;
+    });
+  }, [dashboardSlug]);
+
+  const handleMetaTypeChange = useCallback((widget, type) => {
+    setWidgetMetaTypes((prev) => {
+      const next = { ...prev, [widget]: type };
+      if (dashboardSlug) persistEntry(dashboardSlug, { widgetMetaTypes: next });
+      return next;
+    });
+  }, [dashboardSlug]);
+
   const originalKpiTable = entry?.originalKpiTable || null;
 
   // Auto-save originalKpiTable for older dashboards that don't have it
@@ -186,6 +206,22 @@ const Dashboard = () => {
     setEditingWidget(null);
   }, [chartData, dashboardSlug]);
 
+  const handleKpiMetaChange = useCallback((index, value) => {
+    const updated = [...chartData.kpiTable];
+    updated[index] = { ...updated[index], meta: value };
+    const newData = { ...chartData, kpiTable: updated };
+    setChartData(newData);
+    if (dashboardSlug) persistEntry(dashboardSlug, { chartData: newData });
+  }, [chartData, dashboardSlug]);
+
+  const handleKpiMetaTypeChange = useCallback((index, type) => {
+    const updated = [...chartData.kpiTable];
+    updated[index] = { ...updated[index], metaType: type };
+    const newData = { ...chartData, kpiTable: updated };
+    setChartData(newData);
+    if (dashboardSlug) persistEntry(dashboardSlug, { chartData: newData });
+  }, [chartData, dashboardSlug]);
+
   const handleEditKpi = useCallback((index) => {
     const row = chartData.kpiTable[index];
     if (!row) return;
@@ -197,7 +233,7 @@ const Dashboard = () => {
     }
     setKpiEditForm({
       name: row.name || '',
-      meta: row.meta !== undefined && row.meta !== null ? String(row.meta) : '',
+      meta: row.meta === 'definir' ? 'definir' : (row.meta !== undefined && row.meta !== null ? String(row.meta) : ''),
       tendencia: row.tendencia || '',
       media: row.media !== undefined && row.media !== null ? String(row.media) : '',
       months: monthsCopy,
@@ -207,6 +243,9 @@ const Dashboard = () => {
 
   const handleSaveKpi = useCallback(() => {
     if (editingKpiIndex === null) return;
+    // Allow 'definir' or empty meta (will default to 'definir')
+    const metaStr = String(kpiEditForm.meta).trim();
+    const safeMeta = metaStr === '' ? 'definir' : metaStr;
     const updated = [...chartData.kpiTable];
     const prev = updated[editingKpiIndex];
     const parsedMonths = {};
@@ -218,10 +257,18 @@ const Dashboard = () => {
       const n = Number(s.replace(',', '.'));
       parsedMonths[k] = isNaN(n) ? v : n;
     });
+    // Parse meta: keep 'definir' as string, otherwise convert
+    let parsedMeta = safeMeta;
+    if (safeMeta !== 'definir') {
+      const metaPct = safeMeta.match(/^([\d.,]+)\s*%$/);
+      if (metaPct) parsedMeta = Number(metaPct[1].replace(',', '.')) / 100;
+      else { const n = Number(safeMeta.replace(',', '.')); if (!isNaN(n)) parsedMeta = n; }
+    }
     updated[editingKpiIndex] = {
       ...prev,
       name: kpiEditForm.name,
-      meta: kpiEditForm.meta,
+      meta: parsedMeta,
+      metaRaw: safeMeta,
       tendencia: kpiEditForm.tendencia,
       media: kpiEditForm.media,
       months: parsedMonths,
@@ -272,6 +319,11 @@ const Dashboard = () => {
     if (dashboardSlug) persistEntry(dashboardSlug, { chartData: newData });
   }, [chartData, dashboardSlug]);
 
+  /* ─── Export XLSX (modelo indicadores) ─── */
+  const handleExportCSV = useCallback(() => {
+    exportDashboardXlsx({ widgets, chartData, name });
+  }, [widgets, chartData, name]);
+
   return (
     <div className={styles.dashboardContainer}>
       <div className={styles.pageHeader}>
@@ -284,6 +336,14 @@ const Dashboard = () => {
           ← Dashboards
         </button>
         <h1 className={styles.pageTitle}>{name}</h1>
+        <button
+          type="button"
+          onClick={handleExportCSV}
+          title="Exportar dashboard como Excel"
+          style={{ marginLeft: 'auto', padding: '0.4rem 0.9rem', border: '1.5px solid #e2e8f0', borderRadius: 6, background: 'white', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+        >
+          📥 Exportar Excel
+        </button>
       </div>
 
       {(widgets.includes('metrics') || widgets.includes('tasks')) && (
@@ -292,12 +352,20 @@ const Dashboard = () => {
             <MetricsGrid
               metrics={chartData.metrics}
               onEditData={isReadOnlyMode ? null : () => setEditingWidget('metrics')}
+              meta={widgetMetas.metrics ?? null}
+              metaType={widgetMetaTypes.metrics || 'value'}
+              onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('metrics', v)}
+              onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('metrics', t)}
             />
           )}
           {widgets.includes('tasks') && (
             <TasksGrid
               tasks={chartData.tasks}
               onEditData={isReadOnlyMode ? null : () => setEditingWidget('tasks')}
+              meta={widgetMetas.tasks ?? null}
+              metaType={widgetMetaTypes.tasks || 'value'}
+              onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('tasks', v)}
+              onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('tasks', t)}
             />
           )}
         </div>
@@ -309,12 +377,20 @@ const Dashboard = () => {
             <RevenueChart
               data={chartData.revenue}
               onEditData={isReadOnlyMode ? null : () => setEditingWidget('revenue')}
+              meta={widgetMetas.revenue ?? null}
+              metaType={widgetMetaTypes.revenue || 'value'}
+              onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('revenue', v)}
+              onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('revenue', t)}
             />
           )}
           {widgets.includes('sales') && (
             <SalesBarChart
               data={chartData.sales}
               onEditData={isReadOnlyMode ? null : () => setEditingWidget('sales')}
+              meta={widgetMetas.sales ?? null}
+              metaType={widgetMetaTypes.sales || 'value'}
+              onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('sales', v)}
+              onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('sales', t)}
             />
           )}
         </div>
@@ -326,12 +402,20 @@ const Dashboard = () => {
             <ConversionsChart
               data={chartData.conversions}
               onEditData={isReadOnlyMode ? null : () => setEditingWidget('conversions')}
+              meta={widgetMetas.conversions ?? null}
+              metaType={widgetMetaTypes.conversions || 'value'}
+              onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('conversions', v)}
+              onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('conversions', t)}
             />
           )}
           {widgets.includes('expenses') && (
             <ExpensesChart
               data={chartData.expenses}
               onEditData={isReadOnlyMode ? null : () => setEditingWidget('expenses')}
+              meta={widgetMetas.expenses ?? null}
+              metaType={widgetMetaTypes.expenses || 'value'}
+              onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('expenses', v)}
+              onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('expenses', t)}
             />
           )}
         </div>
@@ -341,6 +425,10 @@ const Dashboard = () => {
         <PipelineChart
           data={chartData.pipeline}
           onEditData={isReadOnlyMode ? null : () => setEditingWidget('pipeline')}
+          meta={widgetMetas.pipeline ?? null}
+          metaType={widgetMetaTypes.pipeline || 'value'}
+          onMetaChange={isReadOnlyMode ? null : (v) => handleMetaChange('pipeline', v)}
+          onMetaTypeChange={isReadOnlyMode ? null : (t) => handleMetaTypeChange('pipeline', t)}
         />
       )}
 
@@ -350,6 +438,8 @@ const Dashboard = () => {
           onEditIndicator={isReadOnlyMode ? null : handleEditKpi}
           onDeleteIndicator={isReadOnlyMode ? null : handleDeleteKpi}
           onResetIndicator={isReadOnlyMode || !originalKpiTable ? null : handleResetKpiDirect}
+          onMetaChange={isReadOnlyMode ? null : handleKpiMetaChange}
+          onMetaTypeChange={isReadOnlyMode ? null : handleKpiMetaTypeChange}
         />
       )}
 
@@ -373,6 +463,12 @@ const Dashboard = () => {
           rows={chartData[editingWidget]}
           onSave={(rows) => handleSaveData(editingWidget, rows)}
           onClose={() => setEditingWidget(null)}
+          meta={widgetMetas[editingWidget] ?? null}
+          metaType={widgetMetaTypes[editingWidget] || 'value'}
+          onMetaSave={(value, type) => {
+            handleMetaChange(editingWidget, value);
+            handleMetaTypeChange(editingWidget, type);
+          }}
         />
       )}
 
@@ -398,7 +494,7 @@ const Dashboard = () => {
               name="kpiMeta"
               value={kpiEditForm.meta}
               onChange={(e) => setKpiEditForm((f) => ({ ...f, meta: e.target.value }))}
-              placeholder="Ex: 0.15 ou 15% ou definir"
+              placeholder="Ex: 0.15, 15% ou definir"
               style={{ width: '100%', padding: '0.45rem 0.6rem', border: '1.5px solid #e2e8f0', borderRadius: 6, fontSize: '0.85rem', marginBottom: '0.75rem' }}
             />
             <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: '#334155', marginBottom: '0.2rem' }}>

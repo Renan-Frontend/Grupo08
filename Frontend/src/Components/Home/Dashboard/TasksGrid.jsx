@@ -52,7 +52,7 @@ const getTaskIcon = (task) => {
   return FALLBACK_ICONS[hashStr(s) % FALLBACK_ICONS.length];
 };
 
-const TasksGrid = ({ tasks, onEditData }) => {
+const TasksGrid = ({ tasks, onEditData, meta, metaType = 'value', onMetaChange, onMetaTypeChange }) => {
   const total = tasks.reduce((s, t) => s + Number(t.valor || 0), 0);
 
   return (
@@ -62,11 +62,24 @@ const TasksGrid = ({ tasks, onEditData }) => {
           <h2 className={styles.title}>Tarefas</h2>
           <p className={styles.subtitle}>Distribuição por status · {total} total</p>
         </div>
-        {onEditData && (
-          <button type="button" className={styles.editBtn} onClick={onEditData}>
-            ✏️ Editar
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {meta != null && (
+            <span style={{ fontSize: '0.68rem', color: '#8b5cf6', fontWeight: 600, background: '#f8f5ff', padding: '0.1rem 0.5rem', borderRadius: 4 }}>
+              Meta: {metaType === 'percent' ? `${Number(meta).toFixed(2)}%` : Number(meta).toFixed(2)}
+            </span>
+          )}
+          {onMetaTypeChange && (
+            <button type="button" onClick={() => onMetaTypeChange(metaType === 'percent' ? 'value' : 'percent')}
+              style={{ fontSize: '0.68rem', padding: '0.1rem 0.35rem', border: '1px solid #e2e8f0', borderRadius: '0.25rem', background: '#f8f5ff', color: '#8b5cf6', cursor: 'pointer', fontWeight: 600, lineHeight: 1 }}
+              title={metaType === 'percent' ? 'Modo porcentagem — clique para valor' : 'Modo valor — clique para porcentagem'}
+            >{metaType === 'percent' ? '%' : '#'}</button>
+          )}
+          {onEditData && (
+            <button type="button" className={styles.editBtn} onClick={onEditData} title="Editar dados">
+              ✏️
+            </button>
+          )}
+        </div>
       </div>
       <div className={styles.grid}>
         {tasks.map((task, i) => {
@@ -85,6 +98,11 @@ const TasksGrid = ({ tasks, onEditData }) => {
                 <div className={styles.barFill} style={{ width: `${pct}%`, background: scheme.color }} />
               </div>
               <span className={styles.pct} style={{ color: scheme.color }}>{pct}%</span>
+              {meta != null && (
+                <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: 0, pointerEvents: 'none' }}>
+                  <div style={{ position: 'absolute', left: `${Math.min((meta / (total || 1)) * 100, 100)}%`, top: 0, bottom: 0, borderLeft: '2px dashed #8b5cf6', opacity: 0.6 }} />
+                </div>
+              )}
             </div>
           );
         })}

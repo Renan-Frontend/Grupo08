@@ -2,10 +2,13 @@ import React, { useState, useRef } from 'react';
 import styles from './DataEditModal.module.css';
 import { parseSpreadsheet } from './parseSpreadsheet';
 
-const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) => {
+const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose, meta: initialMeta, metaType: initialMetaType, onMetaSave }) => {
   const [rows, setRows] = useState(() =>
     initialRows.map((r, i) => ({ ...r, _id: i }))
   );
+  const [metaValue, setMetaValue] = useState(initialMeta ?? '');
+  const [metaTypeValue, setMetaTypeValue] = useState(initialMetaType || 'value');
+  const [metaError, setMetaError] = useState(false);
   const [importError, setImportError] = useState(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);
@@ -43,6 +46,11 @@ const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) =
   const removeRow = (idx) => setRows((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSave = () => {
+    if (onMetaSave) {
+      const mv = String(metaValue).trim();
+      if (!mv) { setMetaError(true); return; }
+      onMetaSave(Number(mv) || 0, metaTypeValue);
+    }
     const cleaned = rows.map(({ _id, ...rest }) => {
       const obj = {};
       // preserve extra fields (e.g. icon) that are not in columns
@@ -75,6 +83,27 @@ const DataEditModal = ({ title, columns, rows: initialRows, onSave, onClose }) =
             ✕
           </button>
         </div>
+
+        {onMetaSave && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', padding: '0.6rem 1rem', borderBottom: '1px solid #e5e9ee', background: '#f8f5ff' }}>
+            <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#8b5cf6', whiteSpace: 'nowrap' }}>Meta *</label>
+            <button
+              type="button"
+              onClick={() => setMetaTypeValue(metaTypeValue === 'percent' ? 'value' : 'percent')}
+              style={{ fontSize: '0.72rem', padding: '0.15rem 0.4rem', border: '1px solid #e2e8f0', borderRadius: '0.25rem', background: '#fff', color: '#8b5cf6', cursor: 'pointer', fontWeight: 600, lineHeight: 1 }}
+              title={metaTypeValue === 'percent' ? 'Modo porcentagem' : 'Modo valor'}
+            >{metaTypeValue === 'percent' ? '%' : '#'}</button>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={metaValue}
+              onChange={(e) => { setMetaValue(e.target.value); setMetaError(false); }}
+              placeholder="Obrigatório"
+              style={{ width: '8rem', fontSize: '0.82rem', padding: '0.3rem 0.5rem', border: metaError ? '2px solid #ef4444' : '1.5px solid #e2e8f0', borderRadius: 6, textAlign: 'right' }}
+            />
+            {metaError && <span style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 600 }}>Preencha a meta</span>}
+          </div>
+        )}
 
         <div className={styles.tableWrap}>
           <table className={styles.table}>

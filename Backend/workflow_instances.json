@@ -135,5 +135,253 @@
     "bpmn_version": 1,
     "startedAt": "2026-04-15T17:31:35.653812",
     "updatedAt": "2026-04-15T17:31:48.930254"
+  },
+  {
+    "id": 16,
+    "currentNodeId": null,
+    "executed": [
+      {
+        "nodeId": "n1",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Solicitar Matrícula",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n2",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Candidato",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n3",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Selecionar Curso",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n4",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Curso",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n5",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Documentação",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n6",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Preencher Dados",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n7",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Enviar Documentação",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n8",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Documentação Completa?",
+        "status": "completed",
+        "decision": "nao"
+      },
+      {
+        "nodeId": "n10",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Corrigir Documentação",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n9",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Conferir Documentação",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n11",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Vaga",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n12",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Analisar Disponibilidade",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n13",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Vaga Disponível?",
+        "status": "completed",
+        "decision": "sim"
+      },
+      {
+        "nodeId": "n14",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Realizar Análise Curricular",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n16",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Critérios Adicionais?",
+        "status": "completed",
+        "decision": "nao"
+      },
+      {
+        "nodeId": "n20",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Formalizar Contrato",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n17",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Contrato",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n18",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Solicitar Bolsa",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n19",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Pagamento Aprovado?",
+        "status": "completed",
+        "decision": "sim"
+      },
+      {
+        "nodeId": "n22",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Gerar Contrato Digital",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n23",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Pagamento",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n24",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Confirmar Pagamento",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n25",
+        "nodeType": "condicional",
+        "canonicalType": "condicional",
+        "label": "Atraso no Pagamento?",
+        "status": "completed",
+        "decision": "sim"
+      },
+      {
+        "nodeId": "n27",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Gerar Registro Acadêmico",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n28",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Registro Acadêmico",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n29",
+        "nodeType": "entidade",
+        "canonicalType": "auto",
+        "label": "Aluno",
+        "status": "completed"
+      },
+      {
+        "nodeId": "n30",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Liberar Acesso Portal",
+        "status": "completed",
+        "formData": {}
+      },
+      {
+        "nodeId": "n31",
+        "nodeType": "task",
+        "canonicalType": "task",
+        "label": "Enviar Comunicação Oficial",
+        "status": "completed",
+        "formData": {}
+      }
+    ],
+    "context": {
+      "completed_n1": true,
+      "completed_n3": true,
+      "completed_n6": true,
+      "completed_n7": true,
+      "decision_n8": "nao",
+      "completed_n10": true,
+      "completed_n9": true,
+      "completed_n12": true,
+      "decision_n13": "sim",
+      "completed_n14": true,
+      "decision_n16": "nao",
+      "completed_n20": true,
+      "completed_n18": true,
+      "decision_n19": "sim",
+      "completed_n22": true,
+      "completed_n24": true,
+      "decision_n25": "sim",
+      "completed_n27": true,
+      "completed_n30": true,
+      "completed_n31": true
+    },
+    "status": "completed",
+    "bpmn_version": 1,
+    "startedAt": "2026-04-20T10:39:28.500199",
+    "updatedAt": "2026-04-20T10:41:48.200821"
   }
 ]

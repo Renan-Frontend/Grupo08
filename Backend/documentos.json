@@ -1,0 +1,162 @@
+[
+  {
+    "id": 2,
+    "opportunityId": 16,
+    "documentType": "Formulário de Matrícula",
+    "documentTitle": "Comprovante de Matrícula - Processo Corporativo de Matrícula Acadêmica Integrada",
+    "header": {
+      "fields": [
+        {
+          "label": "Instituição",
+          "value": "Universidade XYZ"
+        },
+        {
+          "label": "Nome do Aluno",
+          "value": "[Nome Completo]"
+        },
+        {
+          "label": "Curso",
+          "value": "[Curso Selecionado]"
+        },
+        {
+          "label": "Período",
+          "value": "[Semestre/Ano]"
+        },
+        {
+          "label": "Data de Emissão",
+          "value": "2026-04-20"
+        }
+      ]
+    },
+    "sections": [
+      {
+        "heading": "Solicitação de Matrícula",
+        "body": "O candidato iniciou a solicitação de matrícula através do portal digital, preenchendo o formulário de interesse. A solicitação foi registrada no sistema com status concluído, marcando o início formal do processo de admissão."
+      },
+      {
+        "heading": "Seleção de Curso e Modalidade",
+        "body": "O candidato selecionou o curso desejado, definindo turno, modalidade de ensino (presencial ou à distância) e a unidade de campus. Essa escolha foi confirmada e armazenada, permitindo a verificação de disponibilidade de vagas."
+      },
+      {
+        "heading": "Preenchimento de Dados Cadastrais",
+        "body": "Foram inseridos todos os dados pessoais, endereço, contatos e informações dos responsáveis legais. O sistema validou a consistência das informações e marcou a etapa como concluída, garantindo a integridade dos registros."
+      },
+      {
+        "heading": "Envio da Documentação Obrigatória",
+        "body": "O candidato enviou eletronicamente a documentação exigida (RG, CPF, comprovante de residência, histórico escolar). O upload foi concluído com sucesso e a documentação ficou disponível para análise posterior."
+      },
+      {
+        "heading": "Verificação de Documentação Completa",
+        "body": "A checagem automática constatou que a documentação enviada estava incompleta, resultando em decisão \"não\". Essa condição disparou o fluxo de correção, solicitando ao candidato que complementasse os documentos faltantes."
+      },
+      {
+        "heading": "Correção e Complementação da Documentação",
+        "body": "O candidato atendeu à solicitação, enviando os documentos pendentes. Após o recebimento, a documentação foi novamente verificada e considerada completa, permitindo a continuação do processo."
+      },
+      {
+        "heading": "Conferência Administrativa da Documentação",
+        "body": "A equipe administrativa revisou toda a documentação, confirmando a autenticidade e a conformidade com os requisitos institucionais. A etapa foi finalizada com aprovação, preparando o candidato para a análise de vagas."
+      },
+      {
+        "heading": "Análise de Disponibilidade de Vagas",
+        "body": "Foi realizada a verificação de vagas disponíveis no curso selecionado. O resultado indicou que havia vagas suficientes, permitindo que o candidato avançasse para a análise curricular."
+      },
+      {
+        "heading": "Análise Curricular e Critérios Adicionais",
+        "body": "A comissão avaliou o histórico acadêmico do candidato e verificou a presença de critérios adicionais, como pré-requisitos específicos. Não foram identificados critérios adicionais, resultando em decisão \"não\" e prosseguimento direto para a formalização do contrato."
+      },
+      {
+        "heading": "Formalização do Contrato",
+        "body": "O contrato de prestação de serviços educacionais foi preparado, contendo todas as cláusulas padrão, valores e condições de pagamento. O candidato recebeu o documento para revisão e assinatura eletrônica."
+      },
+      {
+        "heading": "Geração e Aceite do Contrato Digital",
+        "body": "O contrato digital foi gerado e enviado ao candidato, que realizou o aceite eletrônico. O sistema registrou a assinatura digital, confirmando a aceitação dos termos e avançando para a etapa de pagamento."
+      },
+      {
+        "heading": "Aprovação do Pagamento",
+        "body": "O pagamento foi processado e aprovado, conforme a decisão \"sim\" na verificação de pagamento. A confirmação incluiu a geração de comprovante e a atualização do status financeiro da matrícula."
+      }
+    ],
+    "footer": "Este documento confirma a conclusão parcial da matrícula conforme as etapas executadas.",
+    "signatureFields": [
+      "Assinatura do Aluno",
+      "Assinatura da Coordenação Acadêmica"
+    ],
+    "owner": "Renan",
+    "processName": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "aiGenerated": true,
+    "createdAt": "2026-04-20T14:22:29.448128+00:00"
+  },
+  {
+    "id": 3,
+    "opportunityId": 1,
+    "documentType": "Ordem de Compra",
+    "documentTitle": "Ordem de Compra ",
+    "header": {
+      "fields": [
+        {
+          "label": "Cliente",
+          "value": "Empresa XYZ"
+        },
+        {
+          "label": "Fornecedor",
+          "value": "Fornecedor ABC Ltda."
+        },
+        {
+          "label": "Data da Emissão",
+          "value": "2026-04-20"
+        },
+        {
+          "label": "Número da Ordem",
+          "value": "OC-20260420-001"
+        },
+        {
+          "label": "Valor Total",
+          "value": "R$ 15.000,00"
+        }
+      ]
+    },
+    "sections": [
+      {
+        "heading": "1. Solicitação de Compra",
+        "body": "O cliente, representado pela Empresa XYZ, iniciou o processo solicitando a compra de bens e serviços necessários para suas operações. A solicitação foi registrada no sistema como um novo pedido, contendo todas as especificações fornecidas pelo cliente. Esta etapa foi concluída com sucesso, gerando o documento inicial de Pedido que servirá de base para as análises subsequentes."
+      },
+      {
+        "heading": "2. Análise do Pedido",
+        "body": "A equipe de compras realizou a análise preliminar do pedido, verificando a conformidade com as políticas internas de prazo e orçamento. Foram avaliados critérios como disponibilidade de crédito, limites de gasto e aderência aos requisitos técnicos. A análise concluiu que o pedido não atendia a todos os critérios financeiros, resultando em uma decisão de não aprovação nesta fase."
+      },
+      {
+        "heading": "3. Validação de Orçamento",
+        "body": "Apesar da não aprovação inicial, o orçamento associado ao pedido foi submetido a uma validação detalhada. O gestor financeiro revisou os custos projetados, comparando-os com o orçamento disponível e as previsões de gasto. A validação indicou que o orçamento também não foi aprovado, exigindo ajustes antes de prosseguir."
+      },
+      {
+        "heading": "4. Atualização e Rejeição de Itens",
+        "body": "Com base nas avaliações negativas, o pedido foi atualizado para refletir as correções necessárias e registrar os motivos da rejeição. Foram inseridas observações sobre os pontos críticos de orçamento e prazo, permitindo que o cliente fosse notificado das pendências. Esta atualização garantiu transparência e preparou o caminho para eventuais revisões futuras."
+      },
+      {
+        "heading": "5. Geração da Ordem de Compra",
+        "body": "Após a revisão interna, foi decidido gerar a Ordem de Compra, mesmo que o orçamento não estivesse totalmente aprovado, para formalizar a intenção de compra e iniciar a negociação com o fornecedor. O documento da Ordem de Compra foi criado contendo todas as informações relevantes: itens, quantidades, preços unitários e condições de pagamento. A geração da ordem foi concluída com sucesso, marcando a transição para a fase de comunicação externa."
+      },
+      {
+        "heading": "6. Envio ao Fornecedor",
+        "body": "A Ordem de Compra foi transmitida eletronicamente ao Fornecedor ABC Ltda., utilizando os canais de comunicação estabelecidos pelo sistema de gestão. O fornecedor recebeu o documento, confirmando o recebimento e iniciando a preparação para o atendimento da solicitação. Esta etapa assegurou que ambas as partes estivessem alinhadas quanto aos termos e prazos acordados."
+      },
+      {
+        "heading": "7. Confirmação e Aprovação Final",
+        "body": "O fornecedor confirmou a capacidade de atender à ordem, enviando a aceitação formal ao cliente. Simultaneamente, a equipe de aprovação interna registrou a conclusão do processo, marcando o status como \"Aprovado\" no sistema. O documento final foi arquivado e está disponível para auditoria e controle futuro."
+      }
+    ],
+    "footer": "Documento gerado automaticamente pelo Sistema de Gestão de Compras - Todos os direitos reservados.",
+    "signatureFields": [
+      "Gestor de Compras",
+      "Representante do Fornecedor",
+      "Cliente"
+    ],
+    "owner": "Renan",
+    "processName": "Aprovação de Pedido de Compra",
+    "aiGenerated": true,
+    "createdAt": "2026-04-20T14:24:29.857848+00:00",
+    "updatedAt": "2026-04-20T14:32:01.134214+00:00"
+  }
+]

@@ -36,13 +36,15 @@ export function parseSpreadsheetRaw(file) {
  *
  * @param {Array<Array>} rawArray  - 2D array from sheet_to_json(header:1)
  * @param {string} fallbackName    - sheet name to use as prefix
- * @returns {Array<{sheetName: string, headers: string[], rows: Object[]}>}
+ * @param {Array<Array>} [fmtArray]  - 2D array with formatted (display) strings (raw:false)
+ * @returns {Array<{sheetName: string, headers: string[], rows: Object[], fmtRows?: Object[]}>}
  */
-function splitStackedTables(rawArray, fallbackName) {
+function splitStackedTables(rawArray, fallbackName, fmtArray) {
   const tables = [];
   let currentTitle = null;
   let currentHeaders = null;
   let currentRows = [];
+  let currentFmtRows = [];
   let sharedHeaders = null; // headers reused across section splits
 
   const isBlankRow = (row) =>
@@ -81,14 +83,23 @@ function splitStackedTables(rawArray, fallbackName) {
         });
         return obj;
       });
+      const fmtRowObjects = fmtArray ? currentFmtRows.map((row) => {
+        const obj = {};
+        currentHeaders.forEach((h, i) => {
+          obj[h] = row[i] !== undefined ? row[i] : '';
+        });
+        return obj;
+      }) : undefined;
       tables.push({
         sheetName: name,
         headers: [...currentHeaders],
         rows: rowObjects,
+        fmtRows: fmtRowObjects,
       });
     }
     currentTitle = null;
     currentRows = [];
+    currentFmtRows = [];
     // Don't reset currentHeaders here — it may be reused via sharedHeaders
   };
 
@@ -137,6 +148,7 @@ function splitStackedTables(rawArray, fallbackName) {
 
     // Data row
     currentRows.push(row);
+    if (fmtArray) currentFmtRows.push(fmtArray[i] || []);
   }
 
   // Flush last table
@@ -173,21 +185,25 @@ export function parseAllSheets(file) {
           // Detect if this sheet has multiple stacked tables:
           // Read as raw 2D array and try to split by blank rows or section headers
           const rawArray = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+          // Also read formatted (display) values for lossless round-trip ("76%" stays "76%", "3,2" stays "3,2")
+          const fmtArray = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', raw: false });
 
           // Always try splitting if sheet has enough rows
           if (rawArray.length > 5) {
-            const subTables = splitStackedTables(rawArray, name);
+            const subTables = splitStackedTables(rawArray, name, fmtArray);
             if (subTables.length > 1) {
               result.push(...subTables);
               continue;
             }
           }
 
-          // Single table in this sheet
+          // Single table in this sheet — also include formatted rows
+          const fmtRows = XLSX.utils.sheet_to_json(sheet, { raw: false, defval: '' });
           result.push({
             sheetName: name,
             headers: Object.keys(rows[0]),
             rows,
+            fmtRows,
             rawRows: rawArray,
           });
         }
@@ -290,7 +306,7 @@ export function parseSpreadsheet(file, columns) {
 /* ── Smart widget detection ─────────────────────────────────────────── */
 
 const WIDGET_SCHEMAS = {
-  kpiTable: { keys: ['name', 'meta', 'tendencia'], labels: ['indicador', 'meta', 'tendência', 'tendencia'] },
+  kpiTable: { keys: ['name', 'meta', 'tendencia', 'media'], labels: ['indicador', 'meta', 'tendência', 'tendencia', 'média', 'media'] },
   revenue: { keys: ['mes', 'valor'], labels: ['mês', 'valor', 'receita', 'faturamento'] },
   sales: { keys: ['mes', 'vendas', 'clientes'], labels: ['mês', 'vendas', 'clientes', 'quantidade'] },
   expenses: { keys: ['mes', 'fixas', 'variaveis'], labels: ['mês', 'fixas', 'variáveis', 'despesas', 'custos'] },
@@ -336,12 +352,17 @@ function scoreWidget(widgetId, headers, sheetName) {
   if (widgetId === 'kpiTable') {
     const hasIndicador = headersNorm.some((h) => h.includes('indicador') || h === 'nome' || h === 'kpi');
     const hasMeta = headersNorm.some((h) => h === 'meta');
+    const hasTendencia = headersNorm.some((h) => h.includes('tendencia') || h.includes('tendência') || h.includes('tend'));
+    const hasMedia = headersNorm.some((h) => h === 'media' || h === 'média');
     const dateColCount = headers.filter((h) => {
       const s = String(h).trim();
-      // Match date patterns: May-23, jul/25, 2023-05-01, Excel serial (5-digit number), etc.
-      return /\d{4}[-/]\d{2}/.test(s) || /^[a-zA-Z\u00c0-\u00fa]{3,}[-/\s]\d{2,4}$/i.test(s)
-          || /^\d{4}-\d{2}-\d{2}/.test(s) || /^\d{5}$/.test(s)
-          || /^\d{2}[-/]\d{4}$/.test(s);
+      // Match date patterns: May-23, jul/25, 2023-05-01, Excel serial (4-5 digit number), M/D/YYYY, etc.
+      if (/\d{4}[-/]\d{2}/.test(s) || /^[a-zA-Z\u00c0-\u00fa]{3,}[-/\s]\d{2,4}$/i.test(s)
+          || /^\d{4}-\d{2}-\d{2}/.test(s) || /^\d{4,5}(\.\d+)?$/.test(s)
+          || /^\d{2}[-/]\d{4}$/.test(s) || /^\d{1,2}[/\-]\d{1,2}[/\-]\d{2,4}$/.test(s)) return true;
+      // Fallback: try JS Date.parse
+      const d = new Date(s);
+      return !isNaN(d.getTime()) && d.getFullYear() >= 2000 && d.getFullYear() <= 2100;
     }).length;
     if (hasIndicador && hasMeta && dateColCount >= 3) {
       score += 20; // Very strong match
@@ -350,6 +371,9 @@ function scoreWidget(widgetId, headers, sheetName) {
     } else if (dateColCount >= 6 && headers.length > 10) {
       score += 8;
     }
+    // Bonus for having tendência and/or média columns
+    if (hasTendencia) score += 3;
+    if (hasMedia) score += 3;
   }
 
   // Match headers against widget labels/keys

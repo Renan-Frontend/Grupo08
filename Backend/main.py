@@ -12,7 +12,7 @@ import uuid
 import threading
 import time
 import requests
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict, deque
 from typing import Any, cast
 try:
@@ -47,6 +47,7 @@ DB_CONNECT_TIMEOUT = int(os.getenv("DB_CONNECT_TIMEOUT", "3"))
 USERS_TABLE = "users_store"
 ENTIDADES_TABLE = "entidades_store"
 OPORTUNIDADES_TABLE = "oportunidades_store"
+DOCUMENTOS_TABLE = "documentos_store"
 AI_AUDIT_TABLE = "ai_audit_store"
 AI_MAX_ACTIONS_PER_MINUTE = int(os.getenv("AI_MAX_ACTIONS_PER_MINUTE", "20"))
 AI_PROVIDER = os.getenv("AI_PROVIDER", "groq").strip().lower() or "groq"
@@ -1280,12 +1281,12 @@ def _auto_layout_bpmn_nodes(
         used[key] += 1
 
     # Constantes de layout — fluxo de CIMA para BAIXO
-    MAX_PER_COL = 5       # nodes por coluna antes de quebrar para a próxima
+    MAX_PER_COL = 7       # nodes por coluna antes de quebrar para a próxima
     X_MAIN_BASE = 160
-    X_COL_GAP = 380       # espaço horizontal entre colunas do fluxo principal
-    X_NAO_OFFSET = 320    # quanto à direita fica o ramo "nao"
+    X_COL_GAP = 420       # espaço horizontal entre colunas do fluxo principal
+    X_NAO_OFFSET = 340    # quanto à direita fica o ramo "nao"
     Y_START = 80
-    Y_STEP = 220          # espaço vertical entre nodes
+    Y_STEP = 240          # espaço vertical entre nodes
 
     # Primeiro passo: calcula posições base para todos os nodes
     pos: dict[str, tuple[float, float]] = {}
@@ -3635,14 +3636,26 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         acts = list(suggested_activities)
         conds = list(suggested_conditionals)
         items: list[str] = []
-        cond_interval = max(1, len(acts) // (len(conds) + 1)) if conds else len(acts)
-        cond_idx = 0
-        for i, act in enumerate(acts):
-            items.append(act)
-            if conds and cond_idx < len(conds) and (i + 1) % cond_interval == 0:
-                items.append(conds[cond_idx])
-                cond_idx += 1
-        items.extend(conds[cond_idx:])  # condicionais restantes
+        if conds and acts:
+            cond_interval = max(2, len(acts) // (len(conds) + 1))
+            cond_idx = 0
+            for i, act in enumerate(acts):
+                items.append(act)
+                if conds and cond_idx < len(conds) and (i + 1) % cond_interval == 0 and i < len(acts) - 1:
+                    items.append(conds[cond_idx])
+                    cond_idx += 1
+            # Condicionais restantes: intercalar nas posições centrais, NUNCA no final
+            remaining = conds[cond_idx:]
+            if remaining:
+                total = len(items)
+                gap = max(2, total // (len(remaining) + 1))
+                offset = 0
+                for ri, rc in enumerate(remaining):
+                    pos = min((ri + 1) * gap + offset, total + offset - 1)
+                    items.insert(pos, rc)
+                    offset += 1
+        else:
+            items = acts or conds
         synthetic_flow = " -> ".join(items)
         python_nodes, python_connections = _build_bpmn_from_flow_steps(synthetic_flow, suggested_entities, process_name, 3)
         print(f"[GROQ] synthetic_flow: {synthetic_flow[:120]}")
@@ -3835,17 +3848,30 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
 
     # Para o fallback (flowOrder vazio), monta typed_flow_order a partir das listas separadas
     if not typed_flow_order and (suggested_activities or suggested_conditionals):
-        acts = suggested_activities
-        conds = suggested_conditionals
+        acts = list(suggested_activities)
+        conds = list(suggested_conditionals)
         fallback_items: list[str] = []
-        ci2 = 0
-        interval2 = max(1, len(acts) // (len(conds) + 1)) if conds else len(acts)
-        for i2, a2 in enumerate(acts):
-            fallback_items.append(a2)
-            if ci2 < len(conds) and (i2 + 1) % interval2 == 0:
-                fallback_items.append(conds[ci2])
-                ci2 += 1
-        fallback_items.extend(conds[ci2:])
+        if conds and acts:
+            # Distribui condicionais uniformemente entre atividades (nunca ficam no final)
+            interval2 = max(2, len(acts) // (len(conds) + 1))
+            ci2 = 0
+            for i2, a2 in enumerate(acts):
+                fallback_items.append(a2)
+                if ci2 < len(conds) and (i2 + 1) % interval2 == 0 and i2 < len(acts) - 1:
+                    fallback_items.append(conds[ci2])
+                    ci2 += 1
+            # Condicionais restantes: intercalar nas posições centrais, NUNCA no final
+            remaining = conds[ci2:]
+            if remaining:
+                total = len(fallback_items)
+                gap = max(2, total // (len(remaining) + 1))
+                offset = 0
+                for ri, rc in enumerate(remaining):
+                    pos = min((ri + 1) * gap + offset, total + offset - 1)
+                    fallback_items.insert(pos, rc)
+                    offset += 1
+        else:
+            fallback_items = acts or conds
         typed_flow_order = [
             {"name": n, "type": _classify_flow_item(n), **( {"desc": flow_order_descs[n]} if n in flow_order_descs else {})}
             for n in fallback_items
@@ -3959,37 +3985,50 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             br = fo.get("branches") or {}
             nao_name = (br.get("nao") or "").strip()
 
-            # Tenta usar branches.nao da IA
-            if nao_name and nao_name in name_to_idx_global:
-                target = name_to_idx_global[nao_name]
-                if fo_list[target].get("type") != "condicional" and target not in claimed_nao:
+            # Tenta usar branches.nao da IA (match exato e normalizado)
+            if nao_name:
+                nao_name_norm = _normalize_ai_text(nao_name)
+                target = name_to_idx_global.get(nao_name)
+                # Fallback: match normalizado
+                if target is None:
+                    for _ni, _nfo in enumerate(fo_list):
+                        if _normalize_ai_text(_nfo.get("name", "")) == nao_name_norm:
+                            target = _ni
+                            break
+                if target is not None and fo_list[target].get("type") != "condicional" and target not in claimed_nao:
                     cond_nao_map[i] = target
                     claimed_nao.add(target)
+                    print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → NAO[{target}] '{fo_list[target].get('name')}' (branches.nao)")
                     continue
 
-            # Fallback: coleta TAREFAS (não entidades nem condicionais) entre
-            # esta condicional e a próxima. Só usa NAO se houver exatamente 2
-            # tarefas na faixa — caso contrário não há como distinguir NAO do
-            # fluxo principal sem branches explícitos.
-            next_cond_idx = n
+            # Fallback por posição: o PRIMEIRO nó task logo após a condicional
+            # é o caminho NAO (conforme instrução do prompt IA).
+            # O prompt diz: "A atividade do caminho NÃO deve vir IMEDIATAMENTE
+            # após o condicional no flowOrder"
+            nao_candidate = None
             for j in range(i + 1, n):
-                if fo_list[j].get("type") == "condicional":
-                    next_cond_idx = j
-                    break
+                jtype = fo_list[j].get("type", "")
+                if jtype == "condicional":
+                    break  # Chegou na próxima condicional sem achar task
+                if jtype == "task" and j not in claimed_nao:
+                    nao_candidate = j
+                    break  # Primeiro task = NAO
 
-            tasks_in_range: list[int] = []
-            for j in range(i + 1, next_cond_idx):
-                if fo_list[j].get("type") == "task" and j not in claimed_nao:
-                    tasks_in_range.append(j)
-
-            # Exatamente 2 tarefas: primeira = SIM, segunda = NAO
-            if len(tasks_in_range) == 2:
-                nao_target = tasks_in_range[1]
+            if nao_candidate is not None:
+                # Verifica se há pelo menos mais um nó após o NAO para ser o SIM
+                has_more_after = False
+                for j2 in range(nao_candidate + 1, n):
+                    if j2 not in claimed_nao and fo_list[j2].get("type") != "condicional":
+                        has_more_after = True
+                        break
+                if has_more_after:
+                    cond_nao_map[i] = nao_candidate
+                    claimed_nao.add(nao_candidate)
+                    print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → NAO[{nao_candidate}] '{fo_list[nao_candidate].get('name')}' (position fallback)")
+                else:
+                    print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → no NAO (no SIM path after candidate)")
             else:
-                continue  # Sem nó NAO dedicado identificável — pula
-
-            cond_nao_map[i] = nao_target
-            claimed_nao.add(nao_target)
+                print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → no NAO candidate found")
 
         all_nao_indices = set(cond_nao_map.values())
 
@@ -4007,7 +4046,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             cur_type = fo_list[cur_idx].get("type", "task")
 
             if cur_type == "condicional":
-                # SIM goes to next in main flow
+                # SIM goes to next in main flow (skip NAO node)
                 result.append({
                     "id": next_conn_id(), "from": f"n{cur_idx + 1}", "to": f"n{nxt_idx + 1}",
                     "fromHandle": "bottom", "toHandle": "top",
@@ -4021,13 +4060,10 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
                         "fromHandle": "right", "toHandle": "left",
                         "decision": "nao", "label": "\u2718"
                     })
-                    # Merge: NAO target reconnects APÓS o SIM target no main flow
-                    # (2 posições adiante, para não cair no mesmo nó do SIM)
-                    merge_target_idx = nxt_idx  # fallback: mesmo que SIM
-                    if pos + 2 < len(main_flow):
-                        merge_target_idx = main_flow[pos + 2]
+                    # Merge: NAO target reconnects to the SAME next node as SIM
+                    # (ambos convergem no mesmo ponto do fluxo principal)
                     result.append({
-                        "id": next_conn_id(), "from": f"n{nao_idx + 1}", "to": f"n{merge_target_idx + 1}",
+                        "id": next_conn_id(), "from": f"n{nao_idx + 1}", "to": f"n{nxt_idx + 1}",
                         "fromHandle": "bottom", "toHandle": "right",
                         "decision": "merge", "label": ""
                     })
@@ -4042,6 +4078,61 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         if main_flow:
             last_idx = main_flow[-1]
             if fo_list[last_idx].get("type") == "condicional":
+                last_name = fo_list[last_idx].get("name", "")
+                last_branches = fo_list[last_idx].get("branches", {})
+                print(f"  [LAST-COND] '{last_name}' branches={last_branches} nao_map={cond_nao_map.get(last_idx)} all_nao={all_nao_indices}")
+                # SIM: conectar ao branch sim — somente se aponta PARA FRENTE (índice > last_idx)
+                sim_connected = False
+                sim_target = (last_branches.get("sim") or "").strip()
+                if sim_target:
+                    sim_target_norm = _normalize_ai_text(sim_target)
+                    for _si in range(n):
+                        _si_name = fo_list[_si].get("name", "").strip()
+                        if _si_name.lower() == sim_target.lower() or _normalize_ai_text(_si_name) == sim_target_norm:
+                            # Só conecta se o alvo está À FRENTE no flowOrder (evita setas para trás)
+                            if _si > last_idx:
+                                result.append({
+                                    "id": next_conn_id(), "from": f"n{last_idx + 1}", "to": f"n{_si + 1}",
+                                    "fromHandle": "bottom", "toHandle": "top",
+                                    "decision": "sim", "label": "\u2714"
+                                })
+                                sim_connected = True
+                                print(f"  [LAST-COND] SIM→'{_si_name}' (branches match, forward)")
+                            else:
+                                print(f"  [LAST-COND] SIM branches.sim='{_si_name}' is BACKWARDS (idx {_si} <= {last_idx}), skipping")
+                            break
+
+                # Fallback SIM: próximo nó sequencial no fo_list (não-NAO) após a condicional
+                if not sim_connected:
+                    for _fi in range(last_idx + 1, n):
+                        if _fi not in all_nao_indices:
+                            result.append({
+                                "id": next_conn_id(), "from": f"n{last_idx + 1}", "to": f"n{_fi + 1}",
+                                "fromHandle": "bottom", "toHandle": "top",
+                                "decision": "sim", "label": "\u2714"
+                            })
+                            sim_connected = True
+                            print(f"  [LAST-COND] SIM→'{fo_list[_fi].get('name','')}' (next non-NAO)")
+                            break
+
+                # Fallback SIM: se tem NAO target, SIM vai para o nó logo após o NAO (se for pra frente)
+                if not sim_connected:
+                    nao_idx_fb = cond_nao_map.get(last_idx)
+                    if nao_idx_fb is not None and nao_idx_fb + 1 < n:
+                        after_nao = nao_idx_fb + 1
+                        if after_nao > last_idx:
+                            result.append({
+                                "id": next_conn_id(), "from": f"n{last_idx + 1}", "to": f"n{after_nao + 1}",
+                                "fromHandle": "bottom", "toHandle": "top",
+                                "decision": "sim", "label": "\u2714"
+                            })
+                            sim_connected = True
+                            print(f"  [LAST-COND] SIM→'{fo_list[after_nao].get('name','')}' (after NAO)")
+
+                if not sim_connected:
+                    print(f"  [LAST-COND] No forward SIM target for '{last_name}' — last conditional has only NAO path")
+
+                # NAO: conectar ao branch nao
                 nao_idx = cond_nao_map.get(last_idx)
                 if nao_idx is not None:
                     result.append({
@@ -4074,6 +4165,79 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             node.setdefault("descricao", "")
             node.setdefault("gatewayType", "exclusivo")
         return node
+
+    # ── Validação estrutural do typed_flow_order antes de construir nós/conexões ──
+    if typed_flow_order:
+        # Coletar nomes NAO referenciados por condicionais
+        _plan_nao_names: set[str] = set()
+        for _vfo in typed_flow_order:
+            if _vfo.get("type") == "condicional":
+                _vn = (_vfo.get("branches", {}).get("nao") or "").strip().lower()
+                if _vn:
+                    _plan_nao_names.add(_vn)
+
+        # 0) Garantir que condicional→condicional tenha atividade ponte entre elas
+        _plan_fixed: list[dict] = []
+        for _fi, _ffo in enumerate(typed_flow_order):
+            _plan_fixed.append(_ffo)
+            if _ffo.get("type") == "condicional":
+                _next_main = None
+                for _nj in range(_fi + 1, len(typed_flow_order)):
+                    _nj_name = typed_flow_order[_nj].get("name", "").strip().lower()
+                    if _nj_name in _plan_nao_names:
+                        continue
+                    if typed_flow_order[_nj].get("type") == "entidade":
+                        continue
+                    _next_main = typed_flow_order[_nj]
+                    break
+                if _next_main is not None and _next_main.get("type") == "condicional":
+                    _bridge = f"Processar {_ffo.get('name', '').replace('?', '').strip()}"
+                    _plan_fixed.append({"name": _bridge, "type": "task", "desc": f"Processamento após '{_ffo.get('name', '')}'."})
+                    _ffo.setdefault("branches", {})
+                    _ffo["branches"]["sim"] = _bridge
+                    print(f"  [FO-FIX] Ponte '{_bridge}' entre '{_ffo.get('name','')}' e '{_next_main.get('name','')}'")
+        typed_flow_order = _plan_fixed
+
+        # Se último é NAO, mover para logo após sua condicional
+        if typed_flow_order[-1].get("name", "").strip().lower() in _plan_nao_names:
+            _nao_item = typed_flow_order.pop()
+            _moved = False
+            for _ri in range(len(typed_flow_order) - 1, -1, -1):
+                if typed_flow_order[_ri].get("type") == "condicional":
+                    _br_nao = (typed_flow_order[_ri].get("branches", {}).get("nao") or "").strip().lower()
+                    if _br_nao == _nao_item.get("name", "").strip().lower():
+                        typed_flow_order.insert(_ri + 1, _nao_item)
+                        _moved = True
+                        print(f"  [FO-FIX] Movido NAO '{_nao_item['name']}' para posição {_ri + 1}")
+                        break
+            if not _moved:
+                typed_flow_order.insert(max(0, len(typed_flow_order) - 1), _nao_item)
+
+        # Se último é condicional OU último é NAO de condicional (sem atividade principal depois),
+        # adicionar atividade de conclusão
+        _last_type = typed_flow_order[-1].get("type", "")
+        _last_name_lc = typed_flow_order[-1].get("name", "").strip().lower()
+        _needs_conclusion = False
+        _target_cond = None
+
+        if _last_type == "condicional":
+            _needs_conclusion = True
+            _target_cond = typed_flow_order[-1]
+        elif _last_name_lc in _plan_nao_names:
+            # Último é NAO — a condicional antes dele precisa de conclusão
+            for _ri in range(len(typed_flow_order) - 2, -1, -1):
+                if typed_flow_order[_ri].get("type") == "condicional":
+                    _needs_conclusion = True
+                    _target_cond = typed_flow_order[_ri]
+                    break
+
+        if _needs_conclusion and _target_cond is not None:
+            _cond_label = _target_cond.get("name", "").rstrip("?").strip()
+            _conc_name = f"Concluir {_cond_label}"
+            typed_flow_order.append({"name": _conc_name, "type": "task", "desc": f"Conclusão do fluxo após '{_target_cond['name']}'."})
+            _target_cond.setdefault("branches", {})
+            _target_cond["branches"]["sim"] = _conc_name
+            print(f"  [FO-FIX] Adicionado '{_conc_name}' após última condicional")
 
     if typed_flow_order:
         # Nodes sempre corretos — construídos diretamente do flowOrder do frontend
@@ -4145,16 +4309,16 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         # Layout serpentina (snake): colunas pares descem ↓, colunas ímpares sobem ↑.
         # Isso garante que conexões entre colunas tenham sempre a mesma Y nos dois lados,
         # produzindo linhas horizontais limpas que não cruzam nenhum retângulo.
-        _MAX_PER_COL = 5
+        _MAX_PER_COL = 7
         _CARD_W      = 220.0
         _CARD_H      = 110.0
-        _GAP_X       = 80.0    # canal livre à direita do ramo NAO, antes da próxima coluna
-        _GAP_NAO     = 60.0    # espaço entre card principal e card do ramo NAO
-        _GAP_Y       = 60.0    # espaço vertical entre nós da mesma coluna
+        _GAP_X       = 120.0   # canal livre à direita do ramo NAO, antes da próxima coluna
+        _GAP_NAO     = 80.0    # espaço entre card principal e card do ramo NAO
+        _GAP_Y       = 80.0    # espaço vertical entre nós da mesma coluna
         _X_START     = 60.0
         _Y_START     = 80.0
-        _X_STEP      = _CARD_W + _GAP_NAO + _CARD_W + _GAP_X   # 580 px por coluna
-        _Y_STEP      = _CARD_H + _GAP_Y                          # 170 px por linha
+        _X_STEP      = _CARD_W + _GAP_NAO + _CARD_W + _GAP_X   # 640 px por coluna
+        _Y_STEP      = _CARD_H + _GAP_Y                          # 190 px por linha
 
         # Mapa id → id do pai para ramos NAO
         _nao_parent: dict[str, str] = {
@@ -5857,6 +6021,14 @@ def save_oportunidades_data(rows):
     save_collection(OPORTUNIDADES_FILE, OPORTUNIDADES_TABLE, rows)
 
 
+def load_documentos_data():
+    return load_collection(DOCUMENTOS_FILE, DOCUMENTOS_TABLE, [])
+
+
+def save_documentos_data(rows):
+    save_collection(DOCUMENTOS_FILE, DOCUMENTOS_TABLE, rows)
+
+
 def get_allowed_origins():
     origins_raw = os.getenv("ALLOWED_ORIGINS", "")
     frontend_url = os.getenv("FRONTEND_URL", "")
@@ -6201,6 +6373,9 @@ BPMN_EDITOR_STATE_FILE = os.path.join(
 )
 AI_AUDIT_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "ai_audit_logs.json"
+)
+DOCUMENTOS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "documentos.json"
 )
 
 init_supabase_storage()
@@ -7466,6 +7641,11 @@ def list_workflows(status: str | None = None, owner: str | None = None, shared: 
 
         total_active = len([n for n in nodes if n.get("active") is not False])
         completed_count = len([e for e in executed if e.get("status") == "completed"])
+        # If workflow is completed, force 100% (branches not taken inflate total_active)
+        if wf_status == "completed" and total_active:
+            calc_progress = 100
+        else:
+            calc_progress = round(completed_count / total_active * 100) if total_active else 0
 
         result.append({
             "opportunityId": op_id,
@@ -7480,7 +7660,7 @@ def list_workflows(status: str | None = None, owner: str | None = None, shared: 
             "currentNodeType": current_node.get("nodeType", "") if current_node else "",
             "totalNodes": total_active,
             "completedNodes": completed_count,
-            "progress": round(completed_count / total_active * 100) if total_active else 0,
+            "progress": calc_progress,
             "startedAt": inst.get("startedAt"),
             "updatedAt": inst.get("updatedAt"),
         })
@@ -8717,6 +8897,299 @@ async def workflow_generate_report(op_id: int, request: Request):
     }
 
 
+@app.post("/workflow/{op_id}/generate-document")
+async def workflow_generate_document(op_id: int, request: Request):
+    """Generate a contextual document based on the BPMN process type using AI.
+
+    Analyses the BPMN nodes and executed steps to produce a document that matches
+    the business context (e.g. purchase order, enrollment form, approval report).
+    """
+    body = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    opp = _find_opportunity(op_id)
+    opp_name = opp.get("nome") or opp.get("name") or "Oportunidade"
+
+    # Load workflow state
+    state = _load_workflow_state(op_id)
+    executed = (state.get("executed") or []) if state else (body.get("executed") or [])
+    wf_status = (state.get("status") if state else "not_started") or "not_started"
+
+    # Load BPMN structure
+    inst_version = state.get("bpmn_version") if state else None
+    bpmn = _get_bpmn_safe(opp, inst_version)
+    bpmn_name = bpmn.get("name") or opp_name
+    nodes = bpmn.get("nodes") or []
+
+    node_labels = [n.get("label", "") for n in nodes if n.get("active") is not False]
+    node_types_summary = {}
+    node_details = []
+    for n in nodes:
+        if n.get("active") is False:
+            continue
+        nt = n.get("nodeType", "task")
+        node_types_summary[nt] = node_types_summary.get(nt, 0) + 1
+        label = n.get("label", "")
+        desc = (
+            str(n.get("taskDescricao") or "").strip()
+            or str(n.get("condicionalDescricao") or "").strip()
+            or str(n.get("descricao") or "").strip()
+        )
+        detail = f"{label} [{nt}]"
+        if desc and desc.lower() != label.lower():
+            detail += f": {desc}"
+        node_details.append(detail)
+
+    executed_summary = []
+    for step in executed:
+        entry = f"- {step.get('label', 'Etapa')}: status={step.get('status', '')}"
+        if step.get("decision"):
+            entry += f", decisão={step['decision']}"
+        if step.get("formData"):
+            form_items = []
+            for k, v in step["formData"].items():
+                form_items.append(f"{k}={v}")
+            if form_items:
+                entry += f" [{', '.join(form_items[:8])}]"
+        executed_summary.append(entry)
+
+    # Build prompt for contextual document generation
+    system_prompt = (
+        "Você é um gerador de documentos empresariais detalhados e completos. "
+        "Com base no processo BPMN descrito, gere um documento formal, contextual e RICO EM CONTEÚDO. "
+        "O documento deve ser do TIPO correto para o processo: "
+        "- Se for aprovação de pedido de compra → gere um Pedido de Compra ou Ordem de Compra. "
+        "- Se for matrícula → gere um Formulário/Comprovante de Matrícula. "
+        "- Se for contratação → gere um Termo de Contratação. "
+        "- Se for aprovação de crédito → gere um Parecer de Crédito. "
+        "- Se for onboarding → gere um Checklist de Onboarding. "
+        "- Se for solicitação de serviço → gere uma Ordem de Serviço. "
+        "- Para qualquer outro processo, gere o documento mais adequado ao contexto. "
+        "REGRAS: "
+        "(1) Retorne SOMENTE JSON válido, sem markdown. "
+        "(2) O JSON deve ter este formato: "
+        '{"documentType":"<tipo do documento>","documentTitle":"<título>","header":{"fields":[{"label":"<rótulo>","value":"<valor ou placeholder>"}]},'
+        '"sections":[{"heading":"<título da seção>","body":"<conteúdo detalhado>"}],'
+        '"footer":"<texto do rodapé>","signatureFields":["<nome do campo de assinatura>"]}. '
+        "(3) Use dados reais das etapas executadas quando disponíveis. "
+        "(4) Preencha campos com valores plausíveis baseados no contexto quando dados reais não existirem. "
+        "(5) O documento deve parecer profissional e pronto para uso. "
+        "(6) CADA SEÇÃO deve ter conteúdo DETALHADO com pelo menos 2-4 frases, "
+        "descrevendo o que foi realizado, verificado ou decidido naquela etapa. "
+        "Use as descrições das etapas fornecidas para enriquecer o texto. "
+        "NÃO use texto genérico ou vago. "
+        "(7) Inclua de 5 a 12 seções dependendo da complexidade do processo. "
+        "Quanto mais etapas o processo tiver, mais seções o documento deve conter. "
+        "(8) O body de cada seção deve refletir a descrição da etapa correspondente, "
+        "expandindo com detalhes operacionais, resultados e observações relevantes."
+    )
+
+    user_prompt = json.dumps({
+        "processName": bpmn_name,
+        "opportunityName": opp_name,
+        "workflowStatus": wf_status,
+        "nodeLabels": node_labels[:30],
+        "nodeDetails": node_details[:30],
+        "nodeTypeCounts": node_types_summary,
+        "executedSteps": executed_summary[:20],
+        "totalNodes": len(nodes),
+    }, ensure_ascii=False)
+
+    # Try AI generation
+    doc_data = None
+    ai_error = None
+
+    try:
+        api_url = None
+        api_key = None
+        model = None
+        headers = {}
+
+        # Geração de documento precisa de modelo capaz para texto rico e detalhado
+        _DOC_MODEL_GROQ = "openai/gpt-oss-120b"
+        if AI_PROVIDER == "openai" and OPENAI_API_KEY:
+            api_url = "https://api.openai.com/v1/chat/completions"
+            api_key = OPENAI_API_KEY
+            model = OPENAI_MODEL
+        elif GROQ_API_KEY:
+            api_url = "https://api.groq.com/openai/v1/chat/completions"
+            api_key = GROQ_API_KEY
+            model = _DOC_MODEL_GROQ
+
+        if api_url and api_key:
+            _DOC_MODELS = [model]
+            # Add fallback models for Groq
+            if "groq" in api_url:
+                _DOC_MODELS = [
+                    "openai/gpt-oss-120b",
+                    "llama-3.3-70b-versatile",
+                    "qwen/qwen3-32b",
+                    "llama-3.1-8b-instant",
+                ]
+
+            MAX_RETRIES = 3
+            for attempt_model in _DOC_MODELS:
+                for attempt in range(MAX_RETRIES):
+                    try:
+                        response = requests.post(
+                            api_url,
+                            headers={
+                                "Authorization": f"Bearer {api_key}",
+                                "Content-Type": "application/json",
+                            },
+                            json={
+                                "model": attempt_model,
+                                "temperature": 0.3,
+                                "response_format": {"type": "json_object"},
+                                "messages": [
+                                    {"role": "system", "content": system_prompt},
+                                    {"role": "user", "content": user_prompt},
+                                ],
+                            },
+                            timeout=AI_LLM_TIMEOUT_SECONDS,
+                        )
+
+                        if response.ok:
+                            payload = response.json()
+                            choices = payload.get("choices") or []
+                            if choices:
+                                first = choices[0] if isinstance(choices[0], dict) else {}
+                                message = first.get("message") or {}
+                                content = message.get("content", "")
+                                try:
+                                    doc_data = json.loads(content)
+                                    ai_error = None
+                                    break
+                                except json.JSONDecodeError:
+                                    ai_error = "Resposta da IA não é JSON válido"
+                        elif response.status_code == 429:
+                            import time as _time
+                            wait = min(2 ** attempt * 2, 15)
+                            _time.sleep(wait)
+                            ai_error = f"LLM HTTP 429 (rate limit)"
+                            continue
+                        else:
+                            ai_error = f"LLM HTTP {response.status_code}"
+                            break
+                    except Exception as exc:
+                        ai_error = str(exc)
+                        break
+                if doc_data:
+                    break
+    except Exception as exc:
+        ai_error = str(exc)
+
+    # AI generation is required — return error if it failed
+    if not doc_data:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Não foi possível gerar o documento com IA. Tente novamente em alguns segundos. Erro: {ai_error or 'desconhecido'}",
+        )
+
+    doc_data["_meta"] = {
+        "aiGenerated": True,
+        "aiError": ai_error,
+        "processName": bpmn_name,
+        "opportunityName": opp_name,
+    }
+
+    return doc_data
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Documentos — CRUD for persisted generated documents
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/documentos")
+def list_documentos(owner: str | None = None):
+    """List all saved documents, optionally filtered by owner."""
+    docs = load_documentos_data()
+    if owner:
+        docs = [d for d in docs if str(d.get("owner", "")).lower() == owner.lower()]
+    docs.sort(key=lambda d: d.get("createdAt", ""), reverse=True)
+    return {"data": docs, "total": len(docs)}
+
+
+@app.get("/documentos/{doc_id}")
+def get_documento(doc_id: int):
+    """Get a single document by ID."""
+    docs = load_documentos_data()
+    doc = next((d for d in docs if d.get("id") == doc_id), None)
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+    return doc
+
+
+@app.post("/documentos")
+async def create_documento(request: Request):
+    """Save a generated document."""
+    body = await request.json()
+    with _data_lock:
+        docs = load_documentos_data()
+        new_id = max((d.get("id", 0) for d in docs), default=0) + 1
+        doc = {
+            "id": new_id,
+            "opportunityId": body.get("opportunityId"),
+            "documentType": body.get("documentType", "Documento"),
+            "documentTitle": body.get("documentTitle", "Sem título"),
+            "header": body.get("header") or {},
+            "sections": body.get("sections") or [],
+            "footer": body.get("footer", ""),
+            "signatureFields": body.get("signatureFields") or [],
+            "owner": body.get("owner", ""),
+            "processName": body.get("processName", ""),
+            "aiGenerated": body.get("aiGenerated", False),
+            "createdAt": datetime.now(timezone.utc).isoformat(),
+        }
+        docs.append(doc)
+        save_documentos_data(docs)
+    return doc
+
+
+@app.delete("/documentos/{doc_id}")
+def delete_documento(doc_id: int):
+    """Delete a saved document."""
+    with _data_lock:
+        docs = load_documentos_data()
+        idx = next((i for i, d in enumerate(docs) if d.get("id") == doc_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Documento não encontrado.")
+        docs.pop(idx)
+        save_documentos_data(docs)
+    return {"msg": "Documento removido."}
+
+
+@app.put("/documentos/{doc_id}")
+async def update_documento(doc_id: int, request: Request):
+    """Update an existing document."""
+    body = await request.json()
+    with _data_lock:
+        docs = load_documentos_data()
+        idx = next((i for i, d in enumerate(docs) if d.get("id") == doc_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Documento não encontrado.")
+        doc = docs[idx]
+        if "documentTitle" in body:
+            doc["documentTitle"] = body["documentTitle"]
+        if "documentType" in body:
+            doc["documentType"] = body["documentType"]
+        if "header" in body:
+            doc["header"] = body["header"]
+        if "sections" in body:
+            doc["sections"] = body["sections"]
+        if "footer" in body:
+            doc["footer"] = body["footer"]
+        if "signatureFields" in body:
+            doc["signatureFields"] = body["signatureFields"]
+        doc["updatedAt"] = datetime.now(timezone.utc).isoformat()
+        docs[idx] = doc
+        save_documentos_data(docs)
+    return doc
+
+
 @app.post("/workflow/{op_id}/suggest")
 async def workflow_suggest(op_id: int, authorization: str = Header(...)):
     """Suggest next action for a workflow paused at a gateway/task node.
@@ -9581,25 +10054,24 @@ def ai_detect_spreadsheet_tables(
     groq_headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
 
     try:
-        resp = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=groq_headers,
-            json=groq_payload,
-            timeout=AI_LLM_TIMEOUT_SECONDS,
-        )
-        if resp.status_code == 429:
-            retry_after = int(resp.headers.get("retry-after", 5))
-            time.sleep(min(retry_after, 10))
+        resp = None
+        _retry_waits = [2, 5, 10]
+        for _attempt in range(len(_retry_waits) + 1):
             resp = requests.post(
                 "https://api.groq.com/openai/v1/chat/completions",
                 headers=groq_headers,
                 json=groq_payload,
                 timeout=AI_LLM_TIMEOUT_SECONDS,
             )
-        if resp.status_code == 429:
+            if resp.status_code != 429 or _attempt >= len(_retry_waits):
+                break
+            wait = _retry_waits[_attempt]
+            print(f"[detect-spreadsheet-tables] 429 rate limit, retry {_attempt + 1}/{len(_retry_waits)}, aguardando {wait}s")
+            time.sleep(wait)
+        if resp is not None and resp.status_code == 429:
             raise HTTPException(status_code=429, detail="Limite de requisições da IA atingido.")
-        if not resp.ok:
-            raise RuntimeError(f"Groq HTTP {resp.status_code}")
+        if resp is None or not resp.ok:
+            raise RuntimeError(f"Groq HTTP {resp.status_code if resp else 'no response'}")
 
         raw_json = resp.json()
         content = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
@@ -9661,90 +10133,133 @@ def ai_parse_description(
     system_prompt = (
         "Você é um especialista em modelagem de processos de negócio (BPM). "
         "A partir da descrição recebida, extraia e classifique TODOS os elementos do processo.\n\n"
-        "Regras obrigatórias:\n"
-        "- 'entities': lista de objetos com {\"name\": string, \"tipoEntidade\": string}. "
-        "Inclua TODOS os substantivos relevantes: objetos de dados, documentos E participantes/atores nomeados "
-        "(ex: Pedido, Nota Fiscal, Cliente, Fornecedor, Aprovacao). "
-        "Para tipoEntidade use EXATAMENTE um destes valores:\n"
-        "  - 'principal': entidade central do processo (geralmente o objeto que o processo transforma, ex: Pedido)\n"
-        "  - 'apoio': entidades secundárias que participam mas não são o foco (ex: Aprovacao, OrdemDeCompra)\n"
-        "  - 'externa': atores/participantes externos, fornecedores e clientes (ex: Cliente, Fornecedor)\n"
-        "  - 'associativa': entidade de relacionamento entre outras duas entidades\n"
-        "- 'activities': lista de strings com tarefas (verbos no infinitivo, ex: Analisar Pedido). "
-        "NUNCA inclua 'Sim', 'Nao' ou 'Não' como atividades — esses são caminhos de decisão, não tarefas.\n"
-        "- 'conditionals': lista de strings com decisões exclusivas, SEMPRE terminam com '?' (ex: Pedido aprovado?).\n"
-        "- 'flowOrder': sequência ordenada de TODOS os elementos acima — inclua todas as entidades, atividades e condicionais, "
-        "sem omitir nenhum. Cada item é {\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", "
-        "\"desc\": string (obrigatório — descreva o papel deste elemento no processo em 1 frase), "
-        "\"tipoEntidade\": string (só para entidades)}.\n"
-        "  REGRA CRÍTICA DE ORDENAÇÃO: entidades devem aparecer INTERCALADAS no fluxo, logo após a atividade que as cria ou utiliza. "
-        "NUNCA agrupe todas as entidades no final. Exemplo correto: [Solicitar compra, Pedido, Analisar Pedido, ...]. "
-        "Exemplo ERRADO: [Solicitar compra, Analisar Pedido, ..., Pedido, Cliente, Fornecedor].\n"
-        "  Para cada condicional, SEMPRE inclua uma atividade dedicada ao caminho NÃO (rejeição/alternativa). "
-        "Exemplo: após 'Pedido aprovado?', inclua tanto 'Validar orcamento' (SIM) quanto 'Atualizar Pedido' (NÃO).\n"
-        "  Para condicionais em flowOrder, adicione 'branches': {\"sim\": \"<próximo elemento se verdadeiro>\", \"nao\": \"<próximo elemento se falso>\"}.\n"
-        "- NOMES CURTOS: nomes de atividade devem ter no máximo 2 palavras (ex: 'Aprovar', 'Enviar NF', 'Revisar'); nomes de entidade no máximo 2 palavras (ex: 'Pedido', 'NF Fiscal'); nomes de condicional no máximo 4 palavras + '?'.\n"
-        "- 'desc' é OBRIGATÓRIO em TODOS os elementos (entidade, atividade e condicional) — NUNCA deixe vazio. "
-        "Para entidades: descreva quem usa a entidade, quando ela é criada/atualizada e qual papel ela cumpre no processo (mínimo 1 frase completa). "
-        "Para atividades: descreva o que acontece neste passo, quem executa e qual o resultado esperado (mínimo 1 frase completa). "
-        "Para condicionais: descreva qual critério é avaliado e quem decide (mínimo 1 frase completa). NÃO explique os caminhos SIM/NÃO, o diagrama já mostra isso. "
-        "NUNCA repita nem parafraseie o nome no desc. "
-        "Exemplo ruim (atividade): name='Analisar Pedido', desc='Análise do pedido'. "
-        "Exemplo bom (atividade): name='Analisar Pedido', desc='Responsável verifica se o pedido atende às políticas internas de prazo e orçamento antes de seguir para aprovação'.\n"
-        "Exemplo ruim (entidade): name='Cliente', desc='Cliente'. "
-        "Exemplo bom (entidade): name='Cliente', desc='Pessoa ou empresa que origina o processo; seus dados são consultados em cada etapa de aprovação e notificação'.\n"
-        "Exemplo ruim (condicional): name='Aprovado?', desc='Verifica aprovação'. "
-        "Exemplo bom (condicional): name='Aprovado?', desc='Gestor avalia se o pedido atende aos critérios financeiros e de prazo'.\n"
-        "- Retorne JSON válido com exatamente estas chaves: processName, entities, activities, conditionals, flowOrder.\n"
-        "- Não inclua explicações, apenas o JSON."
+        "## REGRA #1 — ORDEM SEQUENCIAL (MAIS IMPORTANTE)\n"
+        "O 'flowOrder' DEVE seguir EXATAMENTE a ordem em que os passos aparecem na descrição textual. "
+        "Leia o texto de cima para baixo e mapeie cada passo na mesma sequência. "
+        "NUNCA reorganize, agrupe ou reordene elementos por tipo. "
+        "Se o texto diz 'primeiro A, depois B, então C', o flowOrder é [A, B, C] — nessa exata ordem.\n\n"
+        "## REGRA #2 — INTERCALAÇÃO OBRIGATÓRIA\n"
+        "NUNCA coloque mais de 3 atividades seguidas sem uma entidade ou condicional entre elas. "
+        "Entidades devem aparecer LOGO APÓS a atividade que as cria ou utiliza pela primeira vez. "
+        "Se houver uma sequência longa de atividades, insira a entidade relevante entre elas. "
+        "Exemplo correto: [Solicitar Matrícula, Candidato, Preencher Dados, Formulário, Selecionar Curso, Curso]\n"
+        "Exemplo ERRADO: [Solicitar Matrícula, Preencher Dados, Selecionar Curso, Emitir Carteirinha, Cadastrar Biblioteca]\n\n"
+        "## REGRA #3 — CONDICIONAIS (PROIBIÇÃO ABSOLUTA DE CONDICIONAL→CONDICIONAL)\n"
+        "NUNCA, em hipótese alguma, coloque uma condicional seguida de outra condicional no flowOrder. "
+        "Entre duas condicionais SEMPRE deve haver pelo menos uma ATIVIDADE (task) do fluxo principal. "
+        "Cada condicional DEVE ter 'branches': {\"sim\": \"<próximo se verdadeiro>\", \"nao\": \"<próximo se falso>\"}. "
+        "O branch 'sim' DEVE apontar para uma ATIVIDADE, NUNCA para outra condicional. "
+        "O branch 'nao' DEVE apontar para uma atividade de rejeição/alternativa. "
+        "A atividade do caminho NÃO deve vir IMEDIATAMENTE após o condicional no flowOrder.\n"
+        "Se o processo tem decisões consecutivas, CRIE uma atividade intermediária entre elas.\n"
+        "Exemplo correto: [..., Docs Corretos?, Corrigir (NAO), Processar Resultado, Aprovado?, Rejeitar (NAO), ...]\n"
+        "Exemplo ERRADO: [..., Docs Corretos?, Corrigir (NAO), Aprovado?, ...] (condicional→condicional SEM task entre elas)\n\n"
+        "## REGRA #4 — EQUILÍBRIO DO DIAGRAMA\n"
+        "O processo deve ter um bom equilíbrio entre atividades, entidades e condicionais. "
+        "Para cada 2-3 atividades, inclua a entidade que é produzida ou consumida. "
+        "Use condicionais para pontos de decisão reais mencionados no texto, não invente decisões artificiais.\n\n"
+        "## REGRA #5 — FINALIZAÇÃO DO FLUXO (CRÍTICO)\n"
+        "O flowOrder NUNCA pode terminar com uma condicional nem com a atividade NÃO de uma condicional. "
+        "O ÚLTIMO item do flowOrder DEVE ser SEMPRE uma atividade de CONCLUSÃO do fluxo principal "
+        "(ex: 'Finalizar Processo', 'Concluir Cadastro', 'Encerrar Atendimento'). "
+        "Se a última decisão é uma condicional, ADICIONE ao menos uma atividade final após ela que represente "
+        "a conclusão normal do processo. O caminho SIM da última condicional deve apontar para essa atividade final.\n"
+        "Exemplo correto: [..., Pagamento Aprovado?, Rejeitar Pagamento (NAO), Emitir Recibo]\n"
+        "Exemplo ERRADO: [..., Pagamento Aprovado?, Rejeitar Pagamento] (termina sem conclusão)\n"
+        "Exemplo ERRADO: [..., Pagamento Aprovado?] (termina em condicional)\n\n"
+        "## Formato de saída\n"
+        "Retorne JSON com estas chaves:\n"
+        "- 'processName': string\n"
+        "- 'entities': [{\"name\": string, \"tipoEntidade\": \"principal\"|\"apoio\"|\"externa\"|\"associativa\"}]\n"
+        "- 'activities': [string] — verbos no infinitivo, máx 3 palavras. NUNCA inclua 'Sim', 'Nao' ou 'Não'.\n"
+        "- 'conditionals': [string] — SEMPRE terminam com '?', máx 5 palavras.\n"
+        "- 'flowOrder': [{\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", "
+        "\"desc\": string (OBRIGATÓRIO, mín 1 frase, NUNCA repita o nome), "
+        "\"tipoEntidade\": string (só entidades), "
+        "\"branches\": {\"sim\": string, \"nao\": string} (só condicionais)}]\n\n"
+        "## Regras de qualidade para 'desc'\n"
+        "- Entidade: descreva quem usa, quando é criada/atualizada e seu papel no processo.\n"
+        "- Atividade: descreva o que acontece, quem executa e o resultado esperado.\n"
+        "- Condicional: descreva o critério avaliado e quem decide. NÃO explique caminhos SIM/NÃO.\n"
+        "- NUNCA repita ou parafraseie o nome no desc.\n\n"
+        "## tipoEntidade\n"
+        "- 'principal': objeto central que o processo transforma\n"
+        "- 'apoio': entidade secundária que participa\n"
+        "- 'externa': ator/participante externo\n"
+        "- 'associativa': entidade de relacionamento\n\n"
+        "Retorne APENAS o JSON, sem explicações."
     )
 
     user_prompt = f"Nome do processo: {process_name}\n\nDescrição:\n{description}"
 
-    # Usa modelo menor (8b) para extração estruturada: limite muito mais alto (6000 RPM)
-    # e qualidade suficiente para essa tarefa simples vs 70b (30 RPM).
-    _PARSE_MODEL = "llama-3.1-8b-instant"
-    groq_payload = {
-        "model": _PARSE_MODEL,
-        "temperature": 0.2,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user",   "content": user_prompt},
-        ],
-    }
+    # Modelos em ordem de preferência (cada um tem rate limit separado no Groq)
+    _PARSE_MODELS = ["llama-3.3-70b-versatile", "meta-llama/llama-4-scout-17b-16e-instruct", "llama-3.1-8b-instant"]
     groq_headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    _base_messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user",   "content": user_prompt},
+    ]
 
     try:
-        resp = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers=groq_headers,
-            json=groq_payload,
-            timeout=AI_LLM_TIMEOUT_SECONDS,
-        )
-        # Retry único com backoff quando o Groq sinalizar rate limit temporário
-        if resp.status_code == 429:
-            retry_after = int(resp.headers.get("retry-after", 5))
-            wait = min(retry_after, 10)
-            time.sleep(wait)
-            resp = requests.post(
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers=groq_headers,
-                json=groq_payload,
-                timeout=AI_LLM_TIMEOUT_SECONDS,
-            )
-        if resp.status_code == 429:
+        resp = None
+        _used_model = _PARSE_MODELS[0]
+
+        for _model_idx, _model in enumerate(_PARSE_MODELS):
+            groq_payload = {
+                "model": _model,
+                "temperature": 0.2,
+                "response_format": {"type": "json_object"},
+                "messages": _base_messages,
+            }
+            _retry_waits = [2, 5] if _model_idx == 0 else [2, 5, 10]
+            for _attempt in range(len(_retry_waits) + 1):
+                try:
+                    resp = requests.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers=groq_headers,
+                        json=groq_payload,
+                        timeout=AI_LLM_TIMEOUT_SECONDS,
+                    )
+                except requests.exceptions.RequestException as req_err:
+                    print(f"[parse-description] request error ({_model}): {req_err}")
+                    resp = None
+                    break
+                if resp is None or resp.status_code != 429 or _attempt >= len(_retry_waits):
+                    break
+                wait = _retry_waits[_attempt]
+                print(f"[parse-description] 429 ({_model}), retry {_attempt + 1}/{len(_retry_waits)}, aguardando {wait}s")
+                time.sleep(wait)
+
+            if resp is not None and resp.status_code != 429 and resp.ok:
+                _used_model = _model
+                break  # Sucesso — sai do loop de modelos
+            # Falhou neste modelo (429 ou outro erro) — tenta o próximo
+            _fail_code = resp.status_code if resp is not None else "no response"
+            print(f"[parse-description] {_model} falhou (HTTP {_fail_code}), tentando próximo modelo...")
+
+        print(f"[parse-description] modelo usado: {_used_model}")
+
+        if resp is not None and resp.status_code == 429:
             raise HTTPException(status_code=429, detail="Limite de requisições da IA atingido. Aguarde alguns instantes e tente novamente.")
-        if not resp.ok:
-            raise RuntimeError(f"Groq HTTP {resp.status_code}")
+        if resp is None or not resp.ok:
+            _code = resp.status_code if resp is not None else "no response"
+            raise RuntimeError(f"Groq HTTP {_code}")
 
         raw_json = resp.json()
         content  = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        print(f"[parse-description] modelo={_used_model} status={resp.status_code} content_len={len(content)}")
+        if not content or content.strip() in ("{}", ""):
+            print(f"[parse-description] AVISO: Groq retornou conteúdo vazio!")
         parsed   = json.loads(content)
+        if not parsed.get("flowOrder") and not parsed.get("activities"):
+            print(f"[parse-description] AVISO: parsed sem flowOrder/activities. Keys={list(parsed.keys())}")
+            print(f"[parse-description] content preview: {content[:500]}")
     except HTTPException:
         raise
     except Exception as exc:
+        import traceback
         print(f"[parse-description] Groq falhou: {exc}")
+        traceback.print_exc()
         parsed = {}
 
     # Monta mapa name -> tipoEntidade a partir de parsed["entities"] (lista de objetos ou strings)
@@ -9795,6 +10310,103 @@ def ai_parse_description(
     # Filtra nomes proibidos (Sim, Nao etc.) de todos os outputs
     _PARSE_FORBIDDEN = {"sim", "nao", "não", "yes", "no", "true", "false"}
     flow_order = [fo for fo in flow_order if fo.get("name", "").lower().strip() not in _PARSE_FORBIDDEN]
+
+    # ── Validação pós-IA: corrigir problemas estruturais do flowOrder ──
+
+    # 1) Garantir que condicional→condicional tenha atividade intermediária
+    #    Verifica o próximo item não-NAO após cada condicional. Se for outra condicional,
+    #    insere atividade ponte entre elas.
+    _nao_refs_set: set[str] = set()
+    for _fo_item in flow_order:
+        if _fo_item.get("type") == "condicional":
+            _nr = (_fo_item.get("branches", {}).get("nao") or "").strip().lower()
+            if _nr:
+                _nao_refs_set.add(_nr)
+
+    _fixed_fo: list[dict] = []
+    for _fi, _fo_item in enumerate(flow_order):
+        _fixed_fo.append(_fo_item)
+        if _fo_item.get("type") == "condicional":
+            # Encontra o próximo item no fluxo principal (não-NAO) após esta condicional
+            _next_main = None
+            for _nj in range(_fi + 1, len(flow_order)):
+                _nj_name = flow_order[_nj].get("name", "").strip().lower()
+                if _nj_name in _nao_refs_set:
+                    continue  # Pula nós NAO
+                if flow_order[_nj].get("type") == "entidade":
+                    continue  # Pula entidades intercaladas
+                _next_main = flow_order[_nj]
+                break
+            if _next_main is not None and _next_main.get("type") == "condicional":
+                _bridge_name = f"Processar {_fo_item.get('name', '').replace('?', '').strip()}"
+                # Insere a atividade ponte ANTES da condicional que acabamos de adicionar?
+                # Não — insere no final da _fixed_fo, ela aparecerá entre a cond atual e a próxima
+                _fixed_fo.append({
+                    "name": _bridge_name,
+                    "type": "task",
+                    "desc": f"Atividade de processamento após a decisão '{_fo_item.get('name', '')}'.",
+                })
+                # Atualizar branches.sim da condicional atual para apontar para a ponte
+                _fo_item.setdefault("branches", {})
+                _fo_item["branches"]["sim"] = _bridge_name
+                print(f"[parse-description] Ponte '{_bridge_name}' inserida entre '{_fo_item.get('name','')}' e '{_next_main.get('name','')}'")
+    flow_order = _fixed_fo
+
+    # 2) Garantir que o último nó não seja uma atividade NAO (caminho de rejeição).
+    #    Nós NAO devem ser seguidos por pelo menos um nó do fluxo principal.
+    #    Identifica nós NAO: são referenciados em branches.nao de alguma condicional.
+    #    IMPORTANTE: este step roda ANTES de verificar condicional no final,
+    #    pois mover NAO pode revelar uma condicional como último item.
+    _nao_names: set[str] = set()
+    for _fo_item in flow_order:
+        if _fo_item.get("type") == "condicional":
+            _nao_ref = (_fo_item.get("branches", {}).get("nao") or "").strip().lower()
+            if _nao_ref:
+                _nao_names.add(_nao_ref)
+    # Se o último nó é um NAO, mover para logo após sua condicional
+    if flow_order and flow_order[-1].get("name", "").strip().lower() in _nao_names:
+        _nao_item = flow_order.pop()
+        # Encontrar a condicional que referencia este NAO e inserir logo após ela
+        _inserted = False
+        for _ri in range(len(flow_order) - 1, -1, -1):
+            if flow_order[_ri].get("type") == "condicional":
+                _br_nao = (flow_order[_ri].get("branches", {}).get("nao") or "").strip().lower()
+                if _br_nao == _nao_item.get("name", "").strip().lower():
+                    flow_order.insert(_ri + 1, _nao_item)
+                    _inserted = True
+                    print(f"[parse-description] Movido NAO '{_nao_item['name']}' para posição {_ri + 1} (após sua condicional)")
+                    break
+        if not _inserted:
+            # Fallback: inserir antes do último item
+            flow_order.insert(max(0, len(flow_order) - 1), _nao_item)
+
+    # 3) Garantir que o flowOrder NÃO termine com uma condicional NEM com [Condicional, NAO].
+    #    Agora que NAOs foram reposicionados (step 2), verificar se precisa de conclusão.
+    _needs_conclusion = False
+    _target_cond = None
+
+    if flow_order and flow_order[-1].get("type") == "condicional":
+        _needs_conclusion = True
+        _target_cond = flow_order[-1]
+    elif flow_order and flow_order[-1].get("name", "").strip().lower() in _nao_names:
+        # Último é NAO — a condicional antes dele precisa de conclusão
+        for _ri in range(len(flow_order) - 2, -1, -1):
+            if flow_order[_ri].get("type") == "condicional":
+                _needs_conclusion = True
+                _target_cond = flow_order[_ri]
+                break
+
+    if _needs_conclusion and _target_cond is not None:
+        _conclusion_name = f"Concluir {_target_cond.get('name', '').replace('?', '').strip()}"
+        flow_order.append({
+            "name": _conclusion_name,
+            "type": "task",
+            "desc": f"Atividade de conclusão após a decisão '{_target_cond.get('name', '')}'.",
+        })
+        if "branches" not in _target_cond:
+            _target_cond["branches"] = {}
+        _target_cond["branches"]["sim"] = _conclusion_name
+        print(f"[parse-description] Adicionado '{_conclusion_name}' após última condicional")
 
     # entities como lista de objetos {name, tipoEntidade}
     entities_out = [

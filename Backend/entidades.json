@@ -216,5 +216,7235 @@
     "created_at": "2026-04-15T09:37:00.038563",
     "updated_at": "2026-04-15T09:37:00.038563",
     "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 6,
+    "nome": "Solicitação de Matrícula",
+    "descricao": "A solicitação de matrícula é o início do processo.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.245276",
+    "updated_at": "2026-04-20T09:02:05.245276",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 7,
+    "nome": "Curso",
+    "descricao": "O curso escolhido pelo candidato.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.247169",
+    "updated_at": "2026-04-20T09:02:05.247169",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 8,
+    "nome": "Turno",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.248996",
+    "updated_at": "2026-04-20T09:02:05.248996",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 9,
+    "nome": "Modalidade de Ensino",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_modalidade_de_ensino",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.251601",
+    "updated_at": "2026-04-20T09:02:05.251601",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 10,
+    "nome": "Unidade",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_unidade",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.254274",
+    "updated_at": "2026-04-20T09:02:05.254274",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 11,
+    "nome": "Dados Cadastrais",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_dados_cadastrais",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.262095",
+    "updated_at": "2026-04-20T09:02:05.262095",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 12,
+    "nome": "Documentação Obrigatória",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao_obrigatoria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.264355",
+    "updated_at": "2026-04-20T09:02:05.264355",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 13,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.266505",
+    "updated_at": "2026-04-20T09:02:05.266505",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 14,
+    "nome": "Bolsa",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_bolsa",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.268833",
+    "updated_at": "2026-04-20T09:02:05.268833",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 15,
+    "nome": "Desconto Promocional",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_desconto_promocional",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.271195",
+    "updated_at": "2026-04-20T09:02:05.271195",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 16,
+    "nome": "Convênio",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_convenio",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.273660",
+    "updated_at": "2026-04-20T09:02:05.273660",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 17,
+    "nome": "Financiamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_financiamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.275553",
+    "updated_at": "2026-04-20T09:02:05.275553",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 18,
+    "nome": "Contrato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.277519",
+    "updated_at": "2026-04-20T09:02:05.277519",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 19,
+    "nome": "Número de Registro Acadêmico",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_numero_de_registro_acade",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.279550",
+    "updated_at": "2026-04-20T09:02:05.279550",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 20,
+    "nome": "Turma",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.281598",
+    "updated_at": "2026-04-20T09:02:05.281598",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 21,
+    "nome": "Acesso ao Portal Estudantil",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_acesso_ao_portal_estudan",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.283696",
+    "updated_at": "2026-04-20T09:02:05.283696",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 22,
+    "nome": "Grade Horária",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_grade_horaria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.285828",
+    "updated_at": "2026-04-20T09:02:05.285828",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 23,
+    "nome": "E-mail Institucional",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_e_mail_institucional",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.288036",
+    "updated_at": "2026-04-20T09:02:05.288036",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 24,
+    "nome": "Cadastro em Biblioteca",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_cadastro_em_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.291243",
+    "updated_at": "2026-04-20T09:02:05.291243",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 25,
+    "nome": "Plataformas Educacionais",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_plataformas_educacionais",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.293662",
+    "updated_at": "2026-04-20T09:02:05.293662",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 26,
+    "nome": "Carteirinha",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_carteirinha",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.296165",
+    "updated_at": "2026-04-20T09:02:05.296165",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 27,
+    "nome": "Candidato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.299357",
+    "updated_at": "2026-04-20T09:02:05.299357",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 28,
+    "nome": "Gestor",
+    "descricao": "Responsável por aprovar ou validar etapas no processo de Processo Corporativo de Matrícula Acadêmica Integrada.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_gestor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.302301",
+    "updated_at": "2026-04-20T09:02:05.302301",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 29,
+    "nome": "Professor",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_professor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.305232",
+    "updated_at": "2026-04-20T09:02:05.305232",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada",
+    "id": 30,
+    "nome": "Aluno",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:02:05.308201",
+    "updated_at": "2026-04-20T09:02:05.308201",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 31,
+    "nome": "Solicitação de Matrícula",
+    "descricao": "Requisição de matrícula feita pelo candidato, contendo informações básicas e de contato.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.063141",
+    "updated_at": "2026-04-20T09:11:51.063141",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 32,
+    "nome": "Candidato",
+    "descricao": "Pessoa que deseja ingressar na instituição, com informações pessoais e acadêmicas.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.076994",
+    "updated_at": "2026-04-20T09:11:51.076994",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 33,
+    "nome": "Curso",
+    "descricao": "Opção de curso escolhida pelo candidato, com informações sobre carga horária, créditos e requisitos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.090905",
+    "updated_at": "2026-04-20T09:11:51.090905",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 34,
+    "nome": "Turno",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.105956",
+    "updated_at": "2026-04-20T09:11:51.105956",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 35,
+    "nome": "Modalidade de Ensino",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_modalidade_de_ensino",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.119339",
+    "updated_at": "2026-04-20T09:11:51.119339",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 36,
+    "nome": "Unidade",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_unidade",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.134729",
+    "updated_at": "2026-04-20T09:11:51.134729",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 37,
+    "nome": "Documentação Obrigatória",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao_obrigatoria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.151270",
+    "updated_at": "2026-04-20T09:11:51.151270",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 38,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.176381",
+    "updated_at": "2026-04-20T09:11:51.176381",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 39,
+    "nome": "Bolsa",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_bolsa",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.194863",
+    "updated_at": "2026-04-20T09:11:51.194863",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 40,
+    "nome": "Desconto Promocional",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_desconto_promocional",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.220758",
+    "updated_at": "2026-04-20T09:11:51.220758",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 41,
+    "nome": "Convênio",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_convenio",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.235964",
+    "updated_at": "2026-04-20T09:11:51.235964",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 42,
+    "nome": "Financiamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_financiamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.250698",
+    "updated_at": "2026-04-20T09:11:51.250698",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 43,
+    "nome": "Contrato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.264769",
+    "updated_at": "2026-04-20T09:11:51.264769",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 44,
+    "nome": "Número de Registro Acadêmico",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_numero_de_registro_acade",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.278434",
+    "updated_at": "2026-04-20T09:11:51.278434",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 45,
+    "nome": "Turma",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.291597",
+    "updated_at": "2026-04-20T09:11:51.291597",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 46,
+    "nome": "Grade Horária",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_grade_horaria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.306127",
+    "updated_at": "2026-04-20T09:11:51.306127",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 47,
+    "nome": "E-mail Institucional",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_e_mail_institucional",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.320405",
+    "updated_at": "2026-04-20T09:11:51.320405",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 48,
+    "nome": "Biblioteca",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.335518",
+    "updated_at": "2026-04-20T09:11:51.335518",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 49,
+    "nome": "Plataformas Educacionais",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_plataformas_educacionais",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.340766",
+    "updated_at": "2026-04-20T09:11:51.340766",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (1)",
+    "id": 50,
+    "nome": "Carteirinha",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_carteirinha",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Solicitação de Matrícula.id_solicitacao_de_matricula"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:11:51.355359",
+    "updated_at": "2026-04-20T09:11:51.355359",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 51,
+    "nome": "Candidato",
+    "descricao": "Pessoa ou empresa que origina o processo; seus dados são consultados em cada etapa de aprovação e notificação.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.258751",
+    "updated_at": "2026-04-20T09:22:14.258751",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 52,
+    "nome": "Documentação Obrigatória",
+    "descricao": "Documentos necessários para a matrícula, como identificação, comprovantes e registros acadêmicos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao_obrigatoria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.302896",
+    "updated_at": "2026-04-20T09:22:14.302896",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 53,
+    "nome": "Solicitação de Matrícula",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_solicitacao_de_matricula",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.346232",
+    "updated_at": "2026-04-20T09:22:14.346232",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 54,
+    "nome": "Curso",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.391985",
+    "updated_at": "2026-04-20T09:22:14.391985",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 55,
+    "nome": "Turno",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.436421",
+    "updated_at": "2026-04-20T09:22:14.436421",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 56,
+    "nome": "Modalidade de Ensino",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_modalidade_de_ensino",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.484595",
+    "updated_at": "2026-04-20T09:22:14.484595",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 57,
+    "nome": "Unidade",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_unidade",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.529185",
+    "updated_at": "2026-04-20T09:22:14.529185",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 58,
+    "nome": "Contrato Digital",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato_digital",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.576358",
+    "updated_at": "2026-04-20T09:22:14.576358",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 59,
+    "nome": "Número de Registro Acadêmico",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_numero_de_registro_acade",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.585643",
+    "updated_at": "2026-04-20T09:22:14.585643",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 60,
+    "nome": "Turma",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.682268",
+    "updated_at": "2026-04-20T09:22:14.682268",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 61,
+    "nome": "Grade Horária",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_grade_horaria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.746961",
+    "updated_at": "2026-04-20T09:22:14.746961",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 62,
+    "nome": "E-mail Institucional",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_e_mail_institucional",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.795045",
+    "updated_at": "2026-04-20T09:22:14.795045",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 63,
+    "nome": "Biblioteca",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.841020",
+    "updated_at": "2026-04-20T09:22:14.841020",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 64,
+    "nome": "Plataformas Educacionais",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_plataformas_educacionais",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.869402",
+    "updated_at": "2026-04-20T09:22:14.869402",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 65,
+    "nome": "Carteirinha",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_carteirinha",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.916528",
+    "updated_at": "2026-04-20T09:22:14.916528",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (2)",
+    "id": 66,
+    "nome": "Comunicação Oficial",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_comunicacao_oficial",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:22:14.965808",
+    "updated_at": "2026-04-20T09:22:14.965808",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 67,
+    "nome": "Candidato",
+    "descricao": "O candidato é o interessado em ingressar na instituição e realiza a solicitação de matrícula.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.164454",
+    "updated_at": "2026-04-20T09:32:09.164454",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 68,
+    "nome": "Curso",
+    "descricao": "O curso é o objeto de interesse do candidato e é selecionado no processo de matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.239132",
+    "updated_at": "2026-04-20T09:32:09.239132",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 69,
+    "nome": "Responsável Legal",
+    "descricao": "O responsável legal é a pessoa que tem autoridade sobre o candidato e fornece informações adicionais.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_responsavel_legal",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.314219",
+    "updated_at": "2026-04-20T09:32:09.314219",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 70,
+    "nome": "Contrato Digital",
+    "descricao": "O contrato digital é o documento que formaliza a matrícula do candidato.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato_digital",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.323493",
+    "updated_at": "2026-04-20T09:32:09.323493",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 71,
+    "nome": "Aluno",
+    "descricao": "O aluno é o candidato que foi matriculado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.358743",
+    "updated_at": "2026-04-20T09:32:09.358743",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 72,
+    "nome": "Turma",
+    "descricao": "A turma é o grupo de alunos que frequentam as aulas.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.387038",
+    "updated_at": "2026-04-20T09:32:09.387038",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (3)",
+    "id": 73,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:32:09.453471",
+    "updated_at": "2026-04-20T09:32:09.453471",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 74,
+    "nome": "Candidato",
+    "descricao": "O candidato é o interessado em ingressar na instituição e realiza a solicitação de matrícula.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:26.960765",
+    "updated_at": "2026-04-20T09:39:26.960765",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 75,
+    "nome": "Curso",
+    "descricao": "O curso é o objeto de interesse do candidato e é selecionado no processo de matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:27.118665",
+    "updated_at": "2026-04-20T09:39:27.118665",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 76,
+    "nome": "Responsável Legal",
+    "descricao": "O responsável legal é a pessoa que assume a responsabilidade pelo candidato e fornece informações adicionais.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_responsavel_legal",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:27.221930",
+    "updated_at": "2026-04-20T09:39:27.221930",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 77,
+    "nome": "Contrato Digital",
+    "descricao": "O contrato digital é o documento que formaliza a matrícula do aluno.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato_digital",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:27.254218",
+    "updated_at": "2026-04-20T09:39:27.254218",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 78,
+    "nome": "Aluno",
+    "descricao": "O aluno é o candidato que foi matriculado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:27.307082",
+    "updated_at": "2026-04-20T09:39:27.307082",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 79,
+    "nome": "Turma",
+    "descricao": "A turma é o grupo de alunos que frequentam as aulas.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:27.359296",
+    "updated_at": "2026-04-20T09:39:27.359296",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (4)",
+    "id": 80,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:39:27.454916",
+    "updated_at": "2026-04-20T09:39:27.454916",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 81,
+    "nome": "Candidato",
+    "descricao": "O candidato é o interessado em ingressar na instituição.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.565753",
+    "updated_at": "2026-04-20T09:49:43.565753",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 82,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.711437",
+    "updated_at": "2026-04-20T09:49:43.711437",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 83,
+    "nome": "Curso",
+    "descricao": "O curso é o objeto de interesse do candidato.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.776329",
+    "updated_at": "2026-04-20T09:49:43.776329",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 84,
+    "nome": "Documentação",
+    "descricao": "A documentação é necessária para a análise da solicitação de matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.908413",
+    "updated_at": "2026-04-20T09:49:43.908413",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 85,
+    "nome": "Plataforma Educacional",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_plataforma_educacional",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.920525",
+    "updated_at": "2026-04-20T09:49:43.920525",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 86,
+    "nome": "Contrato",
+    "descricao": "O contrato é o acordo entre o aluno e a instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.931575",
+    "updated_at": "2026-04-20T09:49:43.931575",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 87,
+    "nome": "Aluno",
+    "descricao": "O aluno é o candidato que foi matriculado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:43.990159",
+    "updated_at": "2026-04-20T09:49:43.990159",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 88,
+    "nome": "Turma",
+    "descricao": "A turma é o grupo de alunos que frequentam as aulas.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:44.075944",
+    "updated_at": "2026-04-20T09:49:44.075944",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (5)",
+    "id": 89,
+    "nome": "Biblioteca",
+    "descricao": "A biblioteca é o local onde os alunos podem acessar livros e recursos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:49:44.224835",
+    "updated_at": "2026-04-20T09:49:44.224835",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 90,
+    "nome": "Candidato",
+    "descricao": "O candidato é o interessado em ingressar na instituição.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:08.759445",
+    "updated_at": "2026-04-20T09:56:08.759445",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 91,
+    "nome": "Curso",
+    "descricao": "O curso é a opção de estudo escolhida pelo candidato.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:08.954878",
+    "updated_at": "2026-04-20T09:56:08.954878",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 92,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.132322",
+    "updated_at": "2026-04-20T09:56:09.132322",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 93,
+    "nome": "Documentação",
+    "descricao": "A documentação é necessária para a matrícula e inclui documentos de identificação, comprovantes e registros acadêmicos anteriores.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.224968",
+    "updated_at": "2026-04-20T09:56:09.224968",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 94,
+    "nome": "Matrícula",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_matricula",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.263912",
+    "updated_at": "2026-04-20T09:56:09.263912",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 95,
+    "nome": "Biblioteca",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.276764",
+    "updated_at": "2026-04-20T09:56:09.276764",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 96,
+    "nome": "Plataformas Educacionais",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_plataformas_educacionais",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.371103",
+    "updated_at": "2026-04-20T09:56:09.371103",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 97,
+    "nome": "Contrato",
+    "descricao": "O contrato é o acordo entre o aluno e a instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.464584",
+    "updated_at": "2026-04-20T09:56:09.464584",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 98,
+    "nome": "Pagamento",
+    "descricao": "O pagamento é a forma como o candidato pagará a matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.559003",
+    "updated_at": "2026-04-20T09:56:09.559003",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 99,
+    "nome": "Aluno",
+    "descricao": "O aluno é o candidato que foi matriculado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.572576",
+    "updated_at": "2026-04-20T09:56:09.572576",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (6)",
+    "id": 100,
+    "nome": "Turma",
+    "descricao": "A turma é o grupo de alunos que frequentam as aulas.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:56:09.696248",
+    "updated_at": "2026-04-20T09:56:09.696248",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 101,
+    "nome": "Candidato",
+    "descricao": "O candidato é o interessado em ingressar na instituição.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:12.067494",
+    "updated_at": "2026-04-20T09:59:12.067494",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 102,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:12.318532",
+    "updated_at": "2026-04-20T09:59:12.318532",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 103,
+    "nome": "Curso",
+    "descricao": "O curso é o objeto de interesse do candidato.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:12.459103",
+    "updated_at": "2026-04-20T09:59:12.459103",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 104,
+    "nome": "Matrícula",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_matricula",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:12.695883",
+    "updated_at": "2026-04-20T09:59:12.695883",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 105,
+    "nome": "Contrato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:12.739561",
+    "updated_at": "2026-04-20T09:59:12.739561",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 106,
+    "nome": "Aluno",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:12.876199",
+    "updated_at": "2026-04-20T09:59:12.876199",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 107,
+    "nome": "Biblioteca",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:13.045858",
+    "updated_at": "2026-04-20T09:59:13.045858",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (7)",
+    "id": 108,
+    "nome": "Plataformas Educacionais",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_plataformas_educacionais",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T09:59:13.181993",
+    "updated_at": "2026-04-20T09:59:13.181993",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 109,
+    "nome": "Candidato",
+    "descricao": "O candidato é o interessado em ingressar na instituição.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:56.462398",
+    "updated_at": "2026-04-20T10:01:56.462398",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 110,
+    "nome": "Curso",
+    "descricao": "O curso é o objeto de interesse do candidato.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:56.908050",
+    "updated_at": "2026-04-20T10:01:56.908050",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 111,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:57.411468",
+    "updated_at": "2026-04-20T10:01:57.411468",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 112,
+    "nome": "Documentação",
+    "descricao": "A documentação é necessária para a matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:57.633370",
+    "updated_at": "2026-04-20T10:01:57.633370",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 113,
+    "nome": "Contrato",
+    "descricao": "O contrato é o documento que formaliza a matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:57.762365",
+    "updated_at": "2026-04-20T10:01:57.762365",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 114,
+    "nome": "Aluno",
+    "descricao": "O aluno é o candidato matriculado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:58.021955",
+    "updated_at": "2026-04-20T10:01:58.021955",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 115,
+    "nome": "Turma",
+    "descricao": "A turma é o grupo de alunos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:58.368461",
+    "updated_at": "2026-04-20T10:01:58.368461",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (8)",
+    "id": 116,
+    "nome": "Biblioteca",
+    "descricao": "A biblioteca é o local de estudo.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_biblioteca",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:01:58.668765",
+    "updated_at": "2026-04-20T10:01:58.668765",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 117,
+    "nome": "Candidato",
+    "descricao": "O candidato é o principal objeto do processo, responsável por fornecer informações e realizar ações.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:40.180882",
+    "updated_at": "2026-04-20T10:15:40.180882",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 118,
+    "nome": "Curso",
+    "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:40.541274",
+    "updated_at": "2026-04-20T10:15:40.541274",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 119,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:40.887939",
+    "updated_at": "2026-04-20T10:15:40.887939",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 120,
+    "nome": "Documentação",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:40.976133",
+    "updated_at": "2026-04-20T10:15:40.976133",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 121,
+    "nome": "Pagamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:41.162295",
+    "updated_at": "2026-04-20T10:15:41.162295",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 122,
+    "nome": "Contrato",
+    "descricao": "O contrato é um acordo entre o aluno e a instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:41.214547",
+    "updated_at": "2026-04-20T10:15:41.214547",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 123,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:41.451852",
+    "updated_at": "2026-04-20T10:15:41.451852",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 124,
+    "nome": "Aluno",
+    "descricao": "O aluno é o principal objeto do processo após a matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:41.689696",
+    "updated_at": "2026-04-20T10:15:41.689696",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (9)",
+    "id": 125,
+    "nome": "Turma",
+    "descricao": "A turma é um grupo de alunos que estudam juntos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:15:41.963650",
+    "updated_at": "2026-04-20T10:15:41.963650",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 126,
+    "nome": "Candidato",
+    "descricao": "O candidato é o principal interessado no processo de matrícula.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:56.979476",
+    "updated_at": "2026-04-20T10:19:56.979476",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 127,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:57.601383",
+    "updated_at": "2026-04-20T10:19:57.601383",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 128,
+    "nome": "Curso",
+    "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:57.759355",
+    "updated_at": "2026-04-20T10:19:57.759355",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 129,
+    "nome": "Documentação",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:58.331657",
+    "updated_at": "2026-04-20T10:19:58.331657",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 130,
+    "nome": "Pagamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:58.648024",
+    "updated_at": "2026-04-20T10:19:58.648024",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 131,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:58.770255",
+    "updated_at": "2026-04-20T10:19:58.770255",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 132,
+    "nome": "Contrato",
+    "descricao": "O contrato é um acordo entre o aluno e a instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:59.191742",
+    "updated_at": "2026-04-20T10:19:59.191742",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 133,
+    "nome": "Aluno",
+    "descricao": "O aluno é o estudante matriculado na instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:19:59.638073",
+    "updated_at": "2026-04-20T10:19:59.638073",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (10)",
+    "id": 134,
+    "nome": "Turma",
+    "descricao": "A turma é um grupo de alunos que estudam juntos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:20:00.125428",
+    "updated_at": "2026-04-20T10:20:00.125428",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 135,
+    "nome": "Candidato",
+    "descricao": "O candidato é o principal objeto do processo de matrícula.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:32.885425",
+    "updated_at": "2026-04-20T10:22:32.885425",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 136,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:33.383316",
+    "updated_at": "2026-04-20T10:22:33.383316",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 137,
+    "nome": "Curso",
+    "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:33.573699",
+    "updated_at": "2026-04-20T10:22:33.573699",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 138,
+    "nome": "Documentação",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:34.066537",
+    "updated_at": "2026-04-20T10:22:34.066537",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 139,
+    "nome": "Contrato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:34.307868",
+    "updated_at": "2026-04-20T10:22:34.307868",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 140,
+    "nome": "Pagamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:34.673133",
+    "updated_at": "2026-04-20T10:22:34.673133",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 141,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:34.822290",
+    "updated_at": "2026-04-20T10:22:34.822290",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (11)",
+    "id": 142,
+    "nome": "Aluno",
+    "descricao": "O aluno é o resultado do processo de matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:22:35.189038",
+    "updated_at": "2026-04-20T10:22:35.189038",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 143,
+    "nome": "Candidato",
+    "descricao": "O candidato é o principal objeto do processo, responsável por fornecer informações e realizar ações.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:10.428129",
+    "updated_at": "2026-04-20T10:25:10.428129",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 144,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:11.021806",
+    "updated_at": "2026-04-20T10:25:11.021806",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 145,
+    "nome": "Curso",
+    "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:11.277243",
+    "updated_at": "2026-04-20T10:25:11.277243",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 146,
+    "nome": "Documentação",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:11.857253",
+    "updated_at": "2026-04-20T10:25:11.857253",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 147,
+    "nome": "Contrato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:12.199579",
+    "updated_at": "2026-04-20T10:25:12.199579",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 148,
+    "nome": "Pagamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:12.649234",
+    "updated_at": "2026-04-20T10:25:12.649234",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 149,
+    "nome": "Turma",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:12.856427",
+    "updated_at": "2026-04-20T10:25:12.856427",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 150,
+    "nome": "Instituição",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_instituicao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:13.357583",
+    "updated_at": "2026-04-20T10:25:13.357583",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (12)",
+    "id": 151,
+    "nome": "Aluno",
+    "descricao": "O aluno é o principal objeto do processo, após a matrícula ser oficializada.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:25:13.878779",
+    "updated_at": "2026-04-20T10:25:13.878779",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 152,
+    "nome": "Candidato",
+    "descricao": "O candidato é o principal objeto do processo de matrícula.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:06.311095",
+    "updated_at": "2026-04-20T10:31:06.311095",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 153,
+    "nome": "Curso",
+    "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:07.027607",
+    "updated_at": "2026-04-20T10:31:07.027607",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 154,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:07.731310",
+    "updated_at": "2026-04-20T10:31:07.731310",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 155,
+    "nome": "Documentação",
+    "descricao": "A documentação é necessária para o processo de matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:08.066259",
+    "updated_at": "2026-04-20T10:31:08.066259",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 156,
+    "nome": "Pagamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:08.459811",
+    "updated_at": "2026-04-20T10:31:08.459811",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 157,
+    "nome": "Contrato",
+    "descricao": "O contrato é um acordo entre o aluno e a instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:08.744225",
+    "updated_at": "2026-04-20T10:31:08.744225",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 158,
+    "nome": "Aluno",
+    "descricao": "O aluno é o principal objeto do processo de matrícula.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:09.294709",
+    "updated_at": "2026-04-20T10:31:09.294709",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 159,
+    "nome": "Turma",
+    "descricao": "A turma é uma grupo de alunos.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_turma",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:09.944574",
+    "updated_at": "2026-04-20T10:31:09.944574",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (13)",
+    "id": 160,
+    "nome": "Grade Horária",
+    "descricao": "A grade horária é um cronograma de aulas.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_grade_horaria",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:31:10.635824",
+    "updated_at": "2026-04-20T10:31:10.635824",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 161,
+    "nome": "Candidato",
+    "descricao": "O candidato é o principal interessado no processo de matrícula.",
+    "tipoEntidade": "Principal",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:00.318658",
+    "updated_at": "2026-04-20T10:39:00.318658",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 162,
+    "nome": "Curso",
+    "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_curso",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:01.127106",
+    "updated_at": "2026-04-20T10:39:01.127106",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 163,
+    "nome": "Documentação",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_documentacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:01.948985",
+    "updated_at": "2026-04-20T10:39:01.948985",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 164,
+    "nome": "Vaga",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_vaga",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:02.412251",
+    "updated_at": "2026-04-20T10:39:02.412251",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 165,
+    "nome": "Contrato",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_contrato",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:02.824849",
+    "updated_at": "2026-04-20T10:39:02.824849",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 166,
+    "nome": "Pagamento",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pagamento",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:03.464589",
+    "updated_at": "2026-04-20T10:39:03.464589",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 167,
+    "nome": "Registro Acadêmico",
+    "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_registro_academico",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:03.825364",
+    "updated_at": "2026-04-20T10:39:03.825364",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+    "id": 168,
+    "nome": "Aluno",
+    "descricao": "O aluno é o estudante matriculado.",
+    "tipoEntidade": "Apoio",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aluno",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_candidato",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Candidato.id_candidato"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-04-20T10:39:03.848780",
+    "updated_at": "2026-04-20T10:39:03.848780",
+    "criadoPor": "Renan"
   }
 ]

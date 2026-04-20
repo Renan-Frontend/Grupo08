@@ -27,6 +27,7 @@ const CriarUsuario = React.lazy(
 );
 const IA = React.lazy(() => import('./Components/IA/Ia'));
 const Workflows = React.lazy(() => import('./Components/Workflows/Workflows'));
+const Documentos = React.lazy(() => import('./Components/Documentos/Documentos'));
 
 const LazyFallback = () => (
   <div
@@ -132,6 +133,7 @@ function AppContent() {
             />
             <Route path="/oportunidades/*" element={<OpportunitiesRoutes />} />
             <Route path="/workflows" element={<Workflows />} />
+            <Route path="/documentos" element={<Documentos />} />
             <Route path="/gerar-bpmn/*" element={<GerarBPMN />} />
             <Route
               path="/gerarbpmn/*"

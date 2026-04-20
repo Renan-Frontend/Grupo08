@@ -153,6 +153,25 @@ export const WORKFLOW_GENERATE_OBJECTIVE = (opId, token) =>
 export const WORKFLOW_GENERATE_REPORT = (opId, body, token) =>
   createRequest(`/workflow/${opId}/generate-report`, 'POST', body, token);
 
+export const WORKFLOW_GENERATE_DOCUMENT = (opId, token) =>
+  createRequest(`/workflow/${opId}/generate-document`, 'POST', {}, token);
+
+/* ─── Documentos (persisted) ─── */
+export const DOCUMENTOS_LIST = (token, owner = '') => {
+  const params = new URLSearchParams();
+  if (owner) params.set('owner', owner);
+  const qs = params.toString();
+  return createRequest(`/documentos${qs ? `?${qs}` : ''}`, 'GET', null, token);
+};
+export const DOCUMENTO_GET = (docId, token) =>
+  createRequest(`/documentos/${docId}`, 'GET', null, token);
+export const DOCUMENTO_CREATE = (body, token) =>
+  createRequest('/documentos', 'POST', body, token);
+export const DOCUMENTO_DELETE = (docId, token) =>
+  createRequest(`/documentos/${docId}`, 'DELETE', null, token);
+export const DOCUMENTO_UPDATE = (docId, body, token) =>
+  createRequest(`/documentos/${docId}`, 'PUT', body, token);
+
 export const WORKFLOW_RECORDS = (opId, token) =>
   createRequest(`/workflow/${opId}/records`, 'GET', null, token);
 

@@ -23,10 +23,11 @@ import {
 import { getUserDisplayName } from './opportunityOwnershipRules';
 import { getAuthToken, fetchOpportunitiesPage } from './opportunityApi';
 import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
+import { WORKFLOW_TASKS_LIST, WORKFLOW_TASK_DELETE } from '../../Api';
 
 const OpportunityDetail = () => {
   const { user } = useContext(UserContext);
-  const { entidades, adicionarEntidade, editarEntidade } =
+  const { entidades, adicionarEntidade, editarEntidade, deletarEntidade } =
     useContext(EntidadesContext);
   const navigate = useNavigate();
   const location = useLocation();
@@ -286,6 +287,55 @@ const OpportunityDetail = () => {
       // When workflow completes, deactivate so manual stage clicks work again
       if (workflowStatus === 'completed') {
         setWorkflowActive(false);
+
+        // Delete entities from catalog that were NOT completed in the workflow
+        const executed = Array.isArray(newState?.executed) ? newState.executed : [];
+        const completedNodeIds = new Set(
+          executed
+            .filter((e) => e?.status === 'completed')
+            .map((e) => String(e?.nodeId || ''))
+            .filter(Boolean),
+        );
+        const bpmnNodes = Array.isArray(opportunity?.bpmn?.nodes) ? opportunity.bpmn.nodes : [];
+        const token = getAuthToken();
+        const oppName = String(opportunity?.nome || opportunity?.name || '').trim().toLowerCase();
+        bpmnNodes.forEach((node) => {
+          if (!node || node.active === false) return;
+          const nodeType = String(node.nodeType || '').toLowerCase();
+          if (nodeType !== 'entidade') return;
+          const nodeId = String(node.id || '');
+          if (completedNodeIds.has(nodeId)) return;
+          // This entity node was NOT completed — delete from catalog
+          const entidadeId = node.entidadeId;
+          const entidadeNome = String(node.entidadeNome || node.label || '').trim().toLowerCase();
+          const match = entidades.find((e) => {
+            // Scope to this opportunity's category to avoid deleting entities from other processes
+            const cat = String(e.categoria || '').trim().toLowerCase();
+            if (oppName && cat && cat !== oppName) return false;
+            if (entidadeId && String(e.id) === String(entidadeId)) return true;
+            return String(e.nome || '').trim().toLowerCase() === entidadeNome;
+          });
+          if (match?.id != null) {
+            deletarEntidade(match.id, token);
+          }
+        });
+
+        // Delete tasks whose BPMN node was NOT completed in the workflow
+        const opId = opportunity?.id ?? opportunity?.opportunityId;
+        if (opId) {
+          const req = WORKFLOW_TASKS_LIST(token, { opportunityId: opId });
+          fetch(req.url, req.options)
+            .then((r) => r.ok ? r.json() : [])
+            .then((taskList) => {
+              (Array.isArray(taskList) ? taskList : []).forEach((t) => {
+                const tNodeId = String(t.nodeId || '');
+                if (!tNodeId || completedNodeIds.has(tNodeId)) return;
+                const delReq = WORKFLOW_TASK_DELETE(t.taskId, token);
+                fetch(delReq.url, delReq.options).catch(() => {});
+              });
+            })
+            .catch(() => {});
+        }
       }
 
       setStages((prev) => {
@@ -377,7 +427,7 @@ const OpportunityDetail = () => {
         });
       }
     },
-    [setStages, setVisibleStageCount, setWorkflowExecuted, setWorkflowCurrentNodeId],
+    [setStages, setVisibleStageCount, setWorkflowExecuted, setWorkflowCurrentNodeId, opportunity, entidades, deletarEntidade],
   );
 
   // When workflow is active, inject any executed nao-path nodes that aren't in the static stages list

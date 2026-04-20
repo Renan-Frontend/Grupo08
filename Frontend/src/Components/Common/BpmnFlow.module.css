@@ -20,9 +20,6 @@
   fill: none;
   pointer-events: stroke;
   cursor: pointer;
-  transition:
-    stroke 120ms ease,
-    stroke-width 120ms ease;
 }
 
 .connectionLine:hover {
@@ -170,6 +167,8 @@
   user-select: none;
   touch-action: manipulation;
   overflow: visible;
+  contain: layout style;
+  will-change: transform;
 }
 
 .canvasMode .stageCard {
@@ -312,7 +311,6 @@
   z-index: 6;
   touch-action: none;
   opacity: 0;
-  transition: opacity 150ms ease, transform 120ms ease, background 120ms ease, border-color 120ms ease;
   pointer-events: none;
 }
 
@@ -320,6 +318,7 @@
 .selected .connectorDot {
   opacity: 1;
   pointer-events: auto;
+  transition: opacity 120ms ease;
 }
 
 .connectorDot:hover {

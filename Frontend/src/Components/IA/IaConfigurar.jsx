@@ -98,6 +98,9 @@ const IaConfigurar = () => {
 
     const foNames = new Set(mappedFo.map((i) => i.name.toLowerCase()));
 
+    // Collect missing items from flat arrays (not in flowOrder)
+    const missingItems = [];
+
     (Array.isArray(locationParseData.entities)
       ? locationParseData.entities
       : []
@@ -109,7 +112,7 @@ const IaConfigurar = () => {
       const tipo =
         typeof ent === 'object' ? ent?.tipoEntidade || 'apoio' : 'apoio';
       if (n && !foNames.has(n.toLowerCase())) {
-        mappedFo.push({
+        missingItems.push({
           name: n,
           type: 'entidade',
           desc: '',
@@ -125,7 +128,7 @@ const IaConfigurar = () => {
     ).forEach((name) => {
       const n = String(name || '').trim();
       if (n && !foNames.has(n.toLowerCase())) {
-        mappedFo.push({ name: n, type: 'task', desc: '' });
+        missingItems.push({ name: n, type: 'task', desc: '' });
         foNames.add(n.toLowerCase());
       }
     });
@@ -138,10 +141,23 @@ const IaConfigurar = () => {
       if (!n) return;
       if (!n.endsWith('?')) n += '?';
       if (!foNames.has(n.toLowerCase())) {
-        mappedFo.push({ name: n, type: 'condicional', desc: '' });
+        missingItems.push({ name: n, type: 'condicional', desc: '' });
         foNames.add(n.toLowerCase());
       }
     });
+
+    // Interleave missing items at regular intervals instead of appending at end
+    if (missingItems.length > 0 && mappedFo.length > 0) {
+      const interval = Math.max(2, Math.ceil(mappedFo.length / (missingItems.length + 1)));
+      let insertOffset = 0;
+      for (let mi = 0; mi < missingItems.length; mi++) {
+        const pos = Math.min((mi + 1) * interval + insertOffset, mappedFo.length);
+        mappedFo.splice(pos, 0, missingItems[mi]);
+        insertOffset++;
+      }
+    } else {
+      mappedFo.push(...missingItems);
+    }
 
     setFlowOrder(mappedFo);
 
