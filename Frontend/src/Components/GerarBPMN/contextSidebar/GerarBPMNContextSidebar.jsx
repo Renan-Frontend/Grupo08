@@ -1,14 +1,14 @@
-import React from 'react';
-import ConfigurarEntidadePanel from '../configurar/ConfigurarEntidadePanel';
+import React from "react";
+import ConfigurarEntidadePanel from "../configurar/ConfigurarEntidadePanel";
 import {
   TASK_NAME_MAX_LENGTH,
   GATEWAY_TYPE_OPTIONS,
   getEntidadeNome,
-} from '../gerarBpmnCreate.shared';
-import styles from './GerarBPMNContextSidebar.module.css';
+} from "../gerarBpmnCreate.shared";
+import styles from "./GerarBPMNContextSidebar.module.css";
 
 const GerarBPMNContextSidebar = ({
-  className = '',
+  className = "",
   isMobileMenu = false,
   shouldHideProperties,
   sidebarTabs,
@@ -87,20 +87,20 @@ const GerarBPMNContextSidebar = ({
   if (shouldHideProperties) return null;
 
   const entityPanelStageMode =
-    selectedNodeTypeSelectorValue === 'condicional'
-      ? 'condicional'
-      : 'entidade';
+    selectedNodeTypeSelectorValue === "condicional"
+      ? "condicional"
+      : "entidade";
 
   const mobileStepHint =
-    activeSidebarTab === 'connection'
-      ? 'Passo 1: selecione a conexão • Passo 2: defina a condição'
-      : 'Passo 1: selecione a categoria • Passo 2: configure a etapa';
+    activeSidebarTab === "connection"
+      ? "Passo 1: selecione a conexão • Passo 2: defina a condição"
+      : "Passo 1: selecione a categoria • Passo 2: configure a etapa";
 
   const sidebarPanel = (
     <aside
-      className={`${styles.sidebar} ${isMobileMenu ? styles.sidebarMobileMenu : ''} ${
-        isMobileCollapsed ? styles.sidebarCollapsed : ''
-      } ${!isMobileMenu ? className : ''}`}
+      className={`${styles.sidebar} ${isMobileMenu ? styles.sidebarMobileMenu : ""} ${
+        isMobileCollapsed ? styles.sidebarCollapsed : ""
+      } ${!isMobileMenu ? className : ""}`}
       data-tutorial-id={tutorialTargetId}
     >
       {isMobileMenu ? (
@@ -137,7 +137,7 @@ const GerarBPMNContextSidebar = ({
                   className={`${styles.sidebarTabButton} ${
                     activeSidebarTab === tab.id
                       ? styles.sidebarTabButtonActive
-                      : ''
+                      : ""
                   }`}
                   onClick={() => setActiveSidebarTab(tab.id)}
                   disabled={isReadOnlyMode}
@@ -151,8 +151,8 @@ const GerarBPMNContextSidebar = ({
           {selectedNode && !selectedConnection ? (
             <div className={styles.contextPanel}>
               {isMobileMenu &&
-              activeSidebarTab === 'entidade' &&
-              selectedNodeTypeSelectorValue === 'entidade' ? (
+              activeSidebarTab === "entidade" &&
+              selectedNodeTypeSelectorValue === "entidade" ? (
                 <div className={styles.mobileDualFieldRow}>
                   <div className={styles.mobileFieldGroup}>
                     <p className={styles.contextPanelTitle}>
@@ -180,17 +180,15 @@ const GerarBPMNContextSidebar = ({
                     <select
                       className={styles.nameInput}
                       name="mobileEntityTypeSelect"
-                      value={selectedNodeEntityType || 'apoio'}
+                      value={selectedNodeEntityType || "processo"}
                       onChange={(event) =>
                         onSetSelectedNodeEntityType(event.target.value)
                       }
                       disabled={isReadOnlyMode}
                       title="Tipo da entidade"
                     >
-                      <option value="principal">Principal</option>
-                      <option value="apoio">Apoio</option>
-                      <option value="associativa">Associativa</option>
-                      <option value="externa">Externa</option>
+                      <option value="contato">Contato</option>
+                      <option value="processo">Processo</option>
                     </select>
                   </div>
                 </div>
@@ -213,8 +211,8 @@ const GerarBPMNContextSidebar = ({
                     <option value="condicional">Decisão</option>
                   </select>
 
-                  {activeSidebarTab === 'entidade' &&
-                  selectedNodeTypeSelectorValue === 'entidade' ? (
+                  {activeSidebarTab === "entidade" &&
+                  selectedNodeTypeSelectorValue === "entidade" ? (
                     <>
                       <p className={styles.contextPanelTitle}>
                         Tipo da entidade
@@ -222,28 +220,26 @@ const GerarBPMNContextSidebar = ({
                       <select
                         className={styles.nameInput}
                         name="entityTypeSelect"
-                        value={selectedNodeEntityType || 'apoio'}
+                        value={selectedNodeEntityType || "processo"}
                         onChange={(event) =>
                           onSetSelectedNodeEntityType(event.target.value)
                         }
                         disabled={isReadOnlyMode}
                         title="Tipo da entidade"
                       >
-                        <option value="principal">Principal</option>
-                        <option value="apoio">Apoio</option>
-                        <option value="associativa">Associativa</option>
-                        <option value="externa">Externa</option>
+                        <option value="contato">Contato</option>
+                        <option value="processo">Processo</option>
                       </select>
                     </>
                   ) : null}
                 </>
               )}
 
-              {activeSidebarTab === 'entidade' &&
-              selectedNodeTypeSelectorValue === 'entidade' ? (
+              {activeSidebarTab === "entidade" &&
+              selectedNodeTypeSelectorValue === "entidade" ? (
                 <p className={styles.contextPanelDescription}>
-                  Papel atual:{' '}
-                  {selectedNodeIsPrimaryEntity ? 'Primária' : 'Secundária'}
+                  Papel atual:{" "}
+                  {selectedNodeIsPrimaryEntity ? "Primária" : "Secundária"}
                 </p>
               ) : null}
             </div>
@@ -256,26 +252,26 @@ const GerarBPMNContextSidebar = ({
           className={styles.sidebarBody}
           data-tutorial-id="sidebar-config-area"
         >
-          {activeSidebarTab === 'connection' ? (
+          {activeSidebarTab === "connection" ? (
             <div className={styles.contextPanel}>
               <p className={styles.contextPanelTitle}>Condição da conexão</p>
               <p className={styles.contextPanelDescription}>
-                <strong>De:</strong>{' '}
+                <strong>De:</strong>{" "}
                 {String(
                   selectedConnectionSourceNode?.label ||
                     selectedConnectionSourceNode?.entidadeNome ||
                     selectedConnectionSourceNode?.condicionalNome ||
                     selectedConnectionSourceNode?.id ||
-                    '-',
+                    "-",
                 )}
-                {'  '}
-                <strong>Para:</strong>{' '}
+                {"  "}
+                <strong>Para:</strong>{" "}
                 {String(
                   selectedConnectionTargetNode?.label ||
                     selectedConnectionTargetNode?.entidadeNome ||
                     selectedConnectionTargetNode?.condicionalNome ||
                     selectedConnectionTargetNode?.id ||
-                    '-',
+                    "-",
                 )}
               </p>
               <input
@@ -293,7 +289,7 @@ const GerarBPMNContextSidebar = ({
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => setSidebarConnectionDecisionDraft('sim')}
+                  onClick={() => setSidebarConnectionDecisionDraft("sim")}
                   disabled={isReadOnlyMode}
                 >
                   Sim
@@ -301,7 +297,7 @@ const GerarBPMNContextSidebar = ({
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => setSidebarConnectionDecisionDraft('nao')}
+                  onClick={() => setSidebarConnectionDecisionDraft("nao")}
                   disabled={isReadOnlyMode}
                 >
                   Não
@@ -309,7 +305,7 @@ const GerarBPMNContextSidebar = ({
                 <button
                   type="button"
                   className={styles.secondaryButton}
-                  onClick={() => setSidebarConnectionDecisionDraft('')}
+                  onClick={() => setSidebarConnectionDecisionDraft("")}
                   disabled={isReadOnlyMode}
                 >
                   Limpar
@@ -321,7 +317,7 @@ const GerarBPMNContextSidebar = ({
                   className={styles.primaryButton}
                   onClick={() =>
                     handleUpdateSelectedConnectionDecision(
-                      String(sidebarConnectionDecisionDraft || '').trim(),
+                      String(sidebarConnectionDecisionDraft || "").trim(),
                     )
                   }
                   disabled={isReadOnlyMode || !selectedConnectionId}
@@ -338,53 +334,90 @@ const GerarBPMNContextSidebar = ({
                 </button>
               </div>
             </div>
-          ) : activeSidebarTab === 'entidade' &&
-            selectedNodeTypeSelectorValue === 'task' ? (
-            <div className={styles.contextPanel}>
-              <p className={styles.contextPanelTitle}>
-                Configuração da atividade
-              </p>
-              <input
-                className={styles.nameInput}
-                name="taskNameInput"
-                value={taskForm.nome}
-                onChange={(event) =>
-                  setTaskForm((previous) => ({
-                    ...previous,
-                    nome: event.target.value,
-                  }))
-                }
-                disabled={isReadOnlyMode}
-                placeholder="Nome da atividade"
-                title="Nome da atividade"
-                maxLength={TASK_NAME_MAX_LENGTH}
-              />
-              {String(taskForm.nome || '').length > Math.floor(TASK_NAME_MAX_LENGTH * 0.7) ? (
-                <p
-                  className={styles.charHint}
-                  data-warn={String(taskForm.nome || '').length >= Math.floor(TASK_NAME_MAX_LENGTH * 0.9) ? 'true' : undefined}
-                >
-                  {TASK_NAME_MAX_LENGTH - String(taskForm.nome || '').length} caracteres restantes — prefira nomes curtos
+          ) : activeSidebarTab === "entidade" &&
+            selectedNodeTypeSelectorValue === "task" ? (
+            <>
+              <div className={styles.contextPanel}>
+                <p className={styles.contextPanelTitle}>
+                  Configuração da atividade
                 </p>
-              ) : null}
-              <p className={styles.descriptionTitle}>Descrição da Atividade</p>
-              <textarea
-                className={`${styles.nameInput} ${styles.descriptionInput}`}
-                name="taskDescriptionInput"
-                value={taskForm.descricao}
-                onChange={(event) =>
-                  setTaskForm((previous) => ({
-                    ...previous,
-                    descricao: event.target.value,
-                  }))
-                }
-                disabled={isReadOnlyMode}
-                placeholder="Descrição da atividade"
-                title="Descrição da atividade"
-                rows={5}
+                <input
+                  className={styles.nameInput}
+                  name="taskNameInput"
+                  value={taskForm.nome}
+                  onChange={(event) =>
+                    setTaskForm((previous) => ({
+                      ...previous,
+                      nome: event.target.value,
+                    }))
+                  }
+                  disabled={isReadOnlyMode}
+                  placeholder="Nome da atividade"
+                  title="Nome da atividade"
+                  maxLength={TASK_NAME_MAX_LENGTH}
+                />
+                {String(taskForm.nome || "").length >
+                Math.floor(TASK_NAME_MAX_LENGTH * 0.7) ? (
+                  <p
+                    className={styles.charHint}
+                    data-warn={
+                      String(taskForm.nome || "").length >=
+                      Math.floor(TASK_NAME_MAX_LENGTH * 0.9)
+                        ? "true"
+                        : undefined
+                    }
+                  >
+                    {TASK_NAME_MAX_LENGTH - String(taskForm.nome || "").length}{" "}
+                    caracteres restantes — prefira nomes curtos
+                  </p>
+                ) : null}
+                <p className={styles.descriptionTitle}>
+                  Descrição da Atividade
+                </p>
+                <textarea
+                  className={`${styles.nameInput} ${styles.descriptionInput}`}
+                  name="taskDescriptionInput"
+                  value={taskForm.descricao}
+                  onChange={(event) =>
+                    setTaskForm((previous) => ({
+                      ...previous,
+                      descricao: event.target.value,
+                    }))
+                  }
+                  disabled={isReadOnlyMode}
+                  placeholder="Descrição da atividade"
+                  title="Descrição da atividade"
+                  rows={5}
+                />
+              </div>
+              <ConfigurarEntidadePanel
+                selectedNode={selectedNode}
+                stageConfigMode={stageConfigMode}
+                setStageConfigMode={setStageConfigMode}
+                stageModeLockedTo="task"
+                entityMode={entityMode}
+                setEntityMode={setEntityMode}
+                selectedExistingEntityId={selectedExistingEntityId}
+                setSelectedExistingEntityId={setSelectedExistingEntityId}
+                entityOptions={entityOptions}
+                newEntityForm={newEntityForm}
+                setNewEntityForm={setNewEntityForm}
+                conditionalForm={conditionalForm}
+                setConditionalForm={setConditionalForm}
+                taskForm={taskForm}
+                setTaskForm={setTaskForm}
+                newEntityFields={newEntityFields}
+                entityFieldDraft={entityFieldDraft}
+                setEntityFieldDraft={setEntityFieldDraft}
+                onSaveEntityFieldDraft={onSaveEntityFieldDraft}
+                onEditEntityFieldDraft={onEditEntityFieldDraft}
+                onRemoveEntityFieldDraft={onRemoveEntityFieldDraft}
+                onSelectCreateNewEntityMode={onSelectCreateNewEntityMode}
+                onBeforeNavigateToEntityFields={handleSidebarPrimaryAction}
+                isReadOnlyMode={isReadOnlyMode}
               />
-            </div>
-          ) : activeSidebarTab === 'gateway' ? (
+            </>
+          ) : activeSidebarTab === "gateway" ? (
             <>
               <div className={styles.contextPanel}>
                 <p className={styles.contextPanelTitle}>Tipo da decisão</p>
@@ -436,7 +469,7 @@ const GerarBPMNContextSidebar = ({
                 isReadOnlyMode={isReadOnlyMode}
               />
             </>
-          ) : activeSidebarTab === 'entidade' ? (
+          ) : activeSidebarTab === "entidade" ? (
             <>
               <ConfigurarEntidadePanel
                 selectedNode={selectedNode}
@@ -493,19 +526,19 @@ const GerarBPMNContextSidebar = ({
           ) : null}
           {shouldShowSidebarPrimaryAction &&
           suggestedEntity &&
-          entityMode !== 'existente' ? (
+          entityMode !== "existente" ? (
             <div className={styles.entitySuggestionCard}>
               <p className={styles.entitySuggestionTitle}>
                 {isDuplicateSuggestion
-                  ? 'Entidade já existente'
-                  : 'Entidade selecionada'}
+                  ? "Entidade já existente"
+                  : "Entidade selecionada"}
               </p>
               <p className={styles.entitySuggestionLine}>
-                <strong>Nome:</strong> {getEntidadeNome(suggestedEntity) || '-'}
+                <strong>Nome:</strong> {getEntidadeNome(suggestedEntity) || "-"}
               </p>
               <p className={styles.entitySuggestionLine}>
-                <strong>Descrição:</strong>{' '}
-                {String(suggestedEntity?.descricao || '').trim() || '-'}
+                <strong>Descrição:</strong>{" "}
+                {String(suggestedEntity?.descricao || "").trim() || "-"}
               </p>
 
               <div className={styles.entitySuggestionActions}>
@@ -523,7 +556,7 @@ const GerarBPMNContextSidebar = ({
                   onClick={handleDeleteSuggestedEntity}
                   disabled={isReadOnlyMode || isEntitySuggestionBusy}
                 >
-                  {isEntitySuggestionBusy ? 'Apagando...' : 'Apagar'}
+                  {isEntitySuggestionBusy ? "Apagando..." : "Apagar"}
                 </button>
               </div>
             </div>
@@ -549,10 +582,10 @@ const GerarBPMNContextSidebar = ({
           className={styles.mobileCollapseButton}
           onClick={() => setIsMobileCollapsed((previous) => !previous)}
           aria-expanded={!isMobileCollapsed}
-          aria-label={isMobileCollapsed ? 'Abrir painel' : 'Fechar painel'}
-          title={isMobileCollapsed ? 'Abrir painel' : 'Fechar painel'}
+          aria-label={isMobileCollapsed ? "Abrir painel" : "Fechar painel"}
+          title={isMobileCollapsed ? "Abrir painel" : "Fechar painel"}
         >
-          {isMobileCollapsed ? 'Abrir' : 'Fechar'}
+          {isMobileCollapsed ? "Abrir" : "Fechar"}
         </button>
       </div>
 

@@ -1,35 +1,66 @@
-import React, { useState, useEffect } from 'react';
-import Close from '../../Helper/Close';
-import styles from './EditablePipeline.module.css';
+import React, { useState, useEffect } from "react";
+import Close from "../../Helper/Close";
+import styles from "./EditablePipeline.module.css";
 
 const compactLabel = (value, maxLength = 26) => {
-  const text = String(value || '').trim();
-  if (!text) return '';
+  const text = String(value || "").trim();
+  if (!text) return "";
   if (text.length <= maxLength) return text;
   return `${text.slice(0, maxLength - 1).trim()}…`;
 };
 
 const normalizeLabelKey = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
 
-const getStageTypeLabel = (stageType) => {
-  const normalized = String(stageType || '')
+const normalizeDecisionValue = (value) => {
+  const normalized = String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
-  if (normalized === 'task') return 'Atividade';
-  if (normalized === 'condicional') return 'Condição';
-  return 'Entidade';
+
+  if (["sim", "yes", "y", "true", "1", "✔", "ok"].includes(normalized)) {
+    return "sim";
+  }
+  if (
+    ["nao", "nao", "não", "no", "n", "false", "0", "✘", "x"].includes(
+      normalized,
+    )
+  ) {
+    return "nao";
+  }
+  if (normalized === "merge") return "merge";
+  return normalized;
+};
+
+const getConnectionDecision = (connection) => {
+  const explicit = normalizeDecisionValue(connection?.decision);
+  if (explicit) return explicit;
+
+  const label = normalizeDecisionValue(connection?.label);
+  if (label) return label;
+
+  return "";
+};
+
+const getStageTypeLabel = (stageType) => {
+  const normalized = String(stageType || "")
+    .trim()
+    .toLowerCase();
+  if (normalized === "task") return "Atividade";
+  if (normalized === "condicional") return "Condição";
+  return "Entidade";
 };
 
 const PipelineCircleIcon = () => (
   <span
     style={{
-      verticalAlign: 'middle',
-      display: 'inline-flex',
+      verticalAlign: "middle",
+      display: "inline-flex",
       lineHeight: 0,
       margin: 0,
     }}
@@ -38,7 +69,7 @@ const PipelineCircleIcon = () => (
       width="16"
       height="16"
       viewBox="0 0 16 16"
-      style={{ display: 'block' }}
+      style={{ display: "block" }}
       aria-hidden="true"
     >
       <circle cx="8" cy="8" r="7.5" fill="#e0e0e0" />
@@ -58,8 +89,8 @@ const PipelineCircleIcon = () => (
 const PipelineAddButtonIcon = () => (
   <span
     style={{
-      verticalAlign: 'middle',
-      display: 'inline-flex',
+      verticalAlign: "middle",
+      display: "inline-flex",
       lineHeight: 0,
       margin: 0,
     }}
@@ -68,7 +99,7 @@ const PipelineAddButtonIcon = () => (
       width="16"
       height="16"
       viewBox="0 0 16 16"
-      style={{ display: 'block' }}
+      style={{ display: "block" }}
       aria-hidden="true"
     >
       <circle cx="8" cy="8" r="7.5" fill="#2fb36d" />
@@ -97,8 +128,8 @@ const PipelineAddButtonIcon = () => (
 const PipelineRemoveButtonIcon = () => (
   <span
     style={{
-      verticalAlign: 'middle',
-      display: 'inline-flex',
+      verticalAlign: "middle",
+      display: "inline-flex",
       lineHeight: 0,
       margin: 0,
     }}
@@ -107,7 +138,7 @@ const PipelineRemoveButtonIcon = () => (
       width="16"
       height="16"
       viewBox="0 0 16 16"
-      style={{ display: 'block' }}
+      style={{ display: "block" }}
       aria-hidden="true"
     >
       <circle cx="8" cy="8" r="7.2" fill="#ff4444" />
@@ -145,21 +176,24 @@ const EditablePipeline = ({
   setPipelineSubtitle: setControlledPipelineSubtitle,
   workflowSlot = null,
   noteOverride = null,
+  onActiveStage = null,
+  bpmnNodes = [],
+  bpmnConnections = [],
 }) => {
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [activeStage, setActiveStage] = useState(() => {
-    const saved = localStorage.getItem('pipelineActiveStage');
+    const saved = localStorage.getItem("pipelineActiveStage");
     return saved ? JSON.parse(saved) : -1;
   });
+  const [conditionalDecisions, setConditionalDecisions] = useState({});
   const [resetConfirm, setResetConfirm] = useState(false);
-  const [stageDetailModal, setStageDetailModal] = useState(null);
   const [localPipelineTitle, setLocalPipelineTitle] = useState(() => {
-    const saved = localStorage.getItem('pipelineTitle');
-    return saved || '';
+    const saved = localStorage.getItem("pipelineTitle");
+    return saved || "";
   });
   const [localPipelineSubtitle, setLocalPipelineSubtitle] = useState(() => {
-    const saved = localStorage.getItem('pipelineSubtitle');
-    return saved || '';
+    const saved = localStorage.getItem("pipelineSubtitle");
+    return saved || "";
   });
   const pipelineTitle =
     controlledPipelineTitle !== undefined
@@ -179,79 +213,93 @@ const EditablePipeline = ({
   const [inputSubtitle, setInputSubtitle] = useState(pipelineSubtitle);
 
   // Sincroniza se o valor externo mudar (ex: carregamento de pipeline)
-  useEffect(() => { setInputTitle(pipelineTitle); }, [pipelineTitle]);
-  useEffect(() => { setInputSubtitle(pipelineSubtitle); }, [pipelineSubtitle]);
+  useEffect(() => {
+    setInputTitle(pipelineTitle);
+  }, [pipelineTitle]);
+  useEffect(() => {
+    setInputSubtitle(pipelineSubtitle);
+  }, [pipelineSubtitle]);
+
+  // Notifica o pai com a etapa atual ao montar (usa o primeiro passo não concluído)
+  useEffect(() => {
+    if (!onActiveStage || stages.length === 0) return;
+    const undoneIndex = stages.findIndex((s) => !s.done);
+    const currentIndex = undoneIndex >= 0 ? undoneIndex : stages.length - 1;
+    const currentStage = stages[currentIndex];
+    if (currentStage) onActiveStage(currentStage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isBpmnDrivenPipeline = stages.some((stage) => stage?.fromBpmn === true);
 
   const getStagePalette = (stage) => {
-    const stageType = String(stage?.stageType || '')
+    const stageType = String(stage?.stageType || "")
       .trim()
       .toLowerCase();
 
-    if (stageType === 'condicional') {
+    if (stageType === "condicional") {
       return {
-        base: '#3b82f6',
-        soft: 'rgba(59, 130, 246, 0.3)',
-        softHover: 'rgba(59, 130, 246, 0.5)',
-        contrast: '#3b82f6',
+        base: "#3b82f6",
+        soft: "rgba(59, 130, 246, 0.3)",
+        softHover: "rgba(59, 130, 246, 0.5)",
+        contrast: "#3b82f6",
       };
     }
 
-    if (stageType === 'task') {
+    if (stageType === "task") {
       return {
-        base: '#f4b400',
-        soft: 'rgba(244, 180, 0, 0.3)',
-        softHover: 'rgba(244, 180, 0, 0.5)',
-        contrast: '#8a6a00',
+        base: "#f4b400",
+        soft: "rgba(244, 180, 0, 0.3)",
+        softHover: "rgba(244, 180, 0, 0.5)",
+        contrast: "#8a6a00",
       };
     }
 
     return {
-      base: '#2fb36d',
-      soft: 'rgba(47, 179, 109, 0.3)',
-      softHover: 'rgba(47, 179, 109, 0.5)',
-      contrast: '#2fb36d',
+      base: "#2fb36d",
+      soft: "rgba(47, 179, 109, 0.3)",
+      softHover: "rgba(47, 179, 109, 0.5)",
+      contrast: "#2fb36d",
     };
   };
 
   useEffect(() => {
-    localStorage.setItem('pipelineStages', JSON.stringify(stages));
+    localStorage.setItem("pipelineStages", JSON.stringify(stages));
 
     // Ajusta altura dos textareas quando stages mudam (mantido para clareza, pode remover se desejar)
     setTimeout(() => {
       const textareas = document.querySelectorAll(`.${styles.circleLabel}`);
       textareas.forEach((textarea) => {
-        textarea.style.height = 'auto';
-        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.style.height = "auto";
+        textarea.style.height = textarea.scrollHeight + "px";
       });
     }, 0);
   }, [stages]);
 
   useEffect(() => {
-    localStorage.setItem('pipelineActiveStage', JSON.stringify(activeStage));
+    localStorage.setItem("pipelineActiveStage", JSON.stringify(activeStage));
   }, [activeStage]);
 
   useEffect(() => {
-    localStorage.setItem('pipelineTitle', pipelineTitle);
+    localStorage.setItem("pipelineTitle", pipelineTitle);
     setTimeout(() => {
       const titleTextarea = document.querySelector(`.${styles.leftTitle}`);
       if (titleTextarea) {
-        titleTextarea.style.height = 'auto';
-        titleTextarea.style.height = titleTextarea.scrollHeight + 'px';
+        titleTextarea.style.height = "auto";
+        titleTextarea.style.height = titleTextarea.scrollHeight + "px";
       }
     }, 0);
   }, [pipelineTitle]);
 
   useEffect(() => {
-    localStorage.setItem('pipelineSubtitle', pipelineSubtitle);
+    localStorage.setItem("pipelineSubtitle", pipelineSubtitle);
     setTimeout(() => {
       const subtitleTextarea = document.querySelector(
         `.${styles.leftSubtitle}`,
       );
       if (subtitleTextarea) {
-        subtitleTextarea.style.height = 'auto';
-        subtitleTextarea.style.height = subtitleTextarea.scrollHeight + 'px';
+        subtitleTextarea.style.height = "auto";
+        subtitleTextarea.style.height = subtitleTextarea.scrollHeight + "px";
       }
     }, 0);
   }, [pipelineSubtitle]);
@@ -262,16 +310,16 @@ const EditablePipeline = ({
     if (stages.length >= 7) return;
     const newId =
       stages.length > 0 ? Math.max(...stages.map((s) => s.id)) + 1 : 1;
-    setStages([...stages, { id: newId, label: '', done: false }]);
+    setStages([...stages, { id: newId, label: "", done: false }]);
   };
 
   const resetToDefault = () => {
     if (isReadOnlyMode) return;
     if (isBpmnDrivenPipeline) return;
     setStages([
-      { id: 1, label: '', done: false },
-      { id: 2, label: '', done: false },
-      { id: 3, label: '', done: false },
+      { id: 1, label: "", done: false },
+      { id: 2, label: "", done: false },
+      { id: 3, label: "", done: false },
     ]);
     setActiveStage(-1);
     setResetConfirm(false);
@@ -310,7 +358,7 @@ const EditablePipeline = ({
     if (isReadOnlyMode) return;
     if (
       isBpmnDrivenPipeline &&
-      Object.prototype.hasOwnProperty.call(updates, 'label')
+      Object.prototype.hasOwnProperty.call(updates, "label")
     ) {
       return;
     }
@@ -323,7 +371,7 @@ const EditablePipeline = ({
   };
 
   const handleTextareaInput = (e) => {
-    e.target.style.height = 'auto';
+    e.target.style.height = "auto";
     // Limita altura dos campos do pipelineLeft
     const isPipelineLeftField =
       e.target.classList.contains(styles.leftTitle) ||
@@ -331,50 +379,267 @@ const EditablePipeline = ({
     if (isPipelineLeftField) {
       const maxHeightPx = 2.4 * 16;
       if (e.target.scrollHeight > maxHeightPx) {
-        e.target.style.height = maxHeightPx + 'px';
+        e.target.style.height = maxHeightPx + "px";
       } else {
-        e.target.style.height = e.target.scrollHeight + 'px';
+        e.target.style.height = e.target.scrollHeight + "px";
       }
     } else {
       // Para os labels dos stages, expansão normal
-      e.target.style.height = e.target.scrollHeight + 'px';
+      e.target.style.height = e.target.scrollHeight + "px";
     }
   };
 
   const handleStageClick = (index, stage) => {
     if (isReadOnlyMode) return;
     if (isWorkflowActive) return;
-    if (stage.done) {
-      // Desativa esta e todas as seguintes
-      setStages(stages.map((s, i) => (i >= index ? { ...s, done: false } : s)));
-      setActiveStage(index - 1);
-    } else {
-      // Ativa apenas se anteriores completas
-      const allPreviousCompleted = stages.slice(0, index).every((s) => s.done);
 
-      if (index === 0 || allPreviousCompleted) {
-        // Só ativa se for a primeira ou anteriores completas
+    const blockedNodeIds = (() => {
+      if (!isBpmnDrivenPipeline) return new Set();
+
+      const blocked = new Set();
+      stages.forEach((candidate) => {
+        if (candidate?.stageType !== "condicional") return;
+        const chosenDecision = normalizeDecisionValue(
+          conditionalDecisions[candidate.id],
+        );
+        if (!chosenDecision) return;
+
+        const sourceNodeId = String(candidate?.sourceNodeId || "").trim();
+        if (!sourceNodeId) return;
+
+        bpmnConnections
+          .filter((conn) => String(conn?.from || "").trim() === sourceNodeId)
+          .forEach((conn) => {
+            const connDecision = getConnectionDecision(conn);
+            const targetNodeId = String(conn?.to || "").trim();
+            if (!targetNodeId) return;
+            if (
+              connDecision &&
+              connDecision !== "merge" &&
+              connDecision !== chosenDecision
+            ) {
+              blocked.add(targetNodeId);
+            }
+          });
+      });
+
+      return blocked;
+    })();
+
+    const progressionStages = isBpmnDrivenPipeline
+      ? stages.filter((s) => {
+          const nodeId = String(s?.sourceNodeId || "").trim();
+          return !nodeId || !blockedNodeIds.has(nodeId);
+        })
+      : stages;
+
+    const clickedPathIndex = progressionStages.findIndex(
+      (s) => s.id === stage.id,
+    );
+    if (clickedPathIndex < 0) return;
+
+    if (stage.done) {
+      // Desativa esta e as seguintes no caminho ativo
+      const idsToReset = new Set(
+        progressionStages.slice(clickedPathIndex).map((s) => s.id),
+      );
+      const conditionalIdsToReset = progressionStages
+        .slice(clickedPathIndex)
+        .filter((s) => s?.stageType === "condicional")
+        .map((s) => s.id);
+
+      setStages(
+        stages.map((s) => (idsToReset.has(s.id) ? { ...s, done: false } : s)),
+      );
+      if (conditionalIdsToReset.length > 0) {
+        setConditionalDecisions((prev) => {
+          const next = { ...prev };
+          conditionalIdsToReset.forEach((id) => {
+            delete next[id];
+          });
+          return next;
+        });
+      }
+      setActiveStage(clickedPathIndex);
+      onActiveStage?.(stage);
+    } else {
+      // Ativa apenas se anteriores completas no caminho ativo
+      const allPreviousCompleted = progressionStages
+        .slice(0, clickedPathIndex)
+        .every((s) => s.done);
+
+      if (clickedPathIndex === 0 || allPreviousCompleted) {
         updateStage(stage.id, { done: true });
-        setActiveStage(index);
+        // Condicionais ficam no índice atual para exibir os botões Sim/Não
+        if (stage.stageType === "condicional") {
+          setActiveStage(clickedPathIndex);
+          onActiveStage?.(stage);
+        } else {
+          const nextPathIndex = clickedPathIndex + 1;
+          if (nextPathIndex < progressionStages.length) {
+            setActiveStage(nextPathIndex);
+            onActiveStage?.(progressionStages[nextPathIndex]);
+          } else {
+            setActiveStage(clickedPathIndex);
+            onActiveStage?.(stage);
+          }
+        }
       }
     }
   };
 
-  const allCompleted = stages.every((stage) => stage.done);
-  const anyCompleted = stages.some((stage) => stage.done);
-  const completedCount = stages.filter((stage) => stage.done).length;
+  const handleConditionalDecisionSelect = (stage, decisionValue) => {
+    const normalizedDecision = normalizeDecisionValue(decisionValue);
+    if (!stage?.id || !normalizedDecision) return;
 
-  // For manual (non-BPMN) pipelines: reveal stages one by one as each is confirmed.
-  // Only show completed stages + the next pending one.
-  const manualVisibleCount = (!isBpmnDrivenPipeline && !isWorkflowActive)
-    ? (allCompleted ? stages.length : completedCount + 1)
-    : stages.length;
-  const visibleStages = stages.slice(0, manualVisibleCount);
+    setConditionalDecisions((prev) => ({
+      ...prev,
+      [stage.id]: normalizedDecision,
+    }));
+
+    if (!isBpmnDrivenPipeline) return;
+
+    const conditionalNodeId = String(stage?.sourceNodeId || "").trim();
+    if (!conditionalNodeId) return;
+
+    const outgoingConnections = bpmnConnections.filter(
+      (conn) => String(conn?.from || "").trim() === conditionalNodeId,
+    );
+
+    const targetConnection = outgoingConnections.find(
+      (conn) => getConnectionDecision(conn) === normalizedDecision,
+    );
+    const targetNodeId = String(targetConnection?.to || "").trim();
+    if (!targetNodeId) return;
+
+    setStages((prevStages) => {
+      const alreadyExists = prevStages.some(
+        (s) => String(s?.sourceNodeId || "").trim() === targetNodeId,
+      );
+      if (alreadyExists) return prevStages;
+
+      const targetNode = bpmnNodes.find(
+        (node) => String(node?.id || "").trim() === targetNodeId,
+      );
+      if (!targetNode || targetNode?.active === false) return prevStages;
+
+      const nodeType = String(targetNode?.nodeType || "")
+        .trim()
+        .toLowerCase();
+      const stageType =
+        nodeType === "task"
+          ? "task"
+          : nodeType === "condicional"
+            ? "condicional"
+            : "entidade";
+
+      const label =
+        String(
+          targetNode?.entidadeNome ||
+            targetNode?.taskNome ||
+            targetNode?.condicionalNome ||
+            targetNode?.label ||
+            "",
+        ).trim() || "Próximo passo";
+
+      const numericIds = prevStages
+        .map((s) => Number(s?.id))
+        .filter((id) => Number.isFinite(id));
+      const newId = (numericIds.length > 0 ? Math.max(...numericIds) : 0) + 1;
+
+      const insertIndex = prevStages.findIndex((s) => s.id === stage.id);
+      const nextStage = {
+        id: newId,
+        label,
+        done: false,
+        fromBpmn: true,
+        sourceNodeId: targetNodeId,
+        stageType,
+      };
+
+      if (insertIndex < 0) return [...prevStages, nextStage];
+
+      const updated = [...prevStages];
+      updated.splice(insertIndex + 1, 0, nextStage);
+      return updated;
+    });
+  };
+
+  const blockedPathNodeIds = React.useMemo(() => {
+    if (!isBpmnDrivenPipeline) return new Set();
+
+    const blocked = new Set();
+    stages.forEach((stage) => {
+      if (stage?.stageType !== "condicional") return;
+      const chosenDecision = normalizeDecisionValue(
+        conditionalDecisions[stage.id],
+      );
+      if (!chosenDecision) return;
+
+      const sourceNodeId = String(stage?.sourceNodeId || "").trim();
+      if (!sourceNodeId) return;
+
+      bpmnConnections
+        .filter((conn) => String(conn?.from || "").trim() === sourceNodeId)
+        .forEach((conn) => {
+          const connDecision = getConnectionDecision(conn);
+          const targetNodeId = String(conn?.to || "").trim();
+          if (!targetNodeId) return;
+
+          if (
+            connDecision &&
+            connDecision !== "merge" &&
+            connDecision !== chosenDecision
+          ) {
+            blocked.add(targetNodeId);
+          }
+        });
+    });
+
+    return blocked;
+  }, [isBpmnDrivenPipeline, stages, conditionalDecisions, bpmnConnections]);
+
+  const progressionStages = React.useMemo(() => {
+    if (!isBpmnDrivenPipeline) return stages;
+
+    return stages.filter((stage) => {
+      const nodeId = String(stage?.sourceNodeId || "").trim();
+      return !nodeId || !blockedPathNodeIds.has(nodeId);
+    });
+  }, [isBpmnDrivenPipeline, stages, blockedPathNodeIds]);
+
+  const allCompleted = progressionStages.every((stage) => {
+    if (!stage.done) return false;
+    if (stage.stageType === "condicional") {
+      return conditionalDecisions[stage.id] !== undefined;
+    }
+    return true;
+  });
+  const anyCompleted = progressionStages.some((stage) => stage.done);
+  const completedCount = progressionStages.filter((stage) => stage.done).length;
+
+  // Para condicionais, só conta como concluído se tiver decisão (sim ou não)
+  const effectiveCompletedCount = progressionStages.filter((stage, idx) => {
+    if (!stage.done) return false;
+    if (stage.stageType === "condicional") {
+      return conditionalDecisions[stage.id] !== undefined;
+    }
+    return true;
+  }).length;
+
+  // Reveal stages one by one as each is confirmed by clicking.
+  const manualVisibleCount = allCompleted
+    ? progressionStages.length
+    : effectiveCompletedCount + 1;
+  const visibleStages = progressionStages.slice(0, manualVisibleCount);
 
   const progressPercentage = anyCompleted
     ? allCompleted
       ? 100
-      : Math.min((completedCount / (stages.length + 1)) * 100, 100)
+      : Math.min(
+          (effectiveCompletedCount / (progressionStages.length + 1)) * 100,
+          100,
+        )
     : 0;
 
   const stageDetailsByLabel = React.useMemo(() => {
@@ -383,332 +648,364 @@ const EditablePipeline = ({
       const key = normalizeLabelKey(row?.label);
       if (!key) return;
       if (map.has(key)) return;
-      map.set(key, String(row?.value || '').trim());
+      map.set(key, String(row?.value || "").trim());
     });
     return map;
   }, [infoRows]);
 
-  const handleOpenStageDetails = (stage) => {
-    if (!isBpmnDrivenPipeline || !stage) return;
+  // Encontra o condicional ativo atual
+  const activeConditionalStage = visibleStages.find(
+    (stage, idx) =>
+      idx === activeStage && stage.stageType === "condicional" && stage.done,
+  );
 
-    const stageName = String(stage?.label || '').trim() || 'Etapa';
-    const rawValue = stageDetailsByLabel.get(normalizeLabelKey(stageName)) || '';
-    const participante = String(stage?.participante || '').trim();
-    const tipoLabel = getStageTypeLabel(stage?.stageType);
+  // Encontra as próximas etapas baseado na decisão (Sim ou Não)
+  const getNextStagesByDecision = React.useMemo(() => {
+    if (!activeConditionalStage || !bpmnNodes || !bpmnConnections) {
+      return null;
+    }
 
-    const isEntity = stage?.stageType === 'entidade' || stage?.stageType === 'entity';
-    const fieldMatchers = [
-      { label: 'Descrição',         matcher: /^Descri[cç][aã]o\s*:\s*(.*)$/i },
-      ...(isEntity ? [
-        { label: 'Atributo chave',   matcher: /^Atributo\s*chave\s*:\s*(.*)$/i },
-        { label: 'Tipo da entidade', matcher: /^Tipo\s*da\s*entidade\s*:\s*(.*)$/i },
-      ] : []),
-    ];
+    const decision = normalizeDecisionValue(
+      conditionalDecisions[activeConditionalStage.id],
+    );
+    if (!decision) return null;
 
-    const parsedRows = [];
-    rawValue.split('\n').map(l => l.trim()).filter(Boolean).forEach(line => {
-      const field = fieldMatchers.find(f => f.matcher.test(line));
-      if (!field) return;
-      const m = line.match(field.matcher);
-      const val = String(m?.[1] || '').trim();
-      if (val && val !== '-') parsedRows.push({ label: field.label, value: val });
+    // Encontra o nó BPMN correspondente ao condicional
+    const conditionalNodeId = activeConditionalStage.sourceNodeId;
+    if (!conditionalNodeId) return null;
+
+    // Encontra as conexões saindo deste nó
+    const outgoingConnections = bpmnConnections.filter(
+      (conn) => String(conn.from || "") === String(conditionalNodeId),
+    );
+
+    // Filtra conexões que correspondem à decisão
+    const targetConnection = outgoingConnections.find((conn) => {
+      const connDecision = getConnectionDecision(conn);
+      return connDecision === decision;
     });
 
-    const descRows = parsedRows.length > 0
-      ? parsedRows
-      : rawValue
-        ? [{ label: 'Descrição', value: rawValue }]
-        : [{ label: 'Descrição', value: 'Sem detalhes adicionais para esta etapa.' }];
+    if (!targetConnection) return null;
 
-    const rows = [
-      { label: 'Tipo', value: tipoLabel },
-      ...(participante ? [{ label: 'Participante', value: participante }] : []),
-      ...descRows,
-    ];
+    // Encontra o nó alvo
+    const targetNodeId = String(targetConnection.to || "");
+    const targetNode = bpmnNodes.find((n) => String(n.id) === targetNodeId);
 
-    setStageDetailModal({ title: stageName, rows });
-  };
+    return targetNode
+      ? {
+          nodeId: targetNode.id,
+          label:
+            String(
+              targetNode.entidadeNome ||
+                targetNode.taskNome ||
+                targetNode.condicionalNome ||
+                targetNode.label ||
+                "",
+            ).trim() || "Próximo passo",
+        }
+      : null;
+  }, [
+    activeConditionalStage,
+    bpmnNodes,
+    bpmnConnections,
+    conditionalDecisions,
+  ]);
 
   return (
-    <div className={styles.pipelineShell}>
-      <div className={styles.pipelineFrame}>
-        <div className={styles.pipelineLeft}>
-          <div className={styles.pipelineLeftContent}>
-            <div className={styles.pipelineLeftMeta}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-              </svg>
-              <span className={styles.pipelineLeftMetaText}>Pipeline</span>
-            </div>
-            {workflowSlot != null ? (
-              <>
-                {workflowSlot}
-              </>
-            ) : (
-              <>
-                <div className={styles.editableField}>
-                  <textarea
-                    className={styles.leftTitle}
-                    name="pipelineTitle"
-                    value={inputTitle}
-                    onChange={(e) => {
-                      if (isReadOnlyMode) return;
-                      setInputTitle(e.target.value);
-                    }}
-                    onBlur={(e) => {
-                      if (isReadOnlyMode) return;
-                      setPipelineTitleValue(e.target.value);
-                    }}
-                    onInput={handleTextareaInput}
-                    placeholder="Nome da pipeline..."
-                    maxLength={80}
-                    rows={1}
-                    readOnly={isReadOnlyMode}
-                  />
-                  {!isReadOnlyMode && (
-                    <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                  )}
-                </div>
-                <div className={styles.editableField}>
-                  <textarea
-                    className={styles.leftSubtitle}
-                    name="pipelineSubtitle"
-                    value={inputSubtitle}
-                    onChange={(e) => {
-                      if (isReadOnlyMode) return;
-                      setInputSubtitle(e.target.value);
-                    }}
-                    onBlur={(e) => {
-                      if (isReadOnlyMode) return;
-                      setPipelineSubtitleValue(e.target.value);
-                    }}
-                    onInput={handleTextareaInput}
-                    placeholder="Descrição..."
-                    maxLength={160}
-                    rows={1}
-                    readOnly={isReadOnlyMode}
-                  />
-                  {!isReadOnlyMode && (
-                    <svg className={styles.editIcon} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
-                  )}
-                </div>
-              </>
-            )}
-            <div className={styles.pipelineLeftDivider} />
-            <div className={styles.pipelineLeftStats}>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="3" y="3" width="7" height="7" rx="1" />
-                <rect x="14" y="3" width="7" height="7" rx="1" />
-                <rect x="3" y="14" width="7" height="7" rx="1" />
-                <rect x="14" y="14" width="7" height="7" rx="1" />
-              </svg>
-              <span className={styles.pipelineLeftStatsText}>
-                {stages.length} etapa{stages.length !== 1 ? 's' : ''}
-                {anyCompleted ? ` · ${completedCount} concluída${completedCount !== 1 ? 's' : ''}` : ''}
-              </span>
-            </div>
-          </div>
-          <div className={styles.pipelineProgressBar}>
-            <div
-              className={styles.pipelineProgressFill}
-              style={{ width: `${progressPercentage}%` }}
-            />
-          </div>
-        </div>
-        <div className={styles.pipelineMain}>
-          <div className={styles.stepperTrack}>
-            {visibleStages.map((stage, index) => {
-              const palette = getStagePalette(stage);
-              const stageLabelRaw = String(stage?.label || '').trim();
-              const stageLabelCompact = stageLabelRaw;
-              const isLastStage = index === visibleStages.length - 1;
+    <>
+      <div className={styles.pipelineShell}>
+        <div className={styles.pipelineFrame}>
+          <div className={styles.pipelineLeft}>
+            <div className={styles.pipelineLeftContent}>
+              <div className={styles.pipelineLeftMeta}>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.9)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+                <span className={styles.pipelineLeftMetaText}>Pipeline</span>
+              </div>
+              {workflowSlot != null ? <>{workflowSlot}</> : <></>}
+              <div className={styles.pipelineLeftDivider} />
 
-              return (
-                <React.Fragment key={stage.id}>
-                  <div className={styles.stepItem}>
-                    <div
-                      className={`${styles.stepCard} ${stage.done ? styles.stepCardDone : ''} ${stage.pending && !stage.done ? (stage.stageType === 'condicional' ? styles.stepCardPendingBlue : styles.stepCardPending) : ''} ${isReadOnlyMode ? styles.stepCardReadOnly : ''}`}
-                      onClick={() => handleStageClick(index, stage)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleStageClick(index, stage);
-                        }
-                      }}
-                      style={{
-                        borderLeftColor: stage.done ? palette.base : palette.base,
-                        ...(stage.done ? { background: palette.soft } : {}),
-                      }}
-                      title={stage.done ? 'Marcar como incompleto' : 'Marcar como completo'}
+              {/* Botões Sim/Não para Condicionais */}
+              {activeConditionalStage &&
+                conditionalDecisions[activeConditionalStage.id] ===
+                  undefined && (
+                  <div className={styles.decisionButtonsRow}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleConditionalDecisionSelect(
+                          activeConditionalStage,
+                          "sim",
+                        )
+                      }
+                      className={`${styles.decisionBtn} ${styles.decisionBtnYes}`}
+                      title="Caminho Sim"
                     >
-                      {/* Checkmark badge absoluto — não empurra nada */}
-                      {stage.done && (
-                        <span className={styles.stepCardDoneBadge} style={{ background: palette.base }}>
-                          ✓
-                        </span>
-                      )}
+                      ✓ Sim
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleConditionalDecisionSelect(
+                          activeConditionalStage,
+                          "nao",
+                        )
+                      }
+                      className={`${styles.decisionBtn} ${styles.decisionBtnNo}`}
+                      title="Caminho Não"
+                    >
+                      ✕ Não
+                    </button>
+                  </div>
+                )}
 
-                      {/* Pending badge — visible when workflow is waiting on this stage */}
-                      {stage.pending && !stage.done && (
-                        <span
-                          className={stage.stageType === 'condicional' ? styles.stepPendingBadgeBlue : styles.stepPendingBadge}
-                          title="Passo pendente"
-                          aria-label="Passo pendente"
-                        >
-                          ●
-                        </span>
-                      )}
+              {/* Info do próximo passo */}
+              {getNextStagesByDecision && (
+                <div
+                  style={{
+                    fontSize: "0.7rem",
+                    color: "rgba(255,255,255,0.9)",
+                    marginBottom: "0.6rem",
+                    paddingBottom: "0.4rem",
+                    borderBottom: "1px solid rgba(255,255,255,0.2)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontWeight: "600",
+                      marginBottom: "0.2rem",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    → {getNextStagesByDecision.label}
+                  </div>
+                </div>
+              )}
 
-                      {/* Header: número + tipo */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginBottom: '0.15rem' }}>
-                        <div
-                          className={`${styles.stepCardIcon} ${stage.done ? styles.stepCardIconDone : ''}`}
-                          style={
-                            stage.done
-                              ? { background: palette.base, borderColor: palette.base, color: '#fff' }
-                              : { borderColor: palette.base, color: palette.base, background: '#fff' }
+              <div className={styles.pipelineLeftDivider} />
+              <div className={styles.pipelineLeftStats}>
+                <svg
+                  width="10"
+                  height="10"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="rgba(255,255,255,0.7)"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <rect x="3" y="3" width="7" height="7" rx="1" />
+                  <rect x="14" y="3" width="7" height="7" rx="1" />
+                  <rect x="3" y="14" width="7" height="7" rx="1" />
+                  <rect x="14" y="14" width="7" height="7" rx="1" />
+                </svg>
+                <span className={styles.pipelineLeftStatsText}>
+                  {stages.length} etapa{stages.length !== 1 ? "s" : ""}
+                  {anyCompleted
+                    ? ` · ${completedCount} concluída${completedCount !== 1 ? "s" : ""}`
+                    : ""}
+                </span>
+              </div>
+            </div>
+            <div className={styles.pipelineProgressBar}>
+              <div
+                className={styles.pipelineProgressFill}
+                style={{ width: `${progressPercentage}%` }}
+              />
+            </div>
+          </div>
+          <div className={styles.pipelineMain}>
+            <div className={styles.stepperTrack}>
+              {visibleStages.map((stage, index) => {
+                const palette = getStagePalette(stage);
+                const stageLabelRaw = String(stage?.label || "").trim();
+                const stageLabelCompact = stageLabelRaw;
+                const isLastStage = index === visibleStages.length - 1;
+
+                return (
+                  <React.Fragment key={stage.id}>
+                    <div className={styles.stepItem}>
+                      <div
+                        className={`${styles.stepCard} ${stage.done ? styles.stepCardDone : ""} ${!stage.done ? (stage.stageType === "condicional" ? styles.stepCardPendingBlue : stage.stageType === "task" ? styles.stepCardPendingYellow : styles.stepCardPending) : ""} ${isReadOnlyMode ? styles.stepCardReadOnly : ""}`}
+                        onClick={() => handleStageClick(index, stage)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            handleStageClick(index, stage);
                           }
-                        >
-                          {index + 1}
-                        </div>
-                        {isBpmnDrivenPipeline && stage.stageType && (
-                          <span style={{
-                            fontSize: '0.6rem',
-                            fontWeight: 600,
-                            color: palette.contrast,
-                            background: palette.soft,
-                            borderRadius: '0.25rem',
-                            padding: '0.05rem 0.3rem',
-                            letterSpacing: '0.02em',
-                            whiteSpace: 'nowrap',
-                          }}>
-                            {getStageTypeLabel(stage.stageType)}
+                        }}
+                        style={{
+                          borderLeftColor: stage.done
+                            ? palette.base
+                            : palette.base,
+                          ...(stage.done ? { background: palette.soft } : {}),
+                        }}
+                        title={
+                          stage.done
+                            ? "Marcar como incompleto"
+                            : "Marcar como completo"
+                        }
+                      >
+                        {/* Checkmark badge absoluto — não empurra nada */}
+                        {stage.done && (
+                          <span
+                            className={styles.stepCardDoneBadge}
+                            style={{ background: palette.base }}
+                          >
+                            ✓
                           </span>
                         )}
-                      </div>
 
-                      {/* Label */}
-                      {!isBpmnDrivenPipeline && stages.length > 1 && !isReadOnlyMode && (
-                        <button
-                          className={styles.stepCardRemove}
-                          onClick={(e) => { e.stopPropagation(); removeStage(stage.id); }}
-                          title="Remover etapa"
-                        >
-                          ×
-                        </button>
-                      )}
-                      {isBpmnDrivenPipeline ? (
-                        <>
+                        {/* Pending badge — visible when workflow is waiting on this stage */}
+                        {stage.pending && !stage.done && (
                           <span
-                            className={styles.stepCardLabelCompact}
-                            style={{ color: '#000' }}
+                            className={
+                              stage.stageType === "condicional"
+                                ? styles.stepPendingBadgeBlue
+                                : styles.stepPendingBadge
+                            }
+                            title="Passo pendente"
+                            aria-label="Passo pendente"
                           >
-                            {stageLabelCompact || 'Etapa'}
+                            ●
                           </span>
-                          <button
-                            className={styles.stepCardDetailsBtn}
-                            onClick={(e) => { e.stopPropagation(); handleOpenStageDetails(stage); }}
-                            style={stage.done ? { borderColor: palette.base, color: '#fff', background: palette.base } : { color: palette.base, borderColor: palette.base }}
-                            title="Ver detalhes da etapa"
-                          >
-                            Detalhes ›
-                          </button>
-                        </>
-                      ) : (
-                        <textarea
-                          className={styles.stepCardLabel}
-                          name={`stageLabel_${stage.id}`}
-                          value={stage.label}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            updateStage(stage.id, { label: e.target.value });
+                        )}
+
+                        {/* Header: número + botão ℹ */}
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.35rem",
                           }}
-                          onClick={(e) => e.stopPropagation()}
-                          onInput={handleTextareaInput}
-                          placeholder="Nome..."
-                          rows={1}
-                          maxLength={20}
-                          readOnly={isReadOnlyMode}
-                        />
-                      )}
+                        >
+                          <div
+                            className={`${styles.stepCardIcon} ${stage.done ? styles.stepCardIconDone : ""}`}
+                            style={
+                              stage.done
+                                ? {
+                                    background: palette.base,
+                                    borderColor: palette.base,
+                                    color: "#fff",
+                                  }
+                                : {
+                                    borderColor: palette.base,
+                                    color: palette.base,
+                                    background: "#fff",
+                                  }
+                            }
+                          >
+                            {index + 1}
+                          </div>
+                        </div>
+
+                        {/* Nome da etapa */}
+                        {isBpmnDrivenPipeline ? (
+                          <span className={styles.stepCardLabelCompact}>
+                            {stageLabelRaw || "Etapa"}
+                          </span>
+                        ) : (
+                          <textarea
+                            className={styles.stepCardLabel}
+                            name={`stageLabel_${stage.id}`}
+                            value={stage.label}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              updateStage(stage.id, { label: e.target.value });
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            onInput={handleTextareaInput}
+                            placeholder="Nome..."
+                            rows={1}
+                            maxLength={20}
+                            readOnly={isReadOnlyMode}
+                          />
+                        )}
+                        {!isBpmnDrivenPipeline &&
+                          stages.length > 1 &&
+                          !isReadOnlyMode && (
+                            <button
+                              className={styles.stepCardRemove}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeStage(stage.id);
+                              }}
+                              title="Remover etapa"
+                            >
+                              ×
+                            </button>
+                          )}
+                      </div>
                     </div>
-                  </div>
-                  {!isLastStage && (
-                    <div
-                      className={`${styles.stepConnector} ${stage.done ? styles.stepConnectorDone : ''}`}
-                    />
-                  )}
-                </React.Fragment>
-              );
-            })}
-            {!isBpmnDrivenPipeline && (
-              <>
-                <div className={styles.stepConnector} />
-                <button
-                  className={styles.stepAddCard}
-                  onClick={handleAddOrReset}
-                  disabled={isReadOnlyMode}
-                  title={stages.length >= 7 ? 'Resetar para padrão (3 etapas)' : 'Adicionar etapa'}
-                >
-                  {stages.length >= 7 ? '⟲' : '+'}
-                </button>
-              </>
-            )}
+                    {!isLastStage && (
+                      <div
+                        className={`${styles.stepConnector} ${stage.done ? styles.stepConnectorDone : ""}`}
+                      />
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {!isBpmnDrivenPipeline && (
+                <>
+                  <div className={styles.stepConnector} />
+                  <button
+                    className={styles.stepAddCard}
+                    onClick={handleAddOrReset}
+                    disabled={isReadOnlyMode}
+                    title={
+                      stages.length >= 7
+                        ? "Resetar para padrão (3 etapas)"
+                        : "Adicionar etapa"
+                    }
+                  >
+                    {stages.length >= 7 ? "⟲" : "+"}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
+        <p className={styles.pipelineNote}>
+          {noteOverride
+            ? noteOverride
+            : isBpmnDrivenPipeline
+              ? "* Pipeline sincronizada com o BPMN. *"
+              : allCompleted
+                ? "* Todas as etapas concluídas! *"
+                : `* Etapa ${completedCount + 1} de ${stages.length} — confirme cada passo para avançar. *`}
+        </p>
+        {deleteConfirm && (
+          <Close
+            title="Remover Etapa"
+            message="Tem certeza que deseja apagar essa etapa? Esta ação não pode ser desfeita."
+            onConfirm={confirmRemove}
+            onCancel={() => setDeleteConfirm(null)}
+          />
+        )}
+        {resetConfirm && (
+          <Close
+            title="Resetar Pipeline"
+            message="Resetar para 3 etapas? Todas as etapas atuais serão perdidas."
+            onConfirm={resetToDefault}
+            onCancel={() => setResetConfirm(false)}
+          />
+        )}
       </div>
-      <p className={styles.pipelineNote}>
-        {noteOverride
-          ? noteOverride
-          : isBpmnDrivenPipeline
-            ? '* Pipeline sincronizada com o BPMN. *'
-            : allCompleted
-              ? '* Todas as etapas concluídas! *'
-              : `* Etapa ${completedCount + 1} de ${stages.length} — confirme cada passo para avançar. *`}
-      </p>
-      {deleteConfirm && (
-        <Close
-          title="Remover Etapa"
-          message="Tem certeza que deseja apagar essa etapa? Esta ação não pode ser desfeita."
-          onConfirm={confirmRemove}
-          onCancel={() => setDeleteConfirm(null)}
-        />
-      )}
-      {resetConfirm && (
-        <Close
-          title="Resetar Pipeline"
-          message="Resetar para 3 etapas? Todas as etapas atuais serão perdidas."
-          onConfirm={resetToDefault}
-          onCancel={() => setResetConfirm(false)}
-        />
-      )}
-      {stageDetailModal && (
-        <Close
-          title={stageDetailModal.title}
-          onConfirm={() => setStageDetailModal(null)}
-          onCancel={() => setStageDetailModal(null)}
-          confirmLabel="Fechar"
-          hideCancel
-        >
-          <div className={styles.stageDetailRows}>
-            {stageDetailModal.rows.map(({ label, value }) => (
-              <div key={label} className={styles.stageDetailRow}>
-                <span className={styles.stageDetailLabel}>{label}</span>
-                <span className={styles.stageDetailValue}>{value}</span>
-              </div>
-            ))}
-          </div>
-        </Close>
-      )}
-    </div>
+    </>
   );
 };
 export default EditablePipeline;

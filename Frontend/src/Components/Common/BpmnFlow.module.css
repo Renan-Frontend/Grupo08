@@ -77,7 +77,9 @@
   cursor: pointer;
   pointer-events: all;
   opacity: 0;
-  transition: opacity 150ms ease, r 120ms ease;
+  transition:
+    opacity 150ms ease,
+    r 120ms ease;
 }
 
 .connectionDeleteDot:hover {
@@ -110,7 +112,9 @@
   cursor: crosshair;
   pointer-events: all;
   opacity: 0.6;
-  transition: opacity 100ms ease, r 100ms ease;
+  transition:
+    opacity 100ms ease,
+    r 100ms ease;
 }
 
 .waypointMidHandle:hover {
@@ -157,6 +161,7 @@
   min-height: 110px;
   padding: 0.55rem 0.65rem;
   position: relative;
+  z-index: 11;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -285,11 +290,11 @@
 }
 
 .connectorYes::before {
-  content: '✓';
+  content: "✓";
 }
 
 .connectorNo::before {
-  content: '✕';
+  content: "✕";
   color: #dc2626;
 }
 

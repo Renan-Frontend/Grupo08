@@ -1,0 +1,227 @@
+/* Activity Timeline Widget - Compact Version */
+
+.container {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.addBtn {
+  background-color: #2fac66;
+  color: white;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.addBtn:hover {
+  background-color: #229954;
+  transform: scale(1.1);
+}
+
+/* Timeline */
+
+.timeline {
+  position: relative;
+  padding: 1rem;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #2fac66, #e5e7eb);
+}
+
+.timelineItem {
+  display: flex;
+  margin-bottom: 1rem;
+  position: relative;
+  padding-left: 1rem;
+}
+
+.timelineItem:last-child {
+  margin-bottom: 0;
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  background-color: #fff;
+  border: 2px solid #2fac66;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  margin-left: -22px;
+  font-size: 0.9rem;
+}
+
+.content {
+  flex: 1;
+  position: relative;
+}
+
+.title {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.9rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+}
+
+.date {
+  color: #6b7280;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  text-align: center;
+  min-width: 60px;
+}
+
+.responsible {
+  color: #2fac66;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 0.85rem;
+  color: #374151;
+  margin: 0.25rem 0 0 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.deleteBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.deleteBtn:hover {
+  color: #ef4444;
+  transform: scale(1.2);
+}
+
+.emptyState {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.loadingState {
+  padding: 1.5rem 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #2fac66;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .container {
+    margin-bottom: 1rem;
+  }
+
+  .header {
+    padding: 0.75rem;
+  }
+
+  .timeline {
+    padding: 0.75rem;
+  }
+
+  .timelineItem {
+    margin-bottom: 0.75rem;
+    padding-left: 0.75rem;
+  }
+
+  .dot {
+    width: 24px;
+    height: 24px;
+    border-width: 1.5px;
+    margin-left: -18px;
+    font-size: 0.8rem;
+  }
+
+  .title {
+    font-size: 0.85rem;
+  }
+
+  .meta {
+    font-size: 0.7rem;
+  }
+
+  .description {
+    font-size: 0.8rem;
+  }
+}

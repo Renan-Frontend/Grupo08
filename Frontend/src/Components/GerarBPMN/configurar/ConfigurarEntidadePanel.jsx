@@ -1,26 +1,323 @@
-import React from 'react';
-import Close from '../../Helper/Close';
+import React from "react";
+import Close from "../../Helper/Close";
 import {
   CONDITIONAL_NAME_MAX_LENGTH,
   ENTITY_NAME_MAX_LENGTH,
-} from '../gerarBpmnCreate.shared';
-import panelStyles from './ConfigurarEntidadePanel.module.css';
+} from "../gerarBpmnCreate.shared";
+import panelStyles from "./ConfigurarEntidadePanel.module.css";
 
 const toEntitySlug = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
 const normalizeEntityOptionName = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
+
+// ── Shared campos editor (reused for entity, condicional and task) ──────────
+const CamposEditorBlock = ({
+  entityFieldDraft,
+  setEntityFieldDraft,
+  onSaveEntityFieldDraft,
+  onEditEntityFieldDraft,
+  onRemoveEntityFieldDraft,
+  newEntityFields,
+  lastCreatedField,
+  lastCreatedFieldType,
+  isReadOnlyMode,
+  onFieldClick,
+  headerSlot = null,
+}) => (
+  <>
+    <div className={panelStyles.entityFieldEditorBlock}>
+      <p className={panelStyles.entityFieldEditorTitle}>
+        Criar campo no painel
+      </p>
+      <div className={panelStyles.entityFieldEditorGrid}>
+        <input
+          className={panelStyles.fieldInput}
+          name="entityFieldNameInput"
+          value={String(entityFieldDraft?.nome || "")}
+          onChange={(event) =>
+            setEntityFieldDraft?.((previous) => ({
+              ...previous,
+              nome: event.target.value,
+            }))
+          }
+          disabled={isReadOnlyMode}
+          placeholder="Nome do campo"
+          title="Nome do campo"
+        />
+        <select
+          className={panelStyles.fieldInput}
+          name="entityFieldTypeSelect"
+          value={String(entityFieldDraft?.tipo || "")}
+          onChange={(event) =>
+            setEntityFieldDraft?.((previous) => ({
+              ...previous,
+              tipo: event.target.value,
+            }))
+          }
+          disabled={isReadOnlyMode}
+          title="Tipo do campo"
+        >
+          <option value="" disabled>
+            Tipo
+          </option>
+          <option value="Texto">Texto</option>
+          <option value="Número">Número</option>
+          <option value="Data">Data</option>
+          <option value="Email">Email</option>
+          <option value="Telefone">Telefone</option>
+          <option value="Booleano">Booleano</option>
+        </select>
+        <select
+          className={panelStyles.fieldInput}
+          name="entityFieldRequiredSelect"
+          value={
+            typeof entityFieldDraft?.obrigatorio === "boolean"
+              ? entityFieldDraft.obrigatorio
+                ? "Sim"
+                : "Não"
+              : ""
+          }
+          onChange={(event) =>
+            setEntityFieldDraft?.((previous) => ({
+              ...previous,
+              obrigatorio: event.target.value === "Sim",
+            }))
+          }
+          disabled={isReadOnlyMode}
+          title="Campo obrigatório"
+        >
+          <option value="" disabled>
+            Obrigatório?
+          </option>
+          <option value="Sim">Sim</option>
+          <option value="Não">Não</option>
+        </select>
+        <select
+          className={panelStyles.fieldInput}
+          name="entityFieldKeyTypeSelect"
+          value={String(entityFieldDraft?.keyType || "")}
+          onChange={(event) =>
+            setEntityFieldDraft?.((previous) => ({
+              ...previous,
+              keyType: event.target.value,
+            }))
+          }
+          disabled={isReadOnlyMode}
+          title="Tipo de chave"
+        >
+          <option value="" disabled>
+            Chave:
+          </option>
+          <option value="NORMAL">Normal</option>
+          <option value="PK">PK</option>
+          <option value="FK">FK</option>
+        </select>
+        <input
+          className={panelStyles.fieldInput}
+          name="entityFieldReferenceInput"
+          value={String(entityFieldDraft?.referencia || "")}
+          onChange={(event) =>
+            setEntityFieldDraft?.((previous) => ({
+              ...previous,
+              referencia: event.target.value,
+            }))
+          }
+          disabled={isReadOnlyMode}
+          placeholder="Referência (ex: cliente.id)"
+          title="Referência"
+        />
+      </div>
+      <div className={panelStyles.entityFieldEditorActions}>
+        <button
+          type="button"
+          className={panelStyles.entityFieldsSelectionButton}
+          onClick={() => onSaveEntityFieldDraft?.()}
+          disabled={isReadOnlyMode}
+        >
+          {entityFieldDraft?.id ? "Atualizar campo" : "Adicionar campo"}
+        </button>
+        {entityFieldDraft?.id ? (
+          <button
+            type="button"
+            className={panelStyles.entityFieldsSelectionButton}
+            onClick={() =>
+              setEntityFieldDraft?.({
+                id: null,
+                nome: "",
+                tipo: "",
+                obrigatorio: null,
+                keyType: "",
+                referencia: "",
+              })
+            }
+            disabled={isReadOnlyMode}
+          >
+            Cancelar edição
+          </button>
+        ) : null}
+      </div>
+    </div>
+
+    {lastCreatedField ? (
+      <div className={panelStyles.entityFieldsSelectionBlock}>
+        <div className={panelStyles.entityFieldsHeader}>
+          <div className={panelStyles.entityFieldsTitleGroup}>
+            <p className={panelStyles.entityFieldsTitle}>
+              Ultimo Campo criado:
+            </p>
+            {headerSlot}
+          </div>
+          <span className={panelStyles.entityFieldsCount}>
+            {(Array.isArray(newEntityFields) ? newEntityFields : []).length}
+          </span>
+        </div>
+        <div
+          className={`${panelStyles.entityFieldItem} ${panelStyles.entityFieldItemCompact}`}
+          role="button"
+          tabIndex={0}
+          onClick={() => onFieldClick?.()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              onFieldClick?.();
+            }
+          }}
+          title="Clique para ver o conteúdo completo"
+        >
+          <div className={panelStyles.entityFieldMainRow}>
+            <span
+              className={`${panelStyles.entityFieldName} ${panelStyles.entityFieldNameTruncated}`}
+            >
+              {String(lastCreatedField?.nome || "").trim() || "Campo sem nome"}
+            </span>
+            <div className={panelStyles.entityFieldSelectionActions}>
+              <button
+                type="button"
+                className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldActionIconButton}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEditEntityFieldDraft?.(lastCreatedField);
+                }}
+                aria-label="Editar campo"
+                title="Editar campo"
+                disabled={isReadOnlyMode}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 20H8L19 9L15 5L4 16V20Z"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M13.5 6.5L17.5 10.5"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldActionIconButton}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onRemoveEntityFieldDraft?.(lastCreatedField?.id);
+                }}
+                aria-label="Apagar campo"
+                title="Apagar campo"
+                disabled={isReadOnlyMode}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M5 7H19"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M9 7V5H15V7"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8 7L9 19H15L16 7"
+                    stroke="currentColor"
+                    strokeWidth="1.8"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div
+            className={`${panelStyles.entityFieldBadges} ${panelStyles.entityFieldBadgesSingleLine}`}
+          >
+            {lastCreatedFieldType ? (
+              <span
+                className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+              >
+                {lastCreatedFieldType}
+              </span>
+            ) : null}
+            {typeof lastCreatedField?.obrigatorio === "boolean" ? (
+              <span
+                className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+              >
+                {lastCreatedField.obrigatorio ? "Sim" : "Nao"}
+              </span>
+            ) : null}
+            {String(lastCreatedField?.keyType || "").trim() ? (
+              <span
+                className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+              >
+                {String(lastCreatedField.keyType).trim()}
+              </span>
+            ) : null}
+            {String(lastCreatedField?.relacionamento || "").trim() ? (
+              <span
+                className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
+              >
+                {String(lastCreatedField.relacionamento).trim()}
+              </span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    ) : null}
+  </>
+);
 
 const ConfigurarEntidadePanel = ({
   selectedNode,
@@ -36,6 +333,8 @@ const ConfigurarEntidadePanel = ({
   setNewEntityForm,
   conditionalForm,
   setConditionalForm,
+  taskForm,
+  setTaskForm,
   newEntityFields,
   entityFieldDraft,
   setEntityFieldDraft,
@@ -47,21 +346,23 @@ const ConfigurarEntidadePanel = ({
   isReadOnlyMode = false,
 }) => {
   const effectiveStageConfigMode =
-    stageModeLockedTo === 'entidade' || stageModeLockedTo === 'condicional'
+    stageModeLockedTo === "entidade" ||
+    stageModeLockedTo === "condicional" ||
+    stageModeLockedTo === "task"
       ? stageModeLockedTo
       : stageConfigMode;
-  const sectionTitle = 'Configuração da etapa';
+  const sectionTitle = "Configuração da etapa";
   const selectedExistingEntityName =
-    entityMode === 'existente'
+    entityMode === "existente"
       ? String(
           entityOptions.find(
             (item) => String(item?.id) === String(selectedExistingEntityId),
-          )?.nome || '',
+          )?.nome || "",
         ).trim()
-      : '';
+      : "";
   const entityOptionsWithDuplicateIndex = React.useMemo(() => {
     const normalizedNames = (Array.isArray(entityOptions) ? entityOptions : [])
-      .map((entidade) => normalizeEntityOptionName(entidade?.nome || ''))
+      .map((entidade) => normalizeEntityOptionName(entidade?.nome || ""))
       .filter(Boolean);
 
     const nameCounts = normalizedNames.reduce((acc, name) => {
@@ -72,7 +373,7 @@ const ConfigurarEntidadePanel = ({
     const occurrenceMap = new Map();
     return (Array.isArray(entityOptions) ? entityOptions : []).map(
       (entidade) => {
-        const normalizedName = normalizeEntityOptionName(entidade?.nome || '');
+        const normalizedName = normalizeEntityOptionName(entidade?.nome || "");
         const totalCount = normalizedName
           ? nameCounts.get(normalizedName) || 0
           : 0;
@@ -84,7 +385,7 @@ const ConfigurarEntidadePanel = ({
           occurrenceMap.set(normalizedName, currentOccurrence);
         }
 
-        const baseName = String(entidade?.nome || '').trim();
+        const baseName = String(entidade?.nome || "").trim();
         const displayName =
           totalCount > 1 ? `${baseName} (${currentOccurrence})` : baseName;
 
@@ -96,7 +397,7 @@ const ConfigurarEntidadePanel = ({
     );
   }, [entityOptions]);
   const targetEntityName =
-    selectedExistingEntityName || String(newEntityForm?.nome || '').trim();
+    selectedExistingEntityName || String(newEntityForm?.nome || "").trim();
   const lastCreatedField =
     Array.isArray(newEntityFields) && newEntityFields.length > 0
       ? newEntityFields[newEntityFields.length - 1]
@@ -105,14 +406,14 @@ const ConfigurarEntidadePanel = ({
     lastCreatedField?.tipo ||
       lastCreatedField?.type ||
       lastCreatedField?.tipoCampo ||
-      '',
+      "",
   ).trim();
   const targetEntitySlug = toEntitySlug(targetEntityName);
   const entityFieldsEditHref = targetEntitySlug
-    ? `/entidades/${targetEntitySlug}`
-    : '/entidades';
+    ? `/cadastros/${targetEntitySlug}`
+    : "/cadastros";
   const [pendingEntityFieldsHref, setPendingEntityFieldsHref] =
-    React.useState('');
+    React.useState("");
   const [isNavigatingToEntityFields, setIsNavigatingToEntityFields] =
     React.useState(false);
   const [isLastFieldDetailsOpen, setIsLastFieldDetailsOpen] =
@@ -125,14 +426,14 @@ const ConfigurarEntidadePanel = ({
 
   const handleCancelNavigateToEntityFields = () => {
     if (isNavigatingToEntityFields) return;
-    setPendingEntityFieldsHref('');
+    setPendingEntityFieldsHref("");
   };
 
   const handleConfirmNavigateToEntityFields = async () => {
     if (!pendingEntityFieldsHref) return;
 
     setIsNavigatingToEntityFields(true);
-    if (typeof onBeforeNavigateToEntityFields === 'function') {
+    if (typeof onBeforeNavigateToEntityFields === "function") {
       try {
         await onBeforeNavigateToEntityFields();
       } catch {
@@ -144,26 +445,26 @@ const ConfigurarEntidadePanel = ({
   };
 
   const handleSelectCreateNewEntityMode = () => {
-    if (typeof onSelectCreateNewEntityMode === 'function') {
+    if (typeof onSelectCreateNewEntityMode === "function") {
       onSelectCreateNewEntityMode();
       return;
     }
 
-    setEntityMode('nova');
-    setSelectedExistingEntityId('');
+    setEntityMode("nova");
+    setSelectedExistingEntityId("");
     setNewEntityForm((previous) => ({
       ...previous,
-      nome: '',
-      descricao: '',
-      atributoChave: '',
+      nome: "",
+      descricao: "",
+      atributoChave: "",
     }));
     setEntityFieldDraft?.({
       id: null,
-      nome: '',
-      tipo: '',
+      nome: "",
+      tipo: "",
       obrigatorio: null,
-      keyType: '',
-      referencia: '',
+      keyType: "",
+      referencia: "",
     });
   };
 
@@ -217,8 +518,8 @@ const ConfigurarEntidadePanel = ({
               <input
                 type="radio"
                 name="stageConfigMode"
-                checked={stageConfigMode === 'entidade'}
-                onChange={() => setStageConfigMode('entidade')}
+                checked={stageConfigMode === "entidade"}
+                onChange={() => setStageConfigMode("entidade")}
                 disabled={isReadOnlyMode}
               />
               Entidade
@@ -227,8 +528,8 @@ const ConfigurarEntidadePanel = ({
               <input
                 type="radio"
                 name="stageConfigMode"
-                checked={stageConfigMode === 'condicional'}
-                onChange={() => setStageConfigMode('condicional')}
+                checked={stageConfigMode === "condicional"}
+                onChange={() => setStageConfigMode("condicional")}
                 disabled={isReadOnlyMode}
               />
               Condicional
@@ -236,7 +537,7 @@ const ConfigurarEntidadePanel = ({
           </div>
         ) : null}
 
-        {effectiveStageConfigMode === 'condicional' ? (
+        {effectiveStageConfigMode === "condicional" ? (
           <>
             <input
               className={panelStyles.fieldInput}
@@ -253,16 +554,26 @@ const ConfigurarEntidadePanel = ({
               title="Nome da Condicional"
               maxLength={CONDITIONAL_NAME_MAX_LENGTH}
             />
-            {String(conditionalForm.nome || '').length > Math.floor(CONDITIONAL_NAME_MAX_LENGTH * 0.7) ? (
+            {String(conditionalForm.nome || "").length >
+            Math.floor(CONDITIONAL_NAME_MAX_LENGTH * 0.7) ? (
               <p
                 className={panelStyles.charHint}
-                data-warn={String(conditionalForm.nome || '').length >= Math.floor(CONDITIONAL_NAME_MAX_LENGTH * 0.9) ? 'true' : undefined}
+                data-warn={
+                  String(conditionalForm.nome || "").length >=
+                  Math.floor(CONDITIONAL_NAME_MAX_LENGTH * 0.9)
+                    ? "true"
+                    : undefined
+                }
               >
-                {CONDITIONAL_NAME_MAX_LENGTH - String(conditionalForm.nome || '').length} caracteres restantes — prefira nomes curtos
+                {CONDITIONAL_NAME_MAX_LENGTH -
+                  String(conditionalForm.nome || "").length}{" "}
+                caracteres restantes — prefira nomes curtos
               </p>
             ) : null}
 
-            <p className={panelStyles.descriptionTitle}>Descrição da Condição</p>
+            <p className={panelStyles.descriptionTitle}>
+              Descrição da Condição
+            </p>
             <textarea
               className={`${panelStyles.fieldInput} ${panelStyles.descriptionInput}`}
               name="conditionalDescriptionInput"
@@ -278,17 +589,15 @@ const ConfigurarEntidadePanel = ({
               title="Descrição da Condicional"
               rows={5}
             />
-
-
           </>
-        ) : effectiveStageConfigMode === 'entidade' ? (
+        ) : effectiveStageConfigMode === "entidade" ? (
           <>
             <div className={panelStyles.modeRow}>
               <label className={panelStyles.modeOption}>
                 <input
                   type="radio"
                   name="entityMode"
-                  checked={entityMode === 'nova'}
+                  checked={entityMode === "nova"}
                   onChange={handleSelectCreateNewEntityMode}
                   disabled={isReadOnlyMode}
                 />
@@ -298,15 +607,15 @@ const ConfigurarEntidadePanel = ({
                 <input
                   type="radio"
                   name="entityMode"
-                  checked={entityMode === 'existente'}
-                  onChange={() => setEntityMode('existente')}
+                  checked={entityMode === "existente"}
+                  onChange={() => setEntityMode("existente")}
                   disabled={isReadOnlyMode}
                 />
                 Usar existente
               </label>
             </div>
 
-            {entityMode === 'existente' ? (
+            {entityMode === "existente" ? (
               <>
                 <select
                   className={panelStyles.fieldInput}
@@ -348,16 +657,26 @@ const ConfigurarEntidadePanel = ({
               title="Nome da Entidade"
               maxLength={ENTITY_NAME_MAX_LENGTH}
             />
-            {String(newEntityForm.nome || '').length > Math.floor(ENTITY_NAME_MAX_LENGTH * 0.7) ? (
+            {String(newEntityForm.nome || "").length >
+            Math.floor(ENTITY_NAME_MAX_LENGTH * 0.7) ? (
               <p
                 className={panelStyles.charHint}
-                data-warn={String(newEntityForm.nome || '').length >= Math.floor(ENTITY_NAME_MAX_LENGTH * 0.9) ? 'true' : undefined}
+                data-warn={
+                  String(newEntityForm.nome || "").length >=
+                  Math.floor(ENTITY_NAME_MAX_LENGTH * 0.9)
+                    ? "true"
+                    : undefined
+                }
               >
-                {ENTITY_NAME_MAX_LENGTH - String(newEntityForm.nome || '').length} caracteres restantes — prefira nomes curtos
+                {ENTITY_NAME_MAX_LENGTH -
+                  String(newEntityForm.nome || "").length}{" "}
+                caracteres restantes — prefira nomes curtos
               </p>
             ) : null}
 
-            <p className={panelStyles.descriptionTitle}>Descrição da Entidade</p>
+            <p className={panelStyles.descriptionTitle}>
+              Descrição da Entidade
+            </p>
             <textarea
               className={`${panelStyles.fieldInput} ${panelStyles.descriptionInput}`}
               name="newEntityDescriptionInput"
@@ -374,330 +693,81 @@ const ConfigurarEntidadePanel = ({
               rows={5}
             />
 
-            <div className={panelStyles.entityFieldEditorBlock}>
-              <p className={panelStyles.entityFieldEditorTitle}>
-                Criar campo no painel
-              </p>
-              <div className={panelStyles.entityFieldEditorGrid}>
-                <input
-                  className={panelStyles.fieldInput}
-                  name="entityFieldNameInput"
-                  value={String(entityFieldDraft?.nome || '')}
-                  onChange={(event) =>
-                    setEntityFieldDraft?.((previous) => ({
-                      ...previous,
-                      nome: event.target.value,
-                    }))
-                  }
-                  disabled={isReadOnlyMode}
-                  placeholder="Nome do campo"
-                  title="Nome do campo"
-                />
-                <select
-                  className={panelStyles.fieldInput}
-                  name="entityFieldTypeSelect"
-                  value={String(entityFieldDraft?.tipo || '')}
-                  onChange={(event) =>
-                    setEntityFieldDraft?.((previous) => ({
-                      ...previous,
-                      tipo: event.target.value,
-                    }))
-                  }
-                  disabled={isReadOnlyMode}
-                  title="Tipo do campo"
-                >
-                  <option value="" disabled>
-                    Tipo
-                  </option>
-                  <option value="Texto">Texto</option>
-                  <option value="Número">Número</option>
-                  <option value="Data">Data</option>
-                  <option value="Email">Email</option>
-                  <option value="Telefone">Telefone</option>
-                  <option value="Booleano">Booleano</option>
-                </select>
-                <select
-                  className={panelStyles.fieldInput}
-                  name="entityFieldRequiredSelect"
-                  value={
-                    typeof entityFieldDraft?.obrigatorio === 'boolean'
-                      ? entityFieldDraft.obrigatorio
-                        ? 'Sim'
-                        : 'Não'
-                      : ''
-                  }
-                  onChange={(event) =>
-                    setEntityFieldDraft?.((previous) => ({
-                      ...previous,
-                      obrigatorio: event.target.value === 'Sim',
-                    }))
-                  }
-                  disabled={isReadOnlyMode}
-                  title="Campo obrigatório"
-                >
-                  <option value="" disabled>
-                    Obrigatório?
-                  </option>
-                  <option value="Sim">Sim</option>
-                  <option value="Não">Não</option>
-                </select>
-                <select
-                  className={panelStyles.fieldInput}
-                  name="entityFieldKeyTypeSelect"
-                  value={String(entityFieldDraft?.keyType || '')}
-                  onChange={(event) =>
-                    setEntityFieldDraft?.((previous) => ({
-                      ...previous,
-                      keyType: event.target.value,
-                    }))
-                  }
-                  disabled={isReadOnlyMode}
-                  title="Tipo de chave"
-                >
-                  <option value="" disabled>
-                    Chave:
-                  </option>
-                  <option value="NORMAL">Normal</option>
-                  <option value="PK">PK</option>
-                  <option value="FK">FK</option>
-                </select>
-                <input
-                  className={panelStyles.fieldInput}
-                  name="entityFieldReferenceInput"
-                  value={String(entityFieldDraft?.referencia || '')}
-                  onChange={(event) =>
-                    setEntityFieldDraft?.((previous) => ({
-                      ...previous,
-                      referencia: event.target.value,
-                    }))
-                  }
-                  disabled={isReadOnlyMode}
-                  placeholder="Referência (ex: cliente.id)"
-                  title="Referência"
-                />
-              </div>
-              <div className={panelStyles.entityFieldEditorActions}>
-                <button
-                  type="button"
-                  className={panelStyles.entityFieldsSelectionButton}
-                  onClick={() => onSaveEntityFieldDraft?.()}
-                  disabled={isReadOnlyMode}
-                >
-                  {entityFieldDraft?.id ? 'Atualizar campo' : 'Adicionar campo'}
-                </button>
-                {entityFieldDraft?.id ? (
-                  <button
-                    type="button"
-                    className={panelStyles.entityFieldsSelectionButton}
-                    onClick={() =>
-                      setEntityFieldDraft?.({
-                        id: null,
-                        nome: '',
-                        tipo: '',
-                        obrigatorio: null,
-                        keyType: '',
-                        referencia: '',
-                      })
-                    }
-                    disabled={isReadOnlyMode}
-                  >
-                    Cancelar edição
-                  </button>
-                ) : null}
-              </div>
-            </div>
-
-            {lastCreatedField ? (
-              <div className={panelStyles.entityFieldsSelectionBlock}>
-                <div className={panelStyles.entityFieldsHeader}>
-                  <div className={panelStyles.entityFieldsTitleGroup}>
-                    <p className={panelStyles.entityFieldsTitle}>
-                      Ultimo Campo criado:
-                    </p>
-                    <a
-                      className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldInlineLink} ${panelStyles.entityFieldIconLink}`}
-                      href={isReadOnlyMode ? '#' : entityFieldsEditHref}
-                      onClick={(event) => {
-                        if (isReadOnlyMode) {
-                          event.preventDefault();
-                          return;
-                        }
-                        handleNavigateToEntityFields(event);
-                      }}
-                      aria-label="Ir para campos"
-                      title="Abrir página de Entidades para editar campos"
-                      aria-disabled={isReadOnlyMode}
-                    >
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M14 5H19V10"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M10 14L19 5"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="M19 14V19H5V5H10"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </a>
-                  </div>
-                  <span className={panelStyles.entityFieldsCount}>
-                    {newEntityFields.length}
-                  </span>
-                </div>
-                <div
-                  className={`${panelStyles.entityFieldItem} ${panelStyles.entityFieldItemCompact}`}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setIsLastFieldDetailsOpen(true)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
+            <CamposEditorBlock
+              entityFieldDraft={entityFieldDraft}
+              setEntityFieldDraft={setEntityFieldDraft}
+              onSaveEntityFieldDraft={onSaveEntityFieldDraft}
+              onEditEntityFieldDraft={onEditEntityFieldDraft}
+              onRemoveEntityFieldDraft={onRemoveEntityFieldDraft}
+              newEntityFields={newEntityFields}
+              lastCreatedField={lastCreatedField}
+              lastCreatedFieldType={lastCreatedFieldType}
+              isReadOnlyMode={isReadOnlyMode}
+              onFieldClick={() => setIsLastFieldDetailsOpen(true)}
+              headerSlot={
+                <a
+                  className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldInlineLink} ${panelStyles.entityFieldIconLink}`}
+                  href={isReadOnlyMode ? "#" : entityFieldsEditHref}
+                  onClick={(event) => {
+                    if (isReadOnlyMode) {
                       event.preventDefault();
-                      setIsLastFieldDetailsOpen(true);
+                      return;
                     }
+                    handleNavigateToEntityFields(event);
                   }}
-                  title="Clique para ver o conteúdo completo"
+                  aria-label="Ir para campos"
+                  title="Abrir página de Entidades para editar campos"
+                  aria-disabled={isReadOnlyMode}
                 >
-                  <div className={panelStyles.entityFieldMainRow}>
-                    <span
-                      className={`${panelStyles.entityFieldName} ${panelStyles.entityFieldNameTruncated}`}
-                    >
-                      {String(lastCreatedField?.nome || '').trim() ||
-                        'Campo sem nome'}
-                    </span>
-                    <div className={panelStyles.entityFieldSelectionActions}>
-                      <button
-                        type="button"
-                        className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldActionIconButton}`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onEditEntityFieldDraft?.(lastCreatedField);
-                        }}
-                        aria-label="Editar campo"
-                        title="Editar campo"
-                        disabled={isReadOnlyMode}
-                      >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M4 20H8L19 9L15 5L4 16V20Z"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M13.5 6.5L17.5 10.5"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        className={`${panelStyles.entityFieldSelectionMiniButton} ${panelStyles.entityFieldActionIconButton}`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onRemoveEntityFieldDraft?.(lastCreatedField?.id);
-                        }}
-                        aria-label="Apagar campo"
-                        title="Apagar campo"
-                        disabled={isReadOnlyMode}
-                      >
-                        <svg
-                          width="12"
-                          height="12"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                          aria-hidden="true"
-                        >
-                          <path
-                            d="M5 7H19"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                          />
-                          <path
-                            d="M9 7V5H15V7"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                          <path
-                            d="M8 7L9 19H15L16 7"
-                            stroke="currentColor"
-                            strokeWidth="1.8"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    className={`${panelStyles.entityFieldBadges} ${panelStyles.entityFieldBadgesSingleLine}`}
+                  <svg
+                    width="13"
+                    height="13"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
                   >
-                    {lastCreatedFieldType ? (
-                      <span
-                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
-                      >
-                        {lastCreatedFieldType}
-                      </span>
-                    ) : null}
-                    {typeof lastCreatedField?.obrigatorio === 'boolean' ? (
-                      <span
-                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
-                      >
-                        {lastCreatedField.obrigatorio ? 'Sim' : 'Nao'}
-                      </span>
-                    ) : null}
-                    {String(lastCreatedField?.keyType || '').trim() ? (
-                      <span
-                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
-                      >
-                        {String(lastCreatedField.keyType).trim()}
-                      </span>
-                    ) : null}
-                    {String(lastCreatedField?.relacionamento || '').trim() ? (
-                      <span
-                        className={`${panelStyles.entityFieldBadgeMuted} ${panelStyles.entityFieldBadgeTruncated}`}
-                      >
-                        {String(lastCreatedField.relacionamento).trim()}
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ) : null}
+                    <path
+                      d="M14 5H19V10"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M10 14L19 5"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M19 14V19H5V5H10"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </a>
+              }
+            />
+          </>
+        ) : effectiveStageConfigMode === "task" ? (
+          <>
+            <p className={panelStyles.descriptionTitle}>Campos da atividade</p>
+            <CamposEditorBlock
+              entityFieldDraft={entityFieldDraft}
+              setEntityFieldDraft={setEntityFieldDraft}
+              onSaveEntityFieldDraft={onSaveEntityFieldDraft}
+              onEditEntityFieldDraft={onEditEntityFieldDraft}
+              onRemoveEntityFieldDraft={onRemoveEntityFieldDraft}
+              newEntityFields={newEntityFields}
+              lastCreatedField={lastCreatedField}
+              lastCreatedFieldType={lastCreatedFieldType}
+              isReadOnlyMode={isReadOnlyMode}
+              onFieldClick={() => setIsLastFieldDetailsOpen(true)}
+            />
           </>
         ) : (
           <p className={panelStyles.empty}>
@@ -713,7 +783,7 @@ const ConfigurarEntidadePanel = ({
           onConfirm={handleConfirmNavigateToEntityFields}
           onCancel={handleCancelNavigateToEntityFields}
           confirmLabel={
-            isNavigatingToEntityFields ? 'Salvando...' : 'Sair e salvar'
+            isNavigatingToEntityFields ? "Salvando..." : "Sair e salvar"
           }
         />
       ) : null}
@@ -721,7 +791,7 @@ const ConfigurarEntidadePanel = ({
       {isLastFieldDetailsOpen && lastCreatedField ? (
         <Close
           title="Detalhes do campo"
-          message={`Nome: ${String(lastCreatedField?.nome || '').trim() || 'Campo sem nome'}\nTipo: ${lastCreatedFieldType || '-'}\nObrigatorio: ${lastCreatedField?.obrigatorio === true ? 'Sim' : 'Nao'}\nChave: ${String(lastCreatedField?.keyType || '').trim() || '-'}${String(lastCreatedField?.relacionamento || '').trim() ? `\nReferencia: ${String(lastCreatedField.relacionamento).trim()}` : ''}`}
+          message={`Nome: ${String(lastCreatedField?.nome || "").trim() || "Campo sem nome"}\nTipo: ${lastCreatedFieldType || "-"}\nObrigatorio: ${lastCreatedField?.obrigatorio === true ? "Sim" : "Nao"}\nChave: ${String(lastCreatedField?.keyType || "").trim() || "-"}${String(lastCreatedField?.relacionamento || "").trim() ? `\nReferencia: ${String(lastCreatedField.relacionamento).trim()}` : ""}`}
           onConfirm={() => setIsLastFieldDetailsOpen(false)}
           onCancel={() => setIsLastFieldDetailsOpen(false)}
           confirmLabel="Fechar"

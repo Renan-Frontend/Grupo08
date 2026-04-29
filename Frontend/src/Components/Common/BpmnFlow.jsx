@@ -1,23 +1,30 @@
-import React from 'react';
-import styles from './BpmnFlow.module.css';
+import React from "react";
+import styles from "./BpmnFlow.module.css";
 
-const getNodeLabel = (node) => node?.label || 'Etapa';
-const getNodeDescricao = (node) => node?.descricao || '';
-const getNodeInfo = (node) => node?.info || '';
+const getNodeLabel = (node) => node?.label || "Etapa";
+const getNodeDescricao = (node) => node?.descricao || "";
+const getNodeInfo = (node) => node?.info || "";
 const isNodeActive = (node) => node?.active !== false;
 const CARD_WIDTH = 220;
 const CARD_HEIGHT = 110;
 const isPrimaryPointerButton = (event) =>
   event.button === undefined || event.button === 0;
 
-const getOrthogonalPolylinePoints = (x1, y1, x2, y2, fromHandle = 'right', toHandle = 'left') => {
+const getOrthogonalPolylinePoints = (
+  x1,
+  y1,
+  x2,
+  y2,
+  fromHandle = "right",
+  toHandle = "left",
+) => {
   // Ponto muito próximo → reta direta
   if (Math.abs(x1 - x2) < 2 && Math.abs(y1 - y2) < 2) {
     return `${x1},${y1} ${x2},${y2}`;
   }
 
-  const exitHoriz = fromHandle === 'left' || fromHandle === 'right';
-  const approachHoriz = toHandle === 'left' || toHandle === 'right';
+  const exitHoriz = fromHandle === "left" || fromHandle === "right";
+  const approachHoriz = toHandle === "left" || toHandle === "right";
 
   // Ambos horizontais → reta se alinhados, senão Z-route (horizontal → vertical → horizontal)
   if (exitHoriz && approachHoriz) {
@@ -51,7 +58,7 @@ const getOrthogonalPolylinePoints = (x1, y1, x2, y2, fromHandle = 'right', toHan
  * against every obstacle rect.  When a segment crosses a node it is not
  * connected to, extra waypoints are injected to route around it.
  * --------------------------------------------------------------------- */
-const _OBS_PAD = 20; // px clearance around each obstacle
+const _OBS_PAD = 34; // px clearance around each obstacle
 
 const _segHitsRect = (ax, ay, bx, by, r) => {
   const l = r.x - _OBS_PAD;
@@ -80,8 +87,8 @@ const _segHitsRect = (ax, ay, bx, by, r) => {
 const _avoidObstacles = (pointsStr, obstacles) => {
   if (!obstacles || obstacles.length === 0) return pointsStr;
 
-  let pts = pointsStr.split(' ').map((s) => {
-    const [px, py] = s.split(',').map(Number);
+  let pts = pointsStr.split(" ").map((s) => {
+    const [px, py] = s.split(",").map(Number);
     return { x: px, y: py };
   });
   if (pts.length < 2) return pointsStr;
@@ -130,7 +137,12 @@ const _avoidObstacles = (pointsStr, obstacles) => {
           if (oT >= minY - 1 && oT <= maxY + 1) midY = oT;
           else if (oB >= minY - 1 && oB <= maxY + 1) midY = oB;
           else midY = Math.abs(m1.y - oT) < Math.abs(m1.y - oB) ? oT : oB;
-          pts = [pts[0], { x: pts[0].x, y: midY }, { x: pts[3].x, y: midY }, pts[3]];
+          pts = [
+            pts[0],
+            { x: pts[0].x, y: midY },
+            { x: pts[3].x, y: midY },
+            pts[3],
+          ];
           changed = true;
         }
       }
@@ -184,12 +196,15 @@ const _avoidObstacles = (pointsStr, obstacles) => {
   const deduped = [pts[0]];
   for (let i = 1; i < pts.length; i++) {
     const prev = deduped[deduped.length - 1];
-    if (Math.abs(pts[i].x - prev.x) > 0.5 || Math.abs(pts[i].y - prev.y) > 0.5) {
+    if (
+      Math.abs(pts[i].x - prev.x) > 0.5 ||
+      Math.abs(pts[i].y - prev.y) > 0.5
+    ) {
       deduped.push(pts[i]);
     }
   }
 
-  return deduped.map((p) => `${p.x},${p.y}`).join(' ');
+  return deduped.map((p) => `${p.x},${p.y}`).join(" ");
 };
 
 const computeBestHandles = (fromNode, toNode) => {
@@ -208,59 +223,58 @@ const computeBestHandles = (fromNode, toNode) => {
   const absDy = Math.abs(dy);
 
   // Check if there's clear horizontal gap between nodes (no overlap)
-  const hGap = dx > 0
-    ? tx - (fx + CARD_WIDTH)   // gap between right edge of from → left edge of to
-    : fx - (tx + CARD_WIDTH);  // gap between right edge of to → left edge of from
-  const vGap = dy > 0
-    ? ty - (fy + CARD_HEIGHT)
-    : fy - (ty + CARD_HEIGHT);
+  const hGap =
+    dx > 0
+      ? tx - (fx + CARD_WIDTH) // gap between right edge of from → left edge of to
+      : fx - (tx + CARD_WIDTH); // gap between right edge of to → left edge of from
+  const vGap = dy > 0 ? ty - (fy + CARD_HEIGHT) : fy - (ty + CARD_HEIGHT);
 
-  const hasHClearance = hGap > -10;  // at most 10px overlap allowed
+  const hasHClearance = hGap > -10; // at most 10px overlap allowed
   const hasVClearance = vGap > -10;
 
   // Prefer horizontal if there's clear horizontal gap,
   // OR if horizontal distance between centers is larger than vertical
   if (hasHClearance && (absDx >= absDy || !hasVClearance)) {
     return {
-      fromHandle: dx >= 0 ? 'right' : 'left',
-      toHandle: dx >= 0 ? 'left' : 'right',
+      fromHandle: dx >= 0 ? "right" : "left",
+      toHandle: dx >= 0 ? "left" : "right",
     };
   }
 
   // Use vertical if there's clear vertical gap
   if (hasVClearance) {
     return {
-      fromHandle: dy >= 0 ? 'bottom' : 'top',
-      toHandle: dy >= 0 ? 'top' : 'bottom',
+      fromHandle: dy >= 0 ? "bottom" : "top",
+      toHandle: dy >= 0 ? "top" : "bottom",
     };
   }
 
   // Both overlap — use dominant axis by center distance
   if (absDx >= absDy) {
     return {
-      fromHandle: dx >= 0 ? 'right' : 'left',
-      toHandle: dx >= 0 ? 'left' : 'right',
+      fromHandle: dx >= 0 ? "right" : "left",
+      toHandle: dx >= 0 ? "left" : "right",
     };
   }
   return {
-    fromHandle: dy >= 0 ? 'bottom' : 'top',
-    toHandle: dy >= 0 ? 'top' : 'bottom',
+    fromHandle: dy >= 0 ? "bottom" : "top",
+    toHandle: dy >= 0 ? "top" : "bottom",
   };
 };
 
-const getHandlePoint = (node, handle = 'left') => {
+const getHandlePoint = (node, handle = "left") => {
   const x = node?.x || 0;
   const y = node?.y || 0;
 
-  if (handle === 'right') {
+  if (handle === "right") {
     return { x: x + CARD_WIDTH, y: y + CARD_HEIGHT / 2 };
   }
 
-  if (handle === 'top') {
+  if (handle === "top") {
     return { x: x + CARD_WIDTH / 2, y };
   }
 
-  if (handle === 'bottom') {
+  if (handle === "bottom") {
     return { x: x + CARD_WIDTH / 2, y: y + CARD_HEIGHT };
   }
 
@@ -270,12 +284,12 @@ const getHandlePoint = (node, handle = 'left') => {
 const getHandlePointFromRect = (
   nodeRect,
   containerRect,
-  handle = 'left',
+  handle = "left",
   zoom = 1,
   oppositePoint = null,
 ) => {
   const safeZoom = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
-  const offset = 1;
+  const offset = 6;
   const PAD = 12; // keep line away from corners
 
   const left = (nodeRect.left - containerRect.left) / safeZoom;
@@ -295,13 +309,13 @@ const getHandlePointFromRect = (
     return Math.max(top + PAD, Math.min(bottom - PAD, opp.y));
   };
 
-  if (handle === 'right') {
+  if (handle === "right") {
     return { x: right + offset, y: clampY(oppositePoint) };
   }
-  if (handle === 'top') {
+  if (handle === "top") {
     return { x: clampX(oppositePoint), y: top - offset };
   }
-  if (handle === 'bottom') {
+  if (handle === "bottom") {
     return { x: clampX(oppositePoint), y: bottom + offset };
   }
   // left
@@ -309,37 +323,37 @@ const getHandlePointFromRect = (
 };
 
 const normalizeDecisionValue = (value) => {
-  const raw = String(value || '').trim();
-  if (!raw) return '';
+  const raw = String(value || "").trim();
+  if (!raw) return "";
 
   const normalized = raw
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 
   if (
-    normalized === 'sim' ||
-    normalized === 'yes' ||
-    normalized === 'true' ||
-    normalized === 'ok' ||
-    normalized === 'aprovado' ||
-    raw === '✓' ||
-    raw === '✔'
+    normalized === "sim" ||
+    normalized === "yes" ||
+    normalized === "true" ||
+    normalized === "ok" ||
+    normalized === "aprovado" ||
+    raw === "✓" ||
+    raw === "✔"
   ) {
-    return 'sim';
+    return "sim";
   }
 
   if (
-    normalized === 'nao' ||
-    normalized === 'no' ||
-    normalized === 'false' ||
-    normalized === 'reprovado' ||
-    raw === '✕' ||
-    raw === '✖' ||
-    raw === 'x' ||
-    raw === 'X'
+    normalized === "nao" ||
+    normalized === "no" ||
+    normalized === "false" ||
+    normalized === "reprovado" ||
+    raw === "✕" ||
+    raw === "✖" ||
+    raw === "x" ||
+    raw === "X"
   ) {
-    return 'nao';
+    return "nao";
   }
 
   return raw;
@@ -372,7 +386,7 @@ const BpmnFlow = ({
 }) => {
   const flowWrapRef = React.useRef(null);
   const [editingNodeId, setEditingNodeId] = React.useState(null);
-  const [editingValue, setEditingValue] = React.useState('');
+  const [editingValue, setEditingValue] = React.useState("");
   const editInputRef = React.useRef(null);
   const nodeRefs = React.useRef({});
   const [connectionLines, setConnectionLines] = React.useState([]);
@@ -391,9 +405,9 @@ const BpmnFlow = ({
   }, [editingNodeId]);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
+    if (typeof window === "undefined" || !window.matchMedia) return;
 
-    const mediaQuery = window.matchMedia('(pointer: coarse)');
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
     const updatePointerMode = () => {
       setIsCoarsePointer(Boolean(mediaQuery.matches));
     };
@@ -401,8 +415,8 @@ const BpmnFlow = ({
     updatePointerMode();
 
     if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', updatePointerMode);
-      return () => mediaQuery.removeEventListener('change', updatePointerMode);
+      mediaQuery.addEventListener("change", updatePointerMode);
+      return () => mediaQuery.removeEventListener("change", updatePointerMode);
     }
 
     mediaQuery.addListener(updatePointerMode);
@@ -414,16 +428,16 @@ const BpmnFlow = ({
     const groupedByNode = {};
     const conditionalNodeIdSet = new Set(
       nodes
-        .filter((node) => node?.nodeType === 'condicional')
+        .filter((node) => node?.nodeType === "condicional")
         .map((node) => node.id),
     );
 
     connections.forEach((connection) => {
       const normalizedDecision = normalizeDecisionValue(connection.decision);
-      if (normalizedDecision === 'sim' || normalizedDecision === 'nao') {
+      if (normalizedDecision === "sim" || normalizedDecision === "nao") {
         map[connection.id] = normalizedDecision;
       } else if (normalizedDecision) {
-        map[connection.id] = 'custom';
+        map[connection.id] = "custom";
       }
 
       if (!groupedByNode[connection.from]) {
@@ -440,8 +454,8 @@ const BpmnFlow = ({
         (connection) => !normalizeDecisionValue(connection.decision),
       );
 
-      if (undecided[0]) map[undecided[0].id] = 'sim';
-      if (undecided[1]) map[undecided[1].id] = 'nao';
+      if (undecided[0]) map[undecided[0].id] = "sim";
+      if (undecided[1]) map[undecided[1].id] = "nao";
     });
 
     return map;
@@ -462,7 +476,7 @@ const BpmnFlow = ({
 
   const getClosestSideHandle = React.useCallback((nodeId, clientX, clientY) => {
     const nodeElement = nodeRefs.current[nodeId];
-    if (!nodeElement) return 'right';
+    if (!nodeElement) return "right";
 
     const rect = nodeElement.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -472,10 +486,10 @@ const BpmnFlow = ({
     const dy = (clientY - centerY) / Math.max(1, rect.height / 2);
 
     if (Math.abs(dx) >= Math.abs(dy)) {
-      return dx >= 0 ? 'right' : 'left';
+      return dx >= 0 ? "right" : "left";
     }
 
-    return dy >= 0 ? 'bottom' : 'top';
+    return dy >= 0 ? "bottom" : "top";
   }, []);
 
   const startConnectorDrag = React.useCallback(
@@ -561,30 +575,33 @@ const BpmnFlow = ({
         // for the real layout, causing lines to cross through unrelated nodes.
         // Exception: NAO and merge connections always use sideways handles.
         let fromHandle, toHandle;
-        const connDecision = String(connection.decision || '').toLowerCase();
-        if (connDecision === 'nao' && fromNode && toNode) {
+        const connDecision = String(connection.decision || "").toLowerCase();
+        if (connDecision === "nao" && fromNode && toNode) {
           // NAO: always sideways — from right/left depending on relative X
           const dx = (toNode.x || 0) - (fromNode.x || 0);
-          fromHandle = dx >= 0 ? 'right' : 'left';
-          toHandle = dx >= 0 ? 'left' : 'right';
-        } else if (connDecision === 'merge' && fromNode && toNode) {
-          // Merge: NAO target reconnects — use bottom→top or side depending on position
+          fromHandle = dx >= 0 ? "right" : "left";
+          toHandle = dx >= 0 ? "left" : "right";
+        } else if (connDecision === "merge" && fromNode && toNode) {
+          // Merge: use sideways only when there is real horizontal separation.
+          // If nodes are vertically aligned, keep vertical handles to avoid
+          // unstable routes that can appear as missing connections.
           const dx = (toNode.x || 0) - (fromNode.x || 0);
           const dy = (toNode.y || 0) - (fromNode.y || 0);
-          if (Math.abs(dx) > Math.abs(dy)) {
-            fromHandle = dx >= 0 ? 'right' : 'left';
-            toHandle = dx >= 0 ? 'left' : 'right';
+          const horizontalEnough = Math.abs(dx) > CARD_WIDTH * 0.35;
+          if (horizontalEnough) {
+            fromHandle = dx >= 0 ? "right" : "left";
+            toHandle = dx >= 0 ? "left" : "right";
           } else {
-            fromHandle = dy >= 0 ? 'bottom' : 'top';
-            toHandle = dy >= 0 ? 'top' : 'bottom';
+            fromHandle = dy >= 0 ? "bottom" : "top";
+            toHandle = dy >= 0 ? "top" : "bottom";
           }
         } else if (fromNode && toNode) {
           const computed = computeBestHandles(fromNode, toNode);
           fromHandle = computed.fromHandle;
           toHandle = computed.toHandle;
         } else {
-          fromHandle = connection.fromHandle || 'right';
-          toHandle = connection.toHandle || 'left';
+          fromHandle = connection.fromHandle || "right";
+          toHandle = connection.toHandle || "left";
         }
 
         const fromRect = fromElement.getBoundingClientRect();
@@ -596,8 +613,11 @@ const BpmnFlow = ({
           y: (toRect.top + toRect.height / 2 - containerRect.top) / safeZoom,
         };
         const fromCenter = {
-          x: (fromRect.left + fromRect.width / 2 - containerRect.left) / safeZoom,
-          y: (fromRect.top + fromRect.height / 2 - containerRect.top) / safeZoom,
+          x:
+            (fromRect.left + fromRect.width / 2 - containerRect.left) /
+            safeZoom,
+          y:
+            (fromRect.top + fromRect.height / 2 - containerRect.top) / safeZoom,
         };
 
         const source = getHandlePointFromRect(
@@ -615,8 +635,7 @@ const BpmnFlow = ({
           fromCenter,
         );
 
-        const decision =
-          outgoingDecisionByConnectionId[connection.id] || null;
+        const decision = outgoingDecisionByConnectionId[connection.id] || null;
 
         return {
           id: connection.id,
@@ -651,7 +670,12 @@ const BpmnFlow = ({
     // Pre-compute polyline points with obstacle avoidance
     const linesWithPoints = lines.map((line) => {
       const basePoints = getOrthogonalPolylinePoints(
-        line.x1, line.y1, line.x2, line.y2, line.fromHandle, line.toHandle,
+        line.x1,
+        line.y1,
+        line.x2,
+        line.y2,
+        line.fromHandle,
+        line.toHandle,
       );
       const obs = obstacleRects.filter(
         (o) => o.id !== line.fromId && o.id !== line.toId,
@@ -670,9 +694,9 @@ const BpmnFlow = ({
   }, [nodes, connections, recalculateConnectionLines]);
 
   React.useEffect(() => {
-    window.addEventListener('resize', recalculateConnectionLines);
+    window.addEventListener("resize", recalculateConnectionLines);
     return () =>
-      window.removeEventListener('resize', recalculateConnectionLines);
+      window.removeEventListener("resize", recalculateConnectionLines);
   }, [recalculateConnectionLines]);
 
   React.useEffect(() => {
@@ -727,18 +751,21 @@ const BpmnFlow = ({
 
       // Commit final position to React state (triggers single re-render + connection recalc)
       if (dragState._lastX !== undefined && dragState._lastY !== undefined) {
-        onNodePositionChange?.(dragState.id, { x: dragState._lastX, y: dragState._lastY });
+        onNodePositionChange?.(dragState.id, {
+          x: dragState._lastX,
+          y: dragState._lastY,
+        });
       }
       setDragState(null);
     };
 
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
     };
   }, [
     canvasHeight,
@@ -784,7 +811,7 @@ const BpmnFlow = ({
 
       const target = document.elementFromPoint(event.clientX, event.clientY);
       const targetNode = target?.closest?.('[data-bpmn-node="true"]');
-      let toNodeId = targetNode?.getAttribute?.('data-node-id') || '';
+      let toNodeId = targetNode?.getAttribute?.("data-node-id") || "";
 
       if (!toNodeId) {
         const droppedInsideNodeEntry = Object.entries(nodeRefs.current).find(
@@ -801,20 +828,20 @@ const BpmnFlow = ({
           },
         );
 
-        toNodeId = droppedInsideNodeEntry?.[0] || '';
+        toNodeId = droppedInsideNodeEntry?.[0] || "";
       }
 
-      const targetHandleElement = target?.closest?.('[data-connector-handle]');
+      const targetHandleElement = target?.closest?.("[data-connector-handle]");
 
       let toHandle = targetHandleElement?.getAttribute?.(
-        'data-connector-handle',
+        "data-connector-handle",
       );
 
       if (!toHandle && toNodeId) {
         const toNode = nodes.find((node) => node.id === toNodeId);
         if (toNode) {
           const pointer = getPointerOnCanvas(event.clientX, event.clientY);
-          const handles = ['left', 'right', 'top', 'bottom'];
+          const handles = ["left", "right", "top", "bottom"];
 
           toHandle = handles.reduce((closestHandle, handle) => {
             const point = getHandlePoint(toNode, handle);
@@ -832,7 +859,7 @@ const BpmnFlow = ({
       }
 
       if (!toHandle) {
-        toHandle = 'left';
+        toHandle = "left";
       }
 
       if (toNodeId && toNodeId !== linkDrag.fromId) {
@@ -862,13 +889,13 @@ const BpmnFlow = ({
       setLinkDrag(null);
     };
 
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    window.addEventListener('pointercancel', handlePointerUp);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+    window.addEventListener("pointercancel", handlePointerUp);
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-      window.removeEventListener('pointercancel', handlePointerUp);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+      window.removeEventListener("pointercancel", handlePointerUp);
     };
   }, [
     getPointerOnCanvas,
@@ -955,16 +982,16 @@ const BpmnFlow = ({
           const pointsStr = line.pointsStr;
 
           const decisionLabel =
-            line.decision === 'sim'
-              ? 'Sim'
-              : line.decision === 'nao'
-                ? 'Não'
+            line.decision === "sim"
+              ? "Sim"
+              : line.decision === "nao"
+                ? "Não"
                 : null;
 
           let labelPos = null;
           if (decisionLabel) {
-            const pts = pointsStr.split(' ').map((s) => {
-              const [px, py] = s.split(',').map(Number);
+            const pts = pointsStr.split(" ").map((s) => {
+              const [px, py] = s.split(",").map(Number);
               return { x: px, y: py };
             });
             if (pts.length >= 2) {
@@ -980,19 +1007,19 @@ const BpmnFlow = ({
               <polyline
                 points={pointsStr}
                 className={`${styles.connectionLine} ${
-                  isSelected ? styles.connectionLineSelected : ''
-                } ${
-                  line.decision === 'sim' ? styles.connectionLineSim : ''
-                } ${
-                  line.decision === 'nao' || line.decision === 'merge' ? styles.connectionLineNao : ''
+                  isSelected ? styles.connectionLineSelected : ""
+                } ${line.decision === "sim" ? styles.connectionLineSim : ""} ${
+                  line.decision === "nao" || line.decision === "merge"
+                    ? styles.connectionLineNao
+                    : ""
                 }`}
                 vectorEffect="non-scaling-stroke"
                 markerEnd={
-                  line.decision === 'sim'
-                    ? 'url(#arrowhead-sim)'
-                    : line.decision === 'nao' || line.decision === 'merge'
-                      ? 'url(#arrowhead-nao)'
-                      : 'url(#arrowhead)'
+                  line.decision === "sim"
+                    ? "url(#arrowhead-sim)"
+                    : line.decision === "nao" || line.decision === "merge"
+                      ? "url(#arrowhead-nao)"
+                      : "url(#arrowhead)"
                 }
                 onClick={(event) => {
                   event.stopPropagation();
@@ -1024,7 +1051,7 @@ const BpmnFlow = ({
                   x={labelPos.x}
                   y={labelPos.y - 8}
                   className={`${styles.connectionDecisionLabel} ${
-                    line.decision === 'sim'
+                    line.decision === "sim"
                       ? styles.connectionDecisionYes
                       : styles.connectionDecisionNo
                   }`}
@@ -1053,7 +1080,7 @@ const BpmnFlow = ({
       </svg>
 
       <div
-        className={`${styles.flow} ${draggable ? styles.canvasMode : ''}`}
+        className={`${styles.flow} ${draggable ? styles.canvasMode : ""}`}
         data-tutorial-id="canvas-grid"
         style={
           draggable
@@ -1067,37 +1094,37 @@ const BpmnFlow = ({
           const textScale = zoom < 1 ? Math.max(0.82, zoom) : 1;
           const activeIndex = activeIndexById[node.id];
           const isDone =
-            typeof activeIndex === 'number' && activeIndex < currentIndex;
+            typeof activeIndex === "number" && activeIndex < currentIndex;
           const isCurrent =
-            typeof activeIndex === 'number' && activeIndex === currentIndex;
+            typeof activeIndex === "number" && activeIndex === currentIndex;
           const isSelected = selectedNodeId === node.id;
           const isPrimaryEntityNode =
-            node.nodeType !== 'task' &&
-            node.nodeType !== 'condicional' &&
+            node.nodeType !== "task" &&
+            node.nodeType !== "condicional" &&
             node.isPrimaryEntity === true;
           const nodeConnectionCount = totalConnectionCountByNode[node.id] || 0;
           const nodeTypeLabel =
-            node.nodeType === 'task'
-              ? 'Atividade'
-              : node.nodeType === 'condicional'
-                ? 'Decisão'
-                : 'Entidade';
-          const isConditionalNode = node.nodeType === 'condicional';
+            node.nodeType === "task"
+              ? "Atividade"
+              : node.nodeType === "condicional"
+                ? "Decisão"
+                : "Entidade";
+          const isConditionalNode = node.nodeType === "condicional";
           const connectionBandLabel =
             nodeConnectionCount > 0
               ? `Tipo da etapa: ${nodeTypeLabel}`
-              : 'Sem ligação';
+              : "Sem ligação";
           const connectionBandClass =
             nodeConnectionCount === 0
               ? styles.connectionBandDisconnected
-              : node.nodeType === 'task'
+              : node.nodeType === "task"
                 ? styles.connectionBandTask
-                : node.nodeType === 'condicional'
+                : node.nodeType === "condicional"
                   ? styles.connectionBandDecision
                   : styles.connectionBandData;
           const nodeInfo = getNodeInfo(node);
           const displayInfo = isConditionalNode
-            ? `Decisão Exclusiva (XOR)${nodeInfo ? ` • ${nodeInfo}` : ''}`
+            ? `Decisão Exclusiva (XOR)${nodeInfo ? ` • ${nodeInfo}` : ""}`
             : nodeInfo;
 
           return (
@@ -1113,25 +1140,25 @@ const BpmnFlow = ({
                 }
                 nodeRefs.current[node.id] = element;
               }}
-              className={`${styles.stageCard} ${isDone ? styles.done : ''} ${
-                isCurrent ? styles.current : ''
-              } ${!active ? styles.inactive : ''} ${
-                isSelected ? styles.selected : ''
+              className={`${styles.stageCard} ${isDone ? styles.done : ""} ${
+                isCurrent ? styles.current : ""
+              } ${!active ? styles.inactive : ""} ${
+                isSelected ? styles.selected : ""
               } ${
                 invalidNodeId && String(invalidNodeId) === String(node.id)
                   ? styles.invalid
-                  : ''
+                  : ""
               }`}
               style={
                 draggable
                   ? {
                       left: `${node.x || 0}px`,
                       top: `${node.y || 0}px`,
-                      '--node-text-scale': textScale,
-                      touchAction: disableNodeDrag ? undefined : 'none',
+                      "--node-text-scale": textScale,
+                      touchAction: disableNodeDrag ? undefined : "none",
                     }
                   : {
-                      '--node-text-scale': textScale,
+                      "--node-text-scale": textScale,
                     }
               }
               onClick={(event) => {
@@ -1146,7 +1173,7 @@ const BpmnFlow = ({
                       touchConnectionDraft.fromId,
                       node.id,
                       touchConnectionDraft.fromHandle,
-                      'left',
+                      "left",
                       {
                         clientX: event.clientX,
                         clientY: event.clientY,
@@ -1160,19 +1187,27 @@ const BpmnFlow = ({
                 }
 
                 // On touch device, tap already-selected node → enter connection mode
-                if (isCoarsePointer && connectorsEnabled && isSelected && !disabled) {
+                if (
+                  isCoarsePointer &&
+                  connectorsEnabled &&
+                  isSelected &&
+                  !disabled
+                ) {
                   const handle = getClosestSideHandle(
                     node.id,
                     event.clientX,
                     event.clientY,
                   );
-                  setTouchConnectionDraft({ fromId: node.id, fromHandle: handle });
+                  setTouchConnectionDraft({
+                    fromId: node.id,
+                    fromHandle: handle,
+                  });
                   return;
                 }
 
-                onSelectConnection?.('');
+                onSelectConnection?.("");
                 onSelectNode?.(node.id);
-                if (!active || typeof activeIndex !== 'number') return;
+                if (!active || typeof activeIndex !== "number") return;
                 onStageChange?.(activeIndex);
               }}
               onPointerDown={(event) => {
@@ -1181,9 +1216,9 @@ const BpmnFlow = ({
                 if (!isPrimaryPointerButton(event)) return;
                 const targetTag = event.target?.tagName?.toLowerCase();
                 if (
-                  targetTag === 'button' ||
-                  targetTag === 'input' ||
-                  targetTag === 'select'
+                  targetTag === "button" ||
+                  targetTag === "input" ||
+                  targetTag === "select"
                 ) {
                   return;
                 }
@@ -1199,13 +1234,21 @@ const BpmnFlow = ({
                   const distTop = event.clientY - rect.top;
                   const distBottom = rect.bottom - event.clientY;
 
-                  const minDist = Math.min(distRight, distLeft, distTop, distBottom);
+                  const minDist = Math.min(
+                    distRight,
+                    distLeft,
+                    distTop,
+                    distBottom,
+                  );
                   if (minDist < EDGE_THRESHOLD) {
                     const handle =
-                      minDist === distRight ? 'right'
-                        : minDist === distLeft ? 'left'
-                          : minDist === distTop ? 'top'
-                            : 'bottom';
+                      minDist === distRight
+                        ? "right"
+                        : minDist === distLeft
+                          ? "left"
+                          : minDist === distTop
+                            ? "top"
+                            : "bottom";
                     startConnectorDrag(event, node.id, handle);
                     return;
                   }
@@ -1227,7 +1270,7 @@ const BpmnFlow = ({
                 });
                 if (
                   event.pointerId !== undefined &&
-                  typeof element.setPointerCapture === 'function'
+                  typeof element.setPointerCapture === "function"
                 ) {
                   try {
                     element.setPointerCapture(event.pointerId);
@@ -1241,10 +1284,10 @@ const BpmnFlow = ({
               role="button"
               tabIndex={0}
               onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
+                if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   onSelectNode?.(node.id);
-                  if (!active || typeof activeIndex !== 'number') return;
+                  if (!active || typeof activeIndex !== "number") return;
                   onStageChange?.(activeIndex);
                 }
               }}
@@ -1293,10 +1336,10 @@ const BpmnFlow = ({
                       setEditingNodeId(null);
                     }}
                     onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
+                      if (event.key === "Enter") {
                         event.target.blur();
                       }
-                      if (event.key === 'Escape') {
+                      if (event.key === "Escape") {
                         setEditingNodeId(null);
                       }
                     }}
@@ -1347,7 +1390,7 @@ const BpmnFlow = ({
               </div>
               {connectorsEnabled && !disabled ? (
                 <>
-                  {['left', 'right', 'top', 'bottom'].map((handle) => (
+                  {["left", "right", "top", "bottom"].map((handle) => (
                     <button
                       key={handle}
                       type="button"

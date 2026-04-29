@@ -1,11 +1,11 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import styles from './CriarEntidades.module.css';
-import Button from '../Forms/Button';
-import useForm from '../../Hooks/useForm';
-import { EntidadesContext } from '../../Context/EntidadesContext';
-import { UserContext } from '../../Context/UserContext';
-import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import styles from "./CriarEntidades.module.css";
+import Button from "../Forms/Button";
+import useForm from "../../Hooks/useForm";
+import { EntidadesContext } from "../../Context/EntidadesContext";
+import { UserContext } from "../../Context/UserContext";
+import { isReadOnlyAccessLevelOne } from "../../Utils/accessControl";
 
 const CriarEntidades = () => {
   const navigate = useNavigate();
@@ -18,16 +18,26 @@ const CriarEntidades = () => {
   } = React.useContext(EntidadesContext);
   const { user } = React.useContext(UserContext);
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
-  const [tabelaModo, setTabelaModo] = React.useState('nova');
+  const [tabelaModo, setTabelaModo] = React.useState("nova");
   const nome = useForm();
-  const [nomeTabela, setNomeTabela] = React.useState('');
-  const [descricao, setDescricao] = React.useState('');
-  const [tipoEntidade, setTipoEntidade] = React.useState('Apoio');
-  const [formError, setFormError] = React.useState('');
+  const [nomeTabela, setNomeTabela] = React.useState("");
+  const [descricao, setDescricao] = React.useState("");
+  const [tipoEntidade, setTipoEntidade] = React.useState("Processo");
+  const [papelNegocio, setPapelNegocio] = React.useState("");
+  const [formError, setFormError] = React.useState("");
   const entityIdFromQuery = React.useMemo(() => {
-    const params = new URLSearchParams(location.search || '');
-    const value = String(params.get('entidadeId') || '').trim();
+    const params = new URLSearchParams(location.search || "");
+    const value = String(params.get("entidadeId") || "").trim();
     return value || null;
+  }, [location.search]);
+
+  const papelNegocioFromQuery = React.useMemo(() => {
+    const params = new URLSearchParams(location.search || "");
+    return (
+      String(params.get("papelNegocio") || "")
+        .trim()
+        .toLowerCase() || null
+    );
   }, [location.search]);
 
   const entidadeEmEdicao = React.useMemo(() => {
@@ -36,19 +46,28 @@ const CriarEntidades = () => {
     return (
       (Array.isArray(entidades) ? entidades : []).find(
         (entidade) =>
-          String(entidade?.id ?? entidade?._id ?? '') === entityIdFromQuery,
+          String(entidade?.id ?? entidade?._id ?? "") === entityIdFromQuery,
       ) || null
     );
   }, [entidades, entityIdFromQuery]);
 
   const isEditingMode = Boolean(entidadeEmEdicao && entityIdFromQuery);
 
+  React.useEffect(() => {
+    if (!isEditingMode && papelNegocioFromQuery) {
+      setPapelNegocio(papelNegocioFromQuery);
+      if (papelNegocioFromQuery === "contato") setTipoEntidade("Contato");
+      if (papelNegocioFromQuery === "processo") setTipoEntidade("Processo");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [papelNegocioFromQuery]);
+
   const tabelasDisponiveis = React.useMemo(
     () =>
       Array.from(
         new Set(
           (Array.isArray(entidades) ? entidades : [])
-            .map((entidade) => String(entidade?.categoria || '').trim())
+            .map((entidade) => String(entidade?.categoria || "").trim())
             .filter(Boolean),
         ),
       ),
@@ -58,50 +77,51 @@ const CriarEntidades = () => {
 
   React.useEffect(() => {
     if (hasTabelas) {
-      setTabelaModo((prev) => (prev === 'existente' ? prev : 'nova'));
+      setTabelaModo((prev) => (prev === "existente" ? prev : "nova"));
       return;
     }
 
-    setTabelaModo('nova');
+    setTabelaModo("nova");
   }, [hasTabelas]);
 
   React.useEffect(() => {
     if (!entidadeEmEdicao) return;
 
-    const categoriaAtual = String(entidadeEmEdicao?.categoria || '').trim();
+    const categoriaAtual = String(entidadeEmEdicao?.categoria || "").trim();
     const categoriaExiste = tabelasDisponiveis.some(
-      (item) => String(item || '').trim() === categoriaAtual,
+      (item) => String(item || "").trim() === categoriaAtual,
     );
 
-    nome.setValue(String(entidadeEmEdicao?.nome || ''));
-    setDescricao(String(entidadeEmEdicao?.descricao || ''));
-    setTipoEntidade(String(entidadeEmEdicao?.tipoEntidade || 'Apoio'));
+    nome.setValue(String(entidadeEmEdicao?.nome || ""));
+    setDescricao(String(entidadeEmEdicao?.descricao || ""));
+    setTipoEntidade(String(entidadeEmEdicao?.tipoEntidade || "Processo"));
+    setPapelNegocio(String(entidadeEmEdicao?.papelNegocio || ""));
     setNomeTabela(categoriaAtual);
-    setTabelaModo(categoriaExiste ? 'existente' : 'nova');
+    setTabelaModo(categoriaExiste ? "existente" : "nova");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entidadeEmEdicao, tabelasDisponiveis]);
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setFormError('');
+    setFormError("");
 
     if (isReadOnlyMode) {
-      setFormError('Seu nível de acesso permite apenas visualização.');
+      setFormError("Seu nível de acesso permite apenas visualização.");
       return;
     }
 
     const nomeValido = nome.validate();
-    const descValida = String(descricao || '').trim();
+    const descValida = String(descricao || "").trim();
     if (!nomeValido || !descValida) {
-      if (!descValida) setFormError('A descrição é obrigatória.');
+      if (!descValida) setFormError("A descrição é obrigatória.");
       return;
     }
 
-    const categoriaDestino = String(nomeTabela || '').trim() || 'Manual';
+    const categoriaDestino = String(nomeTabela || "").trim() || "Manual";
     const ignoreId = entidadeEmEdicao?.id ?? entidadeEmEdicao?._id ?? null;
 
     if (validarNomeEntidadeDuplicado(nome.value, ignoreId, categoriaDestino)) {
-      setFormError('Já existe uma entidade com esse nome nesta tabela.');
+      setFormError("Já existe uma entidade com esse nome nesta tabela.");
       return;
     }
 
@@ -110,13 +130,14 @@ const CriarEntidades = () => {
       descricao,
       categoria: categoriaDestino,
       tipoEntidade,
-      criadoPor: user?.nome || user?.username || 'Usuário',
+      papelNegocio: papelNegocio || null,
+      criadoPor: user?.nome || user?.username || "Usuário",
       campos: [],
     };
 
     const token =
-      window.sessionStorage.getItem('token') ||
-      window.localStorage.getItem('token');
+      window.sessionStorage.getItem("token") ||
+      window.localStorage.getItem("token");
     try {
       if (isEditingMode) {
         await editarEntidade(
@@ -129,22 +150,22 @@ const CriarEntidades = () => {
           },
           token,
         );
-        navigate('/entidades');
+        navigate("/cadastros");
       } else {
         const criada = await adicionarEntidade(novaEntidade, token);
         const novaId = criada?.id ?? criada?._id;
         if (novaId) {
-          navigate(`/entidades?entidadeId=${novaId}`);
+          navigate(`/cadastros?entidadeId=${novaId}`);
         } else {
-          navigate('/entidades');
+          navigate("/cadastros");
         }
       }
     } catch (error) {
       setFormError(
         error?.message ||
           (isEditingMode
-            ? 'Não foi possível editar a entidade.'
-            : 'Não foi possível criar a entidade.'),
+            ? "Não foi possível editar a entidade."
+            : "Não foi possível criar a entidade."),
       );
     }
   }
@@ -154,12 +175,12 @@ const CriarEntidades = () => {
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>
-            {isEditingMode ? 'Editar Entidade' : 'Criar Entidade'}
+            {isEditingMode ? "Editar Entidade" : "Criar Entidade"}
           </h1>
           <p className={styles.description}>
             {isEditingMode
-              ? 'Atualize os dados da entidade.'
-              : 'Preencha os dados para criar uma nova entidade.'}
+              ? "Atualize os dados da entidade."
+              : "Preencha os dados para criar uma nova entidade."}
           </p>
         </div>
         <button
@@ -190,7 +211,7 @@ const CriarEntidades = () => {
                   type="radio"
                   name="tabelaModo"
                   value="existente"
-                  checked={tabelaModo === 'existente'}
+                  checked={tabelaModo === "existente"}
                   onChange={(event) => setTabelaModo(event.target.value)}
                   disabled={!hasTabelas || isReadOnlyMode}
                 />
@@ -201,7 +222,7 @@ const CriarEntidades = () => {
                   type="radio"
                   name="tabelaModo"
                   value="nova"
-                  checked={tabelaModo === 'nova'}
+                  checked={tabelaModo === "nova"}
                   onChange={(event) => setTabelaModo(event.target.value)}
                   disabled={isReadOnlyMode}
                 />
@@ -209,7 +230,7 @@ const CriarEntidades = () => {
               </label>
             </div>
 
-            {tabelaModo === 'existente' && hasTabelas ? (
+            {tabelaModo === "existente" && hasTabelas ? (
               <select
                 id="nomeTabela"
                 name="nomeTabela"
@@ -286,14 +307,39 @@ const CriarEntidades = () => {
               onChange={(event) => setTipoEntidade(event.target.value)}
               disabled={isReadOnlyMode}
             >
-              <option value="Principal">Principal</option>
-              <option value="Apoio">Apoio</option>
-              <option value="Associativa">Associativa</option>
-              <option value="Externa">Externa</option>
+              <option value="Contato">Contato</option>
+              <option value="Processo">Processo</option>
             </select>
           </div>
+
+          <div className={styles.field}>
+            <label htmlFor="papelNegocio" className={styles.label}>
+              Papel de negócio
+            </label>
+            <select
+              id="papelNegocio"
+              name="papelNegocio"
+              className={styles.select}
+              value={papelNegocio}
+              onChange={(event) => setPapelNegocio(event.target.value)}
+              disabled={isReadOnlyMode}
+            >
+              <option value="">Nenhum</option>
+              <option value="contato">
+                Contato (Cliente, Fornecedor, Parceiro…)
+              </option>
+              <option value="processo">
+                Processo (Pedido, Solicitação, Contrato…)
+              </option>
+            </select>
+            <small style={{ color: "#6b7280", marginTop: 4, display: "block" }}>
+              Define se registros desta entidade aparecem em /contatos ou
+              /processos.
+            </small>
+          </div>
+
           <Button className={styles.button} disabled={isReadOnlyMode}>
-            {isEditingMode ? 'Salvar alterações' : 'Criar'}
+            {isEditingMode ? "Salvar alterações" : "Criar"}
           </Button>
           {formError && <p className={styles.error}>{formError}</p>}
         </form>

@@ -5,31 +5,31 @@ import {
   useMemo,
   useRef,
   useState,
-} from 'react';
-import { resolveSelectedOwner } from '../opportunityOwnershipRules';
-import { EntidadesContext } from '../../../Context/EntidadesContext';
-import { fetchOpportunitiesPage, getAuthToken } from '../opportunityApi';
+} from "react";
+import { resolveSelectedOwner } from "../opportunityOwnershipRules";
+import { EntidadesContext } from "../../../Context/EntidadesContext";
+import { fetchOpportunitiesPage, getAuthToken } from "../opportunityApi";
 
 const defaultStages = [
-  { id: 1, label: '', done: false },
-  { id: 2, label: '', done: false },
-  { id: 3, label: '', done: false },
+  { id: 1, label: "", done: false },
+  { id: 2, label: "", done: false },
+  { id: 3, label: "", done: false },
 ];
 
 const isEntityNode = (node) =>
   node?.active !== false &&
-  node?.nodeType !== 'task' &&
-  node?.nodeType !== 'condicional';
+  node?.nodeType !== "task" &&
+  node?.nodeType !== "condicional";
 
 const getBpmnStageType = (node) => {
-  if (node?.nodeType === 'task') return 'task';
-  if (node?.nodeType === 'condicional') return 'condicional';
-  return 'entidade';
+  if (node?.nodeType === "task") return "task";
+  if (node?.nodeType === "condicional") return "condicional";
+  return "entidade";
 };
 
 const isBpmnStageNode = (node) =>
   node?.active !== false &&
-  ['entidade', 'task', 'condicional'].includes(getBpmnStageType(node));
+  ["entidade", "task", "condicional"].includes(getBpmnStageType(node));
 
 const sortNodeIdsByPosition = (nodeIds, nodesById) =>
   [...nodeIds].sort((a, b) => {
@@ -43,9 +43,9 @@ const sortNodeIdsByPosition = (nodeIds, nodesById) =>
   });
 
 const normalizeDecisionValue = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
 
@@ -53,11 +53,11 @@ const isNegativeDecision = (value) => {
   const normalized = normalizeDecisionValue(value);
   if (!normalized) return false;
   return (
-    normalized === 'nao' ||
-    normalized === 'no' ||
-    normalized === 'x nao' ||
-    normalized === 'x no' ||
-    normalized.includes('nao')
+    normalized === "nao" ||
+    normalized === "no" ||
+    normalized === "x nao" ||
+    normalized === "x no" ||
+    normalized.includes("nao")
   );
 };
 
@@ -70,10 +70,10 @@ const selectPrimaryOutgoingConnection = (
   const preferred = connections.find((connection) => {
     const normalizedDecision = normalizeDecisionValue(connection?.decision);
     return (
-      normalizedDecision === 'sim' ||
-      normalizedDecision === 'yes' ||
-      normalizedDecision === 'principal' ||
-      normalizedDecision === 'default'
+      normalizedDecision === "sim" ||
+      normalizedDecision === "yes" ||
+      normalizedDecision === "principal" ||
+      normalizedDecision === "default"
     );
   });
 
@@ -90,32 +90,32 @@ const selectPrimaryOutgoingConnection = (
     if (firstNonNegative) return firstNonNegative;
   }
 
-  const sourceNodeId = String(connections[0]?.from || '').trim();
+  const sourceNodeId = String(connections[0]?.from || "").trim();
   const sourceNode =
     nodesById && sourceNodeId ? nodesById.get(sourceNodeId) : null;
-  const sourceType = String(sourceNode?.nodeType || '')
+  const sourceType = String(sourceNode?.nodeType || "")
     .trim()
     .toLowerCase();
-  const sourceGatewayType = String(sourceNode?.gatewayType || '')
+  const sourceGatewayType = String(sourceNode?.gatewayType || "")
     .trim()
     .toLowerCase();
 
   const isConditionalGateway =
-    sourceType === 'condicional' ||
-    sourceGatewayType === 'xor' ||
-    sourceGatewayType === 'and' ||
-    sourceGatewayType === 'or';
+    sourceType === "condicional" ||
+    sourceGatewayType === "xor" ||
+    sourceGatewayType === "and" ||
+    sourceGatewayType === "or";
 
   if (isConditionalGateway && nodesById) {
     const rightMost = [...connections].sort((connectionA, connectionB) => {
-      const nodeA = nodesById.get(String(connectionA?.to || '')) || {};
-      const nodeB = nodesById.get(String(connectionB?.to || '')) || {};
+      const nodeA = nodesById.get(String(connectionA?.to || "")) || {};
+      const nodeB = nodesById.get(String(connectionB?.to || "")) || {};
       const xDiff = (Number(nodeB?.x) || 0) - (Number(nodeA?.x) || 0);
       if (xDiff !== 0) return xDiff;
       const yDiff = (Number(nodeA?.y) || 0) - (Number(nodeB?.y) || 0);
       if (yDiff !== 0) return yDiff;
-      return String(connectionA?.to || '').localeCompare(
-        String(connectionB?.to || ''),
+      return String(connectionA?.to || "").localeCompare(
+        String(connectionB?.to || ""),
       );
     })[0];
 
@@ -126,23 +126,23 @@ const selectPrimaryOutgoingConnection = (
 };
 
 const getStageLabelFromNode = (node, fallbackIndex) => {
-  if (node?.nodeType === 'task') {
-    const taskName = String(node?.taskNome || '').trim();
+  if (node?.nodeType === "task") {
+    const taskName = String(node?.taskNome || "").trim();
     if (taskName) return taskName;
   }
 
-  if (node?.nodeType === 'condicional') {
-    const conditionalName = String(node?.condicionalNome || '').trim();
+  if (node?.nodeType === "condicional") {
+    const conditionalName = String(node?.condicionalNome || "").trim();
     if (conditionalName) return conditionalName;
   }
 
-  const directLabel = String(node?.entidadeNome || '').trim();
+  const directLabel = String(node?.entidadeNome || "").trim();
   if (directLabel) return directLabel;
 
-  const entityLikeLabel = String(node?.label || '').trim();
+  const entityLikeLabel = String(node?.label || "").trim();
   if (entityLikeLabel) return entityLikeLabel;
 
-  const subtitle = String(node?.subtitle || '').trim();
+  const subtitle = String(node?.subtitle || "").trim();
   if (subtitle) return subtitle;
 
   return `Entidade ${fallbackIndex + 1}`;
@@ -176,14 +176,14 @@ const buildStagesFromBpmn = (opportunity) => {
   });
 
   rawConnections.forEach((connection) => {
-    const fromId = String(connection?.from || '');
-    const toId = String(connection?.to || '');
+    const fromId = String(connection?.from || "");
+    const toId = String(connection?.to || "");
     if (!nodesById.has(fromId) || !nodesById.has(toId)) return;
 
     adjacency.get(fromId)?.push({
       from: fromId,
       to: toId,
-      decision: String(connection?.decision || '').trim(),
+      decision: String(connection?.decision || "").trim(),
     });
     incomingCount.set(toId, (incomingCount.get(toId) || 0) + 1);
   });
@@ -192,8 +192,8 @@ const buildStagesFromBpmn = (opportunity) => {
   adjacency.forEach((outgoingConnections, fromId) => {
     const ordered = [...outgoingConnections].sort(
       (connectionA, connectionB) => {
-        const toA = String(connectionA?.to || '');
-        const toB = String(connectionB?.to || '');
+        const toA = String(connectionA?.to || "");
+        const toB = String(connectionB?.to || "");
         return sortNodeIdsByPosition([toA, toB], nodesById)[0] === toA ? -1 : 1;
       },
     );
@@ -224,7 +224,7 @@ const buildStagesFromBpmn = (opportunity) => {
   // the workflow engine actually executes them.
   const visited = new Set();
   const orderedNodeIds = [];
-  let currentNodeId = startNodeId ? String(startNodeId) : '';
+  let currentNodeId = startNodeId ? String(startNodeId) : "";
 
   while (currentNodeId && !visited.has(currentNodeId)) {
     visited.add(currentNodeId);
@@ -256,17 +256,24 @@ const buildStagesFromBpmn = (opportunity) => {
   const orderedStageIds = orderedStageIdsRaw.filter((id, i) => {
     const node = nodesById.get(String(id));
     const type = getBpmnStageType(node);
-    if (type !== 'entidade') return true;
+    if (type !== "entidade") return true;
     // Check if any node after this one is a task or conditional
     let hasLaterStep = false;
     for (let j = i + 1; j < orderedStageIdsRaw.length; j++) {
       const laterNode = nodesById.get(String(orderedStageIdsRaw[j]));
       const laterType = getBpmnStageType(laterNode);
-      if (laterType === 'task' || laterType === 'condicional') { hasLaterStep = true; break; }
+      if (laterType === "task" || laterType === "condicional") {
+        hasLaterStep = true;
+        break;
+      }
     }
     if (!hasLaterStep) return false;
     // Deduplicate entity stages with the same label
-    const label = String(node?.entidadeNome || node?.label || node?.subtitle || '').trim().toLowerCase();
+    const label = String(
+      node?.entidadeNome || node?.label || node?.subtitle || "",
+    )
+      .trim()
+      .toLowerCase();
     if (label && seenEntityLabels.has(label)) return false;
     if (label) seenEntityLabels.add(label);
     return true;
@@ -293,14 +300,14 @@ const defaultTimelineItems = [];
 
 const titleFromSlug = (value) => {
   return value
-    .split('-')
+    .split("-")
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .join(" ");
 };
 
 const formatDateToDayMonthYear = (value) => {
-  if (!value || typeof value !== 'string') return '';
+  if (!value || typeof value !== "string") return "";
 
   const isoDateMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (isoDateMatch) {
@@ -312,7 +319,7 @@ const formatDateToDayMonthYear = (value) => {
 };
 
 const getStoredVisibility = (opportunity, key, storageKey, fallback) => {
-  if (typeof opportunity?.[key] === 'boolean') {
+  if (typeof opportunity?.[key] === "boolean") {
     return opportunity[key];
   }
   const saved = localStorage.getItem(storageKey);
@@ -320,60 +327,112 @@ const getStoredVisibility = (opportunity, key, storageKey, fallback) => {
 };
 
 const getCurrentTimelineTime = () =>
-  new Date().toLocaleTimeString('pt-BR', {
-    hour: '2-digit',
-    minute: '2-digit',
+  new Date().toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
 const getCurrentTimelineTimestamp = () => new Date().toISOString();
 
+const getCurrentDateDayMonthYear = () => new Date().toLocaleDateString("pt-BR");
+
 const normalizeTopicLabel = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
 
 const normalizeTopicType = (value) => {
-  const normalized = String(value || '')
+  const normalized = String(value || "")
     .trim()
     .toLowerCase();
-  if (normalized === 'decisao') return 'decisao';
-  if (normalized === 'atividade') return 'atividade';
-  return 'dados';
+  if (normalized === "decisao") return "decisao";
+  if (normalized === "atividade") return "atividade";
+  return "dados";
 };
 
 const normalizeManualTopicStatus = (value) => {
-  const normalized = String(value || '')
+  const normalized = String(value || "")
     .trim()
     .toLowerCase();
-  if (normalized === 'concluido' || normalized === 'concluído') {
-    return 'concluido';
+  if (normalized === "concluido" || normalized === "concluído") {
+    return "concluido";
   }
-  return 'pendente';
+  return "pendente";
 };
 
 const normalizeManualPendingTarget = (value) => {
-  const normalized = String(value || '')
+  const normalized = String(value || "")
     .trim()
     .toLowerCase();
   if (
-    normalized === 'bpmn_entidades' ||
-    normalized === 'bpmn' ||
-    normalized === 'entidades'
+    normalized === "bpmn_entidades" ||
+    normalized === "bpmn" ||
+    normalized === "entidades"
   ) {
     return normalized;
   }
-  return '';
+  return "";
+};
+
+const normalizeStepConfig = (value) => {
+  const raw = value && typeof value === "object" ? value : {};
+  const checklist = Array.isArray(raw?.checklist) ? raw.checklist : [];
+  const usedFields = Array.isArray(raw?.usedFields) ? raw.usedFields : [];
+
+  return {
+    description: String(raw?.description || ""),
+    responsible: String(raw?.responsible || ""),
+    dueDate: String(raw?.dueDate || ""),
+    checklist: checklist
+      .map((item) => {
+        if (typeof item === "string") {
+          const text = item.trim();
+          return text ? { text, done: false } : null;
+        }
+        const text = String(item?.text || "").trim();
+        if (!text) return null;
+        return { text, done: item?.done === true };
+      })
+      .filter(Boolean),
+    usedFields: usedFields
+      .map((field) => {
+        if (typeof field === "string") {
+          const name = field.trim();
+          return name ? { name, type: "texto", required: false } : null;
+        }
+        const name = String(field?.name || field?.field || "").trim();
+        if (!name) return null;
+        const type = String(field?.type || "texto")
+          .trim()
+          .toLowerCase();
+        const allowed = [
+          "texto",
+          "numero",
+          "data",
+          "booleano",
+          "moeda",
+          "id",
+          "outro",
+        ];
+        return {
+          name,
+          type: allowed.includes(type) ? type : "texto",
+          required: field?.required === true,
+        };
+      })
+      .filter(Boolean),
+  };
 };
 
 const getTopicTypeFromStageType = (stageType) => {
-  const normalized = String(stageType || '')
+  const normalized = String(stageType || "")
     .trim()
     .toLowerCase();
-  if (normalized === 'condicional') return 'decisao';
-  if (normalized === 'task') return 'atividade';
-  return 'dados';
+  if (normalized === "condicional") return "decisao";
+  if (normalized === "task") return "atividade";
+  return "dados";
 };
 
 const resolveEntityAtributoChave = (entity) => {
@@ -381,20 +440,20 @@ const resolveEntityAtributoChave = (entity) => {
     entity?.atributoChave ||
       entity?.atributo_chave ||
       entity?.keyAttribute ||
-      '',
+      "",
   ).trim();
 
   if (directValue) return directValue;
 
   const campos = Array.isArray(entity?.campos) ? entity.campos : [];
   const primaryKeyField = campos.find((campo) => {
-    const keyType = String(campo?.keyType || campo?.chave || '')
+    const keyType = String(campo?.keyType || campo?.chave || "")
       .trim()
       .toUpperCase();
-    return keyType === 'PK';
+    return keyType === "PK";
   });
 
-  return String(primaryKeyField?.nome || '').trim();
+  return String(primaryKeyField?.nome || "").trim();
 };
 
 const getEntitySnapshotKey = (entity) => {
@@ -403,25 +462,25 @@ const getEntitySnapshotKey = (entity) => {
     return `id:${String(entityId).trim()}`;
   }
 
-  const normalizedName = normalizeTopicLabel(entity?.nome || '');
-  return normalizedName ? `name:${normalizedName}` : '';
+  const normalizedName = normalizeTopicLabel(entity?.nome || "");
+  return normalizedName ? `name:${normalizedName}` : "";
 };
 
 const buildEntityFingerprint = (entity) =>
   safeStringify({
-    nome: String(entity?.nome || '').trim(),
-    descricao: String(entity?.descricao || '').trim(),
-    atributoChave: String(entity?.atributoChave || '').trim(),
-    tipoEntidade: String(entity?.tipoEntidade || '').trim(),
+    nome: String(entity?.nome || "").trim(),
+    descricao: String(entity?.descricao || "").trim(),
+    atributoChave: String(entity?.atributoChave || "").trim(),
+    tipoEntidade: String(entity?.tipoEntidade || "").trim(),
     isPrimaryEntity: entity?.isPrimaryEntity === true,
     campos: (Array.isArray(entity?.campos) ? entity.campos : [])
       .map((campo) => ({
-        nome: String(campo?.nome || '').trim(),
-        tipo: String(campo?.tipo || '').trim(),
+        nome: String(campo?.nome || "").trim(),
+        tipo: String(campo?.tipo || "").trim(),
         obrigatorio: campo?.obrigatorio === true,
       }))
       .sort((campoA, campoB) =>
-        String(campoA?.nome || '').localeCompare(String(campoB?.nome || '')),
+        String(campoA?.nome || "").localeCompare(String(campoB?.nome || "")),
       ),
   });
 
@@ -466,24 +525,24 @@ const diffLinkedEntities = (previousEntities = [], nextEntities = []) => {
 };
 
 const normalizeVisibilityValue = (value, fallback) =>
-  typeof value === 'boolean' ? value : fallback;
+  typeof value === "boolean" ? value : fallback;
 
 const buildOpportunityCoreSnapshot = (opportunity) => ({
-  title: String(opportunity?.name || opportunity?.nome || '').trim(),
-  status: String(opportunity?.status || opportunity?.etapa || '').trim(),
+  title: String(opportunity?.name || opportunity?.nome || "").trim(),
+  status: String(opportunity?.status || opportunity?.etapa || "").trim(),
   owner: String(
     opportunity?.responsavelNome ||
       opportunity?.responsavel ||
       opportunity?.owner ||
       opportunity?.criadoPor ||
-      '',
+      "",
   ).trim(),
   createdDate: formatDateToDayMonthYear(
-    opportunity?.createdDate || opportunity?.created_at || '',
+    opportunity?.createdDate || opportunity?.created_at || "",
   ),
-  endDate: String(opportunity?.endDate || '').trim(),
-  pipelineTitle: String(opportunity?.pipelineTitle || '').trim(),
-  pipelineSubtitle: String(opportunity?.pipelineSubtitle || '').trim(),
+  endDate: String(opportunity?.endDate || "").trim(),
+  pipelineTitle: String(opportunity?.pipelineTitle || "").trim(),
+  pipelineSubtitle: String(opportunity?.pipelineSubtitle || "").trim(),
   showPipeline: normalizeVisibilityValue(opportunity?.showPipeline, true),
   showTopico: normalizeVisibilityValue(opportunity?.showTopico, false),
   showTimeline: normalizeVisibilityValue(opportunity?.showTimeline, true),
@@ -500,21 +559,21 @@ const buildBpmnActivitySnapshot = (opportunity) => {
 
   const mainPathStages = buildStagesFromBpmn(opportunity);
   const mainPathLabels = mainPathStages
-    .map((stage) => String(stage?.label || '').trim())
+    .map((stage) => String(stage?.label || "").trim())
     .filter(Boolean)
-    .join(' > ');
+    .join(" > ");
 
   return {
     totalNodes: nodes.length,
     activeNodes: activeNodes.length,
     totalConnections: connections.length,
     entityStages: activeNodes.filter(
-      (node) => getBpmnStageType(node) === 'entidade',
+      (node) => getBpmnStageType(node) === "entidade",
     ).length,
-    taskStages: activeNodes.filter((node) => getBpmnStageType(node) === 'task')
+    taskStages: activeNodes.filter((node) => getBpmnStageType(node) === "task")
       .length,
     decisionStages: activeNodes.filter(
-      (node) => getBpmnStageType(node) === 'condicional',
+      (node) => getBpmnStageType(node) === "condicional",
     ).length,
     mainPathCount: mainPathStages.length,
     mainPathLabels,
@@ -528,36 +587,36 @@ const describeOpportunityCoreChanges = (previousSnapshot, nextSnapshot) => {
 
   if (previous.title !== next.title && next.title) {
     notes.push({
-      key: 'title',
-      title: 'Nome da oportunidade atualizado',
-      description: `Antes: ${previous.title || '-'} → Agora: ${next.title}`,
-      elementType: 'oportunidade',
-      itemName: 'Nome da oportunidade',
-      before: previous.title || '-',
+      key: "title",
+      title: "Nome da oportunidade atualizado",
+      description: `Antes: ${previous.title || "-"} → Agora: ${next.title}`,
+      elementType: "oportunidade",
+      itemName: "Nome da oportunidade",
+      before: previous.title || "-",
       after: next.title,
     });
   }
 
   if (previous.status !== next.status && next.status) {
     notes.push({
-      key: 'status',
-      title: 'Status da oportunidade atualizado',
-      description: `Antes: ${previous.status || '-'} → Agora: ${next.status}`,
-      elementType: 'status',
-      itemName: 'Status da oportunidade',
-      before: previous.status || '-',
+      key: "status",
+      title: "Status da oportunidade atualizado",
+      description: `Antes: ${previous.status || "-"} → Agora: ${next.status}`,
+      elementType: "status",
+      itemName: "Status da oportunidade",
+      before: previous.status || "-",
       after: next.status,
     });
   }
 
   if (previous.owner !== next.owner && next.owner) {
     notes.push({
-      key: 'owner',
-      title: 'Responsável da oportunidade atualizado',
-      description: `Antes: ${previous.owner || '-'} → Agora: ${next.owner}`,
-      elementType: 'proprietario',
-      itemName: 'Responsável',
-      before: previous.owner || '-',
+      key: "owner",
+      title: "Responsável da oportunidade atualizado",
+      description: `Antes: ${previous.owner || "-"} → Agora: ${next.owner}`,
+      elementType: "proprietario",
+      itemName: "Responsável",
+      before: previous.owner || "-",
       after: next.owner,
     });
   }
@@ -567,13 +626,13 @@ const describeOpportunityCoreChanges = (previousSnapshot, nextSnapshot) => {
     previous.endDate !== next.endDate
   ) {
     notes.push({
-      key: 'dates',
-      title: 'Datas da oportunidade atualizadas',
-      description: `Criação: ${previous.createdDate || '-'} → ${next.createdDate || '-'} | Final: ${previous.endDate || '-'} → ${next.endDate || '-'}`,
-      elementType: 'datas',
-      itemName: 'Datas da oportunidade',
-      before: `Criação: ${previous.createdDate || '-'} | Final: ${previous.endDate || '-'}`,
-      after: `Criação: ${next.createdDate || '-'} | Final: ${next.endDate || '-'}`,
+      key: "dates",
+      title: "Datas da oportunidade atualizadas",
+      description: `Criação: ${previous.createdDate || "-"} → ${next.createdDate || "-"} | Final: ${previous.endDate || "-"} → ${next.endDate || "-"}`,
+      elementType: "datas",
+      itemName: "Datas da oportunidade",
+      before: `Criação: ${previous.createdDate || "-"} | Final: ${previous.endDate || "-"}`,
+      after: `Criação: ${next.createdDate || "-"} | Final: ${next.endDate || "-"}`,
     });
   }
 
@@ -582,13 +641,13 @@ const describeOpportunityCoreChanges = (previousSnapshot, nextSnapshot) => {
     previous.pipelineSubtitle !== next.pipelineSubtitle
   ) {
     notes.push({
-      key: 'pipeline-meta',
-      title: 'Metadados da pipeline atualizados',
-      description: `Título: ${previous.pipelineTitle || '-'} → ${next.pipelineTitle || '-'} | Subtítulo: ${previous.pipelineSubtitle || '-'} → ${next.pipelineSubtitle || '-'}`,
-      elementType: 'pipeline',
-      itemName: 'Pipeline',
-      before: `${previous.pipelineTitle || '-'} | ${previous.pipelineSubtitle || '-'}`,
-      after: `${next.pipelineTitle || '-'} | ${next.pipelineSubtitle || '-'}`,
+      key: "pipeline-meta",
+      title: "Metadados da pipeline atualizados",
+      description: `Título: ${previous.pipelineTitle || "-"} → ${next.pipelineTitle || "-"} | Subtítulo: ${previous.pipelineSubtitle || "-"} → ${next.pipelineSubtitle || "-"}`,
+      elementType: "pipeline",
+      itemName: "Pipeline",
+      before: `${previous.pipelineTitle || "-"} | ${previous.pipelineSubtitle || "-"}`,
+      after: `${next.pipelineTitle || "-"} | ${next.pipelineSubtitle || "-"}`,
     });
   }
 
@@ -598,17 +657,17 @@ const describeOpportunityCoreChanges = (previousSnapshot, nextSnapshot) => {
     previous.showTimeline !== next.showTimeline
   ) {
     notes.push({
-      key: 'layout',
-      title: 'Layout da oportunidade atualizado',
+      key: "layout",
+      title: "Layout da oportunidade atualizado",
       description: [
-        `Pipeline: ${previous.showPipeline ? 'visível' : 'oculta'} → ${next.showPipeline ? 'visível' : 'oculta'}`,
-        `Tópico: ${previous.showTopico ? 'visível' : 'oculto'} → ${next.showTopico ? 'visível' : 'oculto'}`,
-        `Timeline: ${previous.showTimeline ? 'visível' : 'oculta'} → ${next.showTimeline ? 'visível' : 'oculta'}`,
-      ].join(' | '),
-      elementType: 'layout',
-      itemName: 'Layout da oportunidade',
-      before: 'Configuração anterior',
-      after: 'Configuração atual',
+        `Pipeline: ${previous.showPipeline ? "visível" : "oculta"} → ${next.showPipeline ? "visível" : "oculta"}`,
+        `Tópico: ${previous.showTopico ? "visível" : "oculto"} → ${next.showTopico ? "visível" : "oculto"}`,
+        `Timeline: ${previous.showTimeline ? "visível" : "oculta"} → ${next.showTimeline ? "visível" : "oculta"}`,
+      ].join(" | "),
+      elementType: "layout",
+      itemName: "Layout da oportunidade",
+      before: "Configuração anterior",
+      after: "Configuração atual",
     });
   }
 
@@ -661,14 +720,14 @@ const buildOpportunitySignature = (opportunity) =>
   safeStringify({
     id: opportunity?.id ?? opportunity?._id ?? null,
     ...buildOpportunityCoreSnapshot(opportunity),
-    updatedAt: String(opportunity?.updatedAt || opportunity?.updated_at || ''),
+    updatedAt: String(opportunity?.updatedAt || opportunity?.updated_at || ""),
   });
 
 const safeStringify = (value) => {
   try {
     return JSON.stringify(value);
   } catch {
-    return String(value || '');
+    return String(value || "");
   }
 };
 
@@ -718,10 +777,10 @@ const getLinkedBpmnEntitiesSnapshot = (opportunity, entidadesCatalog = []) => {
     })
     .map((entidade) => ({
       id: entidade?.id ?? entidade?._id ?? null,
-      nome: String(entidade?.nome || entidade?.name || entidade?.titulo || ''),
-      descricao: String(entidade?.descricao || ''),
-      tipoEntidade: String(entidade?.tipoEntidade || '').trim(),
-      criadoPor: String(entidade?.criadoPor || entidade?.owner || '').trim(),
+      nome: String(entidade?.nome || entidade?.name || entidade?.titulo || ""),
+      descricao: String(entidade?.descricao || ""),
+      tipoEntidade: String(entidade?.tipoEntidade || "").trim(),
+      criadoPor: String(entidade?.criadoPor || entidade?.owner || "").trim(),
       isPrimaryEntity: entidade?.isPrimaryEntity === true,
       atributoChave:
         entidade?.atributoChave !== undefined &&
@@ -730,19 +789,19 @@ const getLinkedBpmnEntitiesSnapshot = (opportunity, entidadesCatalog = []) => {
           : entidade?.atributo_chave !== undefined &&
               entidade?.atributo_chave !== null
             ? String(entidade.atributo_chave)
-            : '',
+            : "",
       campos: (Array.isArray(entidade?.campos) ? entidade.campos : [])
         .map((campo) => ({
-          nome: String(campo?.nome || ''),
-          tipo: String(campo?.tipo || ''),
+          nome: String(campo?.nome || ""),
+          tipo: String(campo?.tipo || ""),
           obrigatorio: campo?.obrigatorio === true,
         }))
         .sort((campoA, campoB) =>
-          String(campoA?.nome || '').localeCompare(String(campoB?.nome || '')),
+          String(campoA?.nome || "").localeCompare(String(campoB?.nome || "")),
         ),
     }))
     .sort((entityA, entityB) =>
-      String(entityA?.nome || '').localeCompare(String(entityB?.nome || '')),
+      String(entityA?.nome || "").localeCompare(String(entityB?.nome || "")),
     );
 };
 
@@ -755,41 +814,55 @@ const buildEntitySummaryContent = ({ linkedEntity, node }) => {
       node?.descricao ||
       node?.entidadeDescricao ||
       node?.entidadeResumo ||
-      '',
+      "",
   ).trim();
   const nodeAtributoChave = String(
-    node?.info || node?.atributoChave || '',
+    node?.info || node?.atributoChave || "",
   ).trim();
 
   const descricao = String(
     linkedEntity?.descricao ||
-      (stageType === 'entidade' ? nodeDescricao : '') ||
-      (stageType === 'task'
+      (stageType === "entidade" ? nodeDescricao : "") ||
+      (stageType === "task"
         ? node?.taskDescricao
         : node?.condicionalDescricao) ||
-      '',
+      "",
   ).trim();
   const atributoChave = String(
     resolveEntityAtributoChave(linkedEntity) ||
-      (stageType === 'entidade' ? nodeAtributoChave : '') ||
-      '',
+      (stageType === "entidade" ? nodeAtributoChave : "") ||
+      "",
   ).trim();
 
   const tipoEntidade = String(
     linkedEntity?.tipoEntidade ||
-      (stageType === 'task'
-        ? 'Atividade BPMN'
-        : stageType === 'condicional'
-          ? 'Decisão BPMN'
-          : ''),
+      (stageType === "task"
+        ? "Atividade BPMN"
+        : stageType === "condicional"
+          ? "Decisão BPMN"
+          : ""),
   ).trim();
 
+  const camposSrc =
+    Array.isArray(linkedEntity?.campos) && linkedEntity.campos.length > 0
+      ? linkedEntity.campos
+      : Array.isArray(node?.selectedEntityFields)
+        ? node.selectedEntityFields
+        : [];
+  const camposLines = camposSrc
+    .filter((c) => String(c?.nome || "").trim())
+    .map((c) => {
+      const tipo = String(c?.tipo || "").trim();
+      return `Campo: ${String(c.nome).trim()}${tipo ? ` (${tipo})` : ""}`;
+    });
+
   return [
-    `Descrição: ${descricao || '-'}`,
-    `Atributo chave: ${atributoChave || '-'}`,
-    `Tipo da entidade: ${tipoEntidade || '-'}`,
-    `Fluxo principal na pipeline: ${isOutOfMainPath ? 'não' : 'sim'}`,
-  ].join('\n');
+    `Descrição: ${descricao || "-"}`,
+    `Atributo chave: ${atributoChave || "-"}`,
+    `Tipo da entidade: ${tipoEntidade || "-"}`,
+    `Fluxo principal na pipeline: ${isOutOfMainPath ? "não" : "sim"}`,
+    ...camposLines,
+  ].join("\n");
 };
 
 const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
@@ -802,7 +875,7 @@ const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
 
   const principalPathNodeIds = new Set(
     (Array.isArray(bpmnStages) ? bpmnStages : [])
-      .map((stage) => String(stage?.sourceNodeId || '').trim())
+      .map((stage) => String(stage?.sourceNodeId || "").trim())
       .filter(Boolean),
   );
 
@@ -811,12 +884,12 @@ const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
       (node) =>
         node?.active !== false &&
         isBpmnStageNode(node) &&
-        !principalPathNodeIds.has(String(node?.id || '').trim()),
+        !principalPathNodeIds.has(String(node?.id || "").trim()),
     )
     .map((node, index) => ({
       id: `offpath-stage-${String(node?.id || index)}`,
       label: getStageLabelFromNode(node, index),
-      sourceNodeId: String(node?.id || ''),
+      sourceNodeId: String(node?.id || ""),
       stageType: getBpmnStageType(node),
       outOfMainPath: true,
     }));
@@ -836,7 +909,7 @@ const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
       entidadesById.set(String(id), item);
     }
 
-    const nome = String(item?.nome || item?.name || item?.titulo || '').trim();
+    const nome = String(item?.nome || item?.name || item?.titulo || "").trim();
     const normalized = normalizeTopicLabel(nome);
     if (normalized) {
       entidadesByName.set(normalized, item);
@@ -847,11 +920,11 @@ const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
   const rows = [];
 
   topicStages.forEach((stage) => {
-    const label = String(stage?.label || '').trim();
+    const label = String(stage?.label || "").trim();
     const normalized = normalizeTopicLabel(label);
     if (!normalized || seen.has(normalized)) return;
 
-    const sourceNode = nodesById.get(String(stage?.sourceNodeId || '')) || null;
+    const sourceNode = nodesById.get(String(stage?.sourceNodeId || "")) || null;
     const node = sourceNode
       ? {
           ...sourceNode,
@@ -861,7 +934,7 @@ const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
     const nodeEntityId =
       node?.entidadeId !== null && node?.entidadeId !== undefined
         ? String(node.entidadeId)
-        : '';
+        : "";
     const nodeEntityName = normalizeTopicLabel(node?.entidadeNome || label);
 
     const linkedEntity =
@@ -878,10 +951,18 @@ const buildTopicRowsFromBpmnEntities = (opportunity, entidadesCatalog = []) => {
     rows.push({
       label,
       value,
-      sourceNodeId: String(stage?.sourceNodeId || ''),
+      sourceNodeId: String(stage?.sourceNodeId || ""),
       topicType: getTopicTypeFromStageType(stage?.stageType),
       isPrimaryEntity:
-        stage?.stageType === 'entidade' && node?.isPrimaryEntity === true,
+        stage?.stageType === "entidade" && node?.isPrimaryEntity === true,
+      campos:
+        Array.isArray(linkedEntity?.campos) && linkedEntity.campos.length > 0
+          ? linkedEntity.campos.filter((c) => String(c?.nome || "").trim())
+          : Array.isArray(node?.selectedEntityFields)
+            ? node.selectedEntityFields.filter((c) =>
+                String(c?.nome || "").trim(),
+              )
+            : [],
     });
   });
 
@@ -897,20 +978,21 @@ const mergeInfoRowsWithBpmnEntities = (
 
   const titleRowSource = safeRows[0] || {};
   const titleRow = {
-    label: String(titleRowSource.label || ''),
-    value: String(titleRowSource.value || ''),
+    label: String(titleRowSource.label || ""),
+    value: String(titleRowSource.value || ""),
     topicType: normalizeTopicType(titleRowSource.topicType),
     isPrimaryEntity: titleRowSource?.isPrimaryEntity === true,
   };
 
   const contentRows = safeRows.slice(1).map((row) => ({
-    label: String(row?.label || ''),
-    value: String(row?.value || ''),
-    sourceNodeId: String(row?.sourceNodeId || '').trim(),
+    label: String(row?.label || ""),
+    value: String(row?.value || ""),
+    sourceNodeId: String(row?.sourceNodeId || "").trim(),
     topicType: normalizeTopicType(row?.topicType),
     isPrimaryEntity: row?.isPrimaryEntity === true,
     manualStatus: normalizeManualTopicStatus(row?.manualStatus),
     pendingTarget: normalizeManualPendingTarget(row?.pendingTarget),
+    stepConfig: normalizeStepConfig(row?.stepConfig),
   }));
 
   const bpmnEntityRows = buildTopicRowsFromBpmnEntities(
@@ -929,12 +1011,12 @@ const mergeInfoRowsWithBpmnEntities = (
 
   const existingBySourceNodeId = new Map(
     contentRows
-      .map((row) => [String(row?.sourceNodeId || '').trim(), row])
+      .map((row) => [String(row?.sourceNodeId || "").trim(), row])
       .filter(([sourceNodeId]) => Boolean(sourceNodeId)),
   );
 
   const mergedBpmnRows = bpmnEntityRows.map((row) => {
-    const sourceNodeId = String(row?.sourceNodeId || '').trim();
+    const sourceNodeId = String(row?.sourceNodeId || "").trim();
     const normalized = normalizeTopicLabel(row.label);
     const existing =
       (sourceNodeId ? existingBySourceNodeId.get(sourceNodeId) : null) ||
@@ -947,8 +1029,9 @@ const mergeInfoRowsWithBpmnEntities = (
       sourceNodeId,
       topicType: normalizeTopicType(row.topicType),
       isPrimaryEntity: row?.isPrimaryEntity === true,
-      manualStatus: 'pendente',
+      manualStatus: "pendente",
       pendingTarget: normalizeManualPendingTarget(existing?.pendingTarget),
+      campos: Array.isArray(row.campos) ? row.campos : [],
     };
   });
 
@@ -958,10 +1041,10 @@ const mergeInfoRowsWithBpmnEntities = (
 
   const extraManualRows = contentRows
     .filter((row) => {
-      const sourceNodeId = String(row?.sourceNodeId || '').trim();
+      const sourceNodeId = String(row?.sourceNodeId || "").trim();
       if (sourceNodeId) return false;
 
-      const normalized = normalizeTopicLabel(row?.label || '');
+      const normalized = normalizeTopicLabel(row?.label || "");
       if (!normalized) return true;
 
       return !bpmnLabelSet.has(normalized);
@@ -995,32 +1078,32 @@ const useOpportunityDetailState = ({
   const [showPipeline, setShowPipeline] = useState(() =>
     getStoredVisibility(
       opportunity,
-      'showPipeline',
-      'layoutShowPipeline',
+      "showPipeline",
+      "layoutShowPipeline",
       true,
     ),
   );
   const [showTopico, setShowTopico] = useState(() =>
-    getStoredVisibility(opportunity, 'showTopico', 'layoutShowTopico', false),
+    getStoredVisibility(opportunity, "showTopico", "layoutShowTopico", false),
   );
   const [showTimeline, setShowTimeline] = useState(() =>
     getStoredVisibility(
       opportunity,
-      'showTimeline',
-      'layoutShowTimeline',
+      "showTimeline",
+      "layoutShowTimeline",
       true,
     ),
   );
   const [pipelineTitle, setPipelineTitle] = useState(() =>
     String(
-      opportunity?.pipelineTitle || localStorage.getItem('pipelineTitle') || '',
+      opportunity?.pipelineTitle || localStorage.getItem("pipelineTitle") || "",
     ),
   );
   const [pipelineSubtitle, setPipelineSubtitle] = useState(() =>
     String(
       opportunity?.pipelineSubtitle ||
-        localStorage.getItem('pipelineSubtitle') ||
-        '',
+        localStorage.getItem("pipelineSubtitle") ||
+        "",
     ),
   );
 
@@ -1033,13 +1116,13 @@ const useOpportunityDetailState = ({
       : defaultStages;
   });
   const [title, setTitle] = useState(
-    opportunity?.name || titleFromSlug(slug || ''),
+    opportunity?.name || titleFromSlug(slug || ""),
   );
   const [infoRows, setInfoRows] = useState(
     mergeInfoRowsWithBpmnEntities(
       Array.isArray(opportunity?.infoRows) && opportunity.infoRows.length
         ? opportunity.infoRows
-        : [{ label: '', value: '' }],
+        : [{ label: "", value: "" }],
       opportunity,
       entidadesCatalog,
     ),
@@ -1057,23 +1140,23 @@ const useOpportunityDetailState = ({
       : defaultTimelineItems,
   );
   const [editingTimelineItemId, setEditingTimelineItemId] = useState(null);
-  const [timelineNoteTitle, setTimelineNoteTitle] = useState('');
-  const [timelineNoteDescription, setTimelineNoteDescription] = useState('');
+  const [timelineNoteTitle, setTimelineNoteTitle] = useState("");
+  const [timelineNoteDescription, setTimelineNoteDescription] = useState("");
   const [manualStatus, setManualStatus] = useState(
-    opportunity?.status || opportunity?.etapa || '',
+    opportunity?.status || opportunity?.etapa || "",
   );
   const [manualStatusLocked, setManualStatusLocked] = useState(!showPipeline);
   const [createdDate, setCreatedDate] = useState(
-    formatDateToDayMonthYear(opportunity?.createdDate || ''),
+    formatDateToDayMonthYear(opportunity?.createdDate || ""),
   );
-  const [endDate, setEndDate] = useState(opportunity?.endDate || '');
+  const [endDate, setEndDate] = useState(opportunity?.endDate || "");
 
   const opportunityId =
     opportunity?.id !== undefined && opportunity?.id !== null
       ? String(opportunity.id)
       : opportunity?._id !== undefined && opportunity?._id !== null
         ? String(opportunity._id)
-        : '';
+        : "";
 
   const autoTimelineKeysRef = useRef(
     new Set(
@@ -1081,7 +1164,7 @@ const useOpportunityDetailState = ({
         ? opportunity.timelineItems
         : []
       )
-        .map((item) => String(item?.autoKey || '').trim())
+        .map((item) => String(item?.autoKey || "").trim())
         .filter(Boolean),
     ),
   );
@@ -1125,22 +1208,22 @@ const useOpportunityDetailState = ({
   const previousLinkedEntitiesSnapshotRef = useRef(linkedEntitiesSnapshot);
 
   const resolvedActorName =
-    String(actorName || owner || '').trim() || 'Conta atual';
-  const resolvedActorId = String(actorId || '').trim() || '';
+    String(actorName || owner || "").trim() || "Conta atual";
+  const resolvedActorId = String(actorId || "").trim() || "";
 
   const appendAutomaticTimelineNote = useCallback(
     ({
       autoKey,
       title,
       description,
-      actionType = 'update',
-      elementType = 'oportunidade',
+      actionType = "update",
+      elementType = "oportunidade",
       itemName,
-      before = '',
-      after = '',
-      comment = '',
+      before = "",
+      after = "",
+      comment = "",
     }) => {
-      const normalizedAutoKey = String(autoKey || '').trim();
+      const normalizedAutoKey = String(autoKey || "").trim();
       if (!normalizedAutoKey) return;
       if (autoTimelineKeysRef.current.has(normalizedAutoKey)) return;
 
@@ -1158,7 +1241,7 @@ const useOpportunityDetailState = ({
         autoKey: normalizedAutoKey,
         actionType,
         elementType,
-        itemName: String(itemName || title || '').trim() || 'Registro',
+        itemName: String(itemName || title || "").trim() || "Registro",
         before,
         after,
         comment,
@@ -1179,26 +1262,26 @@ const useOpportunityDetailState = ({
 
       created.forEach((entity) => {
         const entityName =
-          String(entity?.nome || 'Entidade').trim() || 'Entidade';
+          String(entity?.nome || "Entidade").trim() || "Entidade";
         const entityKey = getEntitySnapshotKey(entity);
 
         appendAutomaticTimelineNote({
           autoKey: `entidade-criada:${scope}:${entityKey}:${buildEntityFingerprint(entity)}`,
           title: `Entidade criada no BPMN: ${entityName}`,
           description:
-            'A entidade foi adicionada ao BPMN ativo e sincronizada automaticamente.',
-          actionType: 'create',
-          elementType: 'entidade',
+            "A entidade foi adicionada ao BPMN ativo e sincronizada automaticamente.",
+          actionType: "create",
+          elementType: "entidade",
           itemName: entityName,
-          before: 'Inexistente',
-          after: 'Criada no BPMN ativo',
+          before: "Inexistente",
+          after: "Criada no BPMN ativo",
         });
       });
 
       updated.forEach(({ previous, current }) => {
-        const previousName = String(previous?.nome || '').trim();
-        const currentName = String(current?.nome || '').trim();
-        const label = currentName || previousName || 'Entidade';
+        const previousName = String(previous?.nome || "").trim();
+        const currentName = String(current?.nome || "").trim();
+        const label = currentName || previousName || "Entidade";
         const currentFields = Array.isArray(current?.campos)
           ? current.campos
           : [];
@@ -1206,29 +1289,29 @@ const useOpportunityDetailState = ({
         appendAutomaticTimelineNote({
           autoKey: `entidade-atualizada:${scope}:${getEntitySnapshotKey(current)}:${buildEntityFingerprint(current)}`,
           title: `Entidade atualizada no BPMN: ${label}`,
-          description: `Atualização sincronizada automaticamente (campos: ${currentFields.length}, atributo chave: ${String(current?.atributoChave || '-').trim() || '-'}).`,
-          actionType: 'update',
-          elementType: 'entidade',
+          description: `Atualização sincronizada automaticamente (campos: ${currentFields.length}, atributo chave: ${String(current?.atributoChave || "-").trim() || "-"}).`,
+          actionType: "update",
+          elementType: "entidade",
           itemName: label,
-          before: 'Versão anterior',
-          after: 'Versão atual sincronizada',
+          before: "Versão anterior",
+          after: "Versão atual sincronizada",
         });
       });
 
       removed.forEach((entity) => {
         const entityName =
-          String(entity?.nome || 'Entidade').trim() || 'Entidade';
+          String(entity?.nome || "Entidade").trim() || "Entidade";
 
         appendAutomaticTimelineNote({
           autoKey: `entidade-removida:${scope}:${getEntitySnapshotKey(entity)}:${buildEntityFingerprint(entity)}`,
           title: `Entidade removida do BPMN: ${entityName}`,
           description:
-            'A entidade deixou de estar vinculada ao BPMN ativo e foi atualizada automaticamente.',
-          actionType: 'delete',
-          elementType: 'entidade',
+            "A entidade deixou de estar vinculada ao BPMN ativo e foi atualizada automaticamente.",
+          actionType: "delete",
+          elementType: "entidade",
           itemName: entityName,
-          before: 'Vinculada ao BPMN ativo',
-          after: 'Removida da vinculação',
+          before: "Vinculada ao BPMN ativo",
+          after: "Removida da vinculação",
         });
       });
     },
@@ -1274,22 +1357,22 @@ const useOpportunityDetailState = ({
         if (bpmnChanges.length > 0) {
           appendAutomaticTimelineNote({
             autoKey: `bpmn-resumo:${bpmnSignature}`,
-            title: 'Estrutura do BPMN atualizada',
-            description: bpmnChanges.join(' | '),
-            actionType: 'update',
-            elementType: 'bpmn',
-            itemName: 'Estrutura BPMN',
+            title: "Estrutura do BPMN atualizada",
+            description: bpmnChanges.join(" | "),
+            actionType: "update",
+            elementType: "bpmn",
+            itemName: "Estrutura BPMN",
             before: [
               `Nós: ${previousBpmnActivitySnapshotRef.current?.totalNodes || 0}`,
               `Conexões: ${
                 previousBpmnActivitySnapshotRef.current?.totalConnections || 0
               }`,
-            ].join(' | '),
+            ].join(" | "),
             after: [
               `Nós: ${bpmnActivitySnapshot?.totalNodes || 0}`,
               `Conexões: ${bpmnActivitySnapshot?.totalConnections || 0}`,
-            ].join(' | '),
-            comment: bpmnChanges.join(' | '),
+            ].join(" | "),
+            comment: bpmnChanges.join(" | "),
           });
         }
 
@@ -1299,29 +1382,29 @@ const useOpportunityDetailState = ({
         ) {
           appendAutomaticTimelineNote({
             autoKey: `bpmn-trilha-principal:${bpmnSignature}`,
-            title: 'Trilha principal do BPMN atualizada',
+            title: "Trilha principal do BPMN atualizada",
             description: `Antes: ${
-              previousBpmnActivitySnapshotRef.current?.mainPathLabels || '-'
-            } → Agora: ${bpmnActivitySnapshot?.mainPathLabels || '-'}`,
-            actionType: 'update',
-            elementType: 'pipeline',
-            itemName: 'Trilha principal BPMN',
+              previousBpmnActivitySnapshotRef.current?.mainPathLabels || "-"
+            } → Agora: ${bpmnActivitySnapshot?.mainPathLabels || "-"}`,
+            actionType: "update",
+            elementType: "pipeline",
+            itemName: "Trilha principal BPMN",
             before:
-              previousBpmnActivitySnapshotRef.current?.mainPathLabels || '-',
-            after: bpmnActivitySnapshot?.mainPathLabels || '-',
+              previousBpmnActivitySnapshotRef.current?.mainPathLabels || "-",
+            after: bpmnActivitySnapshot?.mainPathLabels || "-",
           });
         }
 
         appendAutomaticTimelineNote({
           autoKey: `bpmn:${bpmnSignature}`,
-          title: 'BPMN ativo atualizado',
+          title: "BPMN ativo atualizado",
           description:
-            'As alterações do BPMN ativo foram sincronizadas automaticamente nesta oportunidade.',
-          actionType: 'update',
-          elementType: 'bpmn',
-          itemName: 'BPMN ativo',
-          before: 'Versão anterior',
-          after: 'Versão atual',
+            "As alterações do BPMN ativo foram sincronizadas automaticamente nesta oportunidade.",
+          actionType: "update",
+          elementType: "bpmn",
+          itemName: "BPMN ativo",
+          before: "Versão anterior",
+          after: "Versão atual",
         });
       }, 0);
 
@@ -1341,7 +1424,7 @@ const useOpportunityDetailState = ({
             autoKey: `oportunidade:${change.key}:${opportunitySignature}`,
             title: change.title,
             description: change.description,
-            actionType: 'update',
+            actionType: "update",
             elementType: change.elementType,
             itemName: change.itemName,
             before: change.before,
@@ -1371,7 +1454,7 @@ const useOpportunityDetailState = ({
         appendEntityChangeNotes({
           previousEntities: previousLinkedEntitiesSnapshotRef.current,
           nextEntities: linkedEntitiesSnapshot,
-          scope: 'local',
+          scope: "local",
         });
       }, 0);
 
@@ -1413,7 +1496,7 @@ const useOpportunityDetailState = ({
               ? String(item.id)
               : item?._id !== undefined && item?._id !== null
                 ? String(item._id)
-                : '';
+                : "";
           return idValue && idValue === opportunityId;
         });
 
@@ -1459,11 +1542,11 @@ const useOpportunityDetailState = ({
             if (bpmnChanges.length > 0) {
               appendAutomaticTimelineNote({
                 autoKey: `bpmn-resumo:remote:${remoteBpmnSignature}`,
-                title: 'Estrutura do BPMN remoto atualizada',
-                description: bpmnChanges.join(' | '),
-                actionType: 'update',
-                elementType: 'bpmn',
-                itemName: 'Estrutura BPMN remota',
+                title: "Estrutura do BPMN remoto atualizada",
+                description: bpmnChanges.join(" | "),
+                actionType: "update",
+                elementType: "bpmn",
+                itemName: "Estrutura BPMN remota",
                 before: [
                   `Nós: ${
                     previousBpmnActivitySnapshotRef.current?.totalNodes || 0
@@ -1472,14 +1555,14 @@ const useOpportunityDetailState = ({
                     previousBpmnActivitySnapshotRef.current?.totalConnections ||
                     0
                   }`,
-                ].join(' | '),
+                ].join(" | "),
                 after: [
                   `Nós: ${remoteBpmnActivitySnapshot?.totalNodes || 0}`,
                   `Conexões: ${
                     remoteBpmnActivitySnapshot?.totalConnections || 0
                   }`,
-                ].join(' | '),
-                comment: bpmnChanges.join(' | '),
+                ].join(" | "),
+                comment: bpmnChanges.join(" | "),
               });
             }
 
@@ -1489,32 +1572,32 @@ const useOpportunityDetailState = ({
             ) {
               appendAutomaticTimelineNote({
                 autoKey: `bpmn-trilha-principal:remote:${remoteBpmnSignature}`,
-                title: 'Trilha principal do BPMN remoto atualizada',
+                title: "Trilha principal do BPMN remoto atualizada",
                 description: `Antes: ${
-                  previousBpmnActivitySnapshotRef.current?.mainPathLabels || '-'
+                  previousBpmnActivitySnapshotRef.current?.mainPathLabels || "-"
                 } → Agora: ${
-                  remoteBpmnActivitySnapshot?.mainPathLabels || '-'
+                  remoteBpmnActivitySnapshot?.mainPathLabels || "-"
                 }`,
-                actionType: 'update',
-                elementType: 'pipeline',
-                itemName: 'Trilha principal BPMN remoto',
+                actionType: "update",
+                elementType: "pipeline",
+                itemName: "Trilha principal BPMN remoto",
                 before:
                   previousBpmnActivitySnapshotRef.current?.mainPathLabels ||
-                  '-',
-                after: remoteBpmnActivitySnapshot?.mainPathLabels || '-',
+                  "-",
+                after: remoteBpmnActivitySnapshot?.mainPathLabels || "-",
               });
             }
 
             appendAutomaticTimelineNote({
               autoKey: `bpmn:remote:${remoteBpmnSignature}`,
-              title: 'BPMN já salvo atualizado',
+              title: "BPMN já salvo atualizado",
               description:
-                'Atualizações detectadas em um BPMN já existente foram aplicadas automaticamente.',
-              actionType: 'update',
-              elementType: 'bpmn',
-              itemName: 'BPMN já salvo',
-              before: 'Versão remota anterior',
-              after: 'Versão remota atual',
+                "Atualizações detectadas em um BPMN já existente foram aplicadas automaticamente.",
+              actionType: "update",
+              elementType: "bpmn",
+              itemName: "BPMN já salvo",
+              before: "Versão remota anterior",
+              after: "Versão remota atual",
             });
           }, 0);
 
@@ -1528,13 +1611,13 @@ const useOpportunityDetailState = ({
           setTitle(
             (previousTitle) =>
               String(
-                freshOpportunity?.name || freshOpportunity?.nome || '',
+                freshOpportunity?.name || freshOpportunity?.nome || "",
               ).trim() || previousTitle,
           );
           setManualStatus(
             (previousManualStatus) =>
               String(
-                freshOpportunity?.status || freshOpportunity?.etapa || '',
+                freshOpportunity?.status || freshOpportunity?.etapa || "",
               ).trim() || previousManualStatus,
           );
           setCreatedDate(
@@ -1542,12 +1625,12 @@ const useOpportunityDetailState = ({
               formatDateToDayMonthYear(
                 freshOpportunity?.createdDate ||
                   freshOpportunity?.created_at ||
-                  '',
+                  "",
               ) || previousCreatedDate,
           );
           setEndDate(
             (previousEndDate) =>
-              String(freshOpportunity?.endDate || '').trim() || previousEndDate,
+              String(freshOpportunity?.endDate || "").trim() || previousEndDate,
           );
           setSelectedOwner(
             resolveSelectedOwner({
@@ -1567,7 +1650,7 @@ const useOpportunityDetailState = ({
                 autoKey: `oportunidade:remote:${change.key}:${remoteOpportunitySignature}`,
                 title: change.title,
                 description: change.description,
-                actionType: 'update',
+                actionType: "update",
                 elementType: change.elementType,
                 itemName: change.itemName,
                 before: change.before,
@@ -1597,7 +1680,7 @@ const useOpportunityDetailState = ({
             appendEntityChangeNotes({
               previousEntities: previousLinkedEntitiesSnapshotRef.current,
               nextEntities: remoteLinkedEntitiesSnapshot,
-              scope: 'remote',
+              scope: "remote",
             });
           }, 0);
 
@@ -1619,19 +1702,19 @@ const useOpportunityDetailState = ({
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === "visible") {
         syncExistingBpmnUpdates();
       }
     };
 
-    window.addEventListener('focus', handleWindowFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       isMounted = false;
       window.clearInterval(intervalId);
-      window.removeEventListener('focus', handleWindowFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [
     appendAutomaticTimelineNote,
@@ -1654,30 +1737,30 @@ const useOpportunityDetailState = ({
         : [];
       const approvedSet = new Set(approvedActions.map(String));
       const executedActions = actions.filter((action) =>
-        approvedSet.has(String(action?.id || '')),
+        approvedSet.has(String(action?.id || "")),
       );
       const actionLabels = executedActions
-        .map((action) => String(action?.label || '').trim())
+        .map((action) => String(action?.label || "").trim())
         .filter(Boolean)
-        .join(', ');
+        .join(", ");
 
       appendAutomaticTimelineNote({
-        autoKey: `ia-execute:${Date.now()}:${approvedActions.join(',')}`,
+        autoKey: `ia-execute:${Date.now()}:${approvedActions.join(",")}`,
         title: `IA executou ${executed} ação(ões)`,
         description: actionLabels
           ? `Ações executadas: ${actionLabels}.`
           : `A IA executou ${executed} ação(ões) aprovadas.`,
-        actionType: 'ia',
-        elementType: 'ia',
-        itemName: 'Execução da IA',
-        before: '',
+        actionType: "ia",
+        elementType: "ia",
+        itemName: "Execução da IA",
+        before: "",
         after: actionLabels || `${executed} ação(ões) executadas`,
       });
     };
 
-    window.addEventListener('ia:actions-executed', handleIaExecuted);
+    window.addEventListener("ia:actions-executed", handleIaExecuted);
     return () => {
-      window.removeEventListener('ia:actions-executed', handleIaExecuted);
+      window.removeEventListener("ia:actions-executed", handleIaExecuted);
     };
   }, [appendAutomaticTimelineNote]);
 
@@ -1685,10 +1768,10 @@ const useOpportunityDetailState = ({
     const doneCount = stages.filter((stage) => stage.done).length;
     const defaultStatus =
       stages.length > 0 && doneCount === stages.length
-        ? 'Finalizado'
+        ? "Finalizado"
         : doneCount <= 1
-          ? 'Iniciando'
-          : 'Em Andamento';
+          ? "Iniciando"
+          : "Em Andamento";
 
     const stageStatus = [...stages]
       .reverse()
@@ -1703,12 +1786,12 @@ const useOpportunityDetailState = ({
   );
 
   const currentBpmnStageName = useMemo(() => {
-    if (!isBpmnDrivenPipeline) return '';
+    if (!isBpmnDrivenPipeline) return "";
 
     const currentStage = [...stages]
       .reverse()
       .find(
-        (stage) => stage?.done === true && String(stage?.label || '').trim(),
+        (stage) => stage?.done === true && String(stage?.label || "").trim(),
       );
 
     if (currentStage?.label) {
@@ -1716,9 +1799,9 @@ const useOpportunityDetailState = ({
     }
 
     const firstLabeledStage = stages.find((stage) =>
-      String(stage?.label || '').trim(),
+      String(stage?.label || "").trim(),
     );
-    return String(firstLabeledStage?.label || '').trim();
+    return String(firstLabeledStage?.label || "").trim();
   }, [isBpmnDrivenPipeline, stages]);
 
   const effectiveStatus = isBpmnDrivenPipeline
@@ -1747,30 +1830,42 @@ const useOpportunityDetailState = ({
       setManualStatusLocked(true);
     }
     setShowPipeline(newValue);
-    localStorage.setItem('layoutShowPipeline', JSON.stringify(newValue));
+    localStorage.setItem("layoutShowPipeline", JSON.stringify(newValue));
   };
 
   const toggleTopico = () => {
     if (isReadOnlyMode) return;
     const newValue = !showTopico;
     setShowTopico(newValue);
-    localStorage.setItem('layoutShowTopico', JSON.stringify(newValue));
+    localStorage.setItem("layoutShowTopico", JSON.stringify(newValue));
   };
 
   const toggleTimeline = () => {
     if (isReadOnlyMode) return;
     const newValue = !showTimeline;
     setShowTimeline(newValue);
-    localStorage.setItem('layoutShowTimeline', JSON.stringify(newValue));
+    localStorage.setItem("layoutShowTimeline", JSON.stringify(newValue));
   };
 
   useEffect(() => {
-    localStorage.setItem('pipelineTitle', String(pipelineTitle || ''));
+    localStorage.setItem("pipelineTitle", String(pipelineTitle || ""));
   }, [pipelineTitle]);
 
   useEffect(() => {
-    localStorage.setItem('pipelineSubtitle', String(pipelineSubtitle || ''));
+    localStorage.setItem("pipelineSubtitle", String(pipelineSubtitle || ""));
   }, [pipelineSubtitle]);
+
+  useEffect(() => {
+    if (!Array.isArray(stages) || stages.length === 0) return;
+
+    const allStagesCompleted = stages.every((stage) => stage?.done === true);
+    if (!allStagesCompleted) return;
+
+    const currentEndDate = String(endDate || "").trim();
+    if (currentEndDate) return;
+
+    setEndDate(getCurrentDateDayMonthYear());
+  }, [stages, endDate]);
 
   const handleAddTimelineItem = () => {
     if (isReadOnlyMode) return;
@@ -1780,24 +1875,24 @@ const useOpportunityDetailState = ({
 
     const newItem = {
       id: Date.now(),
-      title: noteTitle || 'Novo evento',
-      description: noteDescription || 'Descreva este evento...',
+      title: noteTitle || "Novo evento",
+      description: noteDescription || "Descreva este evento...",
       time: getCurrentTimelineTime(),
       timestamp,
       actor: resolvedActorName,
       actorId: resolvedActorId,
-      actionType: 'comment',
-      elementType: 'observacao',
-      itemName: noteTitle || 'Novo evento',
-      before: '',
-      after: '',
-      comment: noteDescription || '',
-      source: 'manual-note',
+      actionType: "comment",
+      elementType: "observacao",
+      itemName: noteTitle || "Novo evento",
+      before: "",
+      after: "",
+      comment: noteDescription || "",
+      source: "manual-note",
     };
 
     setTimelineItems((prev) => [newItem, ...prev]);
-    setTimelineNoteTitle('');
-    setTimelineNoteDescription('');
+    setTimelineNoteTitle("");
+    setTimelineNoteDescription("");
   };
 
   const updateTimelineItem = (id, field, value) => {

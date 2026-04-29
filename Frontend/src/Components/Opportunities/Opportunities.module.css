@@ -420,31 +420,31 @@
   }
 
   .table td:nth-child(1)::before {
-    content: 'Nome';
+    content: "Nome";
   }
 
   .table td:nth-child(2)::before {
-    content: 'Proprietário';
+    content: "Proprietário";
   }
 
   .table td:nth-child(3)::before {
-    content: 'Atribuído';
+    content: "Atribuído";
   }
 
   .table td:nth-child(4)::before {
-    content: 'Status';
+    content: "Status";
   }
 
   .table td:nth-child(5)::before {
-    content: 'Criação';
+    content: "Criação";
   }
 
   .table td:nth-child(6)::before {
-    content: 'Final';
+    content: "Final";
   }
 
   .table td:nth-child(7)::before {
-    content: 'Ações';
+    content: "Ações";
   }
 
   .tableActions {
@@ -461,7 +461,7 @@
   }
 
   .table td.tableActions::before {
-    content: 'Ações';
+    content: "Ações";
     width: 100%;
     font-size: 0.68rem;
     font-weight: 700;

@@ -1,0 +1,238 @@
+.card {
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #e5e9ee;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.1rem 0.75rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #334155;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.countBadge {
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.05rem 0.45rem;
+}
+
+.addBtn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1e9158;
+  background: none;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 0.28rem 0.7rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.addBtn:hover {
+  background: #f0fdf4;
+}
+
+/* Empty state */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 0.82rem;
+}
+
+.emptyIcon {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.emptyAddBtn {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1e9158;
+  background: none;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 0.3rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.emptyAddBtn:hover {
+  background: #f0fdf4;
+}
+
+/* Contact list */
+.contactList {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.contactRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid #f1f5f9;
+  transition: background 0.1s;
+}
+.contactRow:last-child {
+  border-bottom: none;
+}
+.contactRow:hover {
+  background: #fafbfc;
+}
+
+.contactRowPrimary {
+  background: #f0fdf4;
+  border-left: 3px solid #1e9158;
+}
+.contactRowPrimary:hover {
+  background: #ecfdf5;
+}
+
+/* Avatar */
+.contactAvatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* Fields */
+.contactFields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fieldRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fieldLabel {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fieldInput {
+  font-size: 0.82rem;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  padding: 0.28rem 0.5rem;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.fieldInput:focus {
+  border-color: #1e9158;
+  box-shadow: 0 0 0 2px #bbf7d044;
+}
+.fieldInput:disabled {
+  background: #f8fafc;
+  color: #475569;
+  cursor: default;
+}
+
+/* Actions */
+.contactActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.primaryBadge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #1e9158;
+  background: #dcfce7;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  white-space: nowrap;
+}
+
+.setPrimaryBtn {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #64748b;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background 0.12s,
+    color 0.12s;
+}
+.setPrimaryBtn:hover {
+  background: #f0fdf4;
+  color: #1e9158;
+  border-color: #bbf7d0;
+}
+
+.removeBtn {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition:
+    color 0.12s,
+    background 0.12s;
+}
+.removeBtn:hover {
+  color: #ef4444;
+  background: #fef2f2;
+}

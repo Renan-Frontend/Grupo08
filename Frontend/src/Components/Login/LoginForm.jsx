@@ -1,19 +1,19 @@
-import React from 'react';
-import Input from '../Forms/Input';
-import Button from '../Forms/Button';
-import Error from '../Helper/Error';
-import useForm from '../../Hooks/useForm';
-import useFormSubmit from '../../Hooks/useFormSubmit';
+import React from "react";
+import Input from "../Forms/Input";
+import Button from "../Forms/Button";
+import Error from "../Helper/Error";
+import useForm from "../../Hooks/useForm";
+import useFormSubmit from "../../Hooks/useFormSubmit";
 
-import { Link, useNavigate } from 'react-router-dom';
-import { UserContext } from '../../Context/UserContext';
-import useOnline from '../../Hooks/useOnline';
+import { Link, useNavigate } from "react-router-dom";
+import { UserContext } from "../../Context/UserContext";
+import useOnline from "../../Hooks/useOnline";
 
-import styles from './Login.module.css';
-import stylesBtn from '../Forms/Button.module.css';
+import styles from "./Login.module.css";
+import stylesBtn from "../Forms/Button.module.css";
 
 const LoginForm = () => {
-  const email = useForm('email');
+  const email = useForm("email");
   const password = useForm();
   const [slowWarning, setSlowWarning] = React.useState(false);
   const [retryWarning, setRetryWarning] = React.useState(false);
@@ -29,7 +29,7 @@ const LoginForm = () => {
     },
     onSubmit: async () => {
       await userLogin(email.value, password.value);
-      navigate('/ia');
+      navigate("/gerar-bpmn");
     },
   });
 
@@ -69,7 +69,7 @@ const LoginForm = () => {
           type="email"
           name="email"
           {...email}
-          error={touched && !email.value ? 'Preencha o email' : email.error}
+          error={touched && !email.value ? "Preencha o email" : email.error}
         />
 
         <Input
@@ -78,7 +78,7 @@ const LoginForm = () => {
           name="senha"
           {...password}
           error={
-            touched && !password.value ? 'Preencha a senha' : password.error
+            touched && !password.value ? "Preencha a senha" : password.error
           }
         />
 

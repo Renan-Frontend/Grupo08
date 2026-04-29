@@ -1,0 +1,30 @@
+[
+  {
+    "id": "n4",
+    "label": "Pedido aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Pedido aprovado?",
+    "condicionalDescricao": "A equipe de compras avalia se o pedido está aprovado com base na análise realizada.",
+    "descricao": "A equipe de compras avalia se o pedido está aprovado com base na análise realizada.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "n8",
+    "label": "Orcamento aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Orcamento aprovado?",
+    "condicionalDescricao": "A equipe de compras avalia se o orçamento está aprovado com base na verificação realizada.",
+    "descricao": "A equipe de compras avalia se o orçamento está aprovado com base na verificação realizada.",
+    "gatewayType": "exclusivo",
+    "x": 700,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra",
+    "_oppId": 1,
+    "_preserved": true
+  }
+]

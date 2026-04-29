@@ -1,24 +1,24 @@
 {
-  "name": "Processo Corporativo de Matrícula Acadêmica Integrada (14)",
+  "name": "Aprovação de Pedido de Compra",
   "nodes": [
     {
       "id": "n1",
-      "label": "Solicitar Matrícula",
+      "label": "Solicitar compra",
       "nodeType": "task",
-      "taskNome": "Solicitar Matrícula",
-      "taskDescricao": "O candidato solicita matrícula no portal digital ou atendimento interno.",
-      "descricao": "O candidato solicita matrícula no portal digital ou atendimento interno.",
+      "taskNome": "Solicitar compra",
+      "taskDescricao": "O cliente inicia o processo solicitando uma compra, que gera um pedido.",
+      "descricao": "O cliente inicia o processo solicitando uma compra, que gera um pedido.",
       "info": "",
       "x": 60,
       "y": 80
     },
     {
       "id": "n2",
-      "label": "Candidato",
+      "label": "Pedido",
       "nodeType": "entidade",
       "campos": [
         {
-          "nome": "id_candidato",
+          "nome": "id_pedido",
           "tipo": "numero",
           "obrigatorio": true,
           "keyType": "PK",
@@ -46,70 +46,52 @@
           "relacionamento": null
         }
       ],
-      "entidadeNome": "Candidato",
-      "descricao": "O candidato é o principal interessado no processo de matrícula.",
+      "entidadeNome": "Pedido",
+      "descricao": "O pedido é criado e utilizado como base para análise.",
       "info": "id",
       "x": 60,
       "y": 270
     },
     {
       "id": "n3",
-      "label": "Selecionar Curso",
+      "label": "Analisar Pedido",
       "nodeType": "task",
-      "taskNome": "Selecionar Curso",
-      "taskDescricao": "O candidato seleciona o curso, turno, modalidade de ensino e unidade disponível.",
-      "descricao": "O candidato seleciona o curso, turno, modalidade de ensino e unidade disponível.",
+      "taskNome": "Analisar Pedido",
+      "taskDescricao": "A equipe analisa o pedido para verificar se está correto e completo.",
+      "descricao": "A equipe analisa o pedido para verificar se está correto e completo.",
       "info": "",
       "x": 60,
       "y": 460
     },
     {
       "id": "n4",
-      "label": "Curso",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_curso",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Curso",
-      "descricao": "O curso é uma opção de estudo oferecida pela instituição.",
-      "info": "id",
+      "label": "Pedido aprovado?",
+      "nodeType": "condicional",
+      "condicionalNome": "Pedido aprovado?",
+      "condicionalDescricao": "A equipe avalia se o pedido está aprovado com base na análise realizada.",
+      "descricao": "A equipe avalia se o pedido está aprovado com base na análise realizada.",
+      "gatewayType": "exclusivo",
       "x": 60,
       "y": 650
     },
     {
       "id": "n5",
-      "label": "Documentação",
+      "label": "Registrar Aprovacao",
+      "nodeType": "task",
+      "taskNome": "Registrar Aprovacao",
+      "taskDescricao": "Registra a aprovação do pedido, criando um registro de aprovação.",
+      "descricao": "Registra a aprovação do pedido, criando um registro de aprovação.",
+      "info": "",
+      "x": 360,
+      "y": 650
+    },
+    {
+      "id": "n6",
+      "label": "Aprovacao",
       "nodeType": "entidade",
       "campos": [
         {
-          "nome": "id_documentacao",
+          "nome": "id_aprovacao",
           "tipo": "numero",
           "obrigatorio": true,
           "keyType": "PK",
@@ -137,442 +119,197 @@
           "relacionamento": null
         }
       ],
-      "entidadeNome": "Documentação",
-      "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
+      "entidadeNome": "Aprovacao",
+      "descricao": "A aprovação é registrada e utilizada para controle.",
       "info": "id",
       "x": 60,
       "y": 840
     },
     {
-      "id": "n6",
-      "label": "Preencher Dados",
+      "id": "n7",
+      "label": "Validar orcamento",
       "nodeType": "task",
-      "taskNome": "Preencher Dados",
-      "taskDescricao": "O candidato preenche seus dados cadastrais, informações pessoais, endereço, contatos e dados de responsáveis legais.",
-      "descricao": "O candidato preenche seus dados cadastrais, informações pessoais, endereço, contatos e dados de responsáveis legais.",
+      "taskNome": "Validar orcamento",
+      "taskDescricao": "A equipe valida o orçamento do pedido para verificar se está dentro do limite.",
+      "descricao": "A equipe valida o orçamento do pedido para verificar se está dentro do limite.",
       "info": "",
       "x": 60,
       "y": 1030
     },
     {
-      "id": "n7",
-      "label": "Enviar Documentação",
-      "nodeType": "task",
-      "taskNome": "Enviar Documentação",
-      "taskDescricao": "O candidato envia a documentação obrigatória.",
-      "descricao": "O candidato envia a documentação obrigatória.",
-      "info": "",
+      "id": "n8",
+      "label": "Cliente",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_cliente",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Cliente",
+      "descricao": "O cliente é o solicitante da compra.",
+      "info": "id",
       "x": 60,
       "y": 1220
     },
     {
-      "id": "n8",
-      "label": "Documentação Completa?",
+      "id": "n9",
+      "label": "Orcamento aprovado?",
       "nodeType": "condicional",
-      "condicionalNome": "Documentação Completa?",
-      "condicionalDescricao": "Verifica se a documentação está completa e correta.",
-      "descricao": "Verifica se a documentação está completa e correta.",
+      "condicionalNome": "Orcamento aprovado?",
+      "condicionalDescricao": "A equipe avalia se o orçamento está aprovado com base na validação realizada.",
+      "descricao": "A equipe avalia se o orçamento está aprovado com base na validação realizada.",
       "gatewayType": "exclusivo",
       "x": 700,
       "y": 1220
     },
     {
-      "id": "n9",
-      "label": "Conferir Documentação",
-      "nodeType": "task",
-      "taskNome": "Conferir Documentação",
-      "taskDescricao": "A documentação é conferida automaticamente e analisada administrativamente.",
-      "descricao": "A documentação é conferida automaticamente e analisada administrativamente.",
-      "info": "",
-      "x": 700,
-      "y": 1030
-    },
-    {
       "id": "n10",
-      "label": "Corrigir Documentação",
+      "label": "Atualizar Pedido",
       "nodeType": "task",
-      "taskNome": "Corrigir Documentação",
-      "taskDescricao": "Caminho alternativo quando a condição 'Documentação Completa?' não é atendida.",
-      "descricao": "Caminho alternativo quando a condição 'Documentação Completa?' não é atendida.",
+      "taskNome": "Atualizar Pedido",
+      "taskDescricao": "Atualiza o pedido com as informações corrigidas.",
+      "descricao": "Atualiza o pedido com as informações corrigidas.",
       "info": "",
       "x": 1000,
       "y": 1220
     },
     {
       "id": "n11",
-      "label": "Vaga",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_vaga",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Vaga",
-      "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
-      "info": "id",
+      "label": "Gerar OrdemDeCompra",
+      "nodeType": "task",
+      "taskNome": "Gerar OrdemDeCompra",
+      "taskDescricao": "Gera a ordem de compra com base no pedido aprovado.",
+      "descricao": "Gera a ordem de compra com base no pedido aprovado.",
+      "info": "",
       "x": 700,
-      "y": 840
+      "y": 1030
     },
     {
       "id": "n12",
-      "label": "Analisar Disponibilidade",
-      "nodeType": "task",
-      "taskNome": "Analisar Disponibilidade",
-      "taskDescricao": "Analisa a disponibilidade de vagas no curso selecionado.",
-      "descricao": "Analisa a disponibilidade de vagas no curso selecionado.",
-      "info": "",
+      "label": "OrdemDeCompra",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_ordemdecompra",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "OrdemDeCompra",
+      "descricao": "A ordem de compra é criada e enviada ao fornecedor.",
+      "info": "id",
       "x": 700,
-      "y": 650
+      "y": 840
     },
     {
       "id": "n13",
-      "label": "Vaga Disponível?",
-      "nodeType": "condicional",
-      "condicionalNome": "Vaga Disponível?",
-      "condicionalDescricao": "Verifica se há vaga disponível no curso.",
-      "descricao": "Verifica se há vaga disponível no curso.",
-      "gatewayType": "exclusivo",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "nodeType": "task",
+      "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+      "taskDescricao": "Envia a ordem de compra ao fornecedor para que ele possa realizar a entrega.",
+      "descricao": "Envia a ordem de compra ao fornecedor para que ele possa realizar a entrega.",
+      "info": "",
       "x": 700,
-      "y": 460
+      "y": 650
     },
     {
       "id": "n14",
-      "label": "Realizar Análise Curricular",
-      "nodeType": "task",
-      "taskNome": "Realizar Análise Curricular",
-      "taskDescricao": "Realiza análise curricular e outros critérios adicionais.",
-      "descricao": "Realiza análise curricular e outros critérios adicionais.",
-      "info": "",
+      "label": "Fornecedor",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_fornecedor",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Fornecedor",
+      "descricao": "O fornecedor recebe a ordem de compra e realiza a entrega.",
+      "info": "id",
       "x": 700,
-      "y": 270
+      "y": 460
     },
     {
       "id": "n15",
-      "label": "Informar Vaga Indisponível",
+      "label": "Fornecedor recebe OrdemDeCompra",
       "nodeType": "task",
-      "taskNome": "Informar Vaga Indisponível",
-      "taskDescricao": "Caminho alternativo quando a condição 'Vaga Disponível?' não é atendida.",
-      "descricao": "Caminho alternativo quando a condição 'Vaga Disponível?' não é atendida.",
+      "taskNome": "Fornecedor recebe OrdemDeCompra",
+      "taskDescricao": "O fornecedor recebe a ordem de compra e inicia o processo de entrega.",
+      "descricao": "O fornecedor recebe a ordem de compra e inicia o processo de entrega.",
       "info": "",
-      "x": 1000,
-      "y": 460
-    },
-    {
-      "id": "n16",
-      "label": "Critérios Adicionais?",
-      "nodeType": "condicional",
-      "condicionalNome": "Critérios Adicionais?",
-      "condicionalDescricao": "Verifica se há critérios adicionais para o candidato.",
-      "descricao": "Verifica se há critérios adicionais para o candidato.",
-      "gatewayType": "exclusivo",
       "x": 700,
-      "y": 80
-    },
-    {
-      "id": "n17",
-      "label": "Contrato",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_contrato",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Contrato",
-      "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
-      "info": "id",
-      "x": 1340,
-      "y": 80
-    },
-    {
-      "id": "n18",
-      "label": "Solicitar Bolsa",
-      "nodeType": "task",
-      "taskNome": "Solicitar Bolsa",
-      "taskDescricao": "O candidato solicita bolsa, desconto promocional, convênio ou financiamento.",
-      "descricao": "O candidato solicita bolsa, desconto promocional, convênio ou financiamento.",
-      "info": "",
-      "x": 1340,
       "y": 270
-    },
-    {
-      "id": "n19",
-      "label": "Pagamento Aprovado?",
-      "nodeType": "condicional",
-      "condicionalNome": "Pagamento Aprovado?",
-      "condicionalDescricao": "Verifica se o pagamento foi aprovado.",
-      "descricao": "Verifica se o pagamento foi aprovado.",
-      "gatewayType": "exclusivo",
-      "x": 1340,
-      "y": 460
-    },
-    {
-      "id": "n20",
-      "label": "Formalizar Contrato",
-      "nodeType": "task",
-      "taskNome": "Formalizar Contrato",
-      "taskDescricao": "Formaliza o contrato entre o aluno e a instituição.",
-      "descricao": "Formaliza o contrato entre o aluno e a instituição.",
-      "info": "",
-      "x": 1000,
-      "y": 80
-    },
-    {
-      "id": "n21",
-      "label": "Atraso no Pagamento",
-      "nodeType": "task",
-      "taskNome": "Atraso no Pagamento",
-      "taskDescricao": "Caminho alternativo quando a condição 'Pagamento Aprovado?' não é atendida.",
-      "descricao": "Caminho alternativo quando a condição 'Pagamento Aprovado?' não é atendida.",
-      "info": "",
-      "x": 1640,
-      "y": 460
-    },
-    {
-      "id": "n22",
-      "label": "Gerar Contrato Digital",
-      "nodeType": "task",
-      "taskNome": "Gerar Contrato Digital",
-      "taskDescricao": "Gera o contrato digital e obtém aceite eletrônico.",
-      "descricao": "Gera o contrato digital e obtém aceite eletrônico.",
-      "info": "",
-      "x": 1340,
-      "y": 650
-    },
-    {
-      "id": "n23",
-      "label": "Pagamento",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_pagamento",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Pagamento",
-      "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
-      "info": "id",
-      "x": 1340,
-      "y": 840
-    },
-    {
-      "id": "n24",
-      "label": "Confirmar Pagamento",
-      "nodeType": "task",
-      "taskNome": "Confirmar Pagamento",
-      "taskDescricao": "Confirma o pagamento e define a forma de pagamento.",
-      "descricao": "Confirma o pagamento e define a forma de pagamento.",
-      "info": "",
-      "x": 1340,
-      "y": 1030
-    },
-    {
-      "id": "n25",
-      "label": "Atraso no Pagamento?",
-      "nodeType": "condicional",
-      "condicionalNome": "Atraso no Pagamento?",
-      "condicionalDescricao": "Verifica se houve atraso no pagamento.",
-      "descricao": "Verifica se houve atraso no pagamento.",
-      "gatewayType": "exclusivo",
-      "x": 1340,
-      "y": 1220
-    },
-    {
-      "id": "n26",
-      "label": "Matricular Aluno",
-      "nodeType": "task",
-      "taskNome": "Matricular Aluno",
-      "taskDescricao": "O aluno é oficialmente matriculado.",
-      "descricao": "O aluno é oficialmente matriculado.",
-      "info": "",
-      "x": 1640,
-      "y": 1220
-    },
-    {
-      "id": "n27",
-      "label": "Gerar Registro Acadêmico",
-      "nodeType": "task",
-      "taskNome": "Gerar Registro Acadêmico",
-      "taskDescricao": "Gera o número de registro acadêmico e aloca o aluno em turma.",
-      "descricao": "Gera o número de registro acadêmico e aloca o aluno em turma.",
-      "info": "",
-      "x": 1980,
-      "y": 1220
-    },
-    {
-      "id": "n28",
-      "label": "Registro Acadêmico",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_registro_academico",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Registro Acadêmico",
-      "descricao": "Participa do processo de Processo Corporativo de Matrícula Acadêmica Integrada como elemento de suporte.",
-      "info": "id",
-      "x": 1980,
-      "y": 1030
-    },
-    {
-      "id": "n29",
-      "label": "Aluno",
-      "nodeType": "entidade",
-      "campos": [
-        {
-          "nome": "id_aluno",
-          "tipo": "numero",
-          "obrigatorio": true,
-          "keyType": "PK",
-          "relacionamento": null
-        },
-        {
-          "nome": "nome",
-          "tipo": "texto",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "descricao",
-          "tipo": "texto",
-          "obrigatorio": false,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        },
-        {
-          "nome": "data_criacao",
-          "tipo": "data",
-          "obrigatorio": true,
-          "keyType": "NORMAL",
-          "relacionamento": null
-        }
-      ],
-      "entidadeNome": "Aluno",
-      "descricao": "O aluno é o estudante matriculado.",
-      "info": "id",
-      "x": 1980,
-      "y": 840
-    },
-    {
-      "id": "n30",
-      "label": "Liberar Acesso Portal",
-      "nodeType": "task",
-      "taskNome": "Liberar Acesso Portal",
-      "taskDescricao": "Libera o acesso ao portal estudantil e disponibiliza a grade horária.",
-      "descricao": "Libera o acesso ao portal estudantil e disponibiliza a grade horária.",
-      "info": "",
-      "x": 1980,
-      "y": 650
-    },
-    {
-      "id": "n31",
-      "label": "Enviar Comunicação Oficial",
-      "nodeType": "task",
-      "taskNome": "Enviar Comunicação Oficial",
-      "taskDescricao": "Envia comunicação oficial confirmando a matrícula.",
-      "descricao": "Envia comunicação oficial confirmando a matrícula.",
-      "info": "",
-      "x": 1980,
-      "y": 460
     }
   ],
   "connections": [
@@ -606,23 +343,32 @@
     {
       "id": "c4",
       "from": "n4",
-      "to": "n5",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c5",
-      "from": "n5",
       "to": "n6",
       "fromHandle": "bottom",
       "toHandle": "top",
-      "decision": "",
-      "label": ""
+      "decision": "sim",
+      "label": "✔"
+    },
+    {
+      "id": "c5",
+      "from": "n4",
+      "to": "n5",
+      "fromHandle": "right",
+      "toHandle": "left",
+      "decision": "nao",
+      "label": "✘"
     },
     {
       "id": "c6",
+      "from": "n5",
+      "to": "n7",
+      "fromHandle": "bottom",
+      "toHandle": "right",
+      "decision": "merge",
+      "label": ""
+    },
+    {
+      "id": "c7",
       "from": "n6",
       "to": "n7",
       "fromHandle": "bottom",
@@ -631,26 +377,35 @@
       "label": ""
     },
     {
-      "id": "c7",
+      "id": "c8",
       "from": "n7",
       "to": "n8",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c9",
+      "from": "n8",
+      "to": "n9",
       "fromHandle": "right",
       "toHandle": "left",
       "decision": "",
       "label": ""
     },
     {
-      "id": "c8",
-      "from": "n8",
-      "to": "n9",
+      "id": "c10",
+      "from": "n9",
+      "to": "n11",
       "fromHandle": "top",
       "toHandle": "bottom",
       "decision": "sim",
       "label": "✔"
     },
     {
-      "id": "c9",
-      "from": "n8",
+      "id": "c11",
+      "from": "n9",
       "to": "n10",
       "fromHandle": "right",
       "toHandle": "left",
@@ -658,25 +413,16 @@
       "label": "✘"
     },
     {
-      "id": "c10",
+      "id": "c12",
       "from": "n10",
-      "to": "n9",
+      "to": "n12",
       "fromHandle": "top",
       "toHandle": "right",
       "decision": "merge",
       "label": ""
     },
     {
-      "id": "c11",
-      "from": "n9",
-      "to": "n11",
-      "fromHandle": "top",
-      "toHandle": "bottom",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c12",
+      "id": "c13",
       "from": "n11",
       "to": "n12",
       "fromHandle": "top",
@@ -685,7 +431,7 @@
       "label": ""
     },
     {
-      "id": "c13",
+      "id": "c14",
       "from": "n12",
       "to": "n13",
       "fromHandle": "top",
@@ -694,203 +440,23 @@
       "label": ""
     },
     {
-      "id": "c14",
+      "id": "c15",
       "from": "n13",
       "to": "n14",
       "fromHandle": "top",
       "toHandle": "bottom",
-      "decision": "sim",
-      "label": "✔"
-    },
-    {
-      "id": "c15",
-      "from": "n13",
-      "to": "n15",
-      "fromHandle": "right",
-      "toHandle": "left",
-      "decision": "nao",
-      "label": "✘"
+      "decision": "",
+      "label": ""
     },
     {
       "id": "c16",
-      "from": "n15",
-      "to": "n14",
-      "fromHandle": "top",
-      "toHandle": "right",
-      "decision": "merge",
-      "label": ""
-    },
-    {
-      "id": "c17",
       "from": "n14",
-      "to": "n16",
-      "fromHandle": "top",
-      "toHandle": "bottom",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c18",
-      "from": "n16",
-      "to": "n17",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "sim",
-      "label": "✔"
-    },
-    {
-      "id": "c19",
-      "from": "n16",
-      "to": "n20",
-      "fromHandle": "right",
-      "toHandle": "left",
-      "decision": "nao",
-      "label": "✘"
-    },
-    {
-      "id": "c20",
-      "from": "n20",
-      "to": "n17",
-      "fromHandle": "bottom",
-      "toHandle": "right",
-      "decision": "merge",
-      "label": ""
-    },
-    {
-      "id": "c21",
-      "from": "n17",
-      "to": "n18",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c22",
-      "from": "n18",
-      "to": "n19",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c23",
-      "from": "n19",
-      "to": "n22",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "sim",
-      "label": "✔"
-    },
-    {
-      "id": "c24",
-      "from": "n19",
-      "to": "n21",
-      "fromHandle": "right",
-      "toHandle": "left",
-      "decision": "nao",
-      "label": "✘"
-    },
-    {
-      "id": "c25",
-      "from": "n21",
-      "to": "n22",
-      "fromHandle": "bottom",
-      "toHandle": "right",
-      "decision": "merge",
-      "label": ""
-    },
-    {
-      "id": "c26",
-      "from": "n22",
-      "to": "n23",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c27",
-      "from": "n23",
-      "to": "n24",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c28",
-      "from": "n24",
-      "to": "n25",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c29",
-      "from": "n25",
-      "to": "n27",
-      "fromHandle": "bottom",
-      "toHandle": "top",
-      "decision": "sim",
-      "label": "✔"
-    },
-    {
-      "id": "c30",
-      "from": "n25",
-      "to": "n26",
-      "fromHandle": "right",
-      "toHandle": "left",
-      "decision": "nao",
-      "label": "✘"
-    },
-    {
-      "id": "c31",
-      "from": "n26",
-      "to": "n27",
-      "fromHandle": "bottom",
-      "toHandle": "right",
-      "decision": "merge",
-      "label": ""
-    },
-    {
-      "id": "c32",
-      "from": "n27",
-      "to": "n28",
-      "fromHandle": "top",
-      "toHandle": "bottom",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c33",
-      "from": "n28",
-      "to": "n29",
-      "fromHandle": "top",
-      "toHandle": "bottom",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c34",
-      "from": "n29",
-      "to": "n30",
-      "fromHandle": "top",
-      "toHandle": "bottom",
-      "decision": "",
-      "label": ""
-    },
-    {
-      "id": "c35",
-      "from": "n30",
-      "to": "n31",
+      "to": "n15",
       "fromHandle": "top",
       "toHandle": "bottom",
       "decision": "",
       "label": ""
     }
   ],
-  "updated_at": "2026-04-20T10:39:04.642702"
+  "updated_at": "2026-04-29T09:18:22.191278"
 }

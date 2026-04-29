@@ -1,34 +1,34 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from './GerarBPMNStart.module.css';
-import Close from '../Helper/Close';
-import { useBpmnOpportunities } from '../../Hooks/useBpmnOpportunities';
-import { UserContext } from '../../Context/UserContext';
-import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
-import { getOpportunityName, getOpportunityStage } from './opportunityHelpers';
-import { toOpportunitySlug } from '../Opportunities/opportunityFormatters';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import styles from "./GerarBPMNStart.module.css";
+import Close from "../Helper/Close";
+import { useBpmnOpportunities } from "../../Hooks/useBpmnOpportunities";
+import { UserContext } from "../../Context/UserContext";
+import { isReadOnlyAccessLevelOne } from "../../Utils/accessControl";
+import { getOpportunityName, getOpportunityStage } from "./opportunityHelpers";
+import { toOpportunitySlug } from "../Opportunities/opportunityFormatters";
 import {
   buildAssignmentPayloadFields,
   canManageOpportunity,
   getOpportunityAssignedName,
-} from '../Opportunities/opportunityOwnershipRules';
+} from "../Opportunities/opportunityOwnershipRules";
 import {
   deleteOpportunityById,
   fetchOpportunityUsers,
   getAuthToken,
-} from '../Opportunities/opportunityApi';
+} from "../Opportunities/opportunityApi";
 
-const BPMN_EDITOR_LOCAL_STORAGE_KEY = 'bpmn_editor_create_draft_v1';
+const BPMN_EDITOR_LOCAL_STORAGE_KEY = "bpmn_editor_create_draft_v1";
 const BPMN_EDITOR_SAVED_OPPORTUNITY_MAP_KEY =
-  'bpmn_editor_saved_opportunity_by_slug_v1';
+  "bpmn_editor_saved_opportunity_by_slug_v1";
 
-const slugifyBpmnName = (value = '') =>
+const slugifyBpmnName = (value = "") =>
   String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'novo-bpmn';
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "novo-bpmn";
 
 const getOpportunityCreatedAt = (opportunity) =>
   opportunity?.created_at ||
@@ -39,21 +39,21 @@ const getOpportunityCreatedAt = (opportunity) =>
 
 const formatOpportunityCreatedAt = (opportunity) => {
   const rawValue = getOpportunityCreatedAt(opportunity);
-  if (!rawValue) return '-';
+  if (!rawValue) return "-";
 
   const parsedDate = new Date(rawValue);
-  if (Number.isNaN(parsedDate.getTime())) return '-';
+  if (Number.isNaN(parsedDate.getTime())) return "-";
 
-  return parsedDate.toLocaleDateString('pt-BR');
+  return parsedDate.toLocaleDateString("pt-BR");
 };
 
 const isBpmnStageNode = (node) => {
-  const nodeType = String(node?.nodeType || '')
+  const nodeType = String(node?.nodeType || "")
     .trim()
     .toLowerCase();
   return (
     node?.active !== false &&
-    ['entidade', 'task', 'condicional'].includes(nodeType)
+    ["entidade", "task", "condicional"].includes(nodeType)
   );
 };
 
@@ -92,7 +92,7 @@ const GerarBPMNStart = () => {
     updateOpportunityData,
   } = useBpmnOpportunities();
   const [deleteConfirmItem, setDeleteConfirmItem] = React.useState(null);
-  const [noticeMessage, setNoticeMessage] = React.useState('');
+  const [noticeMessage, setNoticeMessage] = React.useState("");
   const [userOptions, setUserOptions] = React.useState([]);
 
   const createdBpmns = React.useMemo(() => opportunities, [opportunities]);
@@ -115,7 +115,7 @@ const GerarBPMNStart = () => {
 
     if (isReadOnlyMode || !canManageOpportunity(user, item)) {
       setNoticeMessage(
-        'Seu nível de acesso não permite alterar o responsável desta oportunidade.',
+        "Seu nível de acesso não permite alterar o responsável desta oportunidade.",
       );
       return;
     }
@@ -128,13 +128,13 @@ const GerarBPMNStart = () => {
         },
       });
     } catch {
-      setNoticeMessage('Não foi possível alterar o responsável.');
+      setNoticeMessage("Não foi possível alterar o responsável.");
     }
   };
 
   const handleOpenBpmnFromTable = (item) => {
     if (!item?.id) return;
-    const bpmnName = getOpportunityName(item) || 'Novo BPMN';
+    const bpmnName = getOpportunityName(item) || "Novo BPMN";
     const bpmnSlug = slugifyBpmnName(bpmnName);
     const hasBpmnSnapshot =
       item?.bpmn &&
@@ -162,7 +162,7 @@ const GerarBPMNStart = () => {
         );
         if (rawDraft) {
           const parsedDraft = JSON.parse(rawDraft);
-          const draftSlug = slugifyBpmnName(parsedDraft?.name || '');
+          const draftSlug = slugifyBpmnName(parsedDraft?.name || "");
           if (draftSlug === bpmnSlug) {
             window.localStorage.removeItem(BPMN_EDITOR_LOCAL_STORAGE_KEY);
           }
@@ -174,7 +174,7 @@ const GerarBPMNStart = () => {
       );
       const existingMap = rawMap ? JSON.parse(rawMap) : {};
       const nextMap = {
-        ...(existingMap && typeof existingMap === 'object' ? existingMap : {}),
+        ...(existingMap && typeof existingMap === "object" ? existingMap : {}),
         [bpmnSlug]: item.id,
       };
       window.localStorage.setItem(
@@ -189,7 +189,7 @@ const GerarBPMNStart = () => {
   const handleDeleteBpmnFromTable = (item) => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        'Seu nível de acesso permite apenas visualização de BPMNs.',
+        "Seu nível de acesso permite apenas visualização de BPMNs.",
       );
       return;
     }
@@ -222,8 +222,16 @@ const GerarBPMNStart = () => {
       );
       if (rawMap) {
         const parsedMap = JSON.parse(rawMap);
-        if (parsedMap && typeof parsedMap === 'object') {
-          delete parsedMap[bpmnSlug];
+        if (parsedMap && typeof parsedMap === "object") {
+          const opportunityId = Number(item.id);
+          Object.keys(parsedMap).forEach((slug) => {
+            if (
+              slug === bpmnSlug ||
+              Number(parsedMap[slug]) === opportunityId
+            ) {
+              delete parsedMap[slug];
+            }
+          });
           window.localStorage.setItem(
             BPMN_EDITOR_SAVED_OPPORTUNITY_MAP_KEY,
             JSON.stringify(parsedMap),
@@ -236,13 +244,13 @@ const GerarBPMNStart = () => {
       );
       if (rawDraft) {
         const parsedDraft = JSON.parse(rawDraft);
-        const draftSlug = slugifyBpmnName(parsedDraft?.name || '');
+        const draftSlug = slugifyBpmnName(parsedDraft?.name || "");
         if (draftSlug === bpmnSlug) {
           window.localStorage.removeItem(BPMN_EDITOR_LOCAL_STORAGE_KEY);
         }
       }
     } catch (error) {
-      setNoticeMessage('Não foi possível deletar o BPMN.');
+      setNoticeMessage("Não foi possível deletar o BPMN.");
     } finally {
       setDeleteConfirmItem(null);
     }
@@ -251,7 +259,7 @@ const GerarBPMNStart = () => {
   const handleCreateBpmn = () => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        'Seu nível de acesso permite apenas visualização de BPMNs.',
+        "Seu nível de acesso permite apenas visualização de BPMNs.",
       );
       return;
     }
@@ -259,7 +267,17 @@ const GerarBPMNStart = () => {
       window.localStorage.removeItem(BPMN_EDITOR_LOCAL_STORAGE_KEY);
     } catch (error) {}
 
-    navigate('/gerar-bpmn/criar');
+    navigate("/gerar-bpmn/criar");
+  };
+
+  const handleCreateBpmnWithIA = () => {
+    if (isReadOnlyMode) {
+      setNoticeMessage(
+        "Seu nível de acesso permite apenas visualização de BPMNs.",
+      );
+      return;
+    }
+    navigate("/ia");
   };
 
   return (
@@ -272,13 +290,22 @@ const GerarBPMNStart = () => {
           </p>
         </div>
         {!isReadOnlyMode ? (
-          <button
-            type="button"
-            className={styles.primaryButton}
-            onClick={handleCreateBpmn}
-          >
-            Criar BPMN
-          </button>
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={styles.primaryButton}
+              onClick={handleCreateBpmn}
+            >
+              ✏️ Modelar Manualmente
+            </button>
+            <button
+              type="button"
+              className={styles.aiButton}
+              onClick={handleCreateBpmnWithIA}
+            >
+              ✨ Gerar com IA
+            </button>
+          </div>
         ) : (
           <p className={styles.createdEmpty}>
             Modo somente visualização ativo para o seu nível de acesso.
@@ -294,8 +321,8 @@ const GerarBPMNStart = () => {
         ) : createdBpmns.length === 0 ? (
           <p className={styles.createdEmpty}>
             {isReadOnlyMode
-              ? 'Nenhum BPMN disponível para visualização no momento.'
-              : 'Nenhum BPMN criado ainda. Clique em “Criar BPMN”.'}
+              ? "Nenhum BPMN disponível para visualização no momento."
+              : "Nenhum BPMN criado ainda. Clique em “Criar BPMN”."}
           </p>
         ) : (
           <div className={styles.tableWrapper}>
@@ -357,13 +384,13 @@ const GerarBPMNStart = () => {
                         className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
                         onClick={() => handleOpenBpmnFromTable(item)}
                         title={
-                          isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
+                          isReadOnlyMode ? "Visualizar BPMN" : "Editar BPMN"
                         }
                         aria-label={
-                          isReadOnlyMode ? 'Visualizar BPMN' : 'Editar BPMN'
+                          isReadOnlyMode ? "Visualizar BPMN" : "Editar BPMN"
                         }
                       >
-                        {isReadOnlyMode ? '👁️' : '✏️'}
+                        {isReadOnlyMode ? "👁️" : "✏️"}
                       </button>
                       {!isReadOnlyMode ? (
                         <button
@@ -397,7 +424,7 @@ const GerarBPMNStart = () => {
       {deleteConfirmItem && (
         <Close
           title="Deletar BPMN"
-          message={`Deseja deletar o BPMN "${getOpportunityName(deleteConfirmItem)}"?`}
+          message={`Deseja deletar o BPMN "${getOpportunityName(deleteConfirmItem)}"? A oportunidade vinculada também será deletada.`}
           onConfirm={confirmDeleteBpmnFromTable}
           onCancel={() => setDeleteConfirmItem(null)}
         />
@@ -407,8 +434,8 @@ const GerarBPMNStart = () => {
         <Close
           title="Aviso"
           message={noticeMessage}
-          onConfirm={() => setNoticeMessage('')}
-          onCancel={() => setNoticeMessage('')}
+          onConfirm={() => setNoticeMessage("")}
+          onCancel={() => setNoticeMessage("")}
           confirmLabel="OK"
           hideCancel
         />

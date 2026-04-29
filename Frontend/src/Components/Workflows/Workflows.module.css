@@ -90,7 +90,7 @@
 }
 
 .viewTabActive .tabBadge {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
   color: #fff;
 }
 
@@ -214,12 +214,25 @@
 }
 
 /* Column widths */
-.colName { width: 22%; }
-.colStatus { width: 10%; }
-.colStep { width: 20%; }
-.colProgress { width: 15%; }
-.colUpdated { width: 12%; }
-.colActions { width: 12%; min-width: 100px; }
+.colName {
+  width: 22%;
+}
+.colStatus {
+  width: 10%;
+}
+.colStep {
+  width: 20%;
+}
+.colProgress {
+  width: 15%;
+}
+.colUpdated {
+  width: 12%;
+}
+.colActions {
+  width: 12%;
+  min-width: 100px;
+}
 
 /* ─── Name link ──────────────────────────────── */
 .nameLink {
@@ -415,13 +428,29 @@
 }
 
 /* ─── Task table columns ─────────────────────── */
-.colTaskId { width: 5%; text-align: center; }
-.colTaskLabel { width: 24%; }
-.colTaskOpp { width: 18%; }
-.colTaskAssignee { width: 16%; }
-.colTaskStatus { width: 10%; }
-.colTaskDate { width: 13%; }
-.colTaskActions { width: 16%; min-width: 140px; }
+.colTaskId {
+  width: 5%;
+  text-align: center;
+}
+.colTaskLabel {
+  width: 24%;
+}
+.colTaskOpp {
+  width: 18%;
+}
+.colTaskAssignee {
+  width: 16%;
+}
+.colTaskStatus {
+  width: 10%;
+}
+.colTaskDate {
+  width: 13%;
+}
+.colTaskActions {
+  width: 16%;
+  min-width: 140px;
+}
 
 .taskLabelWrap {
   display: flex;
@@ -1105,7 +1134,7 @@
   padding-left: 1.5rem;
 }
 .timeline::before {
-  content: '';
+  content: "";
   position: absolute;
   left: 5px;
   top: 8px;

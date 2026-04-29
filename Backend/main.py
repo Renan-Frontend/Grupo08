@@ -38,7 +38,7 @@ from app_utils import (
     get_role_permissions,
     ROLE_PERMISSIONS,
 )
-from models import Oportunidade, UserOut, User, UserUpdate, Entidade, AuthRequest
+from models import Oportunidade, UserOut, User, UserUpdate, Entidade, AuthRequest, Lead, Activity, Registro, Contato
 
 
 SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL", "").strip()
@@ -247,7 +247,7 @@ def _execute_ai_action(action: dict[str, Any], current_user: dict[str, Any]) -> 
             "categoria": str(payload.get("categoria") or "IA"),
             "nome": str(payload.get("nome") or "Entidade IA").strip(),
             "descricao": str(payload.get("descricao") or "").strip(),
-            "tipoEntidade": str(payload.get("tipoEntidade") or "Processo"),
+            "tipoEntidade": _normalize_entity_type(str(payload.get("tipoEntidade") or ""), default="processo"),
             "campos": payload.get("campos") if isinstance(payload.get("campos"), list) else [],
             "criadoPor": current_user.get("nome") or "IA",
         }
@@ -1063,7 +1063,7 @@ def _ensure_bpmn_entity_nodes(
                 "label": entity_name,
                 "nodeType": "entidade",
                 "entidadeNome": entity_name,
-                "tipoEntidade": "apoio",
+                "tipoEntidade": "",
                 "x": max_x + (added_count * 240),
                 "y": 120,
                 "info": "id",
@@ -1088,27 +1088,19 @@ def _ensure_bpmn_entity_nodes(
     return _sanitize_bpmn_payload(merged_payload, fallback_id)
 
 
-def _infer_data_entity_type(stage_name: str, participant: str = "", default: str = "apoio") -> str:
+def _infer_data_entity_type(stage_name: str, participant: str = "", default: str = "processo") -> str:
     text = _normalize_ai_text(f"{stage_name} {participant}")
     if not text:
         return default
 
-    external_hints = ("fornecedor", "cliente", "parceiro", "terceiro", "extern", "api", "erp", "banco")
-    if any(hint in text for hint in external_hints):
-        return "externa"
+    # Pessoas ou organizacoes -> contato
+    person_org_hints = ("fornecedor", "cliente", "parceiro", "terceiro", "funcionario",
+                        "gestor", "colaborador", "prestador", "usuario", "operador",
+                        "responsavel", "pessoa", "empresa", "organizacao")
+    if any(hint in text for hint in person_org_hints):
+        return "contato"
 
-    associative_hints = ("item", "vincul", "relacion", "ligacao", "associ")
-    if any(hint in text for hint in associative_hints):
-        return "associativa"
-
-    principal_hints = ("solicit", "pedido", "processo", "cadastro", "proposta", "contrato")
-    if any(hint in text for hint in principal_hints):
-        return "principal"
-
-    support_hints = ("historico", "log", "anexo", "document", "observa", "auditoria")
-    if any(hint in text for hint in support_hints):
-        return "apoio"
-
+    # Objetos, documentos, artefatos -> processo
     return default
 
 
@@ -1164,7 +1156,7 @@ def _inject_entity_nodes_into_bpmn(
             "label": entity_name,
             "nodeType": "entidade",
             "entidadeNome": entity_name,
-            "tipoEntidade": "principal" if entity_counter == 1 else "apoio",
+            "tipoEntidade": "",
             "x": float(best_task.get("x") or 100) if best_task else float(100 + entity_counter * 300),
             "y": float(best_task.get("y") or 200) if best_task else 200.0,
             "campos": [
@@ -1663,7 +1655,7 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 )
                 node_payload["tipoEntidade"] = _normalize_entity_type(
                     stage.get("tipoEntidade"),
-                    default=_infer_data_entity_type(stage_name, stage_participant, default="principal" if index == 1 else "apoio"),
+                    default=_infer_data_entity_type(stage_name, stage_participant, default="processo"),
                 )
             elif stage_type == "condicional":
                 if stage_participant:
@@ -2128,7 +2120,10 @@ def _sanitize_llm_action(raw_action: Any, fallback_id: int, current_user: dict[s
             "entidade que representa",
         )
         raw_desc = str(payload.get("descricao") or "").strip()
-        entity_type_raw = _entity_type_label(str(payload.get("tipoEntidade") or ""), fallback_id)
+        raw_tipo_entidade = str(payload.get("tipoEntidade") or "").strip()
+        if not raw_tipo_entidade:
+            raw_tipo_entidade = f"{entity_name} {raw_desc}".strip()
+        entity_type_raw = _entity_type_label(raw_tipo_entidade, fallback_id)
         clean_desc = raw_desc if not any(raw_desc.lower().startswith(p) for p in _BAD_DESC_PREFIXES) else ""
         # Rejeita descrição que é igual ou contida no nome da entidade (ex: nome='Cliente', desc='Cliente')
         if clean_desc and _normalize_ai_text(clean_desc) == _normalize_ai_text(entity_name):
@@ -2180,9 +2175,7 @@ def _sanitize_context_panel_suggestion(raw_value: Any) -> dict[str, Any] | None:
 
     stage_category = _normalize_bpmn_stage_type(raw_value.get("stageCategory") or "dados", default="dados")
 
-    entity_type = str(raw_value.get("entityType") or "apoio").strip().lower()
-    if entity_type not in {"principal", "apoio", "associativa", "externa"}:
-        entity_type = "apoio"
+    entity_type = _normalize_entity_type(raw_value.get("entityType"), default="processo")
 
     entity_mode = str(raw_value.get("entityMode") or "nova").strip().lower()
     if entity_mode not in {"nova", "existente"}:
@@ -2276,34 +2269,74 @@ def _normalize_ai_text(value: Any) -> str:
     )
 
 
-def _normalize_entity_type(value: Any, default: str = "apoio") -> str:
+def _normalize_entity_type(value: Any, default: str = "processo") -> str:
     normalized = _normalize_ai_text(value)
     if not normalized:
         return default
 
-    if normalized in {"principal", "core", "main", "primaria", "processo", "process"}:
-        return "principal"
-    if normalized in {"apoio", "support", "secundaria", "secundario", "auxiliar"}:
-        return "apoio"
-    if normalized in {"associativa", "associativo", "junction", "pivot", "relacao", "relacional", "vinculo"}:
-        return "associativa"
-    if normalized in {"externa", "externo", "external", "fornecedor", "cliente_externo", "terceiro"}:
-        return "externa"
+    tokens = set(part for part in re.split(r"[^a-z0-9]+", normalized) if part)
+
+    # Pessoas / organizacoes -> contato
+    contato_exact = {
+        "contato", "contact", "cliente", "fornecedor", "parceiro",
+        "funcionario", "gestor", "colaborador", "prestador",
+        "usuario", "operador", "responsavel", "pessoa", "empresa",
+        "organizacao", "terceiro", "solicitante", "aprovador",
+        # Compatibilidade com taxonomia antiga da IA
+        "apoio", "support", "auxiliar", "secundaria", "secundario",
+        "externa", "externo", "external",
+    }
+    contato_hints = {
+        "cliente", "fornecedor", "parceir", "funcionar", "gestor",
+        "colaborador", "prestador", "usuario", "operador", "responsavel",
+        "pessoa", "empresa", "organiz", "terceir", "solicitante",
+        "aprovador",
+    }
+    if normalized in contato_exact or any(hint in normalized for hint in contato_hints) or any(
+        token in contato_exact for token in tokens
+    ):
+        return "contato"
+    # Objetos / documentos / artefatos -> processo
+    processo_exact = {
+        "processo", "process", "principal", "core", "main",
+        "primaria", "associativa", "associativo", "junction", "pivot",
+        "pedido", "contrato",
+        "proposta", "solicitacao", "nota", "fiscal", "relatorio",
+        "documento", "item", "cadastro", "registro", "aprovacao",
+        "orcamento", "ordem",
+    }
+    processo_hints = {
+        "process", "pedido", "contrat", "propost", "solicit",
+        "nota", "fiscal", "relatori", "document", "item", "cadastro",
+        "registro", "aprovaca", "orcament", "ordem",
+    }
+    if normalized in processo_exact or any(hint in normalized for hint in processo_hints) or any(
+        token in processo_exact for token in tokens
+    ):
+        return "processo"
 
     return default
 
 
 def _entity_type_label(normalized_type: str, fallback_index: int) -> str:
     normalized = _normalize_entity_type(normalized_type, default="")
-    if normalized == "principal":
-        return "Principal"
-    if normalized == "associativa":
-        return "Associativa"
-    if normalized == "externa":
-        return "Externa"
-    if normalized == "apoio":
-        return "Apoio"
-    return "Principal" if fallback_index == 1 else "Apoio"
+    if normalized == "contato":
+        return "Contato"
+    return "Processo"
+
+
+def _normalize_papel_negocio(value: Any, tipo_entidade: Any = "", default: str = "") -> str:
+    normalized = _normalize_ai_text(value)
+    if normalized in {"contato", "contact"}:
+        return "contato"
+    if normalized in {"processo", "process"}:
+        return "processo"
+
+    inferred = _normalize_entity_type(tipo_entidade, default=default or "processo")
+    if inferred in {"contato", "processo"}:
+        return inferred
+
+    return default
 
 
 def _extract_goal_data_entities(goal: str) -> list[dict[str, str]]:
@@ -2333,7 +2366,7 @@ def _extract_goal_data_entities(goal: str) -> list[dict[str, str]]:
 
     # Preferred format: "- Nome da Entidade (Tipo)"
     for match in re.finditer(
-        r"[-•*]\s*([^\n\r\-\(\)]+?)\s*\((principal|apoio|associativa|externa|primaria|secundaria|auxiliar|externo)\)",
+        r"[-•*]\s*([^\n\r\-\(\)]+?)\s*\((contato|processo|principal|apoio|associativa|externa|primaria|secundaria|auxiliar|externo)\)",
         text,
         flags=re.IGNORECASE,
     ):
@@ -2341,7 +2374,7 @@ def _extract_goal_data_entities(goal: str) -> list[dict[str, str]]:
 
     # In-text format: "entidade externa Fornecedor" / "entidade Aprovação"
     for match in re.finditer(
-        r"entidade\s+(principal|associativa|apoio|externa)?\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ0-9\s\-_/]{1,80})",
+        r"entidade\s+(contato|processo|principal|associativa|apoio|externa)?\s*([A-ZÀ-Ý][A-Za-zÀ-ÿ0-9\s\-_/]{1,80})",
         text,
         flags=re.IGNORECASE,
     ):
@@ -2360,55 +2393,22 @@ def _infer_entity_type(
     fields: list[dict[str, Any]],
 ) -> str:
     source_type = _normalize_entity_type(source_entity_payload.get("tipoEntidade"), default="")
-    if source_type in {"principal", "apoio", "associativa", "externa"}:
+    if source_type in {"contato", "processo"}:
         return source_type
-
-    fk_count = 0
-    for field in fields:
-        key_type = str(field.get("keyType") or "").strip().upper()
-        if key_type == "FK":
-            fk_count += 1
-    if fk_count >= 2:
-        return "associativa"
 
     text = _normalize_ai_text(" ".join([process_name, entity_name, goal]))
 
-    external_hints = (
-        "extern",
-        "fornecedor",
-        "parceiro",
-        "terceiro",
-        "api",
-        "integracao",
-        "integracao",
-        "erp",
-        "banco",
+    # Entidades que representam pessoas ou organizacoes -> contato
+    person_org_hints = (
+        "cliente", "fornecedor", "parceiro", "funcionario", "gestor",
+        "colaborador", "prestador", "usuario", "operador", "responsavel",
+        "terceiro", "pessoa", "empresa", "organizacao",
     )
-    if any(hint in text for hint in external_hints):
-        return "externa"
+    if any(hint in text for hint in person_org_hints):
+        return "contato"
 
-    associative_hints = (
-        "associ",
-        "vincul",
-        "relacion",
-        "ligacao",
-        "ligacao",
-        "item",
-    )
-    if any(hint in text for hint in associative_hints):
-        return "associativa"
-
-    principal_hints = (
-        "principal",
-        "processo",
-        "solicitacao",
-        "pedido",
-        "cadastro",
-    )
-    if any(hint in text for hint in principal_hints):
-        return "principal"
-
-    return "apoio"
+    # Entidades que representam objetos, documentos ou artefatos -> processo
+    return "processo"
 
 
 def _extract_existing_entities_context(context: dict[str, Any]) -> list[dict[str, Any]]:
@@ -2446,7 +2446,7 @@ def _extract_existing_entities_context(context: dict[str, Any]) -> list[dict[str
                 "id": item.get("id"),
                 "nome": nome,
                 "descricao": str(item.get("descricao") or "").strip(),
-                "tipoEntidade": str(item.get("tipoEntidade") or "Apoio").strip(),
+                "tipoEntidade": _normalize_entity_type(str(item.get("tipoEntidade") or ""), default="processo"),
                 "campos": fields,
             }
         )
@@ -3198,11 +3198,16 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "Exemplo CORRETO (entidade): nome='Cliente', descricao='Pessoa ou empresa que solicita o servico; seus dados sao registrados no inicio do processo e consultados em cada etapa de aprovacao'. "
         "Exemplo CORRETO (atividade): nome='Analisar Pedido', descricao='Responsavel verifica se o pedido atende as politicas internas de prazo e orcamento antes de seguir para aprovacao'. "
         "Exemplo CORRETO (condicional): nome='Aprovado?', descricao='Gestor avalia se o pedido atende aos criterios financeiros e de prazo'. "
-        "TIPO DA ENTIDADE (campo tipoEntidade): escolha com cuidado — nao use sempre 'apoio'. "
-        "  - 'principal': entidade central do processo, geralmente o objeto que inicia e conduz o fluxo (ex: Pedido, Contrato, Solicitacao). "
-        "  - 'apoio': entidade de suporte ou referencia usada pelo processo mas nao e o objeto central (ex: Cliente, Fornecedor, Funcionario). "
-        "  - 'associativa': entidade que representa um relacionamento entre duas outras entidades (ex: ItemPedido, ParticipanteEvento). "
-        "  - 'externa': entidade que pertence a um sistema externo ou dominio fora do processo (ex: NFe, Boleto, EmailExterior). "
+        "TIPO DA ENTIDADE (campo tipoEntidade): existem apenas dois tipos possiveis — 'contato' e 'processo'. "
+        "  - 'contato': use para entidades que representam PESSOAS ou ORGANIZACOES envolvidas no processo — quem executa, solicita, aprova ou e afetado. "
+        "    Exemplos: Cliente, Fornecedor, Funcionario, Gestor, Parceiro, Colaborador, Prestador. "
+        "    Na plataforma, Contatos sao vinculados a Oportunidades e possuem campos como nome, cargo, email e telefone. "
+        "    Use 'contato' quando a entidade responde a perguntas como: Quem solicitou? Quem aprova? Quem fornece? "
+        "  - 'processo': use para entidades que representam OBJETOS, DOCUMENTOS ou ARTEFATOS que fluem pelo processo — o que e processado, criado ou transformado. "
+        "    Exemplos: Pedido, Contrato, Solicitacao, Nota Fiscal, Proposta, Orcamento, Item, Aprovacao, Relatorio. "
+        "    Na plataforma, Processos sao registros estruturados com campos personalizados definidos pela entidade. "
+        "    Use 'processo' quando a entidade responde a perguntas como: O que esta sendo processado? O que e criado? O que e aprovado? "
+        "  REGRA: nunca use 'contato' para documentos ou objetos; nunca use 'processo' para pessoas ou empresas. "
         "Identifique o tipo correto com base no papel da entidade no processo descrito. "
         "Quando houver condicional (XOR), gere ramos com sentido de negocio (sim/nao) e evite decisao sem bifurcacao real. "
         "NUNCA coloque duas condicionais consecutivas no flowOrder — sempre insira pelo menos uma atividade (task) entre duas condicionais. "
@@ -3700,6 +3705,10 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         entry: dict[str, Any] = {"name": name, "type": fo_type}
         if desc:
             entry["desc"] = desc
+        # Preserva tipoEntidade para itens do tipo entidade
+        if fo_type == "entidade" and isinstance(raw_item, dict):
+            raw_tipo = raw_item.get("tipoEntidade") or ""
+            entry["tipoEntidade"] = _normalize_entity_type(raw_tipo, default="apoio")
         # Preserva branches (sim/nao) se a IA/plan forneceu
         if isinstance(raw_item, dict) and isinstance(raw_item.get("branches"), dict):
             entry["branches"] = {
@@ -4060,10 +4069,15 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
                         "fromHandle": "right", "toHandle": "left",
                         "decision": "nao", "label": "\u2718"
                     })
-                    # Merge: NAO target reconnects to the SAME next node as SIM
-                    # (ambos convergem no mesmo ponto do fluxo principal)
+
+                    # Merge: preferir convergir no nó APÓS o passo de SIM
+                    # quando existir, evitando forçar NAO -> SIM.
+                    merge_idx = nxt_idx
+                    if pos + 2 < len(main_flow):
+                        merge_idx = main_flow[pos + 2]
+
                     result.append({
-                        "id": next_conn_id(), "from": f"n{nao_idx + 1}", "to": f"n{nxt_idx + 1}",
+                        "id": next_conn_id(), "from": f"n{nao_idx + 1}", "to": f"n{merge_idx + 1}",
                         "fromHandle": "bottom", "toHandle": "right",
                         "decision": "merge", "label": ""
                     })
@@ -4533,6 +4547,57 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         _cleaned_conns.append(_c)
     base_conns = _cleaned_conns
 
+    # 3. Reparo de nós desconectados: garante que todo nó tenha pelo menos
+    #    uma conexão de entrada E uma de saída (exceto o primeiro e o último).
+    #    Isso previne nós "soltos" causados por falhas do LLM na geração de conexões.
+    _node_order = [str(n.get("id") or "") for n in final_nodes]
+    _outgoing:  dict[str, list[str]] = {nid: [] for nid in _node_order}
+    _incoming:  dict[str, list[str]] = {nid: [] for nid in _node_order}
+    for _c in base_conns:
+        _cf = str(_c.get("from") or "")
+        _ct = str(_c.get("to")   or "")
+        if _cf in _outgoing:
+            _outgoing[_cf].append(_ct)
+        if _ct in _incoming:
+            _incoming[_ct].append(_cf)
+    _repair_id = len(base_conns)
+    for _ri, _nid in enumerate(_node_order):
+        # Nó sem saída (exceto o último) → conectar ao próximo nó do fluxo
+        if _ri < len(_node_order) - 1 and not _outgoing[_nid]:
+            # Procura o próximo nó que AINDA não está conectado de volta
+            _next_nid = _node_order[_ri + 1]
+            _repair_id += 1
+            _rep_conn = {
+                "id": f"c_repair_{_repair_id}",
+                "from": _nid, "to": _next_nid,
+                "fromHandle": "bottom", "toHandle": "top",
+                "decision": "", "label": "",
+            }
+            base_conns.append(_rep_conn)
+            _outgoing[_nid].append(_next_nid)
+            _incoming[_next_nid].append(_nid)
+            print(f"  [REPAIR] Adicionada conexão faltante: {_nid} → {_next_nid}")
+        # Nó sem entrada (exceto o primeiro) → conectar do nó anterior no fluxo
+        if _ri > 0 and not _incoming[_nid]:
+            _prev_nid = _node_order[_ri - 1]
+            # Só adiciona se já não existe saída do anterior para este
+            already = any(
+                str(c.get("from") or "") == _prev_nid and str(c.get("to") or "") == _nid
+                for c in base_conns
+            )
+            if not already:
+                _repair_id += 1
+                _rep_conn = {
+                    "id": f"c_repair_{_repair_id}",
+                    "from": _prev_nid, "to": _nid,
+                    "fromHandle": "bottom", "toHandle": "top",
+                    "decision": "", "label": "",
+                }
+                base_conns.append(_rep_conn)
+                _outgoing[_prev_nid].append(_nid)
+                _incoming[_nid].append(_prev_nid)
+                print(f"  [REPAIR] Adicionada conexão faltante (sem entrada): {_prev_nid} → {_nid}")
+
     final_bpmn_payload = {
         "name": process_name,
         "nodes": final_nodes,
@@ -4558,7 +4623,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
     for _ei, _cname in enumerate(candidate_entities_groq, start=1):
         _tipo_raw = fo_entity_tipo.get(_cname.lower()) or goal_entity_type_by_name.get(_normalize_ai_text(_cname), "")
         _desc_fo = next((str(i.get("desc") or "").strip() for i in typed_flow_order if i.get("name") == _cname and i.get("desc")), "")
-        _tipo = _normalize_entity_type(_tipo_raw, default="apoio") if _tipo_raw else _entity_type_label("", _ei)
+        _tipo = _normalize_entity_type(_tipo_raw, default="apoio") if _tipo_raw else "apoio"
         entity_actions_groq.append({
             "id": f"a{len(entity_actions_groq) + 1}",
             "type": "create_entidade",
@@ -5261,7 +5326,7 @@ def _review_plan_fill_missing_content(plan: dict[str, Any], process_name: str = 
                 continue
 
             entity_name = str(p.get("nome") or "").strip()
-            entity_kind = str(p.get("tipoEntidade") or "Processo").strip()
+            entity_kind = _normalize_entity_type(str(p.get("tipoEntidade") or ""), default="processo")
 
             # Preencher descricao vazia
             if not str(p.get("descricao") or "").strip():
@@ -5685,7 +5750,7 @@ def _sync_bpmn_state_to_opportunity_table(
             "categoria": str(payload.get("categoria") or "IA"),
             "nome": str(payload.get("nome") or "Entidade IA").strip(),
             "descricao": str(payload.get("descricao") or "").strip(),
-            "tipoEntidade": str(payload.get("tipoEntidade") or "Processo"),
+            "tipoEntidade": _normalize_entity_type(str(payload.get("tipoEntidade") or ""), default="processo"),
             "campos": payload.get("campos") if isinstance(payload.get("campos"), list) else [],
             "criadoPor": current_user.get("nome") or "IA",
         }
@@ -5955,6 +6020,40 @@ def get_user_by_email(email: str):
     )
 
 
+def update_user_password_hash(user_id: int, senha_hash: str) -> None:
+    """Update only one user's password hash, avoiding full-table rewrites."""
+    if USE_SUPABASE_DB:
+        _, json_adapter = _require_db_dependencies()
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"SELECT payload FROM {USERS_TABLE} WHERE id = %s",
+                    (int(user_id),),
+                )
+                row = cursor.fetchone()
+                if not row:
+                    return
+                payload = row[0] if isinstance(row[0], dict) else {}
+                payload["senha"] = str(senha_hash)
+                cursor.execute(
+                    f"UPDATE {USERS_TABLE} SET payload = %s WHERE id = %s",
+                    (json_adapter(payload), int(user_id)),
+                )
+            conn.commit()
+        return
+
+    with _data_lock:
+        users = load_users_data()
+        changed = False
+        for u in users:
+            if int(u.get("id", -1)) == int(user_id):
+                u["senha"] = str(senha_hash)
+                changed = True
+                break
+        if changed:
+            save_users_data(users)
+
+
 def _is_admin_user(user: dict[str, Any]) -> bool:
     return bool(user.get("admin", False) or user.get("role") == "admin")
 
@@ -6027,6 +6126,245 @@ def load_documentos_data():
 
 def save_documentos_data(rows):
     save_collection(DOCUMENTOS_FILE, DOCUMENTOS_TABLE, rows)
+
+
+def load_registros_data():
+    return load_json(REGISTROS_FILE, [])
+
+
+def save_registros_data(rows):
+    save_json(REGISTROS_FILE, rows)
+
+
+def load_leads_data():
+    return load_collection(LEADS_FILE, "leads_store", [])
+
+
+def save_leads_data(rows):
+    save_collection(LEADS_FILE, "leads_store", rows)
+
+
+def load_contatos_data():
+    return load_collection(CONTATOS_FILE, "contatos_store", [])
+
+
+def save_contatos_data(rows):
+    save_collection(CONTATOS_FILE, "contatos_store", rows)
+
+
+def _sync_opportunity_contacts_to_independent_table(opportunity: dict[str, Any]) -> None:
+    """Sincroniza contatos de uma oportunidade para contatos.json"""
+    if not isinstance(opportunity, dict):
+        return
+    
+    opp_id = opportunity.get("id")
+    opp_name = opportunity.get("nome") or opportunity.get("name") or ""
+    contacts = opportunity.get("contacts")
+    
+    if not opp_id or not isinstance(contacts, list):
+        return
+    
+    with _data_lock:
+        contatos = load_contatos_data()
+        
+        # Remove contatos antigos dessa oportunidade (soft delete)
+        for c in contatos:
+            if c.get("opportunityId") == opp_id:
+                c["ativo"] = False
+                c["updated_at"] = now_iso()
+        
+        # Adiciona/atualiza contatos da oportunidade
+        next_id = max([int(c.get("id", 0)) for c in contatos if c.get("ativo", True)], default=0) + 1
+        
+        for contact in contacts:
+            if not contact or not isinstance(contact, dict):
+                continue
+            
+            contact_nome = str(contact.get("nome") or "").strip()
+            if not contact_nome:
+                continue
+            
+            # Procura contato existente por nome+opp
+            existing = next(
+                (c for c in contatos 
+                 if c.get("opportunityId") == opp_id 
+                 and (c.get("nome") or "").strip().lower() == contact_nome.lower()
+                 and c.get("ativo", True)),
+                None
+            )
+            
+            contato_dict = {
+                "id": existing.get("id") if existing else next_id,
+                "nome": contact_nome,
+                "cargo": contact.get("cargo") or "",
+                "email": contact.get("email") or "",
+                "telefone": contact.get("telefone") or "",
+                "empresa": contact.get("empresa") or "",
+                "descricao": contact.get("descricao") or "",
+                "notas": contact.get("notas") or "",
+                "isPrimary": contact.get("isPrimary", False),
+                "entidadeId": contact.get("entidadeId"),
+                "entidadeNome": contact.get("entidadeNome"),
+                "opportunityId": opp_id,
+                "opportunityName": opp_name,
+                "ativo": True,
+                "created_at": existing.get("created_at") if existing else now_iso(),
+                "updated_at": now_iso(),
+                "criadoPor": contact.get("criadoPor") or "oportunidade_sync",
+            }
+            
+            if existing:
+                # Atualiza contato existente
+                idx = contatos.index(existing)
+                contatos[idx] = contato_dict
+            else:
+                # Adiciona novo contato
+                contatos.append(contato_dict)
+                next_id += 1
+        
+        save_contatos_data(contatos)
+
+
+def _sync_registro_contato_to_independent_table(registro: dict[str, Any]) -> None:
+    """Sincroniza registros de papelNegocio='contato' para contatos.json e para oportunidade.contacts"""
+    if not isinstance(registro, dict):
+        return
+    
+    # Só sincroniza registros de contato
+    if registro.get("papelNegocio") != "contato":
+        return
+    
+    registro_id = registro.get("id")
+    if not registro_id:
+        return
+    
+    titulo = registro.get("titulo", "")
+    dados = registro.get("dados", {}) if isinstance(registro.get("dados"), dict) else {}
+    opp_id_raw = dados.get("oportunidadeId")
+    
+    # Normaliza opp_id para int se possível
+    try:
+        opp_id = int(opp_id_raw) if opp_id_raw is not None else None
+    except (ValueError, TypeError):
+        opp_id = None
+    
+    # Monta dict do contato
+    contato_base = {
+        "nome": titulo,
+        "cargo": "",
+        "email": "",
+        "telefone": "",
+        "isPrimary": False,
+        "entidadeId": registro.get("entidadeId"),
+        "entidadeNome": registro.get("entidadeNome"),
+        "registro_id": registro_id,
+    }
+    
+    with _data_lock:
+        # 1. Salva em contatos.json
+        contatos = load_contatos_data()
+        existing = next((c for c in contatos if c.get("registro_id") == registro_id), None)
+        new_id = (max([int(c.get("id", 0)) for c in contatos], default=0) + 1) if not existing else existing.get("id")
+        
+        contato_dict = {
+            "id": new_id,
+            "opportunityId": str(opp_id) if opp_id else "",
+            "opportunityName": "",
+            "empresa": "",
+            "descricao": "",
+            "notas": "",
+            "ativo": True,
+            "created_at": existing.get("created_at") if existing else now_iso(),
+            "updated_at": now_iso(),
+            "criadoPor": registro.get("criadoPor", "registro_sync"),
+            **contato_base,
+        }
+        
+        if existing:
+            idx = contatos.index(existing)
+            contatos[idx] = contato_dict
+        else:
+            contatos.append(contato_dict)
+        
+        save_contatos_data(contatos)
+        
+        # 2. Adiciona/atualiza no array contacts da oportunidade correspondente
+        if opp_id:
+            opps = load_oportunidades_data()
+            for opp in opps:
+                if int(opp.get("id", -1)) == opp_id:
+                    existing_contacts = opp.get("contacts") if isinstance(opp.get("contacts"), list) else []
+                    # Remove entrada anterior com mesmo registro_id
+                    existing_contacts = [c for c in existing_contacts if c.get("registro_id") != registro_id]
+                    existing_contacts.append({
+                        **contato_base,
+                        "id": f"reg_{registro_id}",
+                    })
+                    opp["contacts"] = existing_contacts
+                    break
+            save_oportunidades_data(opps)
+
+
+def _delete_registro_contato_from_independent_table(registro: dict[str, Any]) -> None:
+    """Marca contato como inativo quando registro é deletado e remove da oportunidade"""
+    if not isinstance(registro, dict):
+        return
+    
+    registro_id = registro.get("id")
+    if not registro_id:
+        return
+    
+    dados = registro.get("dados", {}) if isinstance(registro.get("dados"), dict) else {}
+    opp_id_raw = dados.get("oportunidadeId")
+    try:
+        opp_id = int(opp_id_raw) if opp_id_raw is not None else None
+    except (ValueError, TypeError):
+        opp_id = None
+    
+    with _data_lock:
+        # Remove de contatos.json
+        contatos = load_contatos_data()
+        for c in contatos:
+            if c.get("registro_id") == registro_id:
+                c["ativo"] = False
+                c["updated_at"] = now_iso()
+        save_contatos_data(contatos)
+        
+        # Remove do array contacts da oportunidade
+        if opp_id:
+            opps = load_oportunidades_data()
+            for opp in opps:
+                if int(opp.get("id", -1)) == opp_id:
+                    existing_contacts = opp.get("contacts") if isinstance(opp.get("contacts"), list) else []
+                    opp["contacts"] = [c for c in existing_contacts if c.get("registro_id") != registro_id]
+                    break
+            save_oportunidades_data(opps)
+
+
+
+
+def load_activities_data():
+    return load_collection(ACTIVITIES_FILE, "activities_store", [])
+
+
+def save_activities_data(rows):
+    save_collection(ACTIVITIES_FILE, "activities_store", rows)
+
+
+def load_bpmn_tasks_catalog():
+    return load_collection(BPMN_TASKS_CATALOG_FILE, "bpmn_tasks_catalog", [])
+
+
+def save_bpmn_tasks_catalog(rows):
+    save_collection(BPMN_TASKS_CATALOG_FILE, "bpmn_tasks_catalog", rows)
+
+
+def load_bpmn_condicionais_catalog():
+    return load_collection(BPMN_CONDICIONAIS_CATALOG_FILE, "bpmn_condicionais_catalog", [])
+
+
+def save_bpmn_condicionais_catalog(rows):
+    save_collection(BPMN_CONDICIONAIS_CATALOG_FILE, "bpmn_condicionais_catalog", rows)
 
 
 def get_allowed_origins():
@@ -6306,6 +6644,13 @@ def create_oportunidade(oportunidade: Oportunidade):
             oportunidade_dict["bpmn_current_version"] = ver
 
         print(f"[OK] Oportunidade criada: id={new_id}, nome={oportunidade_dict.get('nome')}, total={len(fake_oportunidades)}")
+    
+    # Sincroniza contatos para contatos.json
+    try:
+        _sync_opportunity_contacts_to_independent_table(oportunidade_dict)
+    except Exception as e:
+        print(f"[WARN] Falha ao sincronizar contatos: {e}")
+    
     return oportunidade_dict
 
 # Armazenamento temporário de tokens de recuperação (em memória)
@@ -6377,6 +6722,25 @@ AI_AUDIT_FILE = os.path.join(
 DOCUMENTOS_FILE = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "documentos.json"
 )
+LEADS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "leads.json"
+)
+CONTATOS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "contatos.json"
+)
+ACTIVITIES_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "activities.json"
+)
+BPMN_TASKS_CATALOG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "bpmn_tasks_catalog.json"
+)
+BPMN_CONDICIONAIS_CATALOG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "bpmn_condicionais_catalog.json"
+)
+REGISTROS_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "registros.json"
+)
+REGISTROS_TABLE = "registros_store"
 
 init_supabase_storage()
 
@@ -6516,6 +6880,12 @@ def _update_oportunidade_locked(oportunidade_id: int, oportunidade: Oportunidade
             except Exception as e:
                 print(f"[ERRO] Falha ao salvar oportunidades (update): {e}")
                 raise HTTPException(status_code=500, detail=f"Falha ao persistir: {e}")
+            
+            # Sincroniza contatos para contatos.json
+            try:
+                _sync_opportunity_contacts_to_independent_table(merged)
+            except Exception as e:
+                print(f"[WARN] Falha ao sincronizar contatos: {e}")
 
             # Create version snapshot after save (outside main lock to avoid deadlock)
             if _bpmn_changed and merged.get("bpmn"):
@@ -6546,6 +6916,13 @@ def _update_oportunidade_locked(oportunidade_id: int, oportunidade: Oportunidade
     )["createdDate"]
     fake_oportunidades.append(oportunidade_dict)
     save_oportunidades_data(fake_oportunidades)
+    
+    # Sincroniza contatos para contatos.json
+    try:
+        _sync_opportunity_contacts_to_independent_table(oportunidade_dict)
+    except Exception as e:
+        print(f"[WARN] Falha ao sincronizar contatos: {e}")
+    
     return oportunidade_dict
 
 @app.delete("/oportunidades/{oportunidade_id}", status_code=204)
@@ -6559,9 +6936,686 @@ def delete_oportunidade(oportunidade_id: int):
         )
         if idx is None:
             raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
+
+        # ── Preservar nós de task e condicional no catálogo antes de deletar ──
+        opp = fake_oportunidades[idx]
+        opp_name = opp.get("name") or opp.get("nome") or ""
+        bpmn_nodes = []
+        bpmn_data = opp.get("bpmn")
+        if isinstance(bpmn_data, dict):
+            bpmn_nodes = bpmn_data.get("nodes") or []
+        elif isinstance(opp.get("stages"), list):
+            bpmn_nodes = opp.get("stages") or []
+
+        tasks_catalog = load_bpmn_tasks_catalog()
+        condicionais_catalog = load_bpmn_condicionais_catalog()
+
+        # Índice por (opp_name, node_nome) para dedup
+        existing_tasks_keys = {
+            (str(t.get("_oppName") or "").strip(), str(t.get("taskNome") or t.get("label") or "").strip())
+            for t in tasks_catalog
+        }
+        existing_cond_keys = {
+            (str(c.get("_oppName") or "").strip(), str(c.get("condicionalNome") or c.get("label") or "").strip())
+            for c in condicionais_catalog
+        }
+
+        for node in bpmn_nodes:
+            node_type = str(node.get("nodeType") or node.get("type") or "").strip()
+            if node_type == "task":
+                nome = str(node.get("taskNome") or node.get("label") or "").strip()
+                key = (opp_name.strip(), nome)
+                if nome and key not in existing_tasks_keys:
+                    tasks_catalog.append({**node, "_oppName": opp_name, "_oppId": opp.get("id"), "_preserved": True})
+                    existing_tasks_keys.add(key)
+            elif node_type == "condicional":
+                nome = str(node.get("condicionalNome") or node.get("label") or "").strip()
+                key = (opp_name.strip(), nome)
+                if nome and key not in existing_cond_keys:
+                    condicionais_catalog.append({**node, "_oppName": opp_name, "_oppId": opp.get("id"), "_preserved": True})
+                    existing_cond_keys.add(key)
+
+        save_bpmn_tasks_catalog(tasks_catalog)
+        save_bpmn_condicionais_catalog(condicionais_catalog)
+        # ─────────────────────────────────────────────────────────────────────
+
         fake_oportunidades.pop(idx)
         save_oportunidades_data(fake_oportunidades)
     return
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Leads CRUD Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/leads")
+async def get_leads(page: int = 1, limit: int = 50, search: str = ""):
+    """Retorna lista de leads com paginação opcional"""
+    leads = load_leads_data()
+
+    for lead in leads:
+        if "bpmn_generated" not in lead:
+            lead["bpmn_generated"] = False
+        if "bpmn_generated_at" not in lead:
+            lead["bpmn_generated_at"] = None
+        if "bpmn_analysis" not in lead:
+            lead["bpmn_analysis"] = None
+    
+    if search:
+        search_lower = search.lower()
+        leads = [l for l in leads if 
+                 search_lower in l.get("nome", "").lower() or
+                 search_lower in l.get("email", "").lower() or
+                 search_lower in l.get("empresa", "").lower()]
+    
+    total = len(leads)
+    start = (page - 1) * limit
+    paginated = leads[start:start + limit]
+    
+    return {
+        "leads": paginated,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": (total + limit - 1) // limit
+    }
+
+
+@app.post("/api/leads")
+async def create_lead(lead: Lead):
+    """Cria um novo lead"""
+    leads = load_leads_data()
+    
+    new_lead = {
+        "id": str(uuid.uuid4()),
+        "nome": lead.nome,
+        "email": lead.email,
+        "telefone": lead.telefone,
+        "empresa": lead.empresa,
+        "cargo": lead.cargo,
+        "origem": lead.origem or "website",
+        "stage": "novo",
+        "valor_estimado": lead.valor_estimado,
+        "descricao": lead.descricao,
+        "responsavel": lead.responsavel,
+        "data_criacao": datetime.now(timezone.utc).isoformat(),
+        "data_contato": None,
+        "notas": [],
+        "ativo": True,
+        "opp_id": None,
+        "bpmn_generated": False,
+        "bpmn_generated_at": None,
+        "bpmn_analysis": None,
+    }
+    
+    leads.append(new_lead)
+    save_leads_data(leads)
+    
+    return {"success": True, "lead": new_lead}
+
+
+@app.get("/api/leads/{lead_id}")
+async def get_lead(lead_id: str):
+    """Retorna um lead específico"""
+    leads = load_leads_data()
+    lead = next((l for l in leads if l["id"] == lead_id), None)
+    
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+    
+    return {"lead": lead}
+
+
+@app.put("/api/leads/{lead_id}")
+async def update_lead(lead_id: str, lead: Lead):
+    """Atualiza um lead"""
+    leads = load_leads_data()
+    lead_obj = next((l for l in leads if l["id"] == lead_id), None)
+    
+    if not lead_obj:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+    
+    lead_obj.update({
+        "nome": lead.nome or lead_obj.get("nome"),
+        "email": lead.email or lead_obj.get("email"),
+        "telefone": lead.telefone or lead_obj.get("telefone"),
+        "empresa": lead.empresa or lead_obj.get("empresa"),
+        "cargo": lead.cargo or lead_obj.get("cargo"),
+        "origem": lead.origem or lead_obj.get("origem"),
+        "stage": lead.stage or lead_obj.get("stage"),
+        "valor_estimado": lead.valor_estimado or lead_obj.get("valor_estimado"),
+        "descricao": lead.descricao or lead_obj.get("descricao"),
+        "responsavel": lead.responsavel or lead_obj.get("responsavel"),
+    })
+    
+    save_leads_data(leads)
+    return {"success": True, "lead": lead_obj}
+
+
+@app.delete("/api/leads/{lead_id}")
+async def delete_lead(lead_id: str):
+    """Deleta um lead"""
+    leads = load_leads_data()
+    leads = [l for l in leads if l["id"] != lead_id]
+    save_leads_data(leads)
+    
+    return {"success": True}
+
+
+@app.post("/api/leads/{lead_id}/convert-to-opp")
+async def convert_lead_to_opportunity(lead_id: str):
+    """Converte um lead em oportunidade"""
+    leads = load_leads_data()
+    lead = next((l for l in leads if l["id"] == lead_id), None)
+    
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+    
+    if lead.get("stage") == "convertido":
+        raise HTTPException(status_code=400, detail="Lead já foi convertido")
+
+    if not bool(lead.get("bpmn_generated")):
+        raise HTTPException(
+            status_code=400,
+            detail="Gere o BPMN com IA para este prospecto antes de converter para oportunidade.",
+        )
+    
+    # Cria oportunidade baseada no lead
+    fake_oportunidades = load_oportunidades_data()
+    
+    new_opp = {
+        "id": len(fake_oportunidades) + 1,
+        "nome": f"Oportunidade - {lead['nome']}",
+        "empresa": lead.get("empresa"),
+        "valor": lead.get("valor_estimado"),
+        "etapa": "qualificação",
+        "responsavel": lead.get("responsavel"),
+        "descricao": f"Convertido do lead: {lead['nome']}",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "source_lead_id": lead_id,
+        "ativo": True,
+        "owner": lead.get("responsavel"),
+        "lead_bpmn": lead.get("bpmn_analysis"),
+    }
+    
+    fake_oportunidades.append(new_opp)
+    save_oportunidades_data(fake_oportunidades)
+    
+    # Atualiza lead como convertido
+    lead["stage"] = "convertido"
+    lead["opp_id"] = str(new_opp["id"])
+    save_leads_data(leads)
+    
+    return {"success": True, "lead": lead, "opportunity": new_opp}
+
+
+@app.post("/api/leads/{lead_id}/generate-bpmn")
+async def generate_lead_bpmn(lead_id: str):
+    """Gera um BPMN orientado por IA para o prospecto antes da conversão."""
+    leads = load_leads_data()
+    lead = next((l for l in leads if l["id"] == lead_id), None)
+
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead não encontrado")
+
+    lead_nome = str(lead.get("nome") or "Prospecto").strip()
+    lead_empresa = str(lead.get("empresa") or "Empresa não informada").strip()
+    lead_stage = str(lead.get("stage") or "novo").strip()
+    lead_descricao = str(lead.get("descricao") or "").strip()
+    lead_origem = str(lead.get("origem") or "website").strip()
+
+    base_context = (
+        f"Prospecto: {lead_nome}\n"
+        f"Empresa: {lead_empresa}\n"
+        f"Stage atual: {lead_stage}\n"
+        f"Origem: {lead_origem}\n"
+        f"Descrição: {lead_descricao or 'Sem descrição detalhada'}"
+    )
+
+    if AI_PROVIDER != "groq" or not GROQ_API_KEY:
+        fallback_bpmn = {
+            "processo": f"Conversão de Prospecto - {lead_nome}",
+            "etapas": [
+                "Receber lead",
+                "Qualificar lead",
+                "Realizar contato inicial",
+                "Validar interesse",
+                "Converter para oportunidade",
+            ],
+            "riscos": ["Contato sem retorno", "Baixa aderência de perfil"],
+            "proximo_passo": "Agendar reunião de qualificação",
+            "fonte": "fallback",
+        }
+        lead["bpmn_generated"] = True
+        lead["bpmn_generated_at"] = datetime.now(timezone.utc).isoformat()
+        lead["bpmn_analysis"] = fallback_bpmn
+        save_leads_data(leads)
+        return {"success": True, "lead": lead, "bpmn": fallback_bpmn}
+
+    system_prompt = (
+        "Você é especialista em BPMN comercial para pré-vendas. "
+        "A partir do contexto de um prospecto, gere um fluxo BPMN textual objetivo. "
+        "Retorne JSON válido com as chaves: processo, etapas (array de strings em ordem), "
+        "riscos (array de strings), proximo_passo (string curta)."
+    )
+
+    user_prompt = (
+        f"Contexto do prospecto:\n{base_context}\n\n"
+        "Monte um fluxo BPMN comercial desde qualificação até decisão de conversão para oportunidade."
+    )
+
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": GROQ_MODEL,
+                "temperature": 0.2,
+                "response_format": {"type": "json_object"},
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+            },
+            timeout=AI_LLM_TIMEOUT_SECONDS,
+        )
+
+        if resp.status_code == 429:
+            raise HTTPException(
+                status_code=429,
+                detail="Limite de requisições da IA atingido. Tente novamente em alguns instantes.",
+            )
+        if not resp.ok:
+            raise RuntimeError(f"Groq HTTP {resp.status_code}")
+
+        raw_json = resp.json()
+        content = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        parsed = json.loads(content)
+        if not isinstance(parsed, dict):
+            parsed = {}
+
+        bpmn_payload = {
+            "processo": str(parsed.get("processo") or f"Conversão de Prospecto - {lead_nome}").strip()[:120],
+            "etapas": [
+                str(item).strip()[:90]
+                for item in (parsed.get("etapas") or [])
+                if isinstance(item, str) and str(item).strip()
+            ][:12],
+            "riscos": [
+                str(item).strip()[:90]
+                for item in (parsed.get("riscos") or [])
+                if isinstance(item, str) and str(item).strip()
+            ][:8],
+            "proximo_passo": str(parsed.get("proximo_passo") or "Validar critérios de qualificação").strip()[:140],
+            "fonte": "groq",
+        }
+
+        if not bpmn_payload["etapas"]:
+            bpmn_payload["etapas"] = [
+                "Receber lead",
+                "Qualificar lead",
+                "Realizar contato inicial",
+                "Definir próximos passos",
+                "Converter para oportunidade",
+            ]
+
+        lead["bpmn_generated"] = True
+        lead["bpmn_generated_at"] = datetime.now(timezone.utc).isoformat()
+        lead["bpmn_analysis"] = bpmn_payload
+        save_leads_data(leads)
+
+        return {"success": True, "lead": lead, "bpmn": bpmn_payload}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Não foi possível gerar BPMN com IA: {exc}",
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CONTATOS CRUD Endpoints
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/contatos")
+async def list_contatos(page: int = 1, limit: int = 50, search: str = "", empresa: str = ""):
+    """Lista contatos com paginação e filtros"""
+    contatos = load_contatos_data()
+    
+    # Filtro por busca de texto (nome, email, telefone)
+    if search.strip():
+        search_lower = search.lower()
+        contatos = [
+            c for c in contatos
+            if search_lower in (c.get("nome") or "").lower()
+            or search_lower in (c.get("email") or "").lower()
+            or search_lower in (c.get("telefone") or "").lower()
+        ]
+    
+    # Filtro por empresa
+    if empresa.strip():
+        empresa_lower = empresa.lower()
+        contatos = [
+            c for c in contatos
+            if empresa_lower in (c.get("empresa") or "").lower()
+        ]
+    
+    # Filtrar apenas ativos
+    contatos = [c for c in contatos if c.get("ativo", True)]
+    
+    # Paginação
+    total = len(contatos)
+    start = (page - 1) * limit
+    paginated = contatos[start:start + limit]
+    
+    return {
+        "contatos": paginated,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": (total + limit - 1) // limit
+    }
+
+
+@app.post("/api/contatos", status_code=201)
+async def create_contato(contato: Contato):
+    """Cria um novo contato"""
+    contatos = load_contatos_data()
+    
+    new_contato = {
+        "id": max([int(c.get("id", 0)) for c in contatos], default=0) + 1,
+        "nome": contato.nome,
+        "cargo": contato.cargo or "",
+        "email": contato.email or "",
+        "telefone": contato.telefone or "",
+        "empresa": contato.empresa or "",
+        "descricao": contato.descricao or "",
+        "notas": contato.notas or "",
+        "isPrimary": contato.isPrimary,
+        "entidadeId": contato.entidadeId,
+        "entidadeNome": contato.entidadeNome,
+        "opportunityId": contato.opportunityId,
+        "opportunityName": contato.opportunityName,
+        "ativo": contato.ativo,
+        "created_at": now_iso(),
+        "updated_at": now_iso(),
+        "criadoPor": "API",
+    }
+    
+    contatos.append(new_contato)
+    save_contatos_data(contatos)
+    
+    return {"success": True, "contato": new_contato}
+
+
+@app.get("/api/contatos/{contato_id}")
+async def get_contato(contato_id: int):
+    """Retorna um contato específico"""
+    contatos = load_contatos_data()
+    contato = next((c for c in contatos if c.get("id") == contato_id), None)
+    
+    if not contato:
+        raise HTTPException(status_code=404, detail="Contato não encontrado")
+    
+    return {"contato": contato}
+
+
+@app.put("/api/contatos/{contato_id}")
+async def update_contato(contato_id: int, contato: Contato):
+    """Atualiza um contato"""
+    contatos = load_contatos_data()
+    contato_obj = next((c for c in contatos if c.get("id") == contato_id), None)
+    
+    if not contato_obj:
+        raise HTTPException(status_code=404, detail="Contato não encontrado")
+    
+    # Atualizar apenas campos fornecidos
+    contato_obj.update({
+        "nome": contato.nome or contato_obj.get("nome"),
+        "cargo": contato.cargo or contato_obj.get("cargo"),
+        "email": contato.email or contato_obj.get("email"),
+        "telefone": contato.telefone or contato_obj.get("telefone"),
+        "empresa": contato.empresa or contato_obj.get("empresa"),
+        "descricao": contato.descricao or contato_obj.get("descricao"),
+        "notas": contato.notas or contato_obj.get("notas"),
+        "isPrimary": contato.isPrimary if contato.isPrimary is not None else contato_obj.get("isPrimary"),
+        "entidadeId": contato.entidadeId if contato.entidadeId is not None else contato_obj.get("entidadeId"),
+        "entidadeNome": contato.entidadeNome or contato_obj.get("entidadeNome"),
+        "opportunityId": contato.opportunityId if contato.opportunityId is not None else contato_obj.get("opportunityId"),
+        "opportunityName": contato.opportunityName or contato_obj.get("opportunityName"),
+        "ativo": contato.ativo if contato.ativo is not None else contato_obj.get("ativo"),
+        "updated_at": now_iso(),
+    })
+    
+    save_contatos_data(contatos)
+    return {"success": True, "contato": contato_obj}
+
+
+@app.delete("/api/contatos/{contato_id}", status_code=204)
+async def delete_contato(contato_id: int):
+    """Deleta um contato (soft delete - marca como inativo)"""
+    contatos = load_contatos_data()
+    contato_obj = next((c for c in contatos if c.get("id") == contato_id), None)
+    
+    if not contato_obj:
+        raise HTTPException(status_code=404, detail="Contato não encontrado")
+    
+    # Soft delete
+    contato_obj["ativo"] = False
+    contato_obj["updated_at"] = now_iso()
+    
+    save_contatos_data(contatos)
+
+
+@app.post("/api/contatos/{contato_id}/restore", status_code=200)
+async def restore_contato(contato_id: int):
+    """Restaura um contato deletado (inativo)"""
+    contatos = load_contatos_data()
+    contato_obj = next((c for c in contatos if c.get("id") == contato_id), None)
+    
+    if not contato_obj:
+        raise HTTPException(status_code=404, detail="Contato não encontrado")
+    
+    contato_obj["ativo"] = True
+    contato_obj["updated_at"] = now_iso()
+    
+    save_contatos_data(contatos)
+    return {"success": True, "contato": contato_obj}
+
+
+@app.get("/api/contatos/by-entidade/{entidade_id}")
+async def get_contatos_by_entidade(entidade_id: int):
+    """Retorna todos os contatos de uma entidade"""
+    contatos = load_contatos_data()
+    filtered = [c for c in contatos if c.get("entidadeId") == entidade_id and c.get("ativo", True)]
+    
+    return {
+        "contatos": filtered,
+        "total": len(filtered)
+    }
+
+
+@app.get("/api/contatos/by-opportunity/{opportunity_id}")
+async def get_contatos_by_opportunity(opportunity_id: int):
+    """Retorna todos os contatos de uma oportunidade"""
+    contatos = load_contatos_data()
+    filtered = [c for c in contatos if c.get("opportunityId") == opportunity_id and c.get("ativo", True)]
+    
+    return {
+        "contatos": filtered,
+        "total": len(filtered)
+    }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BPMN TASKS / CONDICIONAIS CATALOG (preserved after BPMN deletion)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/bpmn-catalog/tasks")
+def get_bpmn_tasks_catalog():
+    """Retorna catálogo de nós de atividade preservados após deleção de BPMNs."""
+    return load_bpmn_tasks_catalog()
+
+
+@app.delete("/api/bpmn-catalog/tasks/{node_id}", status_code=204)
+def delete_bpmn_task_catalog_entry(node_id: str):
+    """Remove uma entrada do catálogo de atividades."""
+    catalog = load_bpmn_tasks_catalog()
+    catalog = [n for n in catalog if str(n.get("id") or "") != node_id]
+    save_bpmn_tasks_catalog(catalog)
+    return
+
+
+@app.get("/api/bpmn-catalog/condicionais")
+def get_bpmn_condicionais_catalog():
+    """Retorna catálogo de nós de condicional preservados após deleção de BPMNs."""
+    return load_bpmn_condicionais_catalog()
+
+
+@app.delete("/api/bpmn-catalog/condicionais/{node_id}", status_code=204)
+def delete_bpmn_condicional_catalog_entry(node_id: str):
+    """Remove uma entrada do catálogo de condicionais."""
+    catalog = load_bpmn_condicionais_catalog()
+    catalog = [n for n in catalog if str(n.get("id") or "") != node_id]
+    save_bpmn_condicionais_catalog(catalog)
+    return
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# ATIVIDADES (Timeline/Activities)
+# ─────────────────────────────────────────────────────────────────────────────
+
+@app.get("/api/activities")
+async def get_activities(page: int = 1, limit: int = 50, entity_type: str = "", entity_id: str = ""):
+    """Retorna lista de atividades com filtros opcionais"""
+    activities = load_activities_data()
+    
+    if entity_type and entity_id:
+        activities = [a for a in activities if 
+                     a.get("entidade_tipo") == entity_type and 
+                     a.get("entidade_id") == entity_id]
+    
+    # Ordena por data mais recente
+    activities.sort(key=lambda x: x.get("data_atividade", x.get("data_criacao", "")), reverse=True)
+    
+    total = len(activities)
+    start = (page - 1) * limit
+    paginated = activities[start:start + limit]
+    
+    return {
+        "activities": paginated,
+        "total": total,
+        "page": page,
+        "limit": limit,
+        "pages": (total + limit - 1) // limit
+    }
+
+
+@app.post("/api/activities")
+async def create_activity(activity: Activity):
+    """Cria uma nova atividade"""
+    activities = load_activities_data()
+    
+    new_activity = {
+        "id": str(uuid.uuid4()),
+        "titulo": activity.titulo,
+        "descricao": activity.descricao,
+        "tipo": activity.tipo or "nota",
+        "data_atividade": activity.data_atividade or datetime.now(timezone.utc).isoformat(),
+        "responsavel": activity.responsavel,
+        "usuario_criador": activity.usuario_criador,
+        "entidade_tipo": activity.entidade_tipo,
+        "entidade_id": activity.entidade_id,
+        "status": activity.status or "planejado",
+        "resultado": activity.resultado,
+        "proximos_passos": activity.proximos_passos,
+        "duracao_minutos": activity.duracao_minutos,
+        "local": activity.local,
+        "participantes": activity.participantes or [],
+        "data_criacao": datetime.now(timezone.utc).isoformat(),
+        "data_atualizacao": datetime.now(timezone.utc).isoformat(),
+        "anexos": activity.anexos or [],
+        "tags": activity.tags or []
+    }
+    
+    activities.append(new_activity)
+    save_activities_data(activities)
+    
+    return {"success": True, "activity": new_activity}
+
+
+@app.get("/api/activities/{activity_id}")
+async def get_activity(activity_id: str):
+    """Retorna uma atividade específica"""
+    activities = load_activities_data()
+    activity = next((a for a in activities if a["id"] == activity_id), None)
+    
+    if not activity:
+        raise HTTPException(status_code=404, detail="Atividade não encontrada")
+    
+    return {"activity": activity}
+
+
+@app.put("/api/activities/{activity_id}")
+async def update_activity(activity_id: str, activity: Activity):
+    """Atualiza uma atividade"""
+    activities = load_activities_data()
+    activity_obj = next((a for a in activities if a["id"] == activity_id), None)
+    
+    if not activity_obj:
+        raise HTTPException(status_code=404, detail="Atividade não encontrada")
+    
+    activity_obj.update({
+        "titulo": activity.titulo or activity_obj.get("titulo"),
+        "descricao": activity.descricao or activity_obj.get("descricao"),
+        "tipo": activity.tipo or activity_obj.get("tipo"),
+        "data_atividade": activity.data_atividade or activity_obj.get("data_atividade"),
+        "responsavel": activity.responsavel or activity_obj.get("responsavel"),
+        "status": activity.status or activity_obj.get("status"),
+        "resultado": activity.resultado or activity_obj.get("resultado"),
+        "proximos_passos": activity.proximos_passos or activity_obj.get("proximos_passos"),
+        "duracao_minutos": activity.duracao_minutos or activity_obj.get("duracao_minutos"),
+        "local": activity.local or activity_obj.get("local"),
+        "participantes": activity.participantes or activity_obj.get("participantes"),
+        "tags": activity.tags or activity_obj.get("tags"),
+        "data_atualizacao": datetime.now(timezone.utc).isoformat()
+    })
+    
+    save_activities_data(activities)
+    return {"success": True, "activity": activity_obj}
+
+
+@app.delete("/api/activities/{activity_id}")
+async def delete_activity(activity_id: str):
+    """Deleta uma atividade"""
+    activities = load_activities_data()
+    activities = [a for a in activities if a["id"] != activity_id]
+    save_activities_data(activities)
+    
+    return {"success": True}
+
+
+@app.get("/api/activities/entity/{entity_type}/{entity_id}")
+async def get_entity_activities(entity_type: str, entity_id: str, limit: int = 20):
+    """Retorna timeline de atividades de uma entidade específica"""
+    activities = load_activities_data()
+    
+    entity_activities = [a for a in activities if 
+                        a.get("entidade_tipo") == entity_type and 
+                        a.get("entidade_id") == entity_id]
+    
+    # Ordena por data mais recente
+    entity_activities.sort(key=lambda x: x.get("data_atividade", x.get("data_criacao", "")), reverse=True)
+    
+    return {
+        "activities": entity_activities[:limit],
+        "total": len(entity_activities)
+    }
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # SLA & Metrics System
@@ -9104,11 +10158,13 @@ async def workflow_generate_document(op_id: int, request: Request):
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.get("/documentos")
-def list_documentos(owner: str | None = None):
-    """List all saved documents, optionally filtered by owner."""
+def list_documentos(owner: str | None = None, opportunity_id: int | None = None):
+    """List all saved documents, optionally filtered by owner and/or opportunityId."""
     docs = load_documentos_data()
     if owner:
         docs = [d for d in docs if str(d.get("owner", "")).lower() == owner.lower()]
+    if opportunity_id is not None:
+        docs = [d for d in docs if d.get("opportunityId") == opportunity_id]
     docs.sort(key=lambda d: d.get("createdAt", ""), reverse=True)
     return {"data": docs, "total": len(docs)}
 
@@ -9773,6 +10829,11 @@ def create_entidade(entidade: Entidade):
         now = now_iso()
         if not isinstance(entidade_dict.get("campos"), list):
             entidade_dict["campos"] = []
+        entidade_dict["papelNegocio"] = _normalize_papel_negocio(
+            entidade_dict.get("papelNegocio"),
+            entidade_dict.get("tipoEntidade"),
+            default="processo",
+        )
         entidade_dict["id"] = new_id
         entidade_dict["created_at"] = now
         entidade_dict["updated_at"] = now
@@ -9805,6 +10866,11 @@ def update_entidade(entidade_id: int, entidade: Entidade):
                     entidade_dict["campos"] = (
                         e.get("campos") if isinstance(e.get("campos"), list) else []
                     )
+                entidade_dict["papelNegocio"] = _normalize_papel_negocio(
+                    entidade_dict.get("papelNegocio"),
+                    entidade_dict.get("tipoEntidade"),
+                    default=_normalize_papel_negocio(e.get("papelNegocio"), e.get("tipoEntidade"), default="processo"),
+                )
                 entidade_dict["id"] = entidade_id
                 entidade_dict["created_at"] = e["created_at"]
                 entidade_dict["updated_at"] = now_iso()
@@ -9879,6 +10945,11 @@ def batch_sync_entidades(payload: dict = Body(...)):
                     if e["id"] == int(entity_id):
                         if not isinstance(data.get("campos"), list):
                             data["campos"] = e.get("campos") if isinstance(e.get("campos"), list) else []
+                        data["papelNegocio"] = _normalize_papel_negocio(
+                            data.get("papelNegocio"),
+                            data.get("tipoEntidade"),
+                            default=_normalize_papel_negocio(e.get("papelNegocio"), e.get("tipoEntidade"), default="processo"),
+                        )
                         data["id"] = int(entity_id)
                         data["created_at"] = e.get("created_at", now_iso())
                         data["updated_at"] = now_iso()
@@ -9911,6 +10982,11 @@ def batch_sync_entidades(payload: dict = Body(...)):
                     now = now_iso()
                     if not isinstance(data.get("campos"), list):
                         data["campos"] = []
+                    data["papelNegocio"] = _normalize_papel_negocio(
+                        data.get("papelNegocio"),
+                        data.get("tipoEntidade"),
+                        default="processo",
+                    )
                     data["id"] = new_id
                     data["created_at"] = now
                     data["updated_at"] = now
@@ -9939,6 +11015,117 @@ def batch_sync_entidades(payload: dict = Body(...)):
 
     return {"items": results}
 
+
+# ─── REGISTROS (instâncias de entidades: contatos, processos) ─────────────────
+
+@app.get("/registros")
+def get_registros(papelNegocio: str = "", entidadeId: str = ""):
+    registros = load_registros_data()
+    if not isinstance(registros, list):
+        registros = []
+    result = registros
+    if papelNegocio.strip():
+        result = [r for r in result if str(r.get("papelNegocio", "")).lower() == papelNegocio.strip().lower()]
+    if entidadeId.strip():
+        result = [r for r in result if str(r.get("entidadeId", "")) == entidadeId.strip()]
+    return result
+
+
+@app.post("/registros/sync-contatos")
+def sync_registros_contatos():
+    """Sincroniza todos os registros com papelNegocio='contato' para contatos.json"""
+    registros = load_registros_data()
+    if not isinstance(registros, list):
+        registros = []
+    
+    count = 0
+    for registro in registros:
+        if registro.get("papelNegocio") == "contato":
+            try:
+                _sync_registro_contato_to_independent_table(registro)
+                count += 1
+                print(f"[OK] Sincronizado contato de registro {registro.get('id')}")
+            except Exception as e:
+                print(f"[ERRO] Falha ao sincronizar registro {registro.get('id')}: {e}")
+    
+    print(f"[OK] Sincronizacao completa: {count} contatos")
+    return {"message": f"Sincronizados {count} contatos", "count": count}
+
+
+@app.post("/registros", status_code=201)
+def create_registro(registro: Registro):
+    with _data_lock:
+        registros = load_registros_data()
+        if not isinstance(registros, list):
+            registros = []
+        registro_dict = registro.dict()
+        new_id = max((r["id"] for r in registros if isinstance(r.get("id"), int)), default=0) + 1
+        now = now_iso()
+        registro_dict["id"] = new_id
+        registro_dict["created_at"] = now
+        registro_dict["updated_at"] = now
+        registro_dict["criadoPor"] = registro_dict.get("criadoPor") or "admin"
+        registros.append(registro_dict)
+        save_registros_data(registros)
+    
+    # Sincroniza registros de contato para contatos.json
+    try:
+        if registro_dict.get("papelNegocio") == "contato":
+            _sync_registro_contato_to_independent_table(registro_dict)
+    except Exception as e:
+        print(f"[WARN] Falha ao sincronizar registro contato: {e}")
+    
+    return registro_dict
+
+
+@app.put("/registros/{registro_id}")
+def update_registro(registro_id: int, registro: Registro):
+    with _data_lock:
+        registros = load_registros_data()
+        if not isinstance(registros, list):
+            registros = []
+        for idx, r in enumerate(registros):
+            if r.get("id") == registro_id:
+                registro_dict = registro.dict()
+                registro_dict["id"] = registro_id
+                registro_dict["created_at"] = r.get("created_at", now_iso())
+                registro_dict["updated_at"] = now_iso()
+                registro_dict["criadoPor"] = r.get("criadoPor", registro_dict.get("criadoPor", "admin"))
+                registros[idx] = registro_dict
+                save_registros_data(registros)
+                
+                # Sincroniza registros de contato para contatos.json
+                try:
+                    if registro_dict.get("papelNegocio") == "contato":
+                        _sync_registro_contato_to_independent_table(registro_dict)
+                except Exception as e:
+                    print(f"[WARN] Falha ao sincronizar registro contato: {e}")
+                
+                return registro_dict
+    raise HTTPException(status_code=404, detail="Registro não encontrado")
+
+
+@app.delete("/registros/{registro_id}", status_code=204)
+def delete_registro(registro_id: int):
+    deleted_registro = None
+    with _data_lock:
+        registros = load_registros_data()
+        if not isinstance(registros, list):
+            registros = []
+        idx = next((i for i, r in enumerate(registros) if r.get("id") == registro_id), None)
+        if idx is None:
+            raise HTTPException(status_code=404, detail="Registro não encontrado")
+        deleted_registro = registros.pop(idx)
+        save_registros_data(registros)
+    
+    # Sincroniza delete de registro contato para contatos.json
+    try:
+        if deleted_registro and deleted_registro.get("papelNegocio") == "contato":
+            _delete_registro_contato_from_independent_table(deleted_registro)
+    except Exception as e:
+        print(f"[WARN] Falha ao sincronizar delete de registro contato: {e}")
+    
+    return
 
 
 @app.get("/")
@@ -10170,7 +11357,7 @@ def ai_parse_description(
         "## Formato de saída\n"
         "Retorne JSON com estas chaves:\n"
         "- 'processName': string\n"
-        "- 'entities': [{\"name\": string, \"tipoEntidade\": \"principal\"|\"apoio\"|\"externa\"|\"associativa\"}]\n"
+        "- 'entities': [{\"name\": string, \"tipoEntidade\": \"contato\"|\"processo\"}]\n"
         "- 'activities': [string] — verbos no infinitivo, máx 3 palavras. NUNCA inclua 'Sim', 'Nao' ou 'Não'.\n"
         "- 'conditionals': [string] — SEMPRE terminam com '?', máx 5 palavras.\n"
         "- 'flowOrder': [{\"name\": string, \"type\": \"task\"|\"condicional\"|\"entidade\", "
@@ -10183,10 +11370,9 @@ def ai_parse_description(
         "- Condicional: descreva o critério avaliado e quem decide. NÃO explique caminhos SIM/NÃO.\n"
         "- NUNCA repita ou parafraseie o nome no desc.\n\n"
         "## tipoEntidade\n"
-        "- 'principal': objeto central que o processo transforma\n"
-        "- 'apoio': entidade secundária que participa\n"
-        "- 'externa': ator/participante externo\n"
-        "- 'associativa': entidade de relacionamento\n\n"
+        "- 'contato': pessoa ou organização envolvida no processo (quem solicita, aprova, fornece ou executa). Ex: Cliente, Fornecedor, Funcionario, Gestor.\n"
+        "- 'processo': objeto, documento ou artefato que é processado, criado ou transformado. Ex: Pedido, Contrato, Nota Fiscal, Proposta, Relatorio.\n"
+        "NUNCA use 'contato' para documentos; NUNCA use 'processo' para pessoas ou empresas.\n\n"
         "Retorne APENAS o JSON, sem explicações."
     )
 
@@ -10555,6 +11741,149 @@ def ai_execute(
     }
 
 
+@app.post("/ai/analyze-lead")
+def ai_analyze_lead(
+    payload: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Analisa prospecto usando IA: resumo do histórico, score de conversão, próxima ação."""
+    lead = payload.get("lead") if isinstance(payload.get("lead"), dict) else {}
+    activities = payload.get("activities") if isinstance(payload.get("activities"), list) else []
+    
+    if not lead.get("id"):
+        raise HTTPException(status_code=400, detail="Lead inválido: falta ID")
+    
+    lead_nome = str(lead.get("nome", "Prospecto")).strip()
+    lead_empresa = str(lead.get("empresa", "")).strip()
+    lead_stage = str(lead.get("stage", "novo")).strip()
+    
+    # Formata histórico de atividades para o prompt
+    activities_text = ""
+    if activities:
+        activity_lines = []
+        for act in sorted(activities, key=lambda a: str(a.get("data_criacao", "")), reverse=True)[:10]:
+            tipo = str(act.get("tipo", "nota")).upper()
+            data = str(act.get("data_criacao", ""))[:10]
+            descricao = str(act.get("descricao", "")).strip()[:100]
+            activity_lines.append(f"- [{data}] {tipo}: {descricao}")
+        activities_text = "\n".join(activity_lines)
+    else:
+        activities_text = "- Sem atividades registradas"
+    
+    system_prompt = """Você é um especialista em análise de prospectos de vendas. 
+Analise o histórico do prospecto e forneça insights estruturados em JSON.
+
+Retorne SEMPRE um JSON válido com estas chaves:
+- "resumo": Resumo breve do relacionamento (1-2 linhas)
+- "score_conversao": Número de 0 a 100 indicando probabilidade de conversão
+- "proxima_acao": Recomendação específica do próximo passo (uma frase)
+- "sentimento": "positivo", "neutro" ou "negativo"
+- "urgencia": "baixa", "média" ou "alta"
+- "motivo_inatividade": Se inativo, por que (uma frase)
+"""
+    
+    user_prompt = f"""Prospecto: {lead_nome}
+Empresa: {lead_empresa}
+Stage Atual: {lead_stage}
+
+Histórico de Atividades (últimas 10):
+{activities_text}
+
+Análise necessária: Avalie o potencial de conversão, sentimento, urgência de recontato e recomende próxima ação."""
+    
+    if AI_PROVIDER != "groq" or not GROQ_API_KEY:
+        # Fallback sem IA: retorna análise simples baseada em dados
+        return {
+            "resumo": f"{lead_nome} de {lead_empresa} em estágio {lead_stage}",
+            "score_conversao": 50,
+            "proxima_acao": "Enviar email de reengajamento",
+            "sentimento": "neutro",
+            "urgencia": "média",
+            "motivo_inatividade": "Sem atividades recentes",
+            "fonte": "fallback"
+        }
+    
+    groq_headers = {"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"}
+    groq_payload = {
+        "model": GROQ_MODEL,
+        "temperature": 0.3,
+        "response_format": {"type": "json_object"},
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+    }
+    
+    try:
+        resp = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers=groq_headers,
+            json=groq_payload,
+            timeout=AI_LLM_TIMEOUT_SECONDS,
+        )
+        
+        if resp.status_code == 429:
+            raise HTTPException(status_code=429, detail="Limite de requisições da IA atingido. Tente novamente em alguns instantes.")
+        
+        if not resp.ok:
+            print(f"[analyze-lead] Groq HTTP {resp.status_code}: {resp.text[:200]}")
+            raise RuntimeError(f"Groq HTTP {resp.status_code}")
+        
+        raw_json = resp.json()
+        content = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        parsed = json.loads(content)
+        
+        # Validação de resposta
+        if not isinstance(parsed, dict):
+            parsed = {}
+        
+        # Preenchimento de campos padrão se faltarem
+        result = {
+            "resumo": str(parsed.get("resumo", "Análise não disponível")).strip()[:200],
+            "score_conversao": int(parsed.get("score_conversao", 50)) if isinstance(parsed.get("score_conversao"), int) else 50,
+            "proxima_acao": str(parsed.get("proxima_acao", "Enviar email")).strip()[:150],
+            "sentimento": str(parsed.get("sentimento", "neutro")).strip().lower(),
+            "urgencia": str(parsed.get("urgencia", "média")).strip().lower(),
+            "motivo_inatividade": str(parsed.get("motivo_inatividade", "")).strip()[:150],
+            "fonte": "groq"
+        }
+        
+        # Validação de ranges
+        result["score_conversao"] = max(0, min(100, result["score_conversao"]))
+        if result["sentimento"] not in ["positivo", "neutro", "negativo"]:
+            result["sentimento"] = "neutro"
+        if result["urgencia"] not in ["baixa", "média", "alta"]:
+            result["urgencia"] = "média"
+        
+        _append_ai_audit_log({
+            "user_id": current_user.get("id"),
+            "user_nome": current_user.get("nome"),
+            "event": "ai_analyze_lead",
+            "lead_id": lead.get("id"),
+            "lead_nome": lead_nome,
+            "score_conversao": result["score_conversao"],
+        })
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as exc:
+        print(f"[analyze-lead] Erro: {exc}")
+        import traceback
+        traceback.print_exc()
+        return {
+            "resumo": f"{lead_nome} de {lead_empresa}",
+            "score_conversao": 50,
+            "proxima_acao": "Contactar manualmente",
+            "sentimento": "neutro",
+            "urgencia": "média",
+            "motivo_inatividade": "Erro na análise de IA",
+            "fonte": "erro",
+            "erro": str(exc)
+        }
+
+
 @app.get("/ai/audit")
 def ai_audit(
     limit: int = 20,
@@ -10639,13 +11968,8 @@ def auth_login(auth: AuthRequest):
     # Upgrade legacy SHA256 hash to bcrypt on successful login
     if not user["senha"].startswith(("$2b$", "$2a$", "$2y$")):
         new_hash = hash_password_bcrypt(auth.senha)
-        with _data_lock:
-            users = load_users_data()
-            for u in users:
-                if u["id"] == user["id"]:
-                    u["senha"] = new_hash
-                    break
-            save_users_data(users)
+        update_user_password_hash(int(user["id"]), new_hash)
+        user["senha"] = new_hash
 
     role = user.get("role", "user")
     token_data = {"sub": str(user["id"]), "role": role}

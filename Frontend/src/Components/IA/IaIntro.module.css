@@ -1,3 +1,20 @@
+.backButton {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: #555;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.backButton:hover {
+  color: #222;
+}
+
 .wrapper {
   width: 100%;
   display: flex;

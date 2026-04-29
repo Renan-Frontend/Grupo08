@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1,
+    "nome": "Cliente",
+    "cargo": "",
+    "email": "",
+    "telefone": "",
+    "empresa": "",
+    "descricao": "",
+    "notas": "",
+    "isPrimary": false,
+    "entidadeId": 3,
+    "entidadeNome": "Cliente",
+    "opportunityId": "1",
+    "opportunityName": "",
+    "registro_id": 2,
+    "ativo": true,
+    "created_at": "2026-04-28T09:38:52.945981",
+    "updated_at": "2026-04-29T09:39:00.970817",
+    "criadoPor": "Renan"
+  }
+]

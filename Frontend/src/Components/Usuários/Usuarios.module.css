@@ -371,31 +371,31 @@
   }
 
   .table td:nth-child(1)::before {
-    content: 'Nome';
+    content: "Nome";
   }
 
   .table td:nth-child(2)::before {
-    content: 'Email';
+    content: "Email";
   }
 
   .table td:nth-child(3)::before {
-    content: 'Nível';
+    content: "Nível";
   }
 
   .table td:nth-child(4)::before {
-    content: 'Admin';
+    content: "Admin";
   }
 
   .table td:nth-child(5)::before {
-    content: 'Cargo';
+    content: "Cargo";
   }
 
   .table td:nth-child(6)::before {
-    content: 'Cadastro';
+    content: "Cadastro";
   }
 
   .table td:nth-child(7)::before {
-    content: 'Ações';
+    content: "Ações";
   }
 
   .actions {

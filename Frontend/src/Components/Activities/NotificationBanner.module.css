@@ -1,0 +1,160 @@
+/* Notification Banner */
+
+.container {
+  padding: 0 2rem 2rem 2rem;
+}
+
+.banner {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff8f8 100%);
+  border-left: 4px solid #ef4444;
+  border-radius: 0;
+  border: 1px solid #fecaca;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.1);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+}
+
+.content h3 {
+  margin: 0 0 0.5rem 0;
+  color: #991b1b;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.content p {
+  margin: 0 0 1rem 0;
+  color: #7f1d1d;
+  font-size: 0.9rem;
+}
+
+.alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.alertItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 0.375rem;
+  border-left: 3px solid #fca5a5;
+  font-size: 0.9rem;
+}
+
+.alertItem.critical {
+  border-left-color: #dc2626;
+  background-color: rgba(220, 38, 38, 0.05);
+}
+
+.alertItem.warning {
+  border-left-color: #fca5a5;
+  background-color: rgba(252, 165, 165, 0.05);
+}
+
+.alertInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+
+.alertInfo strong {
+  color: #7f1d1d;
+  flex-shrink: 0;
+  min-width: 150px;
+}
+
+.alertInfo span {
+  color: #9f1239;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.alertInfo small {
+  color: #dc2626;
+  font-weight: 600;
+  background-color: rgba(220, 38, 38, 0.1);
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+}
+
+.dismissBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fca5a5;
+  font-size: 1.2rem;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dismissBtn:hover {
+  color: #dc2626;
+  transform: scale(1.2);
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem 1rem 1rem;
+  }
+
+  .banner {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .alertItem {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .alertInfo {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .alertInfo strong,
+  .alertInfo span {
+    min-width: auto;
+  }
+
+  .dismissBtn {
+    align-self: flex-end;
+    margin-top: 0.5rem;
+  }
+}

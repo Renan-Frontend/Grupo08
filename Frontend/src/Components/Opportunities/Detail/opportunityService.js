@@ -1,9 +1,9 @@
-import { buildOwnerPayloadFields } from '../opportunityOwnershipRules';
+import { buildOwnerPayloadFields } from "../opportunityOwnershipRules";
 import {
   createOpportunity,
   deleteOpportunityById,
   updateOpportunityById,
-} from '../opportunityApi';
+} from "../opportunityApi";
 
 export const buildOpportunityPayload = ({
   title,
@@ -20,12 +20,18 @@ export const buildOpportunityPayload = ({
   showPipeline,
   showTopico,
   showTimeline,
+  products,
+  quotes,
+  contacts,
+  probabilidade,
+  origemLead,
+  motivoFechamento,
 }) => {
   const resolvedPipelineTitle =
-    safeTrim(pipelineTitle) || safeTrim(localStorage.getItem('pipelineTitle'));
+    safeTrim(pipelineTitle) || safeTrim(localStorage.getItem("pipelineTitle"));
   const resolvedPipelineSubtitle =
     safeTrim(pipelineSubtitle) ||
-    safeTrim(localStorage.getItem('pipelineSubtitle'));
+    safeTrim(localStorage.getItem("pipelineSubtitle"));
   const normalizedInfoRows = normalizeInfoRowsForSave(infoRows);
   const normalizedStages = Array.isArray(stages) ? stages : [];
 
@@ -39,15 +45,15 @@ export const buildOpportunityPayload = ({
 
   const activeStage =
     activeStageIndex >= 0 ? normalizedStages[activeStageIndex] : null;
-  const activeNodeId = String(activeStage?.sourceNodeId || '').trim();
+  const activeNodeId = String(activeStage?.sourceNodeId || "").trim();
 
   return {
-    nome: title?.trim() || 'Nova Oportunidade',
-    name: title?.trim() || 'Nova Oportunidade',
+    nome: title?.trim() || "Nova Oportunidade",
+    name: title?.trim() || "Nova Oportunidade",
     ...buildOwnerPayloadFields({ selectedOwner, owner }),
-    created_at: createdDate || '',
-    createdDate: createdDate || '',
-    endDate: endDate || '',
+    created_at: createdDate || "",
+    createdDate: createdDate || "",
+    endDate: endDate || "",
     status: effectiveStatus,
     stages: normalizedStages,
     stageIndex: activeStageIndex,
@@ -63,46 +69,73 @@ export const buildOpportunityPayload = ({
     showTimeline,
     pipelineTitle: resolvedPipelineTitle,
     pipelineSubtitle: resolvedPipelineSubtitle,
+    products: Array.isArray(products) ? products : [],
+    quotes: Array.isArray(quotes) ? quotes : [],
+    contacts: Array.isArray(contacts) ? contacts : [],
+    probabilidade: probabilidade ?? "",
+    origemLead: origemLead ?? "",
+    motivoFechamento: motivoFechamento ?? "",
   };
 };
 
-const safeTrim = (value) => String(value || '').trim();
+const resolvePapelNegocioFromTipoEntidade = (
+  tipoEntidade,
+  fallback = "processo",
+) => {
+  const normalized = safeTrim(tipoEntidade).toLowerCase();
+  if (
+    normalized === "contato" ||
+    normalized.includes("cliente") ||
+    normalized.includes("fornecedor") ||
+    normalized.includes("parceiro") ||
+    normalized.includes("pessoa") ||
+    normalized.includes("empresa")
+  ) {
+    return "contato";
+  }
+  if (normalized === "processo" || normalized.includes("process")) {
+    return "processo";
+  }
+  return fallback;
+};
+
+const safeTrim = (value) => String(value || "").trim();
 
 const normalizeName = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+  String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
 
 const normalizeManualPendingTarget = (value) => {
-  const normalized = String(value || '')
+  const normalized = String(value || "")
     .trim()
     .toLowerCase();
 
   if (
-    normalized === 'bpmn_entidades' ||
-    normalized === 'bpmn' ||
-    normalized === 'entidades'
+    normalized === "bpmn_entidades" ||
+    normalized === "bpmn" ||
+    normalized === "entidades"
   ) {
     return normalized;
   }
 
-  return '';
+  return "";
 };
 
 const resolveNodeStageType = (node) => {
-  const rawType = String(node?.nodeType || '')
+  const rawType = String(node?.nodeType || "")
     .trim()
     .toLowerCase();
-  if (rawType === 'task') return 'task';
-  if (rawType === 'condicional') return 'condicional';
-  return 'entidade';
+  if (rawType === "task") return "task";
+  if (rawType === "condicional") return "condicional";
+  return "entidade";
 };
 
 const resolveBpmnEntityName = (node) => {
   const stageType = resolveNodeStageType(node);
-  if (stageType === 'task') {
+  if (stageType === "task") {
     return (
       safeTrim(node?.taskNome) ||
       safeTrim(node?.entidadeNome) ||
@@ -111,7 +144,7 @@ const resolveBpmnEntityName = (node) => {
     );
   }
 
-  if (stageType === 'condicional') {
+  if (stageType === "condicional") {
     return (
       safeTrim(node?.condicionalNome) ||
       safeTrim(node?.entidadeNome) ||
@@ -128,37 +161,37 @@ const resolveBpmnEntityName = (node) => {
 };
 
 const resolveBpmnEntityDescription = (node, stageType) => {
-  if (stageType === 'task') {
+  if (stageType === "task") {
     return (
       safeTrim(node?.taskDescricao) ||
       safeTrim(node?.descricao) ||
-      'Entidade gerada pelo BPMN'
+      "Entidade gerada pelo BPMN"
     );
   }
 
-  if (stageType === 'condicional') {
+  if (stageType === "condicional") {
     return (
       safeTrim(node?.condicionalDescricao) ||
       safeTrim(node?.descricao) ||
-      'Entidade gerada pelo BPMN'
+      "Entidade gerada pelo BPMN"
     );
   }
 
   return (
     safeTrim(node?.entidadeDescricao) ||
     safeTrim(node?.descricao) ||
-    'Entidade gerada pelo BPMN'
+    "Entidade gerada pelo BPMN"
   );
 };
 
 const parseTopicFieldsFromValue = (value) => {
-  const text = String(value || '');
+  const text = String(value || "");
   const descricaoMatch = text.match(/Descri[cç][aã]o\s*:\s*([^\n]*)/i);
   const atributoMatch = text.match(/Atributo\s*chave\s*:\s*([^\n]*)/i);
 
   return {
-    descricao: safeTrim(descricaoMatch?.[1] || ''),
-    atributoChave: safeTrim(atributoMatch?.[1] || ''),
+    descricao: safeTrim(descricaoMatch?.[1] || ""),
+    atributoChave: safeTrim(atributoMatch?.[1] || ""),
   };
 };
 
@@ -171,7 +204,7 @@ export const buildBpmnEntitiesForCatalog = ({
 }) => {
   const nodes = Array.isArray(bpmn?.nodes) ? bpmn.nodes : [];
   const dedupedEntities = new Map();
-  const categoryName = safeTrim(bpmnName) || 'BPMN';
+  const categoryName = safeTrim(bpmnName) || "BPMN";
   const syncTimestamp = new Date().toISOString();
   const infoRowsByLabel = new Map(
     (Array.isArray(infoRows) ? infoRows : [])
@@ -186,19 +219,19 @@ export const buildBpmnEntitiesForCatalog = ({
     baseDescription,
     atributoChave,
     isPrimaryEntity = false,
-    tipoEntidade = '',
+    tipoEntidade = "",
     entidadeId = null,
   }) => {
     const normalized = normalizeName(nome);
     const rawEntityId =
       entidadeId !== null && entidadeId !== undefined
         ? String(entidadeId).trim()
-        : '';
+        : "";
     const dedupeKey = rawEntityId
       ? `id:${rawEntityId}`
       : normalized
         ? `name:${normalized}`
-        : '';
+        : "";
     if (!dedupeKey) return;
 
     const topicRow = infoRowsByLabel.get(normalized);
@@ -210,16 +243,20 @@ export const buildBpmnEntitiesForCatalog = ({
       descricao:
         safeTrim(parsedTopic.descricao) ||
         safeTrim(baseDescription) ||
-        'Entidade gerada pelo BPMN',
+        "Entidade gerada pelo BPMN",
       atributoChave:
-        safeTrim(parsedTopic.atributoChave) || safeTrim(atributoChave || ''),
+        safeTrim(parsedTopic.atributoChave) || safeTrim(atributoChave || ""),
       categoria: categoryName,
       tipoEntidade:
         safeTrim(tipoEntidade) ||
-        (isPrimaryEntity === true ? 'Principal' : 'Apoio'),
+        (isPrimaryEntity === true ? "Principal" : "Apoio"),
+      papelNegocio: resolvePapelNegocioFromTipoEntidade(
+        safeTrim(tipoEntidade),
+        isPrimaryEntity === true ? "contato" : "processo",
+      ),
       isPrimaryEntity: isPrimaryEntity === true,
       ativo: true,
-      criadoPor: safeTrim(actorName) || 'Usuário do sistema',
+      criadoPor: safeTrim(actorName) || "Usuário do sistema",
       updated_at: syncTimestamp,
     };
 
@@ -230,16 +267,16 @@ export const buildBpmnEntitiesForCatalog = ({
     if (node?.active === false) return;
 
     const stageType = resolveNodeStageType(node);
-    if (stageType !== 'entidade') return;
+    if (stageType !== "entidade") return;
 
     const nome = resolveBpmnEntityName(node);
     upsertEntity({
       nome,
       stageType,
       baseDescription: resolveBpmnEntityDescription(node, stageType),
-      atributoChave: safeTrim(node?.atributoChave || ''),
+      atributoChave: safeTrim(node?.atributoChave || ""),
       isPrimaryEntity: node?.isPrimaryEntity === true,
-      tipoEntidade: safeTrim(node?.tipoEntidade || ''),
+      tipoEntidade: safeTrim(node?.tipoEntidade || ""),
       entidadeId: node?.entidadeId,
     });
   });
@@ -247,7 +284,7 @@ export const buildBpmnEntitiesForCatalog = ({
   (Array.isArray(stages) ? stages : []).forEach((stage) => {
     if (stage?.fromBpmn !== true) return;
 
-    const nome = safeTrim(stage?.label || '');
+    const nome = safeTrim(stage?.label || "");
     const normalized = normalizeName(nome);
     const alreadyTrackedByName = [...dedupedEntities.values()].some(
       (entityPayload) => normalizeName(entityPayload?.nome) === normalized,
@@ -255,14 +292,14 @@ export const buildBpmnEntitiesForCatalog = ({
     if (alreadyTrackedByName) return;
 
     const stageType = resolveNodeStageType({ nodeType: stage?.stageType });
-    if (stageType !== 'entidade') return;
+    if (stageType !== "entidade") return;
     upsertEntity({
       nome,
       stageType,
-      baseDescription: '',
-      atributoChave: '',
+      baseDescription: "",
+      atributoChave: "",
       isPrimaryEntity: false,
-      tipoEntidade: '',
+      tipoEntidade: "",
     });
   });
 
@@ -290,7 +327,7 @@ export const buildEntidadesSyncOperations = ({
           ? String(entidade.id)
           : entidade?._id !== undefined && entidade?._id !== null
             ? String(entidade._id)
-            : '',
+            : "",
         entidade,
       ])
       .filter(([id]) => Boolean(id)),
@@ -305,7 +342,7 @@ export const buildEntidadesSyncOperations = ({
       entityPayload?.entidadeId !== undefined &&
       entityPayload?.entidadeId !== null
         ? String(entityPayload.entidadeId).trim()
-        : '';
+        : "";
     if (!normalized && !payloadEntityId) return;
 
     const existing =
@@ -336,7 +373,7 @@ export const buildEntidadesSyncOperations = ({
 
     const nextAtributoChave = safeTrim(entityPayload?.atributoChave);
     const shouldPreserveExistingAtributoChave =
-      !nextAtributoChave || nextAtributoChave === '-';
+      !nextAtributoChave || nextAtributoChave === "-";
 
     toUpdate.push({
       id: existingId,
@@ -362,29 +399,29 @@ const safeStringify = (value) => {
   try {
     return JSON.stringify(value);
   } catch {
-    return String(value || '');
+    return String(value || "");
   }
 };
 
 const formatTimelineDateTime = () =>
-  new Date().toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  new Date().toLocaleString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 
 const normalizeInfoRowsForSave = (rows = []) => {
   const safeRows = Array.isArray(rows) ? rows : [];
   if (safeRows.length === 0) {
-    return [{ label: '', value: '' }];
+    return [{ label: "", value: "" }];
   }
 
   const titleRow = {
-    label: String(safeRows[0]?.label || ''),
-    value: String(safeRows[0]?.value || ''),
-    topicType: String(safeRows[0]?.topicType || '')
+    label: String(safeRows[0]?.label || ""),
+    value: String(safeRows[0]?.value || ""),
+    topicType: String(safeRows[0]?.topicType || "")
       .trim()
       .toLowerCase(),
     isPrimaryEntity: safeRows[0]?.isPrimaryEntity === true,
@@ -392,34 +429,91 @@ const normalizeInfoRowsForSave = (rows = []) => {
 
   const contentRows = safeRows.slice(1).map((row, index) => ({
     label: safeTrim(row?.label) || `Assunto ${index + 1}`,
-    value: String(row?.value || ''),
-    sourceNodeId: String(row?.sourceNodeId || '').trim(),
+    value: String(row?.value || ""),
+    sourceNodeId: String(row?.sourceNodeId || "").trim(),
     topicType:
-      String(row?.topicType || '')
+      String(row?.topicType || "")
         .trim()
-        .toLowerCase() || 'dados',
+        .toLowerCase() || "dados",
     isPrimaryEntity: row?.isPrimaryEntity === true,
     manualStatus:
-      String(row?.manualStatus || '')
+      String(row?.manualStatus || "")
         .trim()
-        .toLowerCase() === 'concluido'
-        ? 'concluido'
-        : 'pendente',
+        .toLowerCase() === "concluido"
+        ? "concluido"
+        : "pendente",
     pendingTarget: normalizeManualPendingTarget(row?.pendingTarget),
+    stepConfig: (() => {
+      const raw = row?.stepConfig;
+      if (!raw || typeof raw !== "object") {
+        return {
+          description: "",
+          responsible: "",
+          dueDate: "",
+          checklist: [],
+          usedFields: [],
+        };
+      }
+      const checklist = Array.isArray(raw?.checklist) ? raw.checklist : [];
+      const usedFields = Array.isArray(raw?.usedFields) ? raw.usedFields : [];
+      return {
+        description: String(raw?.description || ""),
+        responsible: String(raw?.responsible || ""),
+        dueDate: String(raw?.dueDate || ""),
+        checklist: checklist
+          .map((item) => {
+            if (typeof item === "string") {
+              const text = item.trim();
+              return text ? { text, done: false } : null;
+            }
+            const text = String(item?.text || "").trim();
+            if (!text) return null;
+            return { text, done: item?.done === true };
+          })
+          .filter(Boolean),
+        usedFields: usedFields
+          .map((field) => {
+            if (typeof field === "string") {
+              const name = field.trim();
+              return name ? { name, type: "texto", required: false } : null;
+            }
+            const name = String(field?.name || field?.field || "").trim();
+            if (!name) return null;
+            const type = String(field?.type || "texto")
+              .trim()
+              .toLowerCase();
+            const allowed = [
+              "texto",
+              "numero",
+              "data",
+              "booleano",
+              "moeda",
+              "id",
+              "outro",
+            ];
+            return {
+              name,
+              type: allowed.includes(type) ? type : "texto",
+              required: field?.required === true,
+            };
+          })
+          .filter(Boolean),
+      };
+    })(),
   }));
 
   return [titleRow, ...contentRows];
 };
 
-const parseTopicStructuredFields = (value = '') => {
-  const text = String(value || '');
+const parseTopicStructuredFields = (value = "") => {
+  const text = String(value || "");
   const descricaoMatch = text.match(/Descri[cç][aã]o\s*:\s*([^\n]*)/i);
   const atributoMatch = text.match(/Atributo\s*chave\s*:\s*([^\n]*)/i);
   const campoMatch = text.match(/Campo\s*:\s*([^\n]*)/i);
 
-  const descricao = safeTrim(descricaoMatch?.[1] || '');
-  const atributoChave = safeTrim(atributoMatch?.[1] || '');
-  const campo = safeTrim(campoMatch?.[1] || '');
+  const descricao = safeTrim(descricaoMatch?.[1] || "");
+  const atributoChave = safeTrim(atributoMatch?.[1] || "");
+  const campo = safeTrim(campoMatch?.[1] || "");
 
   return {
     hasStructured:
@@ -449,18 +543,18 @@ export const buildOpportunityAutoTimelineItems = ({
   showTimeline,
   timelineItems,
 }) => {
-  const actor = safeTrim(actorName) || 'Conta atual';
+  const actor = safeTrim(actorName) || "Conta atual";
   const normalizedActorId = safeTrim(actorId);
   const now = formatTimelineDateTime();
   const nowTimestamp = new Date().toISOString();
   const baseId = Date.now() + Math.floor(Math.random() * 1000);
   let offset = 0;
 
-  const originalTitle = safeTrim(opportunity?.name || opportunity?.nome || '');
+  const originalTitle = safeTrim(opportunity?.name || opportunity?.nome || "");
   const nextTitle = safeTrim(title);
 
   const originalStatus = safeTrim(
-    opportunity?.status || opportunity?.etapa || '',
+    opportunity?.status || opportunity?.etapa || "",
   );
   const nextStatus = safeTrim(effectiveStatus);
 
@@ -469,16 +563,16 @@ export const buildOpportunityAutoTimelineItems = ({
       opportunity?.criadoPor ||
       opportunity?.responsavelNome ||
       opportunity?.responsavel ||
-      '',
+      "",
   );
-  const nextOwnerName = safeTrim(selectedOwner || owner || '');
+  const nextOwnerName = safeTrim(selectedOwner || owner || "");
 
   const originalCreatedDate = safeTrim(
-    opportunity?.createdDate || opportunity?.created_at || '',
+    opportunity?.createdDate || opportunity?.created_at || "",
   );
   const nextCreatedDate = safeTrim(createdDate);
 
-  const originalEndDate = safeTrim(opportunity?.endDate || '');
+  const originalEndDate = safeTrim(opportunity?.endDate || "");
   const nextEndDate = safeTrim(endDate);
 
   const originalStages = Array.isArray(opportunity?.stages)
@@ -508,7 +602,7 @@ export const buildOpportunityAutoTimelineItems = ({
     safeStringify(originalInfoRows) !== safeStringify(nextInfoRows);
 
   const normalizeVisibility = (value, fallback) =>
-    typeof value === 'boolean' ? value : fallback;
+    typeof value === "boolean" ? value : fallback;
 
   const originalShowPipeline = normalizeVisibility(
     opportunity?.showPipeline,
@@ -532,12 +626,12 @@ export const buildOpportunityAutoTimelineItems = ({
   const pushNote = ({
     titleText,
     descriptionText,
-    actionType = 'update',
-    elementType = 'oportunidade',
+    actionType = "update",
+    elementType = "oportunidade",
     itemName,
-    before = '',
-    after = '',
-    comment = '',
+    before = "",
+    after = "",
+    comment = "",
   }) => {
     newAutoNotes.push({
       id: baseId + offset,
@@ -548,10 +642,10 @@ export const buildOpportunityAutoTimelineItems = ({
       actor,
       actorId: normalizedActorId,
       autoGenerated: true,
-      source: 'opportunity-save',
+      source: "opportunity-save",
       actionType,
       elementType,
-      itemName: safeTrim(itemName || titleText) || 'Registro',
+      itemName: safeTrim(itemName || titleText) || "Registro",
       before,
       after,
       comment,
@@ -561,24 +655,24 @@ export const buildOpportunityAutoTimelineItems = ({
 
   if (originalTitle !== nextTitle && nextTitle) {
     pushNote({
-      titleText: 'Nome da oportunidade foi alterado',
-      descriptionText: `Antes: ${originalTitle || '-'} → Agora: ${nextTitle}`,
-      actionType: 'update',
-      elementType: 'oportunidade',
-      itemName: 'Nome da oportunidade',
-      before: originalTitle || '-',
+      titleText: "Nome da oportunidade foi alterado",
+      descriptionText: `Antes: ${originalTitle || "-"} → Agora: ${nextTitle}`,
+      actionType: "update",
+      elementType: "oportunidade",
+      itemName: "Nome da oportunidade",
+      before: originalTitle || "-",
       after: nextTitle,
     });
   }
 
   if (originalStatus !== nextStatus && nextStatus) {
     pushNote({
-      titleText: 'Status da oportunidade foi alterado',
-      descriptionText: `Antes: ${originalStatus || '-'} → Agora: ${nextStatus}`,
-      actionType: 'update',
-      elementType: 'status',
-      itemName: 'Status da oportunidade',
-      before: originalStatus || '-',
+      titleText: "Status da oportunidade foi alterado",
+      descriptionText: `Antes: ${originalStatus || "-"} → Agora: ${nextStatus}`,
+      actionType: "update",
+      elementType: "status",
+      itemName: "Status da oportunidade",
+      before: originalStatus || "-",
       after: nextStatus,
     });
   }
@@ -588,34 +682,34 @@ export const buildOpportunityAutoTimelineItems = ({
     originalEndDate !== nextEndDate
   ) {
     pushNote({
-      titleText: 'Datas da oportunidade foram atualizadas',
-      descriptionText: `Criação: ${originalCreatedDate || '-'} → ${nextCreatedDate || '-'} | Final: ${originalEndDate || '-'} → ${nextEndDate || '-'}`,
-      actionType: 'update',
-      elementType: 'datas',
-      itemName: 'Datas da oportunidade',
-      before: `Criação: ${originalCreatedDate || '-'} | Final: ${originalEndDate || '-'}`,
-      after: `Criação: ${nextCreatedDate || '-'} | Final: ${nextEndDate || '-'}`,
+      titleText: "Datas da oportunidade foram atualizadas",
+      descriptionText: `Criação: ${originalCreatedDate || "-"} → ${nextCreatedDate || "-"} | Final: ${originalEndDate || "-"} → ${nextEndDate || "-"}`,
+      actionType: "update",
+      elementType: "datas",
+      itemName: "Datas da oportunidade",
+      before: `Criação: ${originalCreatedDate || "-"} | Final: ${originalEndDate || "-"}`,
+      after: `Criação: ${nextCreatedDate || "-"} | Final: ${nextEndDate || "-"}`,
     });
   }
 
   const resolvedPipelineTitle =
-    safeTrim(pipelineTitle) || safeTrim(localStorage.getItem('pipelineTitle'));
+    safeTrim(pipelineTitle) || safeTrim(localStorage.getItem("pipelineTitle"));
   const resolvedPipelineSubtitle =
     safeTrim(pipelineSubtitle) ||
-    safeTrim(localStorage.getItem('pipelineSubtitle'));
-  const originalPipelineTitle = safeTrim(opportunity?.pipelineTitle || '');
+    safeTrim(localStorage.getItem("pipelineSubtitle"));
+  const originalPipelineTitle = safeTrim(opportunity?.pipelineTitle || "");
   const originalPipelineSubtitle = safeTrim(
-    opportunity?.pipelineSubtitle || '',
+    opportunity?.pipelineSubtitle || "",
   );
 
   if (originalOwnerName !== nextOwnerName && nextOwnerName) {
     pushNote({
-      titleText: 'Proprietário da oportunidade foi alterado',
-      descriptionText: `Antes: ${originalOwnerName || '-'} → Agora: ${nextOwnerName}`,
-      actionType: 'update',
-      elementType: 'proprietario',
-      itemName: 'Proprietário',
-      before: originalOwnerName || '-',
+      titleText: "Proprietário da oportunidade foi alterado",
+      descriptionText: `Antes: ${originalOwnerName || "-"} → Agora: ${nextOwnerName}`,
+      actionType: "update",
+      elementType: "proprietario",
+      itemName: "Proprietário",
+      before: originalOwnerName || "-",
       after: nextOwnerName,
     });
   }
@@ -627,33 +721,33 @@ export const buildOpportunityAutoTimelineItems = ({
   ) {
     const changedParts = [];
     if (originalPipelineTitle !== resolvedPipelineTitle)
-      changedParts.push('título');
+      changedParts.push("título");
     if (originalPipelineSubtitle !== resolvedPipelineSubtitle)
-      changedParts.push('subtítulo');
-    if (stagesChanged) changedParts.push('nódulos ativos/inativos');
+      changedParts.push("subtítulo");
+    if (stagesChanged) changedParts.push("nódulos ativos/inativos");
 
     pushNote({
-      titleText: 'Pipeline foi alterada',
+      titleText: "Pipeline foi alterada",
       descriptionText: `Antes: ${[
-        originalPipelineTitle || '-',
-        originalPipelineSubtitle || '-',
-      ].join(' | ')} → Agora: ${[
-        resolvedPipelineTitle || '-',
-        resolvedPipelineSubtitle || '-',
-      ].join(' | ')} | Alterações: ${
-        changedParts.length > 0 ? changedParts.join(', ') : 'estrutura'
+        originalPipelineTitle || "-",
+        originalPipelineSubtitle || "-",
+      ].join(" | ")} → Agora: ${[
+        resolvedPipelineTitle || "-",
+        resolvedPipelineSubtitle || "-",
+      ].join(" | ")} | Alterações: ${
+        changedParts.length > 0 ? changedParts.join(", ") : "estrutura"
       }`,
-      actionType: 'update',
-      elementType: 'pipeline',
-      itemName: 'Pipeline principal',
+      actionType: "update",
+      elementType: "pipeline",
+      itemName: "Pipeline principal",
       before: hasAnyActiveStage
-        ? `${originalPipelineTitle || '-'} | ${originalPipelineSubtitle || '-'}`
-        : originalStatus || '-',
-      after: `${resolvedPipelineTitle || '-'} | ${resolvedPipelineSubtitle || '-'}`,
+        ? `${originalPipelineTitle || "-"} | ${originalPipelineSubtitle || "-"}`
+        : originalStatus || "-",
+      after: `${resolvedPipelineTitle || "-"} | ${resolvedPipelineSubtitle || "-"}`,
       comment:
         changedParts.length > 0
-          ? `Campos alterados: ${changedParts.join(', ')}`
-          : 'Estrutura atualizada',
+          ? `Campos alterados: ${changedParts.join(", ")}`
+          : "Estrutura atualizada",
     });
   }
 
@@ -674,12 +768,12 @@ export const buildOpportunityAutoTimelineItems = ({
         const label = safeTrim(currentRow?.label) || `Assunto ${index + 1}`;
         pushNote({
           titleText: `${label} foi adicionado`,
-          descriptionText: 'Antes: inexistente → Agora: tópico criado',
-          actionType: 'create',
-          elementType: 'topico',
+          descriptionText: "Antes: inexistente → Agora: tópico criado",
+          actionType: "create",
+          elementType: "topico",
           itemName: label,
-          before: 'Inexistente',
-          after: 'Tópico criado',
+          before: "Inexistente",
+          after: "Tópico criado",
         });
         continue;
       }
@@ -688,12 +782,12 @@ export const buildOpportunityAutoTimelineItems = ({
         const label = safeTrim(previousRow?.label) || `Assunto ${index + 1}`;
         pushNote({
           titleText: `${label} foi removido`,
-          descriptionText: 'Antes: tópico existente → Agora: removido',
-          actionType: 'delete',
-          elementType: 'topico',
+          descriptionText: "Antes: tópico existente → Agora: removido",
+          actionType: "delete",
+          elementType: "topico",
           itemName: label,
-          before: 'Tópico existente',
-          after: 'Removido',
+          before: "Tópico existente",
+          after: "Removido",
         });
         continue;
       }
@@ -713,10 +807,10 @@ export const buildOpportunityAutoTimelineItems = ({
 
         if (previousLabel !== currentLabel) {
           pushNote({
-            titleText: 'Assunto do tópico foi renomeado',
+            titleText: "Assunto do tópico foi renomeado",
             descriptionText: `Antes: ${previousLabel} → Agora: ${currentLabel}`,
-            actionType: 'update',
-            elementType: 'topico',
+            actionType: "update",
+            elementType: "topico",
             itemName: currentLabel,
             before: previousLabel,
             after: currentLabel,
@@ -731,12 +825,12 @@ export const buildOpportunityAutoTimelineItems = ({
             pushNote({
               titleText: `Descrição atualizada em ${currentLabel}`,
               descriptionText:
-                'Antes: descrição anterior → Agora: descrição atual',
-              actionType: 'update',
-              elementType: 'topico',
+                "Antes: descrição anterior → Agora: descrição atual",
+              actionType: "update",
+              elementType: "topico",
               itemName: `${currentLabel} • Descrição`,
-              before: previousStructured.descricao || '-',
-              after: currentStructured.descricao || '-',
+              before: previousStructured.descricao || "-",
+              after: currentStructured.descricao || "-",
             });
           }
 
@@ -746,24 +840,24 @@ export const buildOpportunityAutoTimelineItems = ({
             pushNote({
               titleText: `Atributo chave atualizado em ${currentLabel}`,
               descriptionText:
-                'Antes: atributo chave anterior → Agora: atributo chave atual',
-              actionType: 'update',
-              elementType: 'topico',
+                "Antes: atributo chave anterior → Agora: atributo chave atual",
+              actionType: "update",
+              elementType: "topico",
               itemName: `${currentLabel} • Atributo chave`,
-              before: previousStructured.atributoChave || '-',
-              after: currentStructured.atributoChave || '-',
+              before: previousStructured.atributoChave || "-",
+              after: currentStructured.atributoChave || "-",
             });
           }
 
           if (previousStructured.campo !== currentStructured.campo) {
             pushNote({
               titleText: `Campo atualizado em ${currentLabel}`,
-              descriptionText: 'Antes: campo anterior → Agora: campo atual',
-              actionType: 'update',
-              elementType: 'topico',
+              descriptionText: "Antes: campo anterior → Agora: campo atual",
+              actionType: "update",
+              elementType: "topico",
               itemName: `${currentLabel} • Campo`,
-              before: previousStructured.campo || '-',
-              after: currentStructured.campo || '-',
+              before: previousStructured.campo || "-",
+              after: currentStructured.campo || "-",
             });
           }
 
@@ -772,27 +866,27 @@ export const buildOpportunityAutoTimelineItems = ({
 
         pushNote({
           titleText: `${currentLabel} foi atualizado`,
-          descriptionText: 'Antes: versão anterior → Agora: versão atual',
-          actionType: 'update',
-          elementType: 'topico',
+          descriptionText: "Antes: versão anterior → Agora: versão atual",
+          actionType: "update",
+          elementType: "topico",
           itemName: currentLabel,
-          before: 'Versão anterior',
-          after: 'Versão atual',
+          before: "Versão anterior",
+          after: "Versão atual",
         });
       }
     }
 
-    const originalTopicTitle = safeTrim(originalInfoRows?.[0]?.label || '');
-    const nextTopicTitle = safeTrim(nextInfoRows?.[0]?.label || '');
+    const originalTopicTitle = safeTrim(originalInfoRows?.[0]?.label || "");
+    const nextTopicTitle = safeTrim(nextInfoRows?.[0]?.label || "");
 
     if (originalTopicTitle !== nextTopicTitle && nextTopicTitle) {
       pushNote({
-        titleText: 'Título do tópico foi alterado',
-        descriptionText: `Antes: ${originalTopicTitle || '-'} → Agora: ${nextTopicTitle}`,
-        actionType: 'update',
-        elementType: 'topico',
-        itemName: 'Título do tópico',
-        before: originalTopicTitle || '-',
+        titleText: "Título do tópico foi alterado",
+        descriptionText: `Antes: ${originalTopicTitle || "-"} → Agora: ${nextTopicTitle}`,
+        actionType: "update",
+        elementType: "topico",
+        itemName: "Título do tópico",
+        before: originalTopicTitle || "-",
         after: nextTopicTitle,
       });
     }
@@ -806,29 +900,29 @@ export const buildOpportunityAutoTimelineItems = ({
     const changedSections = [];
     if (originalShowPipeline !== nextShowPipeline) {
       changedSections.push(
-        `Pipeline: ${originalShowPipeline ? 'visível' : 'oculta'} → ${nextShowPipeline ? 'visível' : 'oculta'}`,
+        `Pipeline: ${originalShowPipeline ? "visível" : "oculta"} → ${nextShowPipeline ? "visível" : "oculta"}`,
       );
     }
     if (originalShowTopico !== nextShowTopico) {
       changedSections.push(
-        `Tópico: ${originalShowTopico ? 'visível' : 'oculto'} → ${nextShowTopico ? 'visível' : 'oculto'}`,
+        `Tópico: ${originalShowTopico ? "visível" : "oculto"} → ${nextShowTopico ? "visível" : "oculto"}`,
       );
     }
     if (originalShowTimeline !== nextShowTimeline) {
       changedSections.push(
-        `Linha do tempo: ${originalShowTimeline ? 'visível' : 'oculta'} → ${nextShowTimeline ? 'visível' : 'oculta'}`,
+        `Linha do tempo: ${originalShowTimeline ? "visível" : "oculta"} → ${nextShowTimeline ? "visível" : "oculta"}`,
       );
     }
 
     pushNote({
-      titleText: 'Layout da oportunidade foi alterado',
-      descriptionText: changedSections.join(' | '),
-      actionType: 'update',
-      elementType: 'layout',
-      itemName: 'Layout da oportunidade',
-      before: 'Configuração anterior',
-      after: 'Configuração atual',
-      comment: changedSections.join(' | '),
+      titleText: "Layout da oportunidade foi alterado",
+      descriptionText: changedSections.join(" | "),
+      actionType: "update",
+      elementType: "layout",
+      itemName: "Layout da oportunidade",
+      before: "Configuração anterior",
+      after: "Configuração atual",
+      comment: changedSections.join(" | "),
     });
   }
 

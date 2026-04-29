@@ -1,0 +1,71 @@
+[
+  {
+    "id": "5e8c1904-3c4d-4bcd-b8e7-0187a00dc76f",
+    "titulo": "Solicitar compra",
+    "descricao": "asda: dasda\ndas: dasd",
+    "tipo": "task",
+    "data_atividade": "2026-04-28T14:16:42.074971+00:00",
+    "responsavel": null,
+    "usuario_criador": "Renan",
+    "entidade_tipo": "oportunidade",
+    "entidade_id": "1",
+    "status": "concluido",
+    "resultado": null,
+    "proximos_passos": null,
+    "duracao_minutos": null,
+    "local": null,
+    "participantes": [],
+    "data_criacao": "2026-04-28T14:16:42.074985+00:00",
+    "data_atualizacao": "2026-04-28T14:16:42.074987+00:00",
+    "anexos": [],
+    "tags": [
+      "eaeaw"
+    ]
+  },
+  {
+    "id": "c89e6b0b-b0a0-4d2a-b611-13af3e759dab",
+    "titulo": "Solicitar compra",
+    "descricao": "Referência: -dszada\nDescrição: O cliente inicia o processo solicitando uma compra, que gera um pedido.",
+    "tipo": "task",
+    "data_atividade": "2026-04-28T22:20:18.685178+00:00",
+    "responsavel": null,
+    "usuario_criador": "Renan",
+    "entidade_tipo": "oportunidade",
+    "entidade_id": "1",
+    "status": "planejado",
+    "resultado": null,
+    "proximos_passos": null,
+    "duracao_minutos": null,
+    "local": null,
+    "participantes": [],
+    "data_criacao": "2026-04-28T22:20:18.685195+00:00",
+    "data_atualizacao": "2026-04-28T22:20:18.685198+00:00",
+    "anexos": [],
+    "tags": [
+      "dsadasd"
+    ]
+  },
+  {
+    "id": "fb070961-7437-4144-b09f-84470754af19",
+    "titulo": "Pedido aprovado?",
+    "descricao": "Referência: -asdsad\nDescrição: A equipe de compras avalia se o pedido está aprovado com base na análise realizada.",
+    "tipo": "task",
+    "data_atividade": "2026-04-28T22:20:32.969044+00:00",
+    "responsavel": null,
+    "usuario_criador": "Renan",
+    "entidade_tipo": "oportunidade",
+    "entidade_id": "1",
+    "status": "planejado",
+    "resultado": null,
+    "proximos_passos": null,
+    "duracao_minutos": null,
+    "local": null,
+    "participantes": [],
+    "data_criacao": "2026-04-28T22:20:32.969062+00:00",
+    "data_atualizacao": "2026-04-28T22:20:32.969064+00:00",
+    "anexos": [],
+    "tags": [
+      "sadsad"
+    ]
+  }
+]

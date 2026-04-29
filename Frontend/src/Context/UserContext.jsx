@@ -4,7 +4,7 @@ import React, {
   useEffect,
   useMemo,
   useState,
-} from 'react';
+} from "react";
 import {
   TOKEN_POST,
   USER_ME,
@@ -14,7 +14,7 @@ import {
   USER_GET,
   USER_GET_BY_ID,
   AUTH_REFRESH,
-} from '../Api';
+} from "../Api";
 
 export const UserContext = createContext({
   user: null,
@@ -32,14 +32,14 @@ export const UserContext = createContext({
   hasPermission: () => false,
   hasRole: () => false,
 });
-const USER_SESSION_CACHE_KEY = 'user_session_cache_v1';
-const AUTH_REQUEST_TIMEOUT_MS = 30000;
-const LOGIN_REQUEST_TIMEOUT_MS = 20000; // first attempt; cold-start retry uses 50s
+const USER_SESSION_CACHE_KEY = "user_session_cache_v1";
+const AUTH_REQUEST_TIMEOUT_MS = 12000;
+const LOGIN_REQUEST_TIMEOUT_MS = 10000; // first attempt; cold-start retry uses 20s
 
 // Offline session: persists token + user in localStorage so the app works
 // after a browser restart when there is no network connection.
 // Only used when navigator.onLine === false — online flow is unchanged.
-const OFFLINE_SESSION_KEY = 'offline_session_v1';
+const OFFLINE_SESSION_KEY = "offline_session_v1";
 const OFFLINE_SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 const readOfflineSession = () => {
@@ -47,7 +47,7 @@ const readOfflineSession = () => {
     const raw = window.localStorage.getItem(OFFLINE_SESSION_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return null;
+    if (!parsed || typeof parsed !== "object") return null;
     const { token, user, savedAt } = parsed;
     if (!token || !user || !savedAt) return null;
     if (Date.now() - savedAt > OFFLINE_SESSION_TTL_MS) {
@@ -64,7 +64,12 @@ const writeOfflineSession = (token, userData, refreshToken = null) => {
   try {
     window.localStorage.setItem(
       OFFLINE_SESSION_KEY,
-      JSON.stringify({ token, refreshToken, user: userData, savedAt: Date.now() }),
+      JSON.stringify({
+        token,
+        refreshToken,
+        user: userData,
+        savedAt: Date.now(),
+      }),
     );
   } catch {
     // no-op
@@ -84,7 +89,7 @@ const readCachedUser = () => {
     const raw = window.sessionStorage.getItem(USER_SESSION_CACHE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? parsed : null;
+    return parsed && typeof parsed === "object" ? parsed : null;
   } catch {
     return null;
   }
@@ -131,7 +136,7 @@ export const UserStorage = ({ children }) => {
       window.clearTimeout(timeoutId);
     }
 
-    if (!res.ok) throw new Error('Erro ao buscar usuário');
+    if (!res.ok) throw new Error("Erro ao buscar usuário");
     return await res.json();
   }, []);
 
@@ -152,7 +157,7 @@ export const UserStorage = ({ children }) => {
             ...options,
             signal: controller.signal,
           });
-          if (!res.ok) throw new Error('Usuário ou senha incorretos');
+          if (!res.ok) throw new Error("Usuário ou senha incorretos");
           return await res.json();
         } finally {
           window.clearTimeout(timeoutId);
@@ -163,26 +168,26 @@ export const UserStorage = ({ children }) => {
       try {
         data = await attemptFetch();
       } catch (firstError) {
-        if (firstError?.name !== 'AbortError') {
+        if (firstError?.name !== "AbortError") {
           if (firstError instanceof TypeError) {
             throw new Error(
-              'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
+              "Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.",
             );
           }
           throw firstError;
         }
         // Backend em cold start (Render) — tenta novamente automaticamente
         try {
-          data = await attemptFetch(50000);
+          data = await attemptFetch(20000);
         } catch (retryError) {
-          if (retryError?.name === 'AbortError') {
+          if (retryError?.name === "AbortError") {
             throw new Error(
-              'A autenticacao demorou demais. Tente novamente em alguns segundos.',
+              "A autenticacao demorou demais. Tente novamente em alguns segundos.",
             );
           }
           if (retryError instanceof TypeError) {
             throw new Error(
-              'Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.',
+              "Falha de conexao com a API. Verifique VITE_API_URL e ALLOWED_ORIGINS.",
             );
           }
           throw retryError;
@@ -191,16 +196,16 @@ export const UserStorage = ({ children }) => {
 
       const token = data.access_token;
       const refreshToken = data.refresh_token || null;
-      window.sessionStorage.setItem('token', token);
+      window.sessionStorage.setItem("token", token);
       if (refreshToken) {
-        window.sessionStorage.setItem('refresh_token', refreshToken);
+        window.sessionStorage.setItem("refresh_token", refreshToken);
       }
       // Clear legacy persistent token so the app asks login again
       // after browser restart.
-      window.localStorage.removeItem('token');
+      window.localStorage.removeItem("token");
 
       const userDataFromLogin =
-        data?.user && typeof data.user === 'object' ? data.user : null;
+        data?.user && typeof data.user === "object" ? data.user : null;
       const userData = userDataFromLogin || (await getUser(token));
 
       setUser(userData);
@@ -215,9 +220,9 @@ export const UserStorage = ({ children }) => {
 
   // API proxy: logout (just remove token)
   const userLogout = useCallback(() => {
-    window.sessionStorage.removeItem('token');
-    window.sessionStorage.removeItem('refresh_token');
-    window.localStorage.removeItem('token');
+    window.sessionStorage.removeItem("token");
+    window.sessionStorage.removeItem("refresh_token");
+    window.localStorage.removeItem("token");
     clearCachedUser();
     clearOfflineSession();
     setUser(null);
@@ -228,14 +233,14 @@ export const UserStorage = ({ children }) => {
 
     const restoreUserSession = async () => {
       try {
-        const legacyPersistentToken = window.localStorage.getItem('token');
-        const sessionToken = window.sessionStorage.getItem('token');
+        const legacyPersistentToken = window.localStorage.getItem("token");
+        const sessionToken = window.sessionStorage.getItem("token");
 
         // If the user still has the legacy persistent token, invalidate
         // current auth once so the app asks for account credentials again.
         if (legacyPersistentToken) {
-          window.sessionStorage.removeItem('token');
-          window.localStorage.removeItem('token');
+          window.sessionStorage.removeItem("token");
+          window.localStorage.removeItem("token");
           clearCachedUser();
           if (isMounted) setUser(null);
           return;
@@ -250,13 +255,13 @@ export const UserStorage = ({ children }) => {
           if (!navigator.onLine) {
             const offlineSession = readOfflineSession();
             if (offlineSession) {
-              window.sessionStorage.setItem('token', offlineSession.token);
+              window.sessionStorage.setItem("token", offlineSession.token);
               writeCachedUser(offlineSession.user);
               if (isMounted) setUser(offlineSession.user);
               return;
             }
           }
-          window.sessionStorage.removeItem('token');
+          window.sessionStorage.removeItem("token");
           if (isMounted) setUser(null);
           return;
         }
@@ -287,8 +292,11 @@ export const UserStorage = ({ children }) => {
         } catch (_firstErr) {
           // Token may be expired — try refreshing before giving up.
           const refreshToken =
-            window.sessionStorage.getItem('refresh_token') ||
-            (() => { const s = readOfflineSession(); return s?.refreshToken; })();
+            window.sessionStorage.getItem("refresh_token") ||
+            (() => {
+              const s = readOfflineSession();
+              return s?.refreshToken;
+            })();
           if (refreshToken) {
             try {
               const { url: rUrl, options: rOpts } = AUTH_REFRESH(refreshToken);
@@ -297,7 +305,7 @@ export const UserStorage = ({ children }) => {
                 const rData = await rRes.json();
                 const newToken = rData.access_token;
                 if (newToken) {
-                  window.sessionStorage.setItem('token', newToken);
+                  window.sessionStorage.setItem("token", newToken);
                   activeToken = newToken;
                   userData = await getUser(newToken);
                 }
@@ -323,7 +331,7 @@ export const UserStorage = ({ children }) => {
           return;
         }
 
-        window.sessionStorage.removeItem('token');
+        window.sessionStorage.removeItem("token");
         clearCachedUser();
         if (isMounted) setUser(null);
       } finally {
@@ -342,7 +350,7 @@ export const UserStorage = ({ children }) => {
   const createUser = useCallback(async (user, token) => {
     const { url, options } = USER_POST(user, token);
     const res = await fetch(url, options);
-    if (!res.ok) throw new Error('Erro ao criar usuário');
+    if (!res.ok) throw new Error("Erro ao criar usuário");
     return await res.json();
   }, []);
 
@@ -350,7 +358,7 @@ export const UserStorage = ({ children }) => {
   const updateUser = useCallback(async (id, user, token) => {
     const { url, options } = USER_PUT(id, user, token);
     const res = await fetch(url, options);
-    if (!res.ok) throw new Error('Erro ao atualizar usuário');
+    if (!res.ok) throw new Error("Erro ao atualizar usuário");
     return await res.json();
   }, []);
 
@@ -358,7 +366,7 @@ export const UserStorage = ({ children }) => {
   const deleteUser = useCallback(async (id, token) => {
     const { url, options } = USER_DELETE(id, token);
     const res = await fetch(url, options);
-    if (!res.ok) throw new Error('Erro ao deletar usuário');
+    if (!res.ok) throw new Error("Erro ao deletar usuário");
     return true;
   }, []);
 
@@ -366,7 +374,7 @@ export const UserStorage = ({ children }) => {
   const getAllUsers = useCallback(async (token) => {
     const { url, options } = USER_GET(token);
     const res = await fetch(url, options);
-    if (!res.ok) throw new Error('Erro ao buscar usuários');
+    if (!res.ok) throw new Error("Erro ao buscar usuários");
     return await res.json();
   }, []);
 
@@ -374,14 +382,14 @@ export const UserStorage = ({ children }) => {
   const getUserById = useCallback(async (id, token) => {
     const { url, options } = USER_GET_BY_ID(id, token);
     const res = await fetch(url, options);
-    if (!res.ok) throw new Error('Erro ao buscar usuário');
+    if (!res.ok) throw new Error("Erro ao buscar usuário");
     return await res.json();
   }, []);
 
   // Refresh access token using refresh_token
   const refreshAccessToken = useCallback(async () => {
     const refreshToken =
-      window.sessionStorage.getItem('refresh_token') ||
+      window.sessionStorage.getItem("refresh_token") ||
       (() => {
         const s = readOfflineSession();
         return s?.refreshToken;
@@ -394,7 +402,7 @@ export const UserStorage = ({ children }) => {
       const data = await res.json();
       const newToken = data.access_token;
       if (newToken) {
-        window.sessionStorage.setItem('token', newToken);
+        window.sessionStorage.setItem("token", newToken);
         // Update offline session with new access token
         if (user) writeOfflineSession(newToken, user, refreshToken);
       }
@@ -407,13 +415,16 @@ export const UserStorage = ({ children }) => {
   // Fetch wrapper: auto-refresh token on 401 and retry once
   const fetchWithAuth = useCallback(
     async (requestBuilder, ...builderArgs) => {
-      const token = window.sessionStorage.getItem('token');
+      const token = window.sessionStorage.getItem("token");
       const { url, options } = requestBuilder(token, ...builderArgs);
       const res = await fetch(url, options);
       if (res.status === 401) {
         const newToken = await refreshAccessToken();
         if (newToken) {
-          const { url: url2, options: opts2 } = requestBuilder(newToken, ...builderArgs);
+          const { url: url2, options: opts2 } = requestBuilder(
+            newToken,
+            ...builderArgs,
+          );
           return fetch(url2, opts2);
         }
       }
@@ -436,7 +447,7 @@ export const UserStorage = ({ children }) => {
   const hasRole = useCallback(
     (...roles) => {
       if (!user) return false;
-      return roles.includes(user.role || 'user');
+      return roles.includes(user.role || "user");
     },
     [user],
   );

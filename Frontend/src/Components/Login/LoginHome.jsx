@@ -1,25 +1,30 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import Input from '../Forms/Input';
-import ButtonRegister from '../Forms/ButtonRegister';
-import ButtonLogin from '../Forms/ButtonLogin';
-import useForm from '../../Hooks/useForm';
-import useFormSubmit from '../../Hooks/useFormSubmit';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Input from "../Forms/Input";
+import ButtonRegister from "../Forms/ButtonRegister";
+import ButtonLogin from "../Forms/ButtonLogin";
+import useForm from "../../Hooks/useForm";
+import useFormSubmit from "../../Hooks/useFormSubmit";
 
-import { UserContext } from '../../Context/UserContext';
-import Error from '../Helper/Error';
-import useFetch from '../../Hooks/useFetch';
-import { USER_POST, PASSWORD_LOST, PASSWORD_RESET, HEALTH_GET } from '../../Api';
-import styles from './LoginHome.module.css';
-import stylesBtn from '../Forms/Button.module.css';
-import Close from '../Helper/Close';
+import { UserContext } from "../../Context/UserContext";
+import Error from "../Helper/Error";
+import useFetch from "../../Hooks/useFetch";
+import {
+  USER_POST,
+  PASSWORD_LOST,
+  PASSWORD_RESET,
+  HEALTH_GET,
+} from "../../Api";
+import styles from "./LoginHome.module.css";
+import stylesBtn from "../Forms/Button.module.css";
+import Close from "../Helper/Close";
 
 const LoginHome = () => {
   const [isPasswordRecovery, setIsPasswordRecovery] = React.useState(false);
   const [showSuccessMessage, setShowSuccessMessage] = React.useState(false);
   const [isPasswordReset, setIsPasswordReset] = React.useState(false);
-  const [resetKey, setResetKey] = React.useState('');
-  const [resetLogin, setResetLogin] = React.useState('');
+  const [resetKey, setResetKey] = React.useState("");
+  const [resetLogin, setResetLogin] = React.useState("");
   const [resetSuccessNotice, setResetSuccessNotice] = React.useState(false);
   const navigate = useNavigate();
 
@@ -28,8 +33,8 @@ const LoginHome = () => {
   // Verificar se está acessando via link de reset
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const key = params.get('key');
-    const login = params.get('login');
+    const key = params.get("key");
+    const login = params.get("login");
     if (key && login) {
       setResetKey(key);
       setResetLogin(login);
@@ -48,7 +53,7 @@ const LoginHome = () => {
   // ======================
   // LOGIN
   // ======================
-  const username = useForm('email');
+  const username = useForm("email");
   const password = useForm();
 
   const {
@@ -63,7 +68,7 @@ const LoginHome = () => {
     },
     onSubmit: async () => {
       await userLogin(username.value, password.value);
-      navigate('/ia');
+      navigate("/gerar-bpmn");
     },
   });
 
@@ -71,8 +76,8 @@ const LoginHome = () => {
   // CADASTRO
   // ======================
   const usernameCreate = useForm();
-  const emailCreate = useForm('email');
-  const passwordCreate = useForm('password');
+  const emailCreate = useForm("email");
+  const passwordCreate = useForm("password");
   const { request } = useFetch();
 
   const {
@@ -98,7 +103,7 @@ const LoginHome = () => {
       const { response } = await request(url, options);
       if (response && response.ok) {
         await userLogin(emailCreate.value, passwordCreate.value);
-        setTimeout(() => navigate('/'), 1200);
+        setTimeout(() => navigate("/"), 1200);
       }
     },
   });
@@ -118,7 +123,7 @@ const LoginHome = () => {
     if (loginRecovery.validate()) {
       const { url, options } = PASSWORD_LOST({
         login: loginRecovery.value,
-        url: window.location.href.replace('login', 'login/resetar'),
+        url: window.location.href.replace("login", "login/resetar"),
       });
       const { response } = await requestRecovery(url, options);
       if (response && response.ok) {
@@ -129,15 +134,15 @@ const LoginHome = () => {
 
   const handleTryAgain = () => {
     setShowSuccessMessage(false);
-    loginRecovery.setValue('');
+    loginRecovery.setValue("");
   };
 
   // ======================
   // RESET DE SENHA
   // ======================
-  const newPassword = useForm('password');
+  const newPassword = useForm("password");
   const confirmPassword = useForm();
-  const [passwordMatchError, setPasswordMatchError] = React.useState('');
+  const [passwordMatchError, setPasswordMatchError] = React.useState("");
   const {
     loading: loadingReset,
     error: errorReset,
@@ -148,11 +153,11 @@ const LoginHome = () => {
     event.preventDefault();
 
     if (newPassword.value !== confirmPassword.value) {
-      setPasswordMatchError('As senhas não coincidem');
+      setPasswordMatchError("As senhas não coincidem");
       return;
     }
 
-    setPasswordMatchError('');
+    setPasswordMatchError("");
 
     if (newPassword.validate() && confirmPassword.validate()) {
       const { url, options } = PASSWORD_RESET({
@@ -192,7 +197,7 @@ const LoginHome = () => {
                     className={stylesBtn.outline}
                     disabled={loadingReset}
                   >
-                    {loadingReset ? 'Redefinindo...' : 'Redefinir Senha'}
+                    {loadingReset ? "Redefinindo..." : "Redefinir Senha"}
                   </ButtonLogin>
                 </div>
                 <Error error={errorReset} />
@@ -229,19 +234,19 @@ const LoginHome = () => {
                       className={stylesBtn.outline}
                       disabled={loadingRecovery}
                     >
-                      {loadingRecovery ? 'Enviando...' : 'Enviar Email'}
+                      {loadingRecovery ? "Enviando..." : "Enviar Email"}
                     </ButtonLogin>
                   </div>
                   <p
                     className={styles.forgotPassword}
                     style={{
-                      marginTop: '1.5rem',
-                      fontSize: '1rem',
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      color: '#fff',
-                      textDecoration: 'underline',
-                      fontWeight: 'bold',
+                      marginTop: "1.5rem",
+                      fontSize: "1rem",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      color: "#fff",
+                      textDecoration: "underline",
+                      fontWeight: "bold",
                     }}
                     onClick={() => setIsPasswordRecovery(false)}
                   >
@@ -260,7 +265,7 @@ const LoginHome = () => {
                   {...username}
                   error={
                     loginTouched && !username.value
-                      ? 'Preencha o email'
+                      ? "Preencha o email"
                       : username.error
                   }
                 />
@@ -270,7 +275,7 @@ const LoginHome = () => {
                   {...password}
                   error={
                     loginTouched && !password.value
-                      ? 'Preencha a senha'
+                      ? "Preencha a senha"
                       : password.error
                   }
                 />
@@ -279,7 +284,7 @@ const LoginHome = () => {
                     className={stylesBtn.outline}
                     disabled={loginLoading}
                   >
-                    {loginLoading ? 'Carregando...' : 'Entrar'}
+                    {loginLoading ? "Carregando..." : "Entrar"}
                   </ButtonLogin>
                 </div>
                 <Error error={loginError} />
@@ -287,12 +292,12 @@ const LoginHome = () => {
               <p
                 className={styles.forgotPassword}
                 style={{
-                  marginTop: '2.5rem',
-                  fontSize: '1rem',
-                  textAlign: 'center',
+                  marginTop: "2.5rem",
+                  fontSize: "1rem",
+                  textAlign: "center",
                 }}
               >
-                Esqueceu a sua senha?{' '}
+                Esqueceu a sua senha?{" "}
                 <span
                   className={styles.cliqueAqui}
                   onClick={() => setIsPasswordRecovery(true)}
@@ -313,7 +318,7 @@ const LoginHome = () => {
               {...usernameCreate}
               error={
                 touchedCreate && !usernameCreate.value
-                  ? 'Preencha o nome'
+                  ? "Preencha o nome"
                   : undefined
               }
             />
@@ -322,7 +327,7 @@ const LoginHome = () => {
               {...emailCreate}
               error={
                 touchedCreate && !emailCreate.value
-                  ? 'Preencha o email'
+                  ? "Preencha o email"
                   : emailCreate.error
               }
             />
@@ -332,7 +337,7 @@ const LoginHome = () => {
               {...passwordCreate}
               error={
                 touchedCreate && !passwordCreate.value
-                  ? 'Preencha a senha'
+                  ? "Preencha a senha"
                   : passwordCreate.error
               }
             />
@@ -341,7 +346,7 @@ const LoginHome = () => {
                 className={stylesBtn.primary}
                 disabled={loadingCreate}
               >
-                {loadingCreate ? 'Cadastrando...' : 'Inscrever-se'}
+                {loadingCreate ? "Cadastrando..." : "Inscrever-se"}
               </ButtonRegister>
             </div>
             <Error error={errorCreate} />
@@ -356,12 +361,12 @@ const LoginHome = () => {
           message="Senha redefinida com sucesso!"
           onConfirm={() => {
             setResetSuccessNotice(false);
-            navigate('/login');
+            navigate("/login");
             window.location.reload();
           }}
           onCancel={() => {
             setResetSuccessNotice(false);
-            navigate('/login');
+            navigate("/login");
             window.location.reload();
           }}
           confirmLabel="OK"

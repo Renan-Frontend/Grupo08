@@ -69,6 +69,31 @@ button.primaryButton:hover {
   opacity: 0.88;
 }
 
+.headerActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.aiButton {
+  border: none;
+  background: linear-gradient(135deg, #2563eb 60%, #1d4ed8 100%);
+  color: #fff !important;
+  border-radius: 10px;
+  padding: 0.6rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 2px 0 8px rgba(37, 99, 235, 0.25);
+  transition: opacity 0.2s;
+}
+
+button.aiButton:hover {
+  opacity: 0.88;
+}
+
 .secondaryButton {
   border: 1px solid #d1d5db;
   background: #fff;
@@ -404,23 +429,23 @@ button.primaryButton:hover {
   }
 
   .table td:nth-child(1)::before {
-    content: 'Processo';
+    content: "Processo";
   }
 
   .table td:nth-child(2)::before {
-    content: 'Status';
+    content: "Status";
   }
 
   .table td:nth-child(3)::before {
-    content: 'Etapas';
+    content: "Etapas";
   }
 
   .table td:nth-child(4)::before {
-    content: 'Estrutura';
+    content: "Estrutura";
   }
 
   .table td:nth-child(5)::before {
-    content: 'Data';
+    content: "Data";
   }
 
   .table td.tableActions {
@@ -433,7 +458,7 @@ button.primaryButton:hover {
   }
 
   .table td.tableActions::before {
-    content: 'Ações';
+    content: "Ações";
     width: 100%;
     font-size: 0.68rem;
     font-weight: 700;

@@ -1,0 +1,213 @@
+.wrapper {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.btnAdd {
+  background: #1e9158;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.38rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btnAdd:hover {
+  background: #177a4a;
+}
+
+.btnAddInline {
+  background: #1e9158;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.42rem 1rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.15s;
+}
+
+.btnAddInline:hover {
+  background: #177a4a;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+  color: #6b7280;
+  text-align: center;
+  gap: 0.5rem;
+}
+
+.emptyIcon {
+  font-size: 2.5rem;
+  opacity: 0.4;
+}
+
+.empty {
+  color: #6b7280;
+  font-size: 0.9rem;
+  padding: 1rem 0;
+}
+
+/* ── Timeline layout ── */
+.timeline {
+  position: relative;
+  padding: 0.25rem 0 0.25rem 1rem;
+}
+
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #2fac66, #e5e7eb);
+}
+
+.timelineItem {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.timelineItem:last-child {
+  margin-bottom: 0;
+}
+
+.dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  background-color: #fff;
+  border: 2px solid #2fac66;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.itemContent {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.itemTitle {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.88rem;
+  margin: 0 0 0.3rem 0;
+  padding-right: 1.5rem;
+}
+
+.itemMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.3rem;
+}
+
+.itemSubtitle {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.25rem;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.itemDate {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.dataList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dataRow {
+  display: flex;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #374151;
+  margin-bottom: 0.15rem;
+}
+
+.dataKey {
+  color: #6b7280;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.editBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.editBtn:hover {
+  color: #2fac66;
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  margin-top: 0.25rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}

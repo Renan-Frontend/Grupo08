@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from '../OpportunityDetail.module.css';
+import React from "react";
+import styles from "../OpportunityDetail.module.css";
 
 const OpportunitySummary = ({
   isReadOnlyMode,
@@ -15,7 +15,15 @@ const OpportunitySummary = ({
   setManualStatus,
   selectedOwner,
   setSelectedOwner,
+  motivoFechamento = "",
+  setMotivoFechamento,
 }) => {
+  const currentStatus = showPipeline ? effectiveStatus : manualStatus;
+  const isClosed =
+    /ganho|won|fechado/i.test(currentStatus) ||
+    /perdido|lost|cancelado/i.test(currentStatus);
+  const isWon = /ganho|won|fechado/i.test(currentStatus);
+
   return (
     <div className={styles.headerRow}>
       <div className={styles.opportunityInfo}>
@@ -35,14 +43,14 @@ const OpportunitySummary = ({
             maxLength={120}
             rows={2}
             style={{
-              fontWeight: 'bold',
-              border: 'none',
-              background: 'transparent',
-              width: '100%',
-              fontSize: '1.5em',
-              resize: 'none',
-              overflow: 'hidden',
-              fontFamily: 'inherit',
+              fontWeight: "bold",
+              border: "none",
+              background: "transparent",
+              width: "100%",
+              fontSize: "1.5em",
+              resize: "none",
+              overflow: "hidden",
+              fontFamily: "inherit",
             }}
           />
         </div>
@@ -118,6 +126,25 @@ const OpportunitySummary = ({
             placeholder="Digite o proprietário..."
           />
         </div>
+        {isClosed && (
+          <div className={styles.summaryItem}>
+            <span className={styles.label}>
+              {isWon ? "Motivo do ganho" : "Motivo da perda"}
+            </span>
+            <input
+              type="text"
+              className={styles.dateInput}
+              value={motivoFechamento}
+              onChange={(e) => {
+                if (isReadOnlyMode) return;
+                setMotivoFechamento?.(e.target.value);
+              }}
+              readOnly={isReadOnlyMode}
+              placeholder={isWon ? "Ex: Melhor preço" : "Ex: Concorrência"}
+              style={{ borderColor: isWon ? "#bbf7d0" : "#fecaca" }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

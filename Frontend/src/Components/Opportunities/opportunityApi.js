@@ -1,7 +1,7 @@
-import { API_URL } from '../../Api';
+import { API_URL } from "../../Api";
 
 const jsonHeaders = (token) => ({
-  'Content-Type': 'application/json',
+  "Content-Type": "application/json",
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 });
 
@@ -10,8 +10,8 @@ const authHeaders = (token) => ({
 });
 
 export const getAuthToken = () =>
-  window.sessionStorage.getItem('token') ||
-  window.localStorage.getItem('token');
+  window.sessionStorage.getItem("token") ||
+  window.localStorage.getItem("token");
 
 export const fetchOpportunitiesPage = async ({
   page,
@@ -28,7 +28,7 @@ export const fetchOpportunitiesPage = async ({
   });
 
   if (!response.ok) {
-    throw new Error('Erro ao buscar oportunidades');
+    throw new Error("Erro ao buscar oportunidades");
   }
 
   return response.json();
@@ -58,13 +58,13 @@ export const updateOpportunityById = async ({
   token,
 }) => {
   const response = await fetch(`${API_URL}/oportunidades/${opportunityId}`, {
-    method: 'PUT',
+    method: "PUT",
     headers: jsonHeaders(token),
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    throw new Error('Erro ao atualizar oportunidade');
+    throw new Error("Erro ao atualizar oportunidade");
   }
 
   return response.json();
@@ -72,16 +72,16 @@ export const updateOpportunityById = async ({
 
 export const createOpportunity = async ({ payload, token }) => {
   const response = await fetch(`${API_URL}/oportunidades`, {
-    method: 'POST',
+    method: "POST",
     headers: jsonHeaders(token),
     body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
-    let detail = '';
+    let detail = "";
     try {
       const errorBody = await response.json();
-      detail = errorBody?.detail || '';
+      detail = errorBody?.detail || "";
     } catch {
       // no-op
     }
@@ -95,12 +95,12 @@ export const createOpportunity = async ({ payload, token }) => {
 
 export const deleteOpportunityById = async ({ opportunityId, token }) => {
   const response = await fetch(`${API_URL}/oportunidades/${opportunityId}`, {
-    method: 'DELETE',
+    method: "DELETE",
     headers: authHeaders(token),
   });
 
   if (!response.ok && response.status !== 404) {
-    throw new Error('Erro ao deletar oportunidade');
+    throw new Error("Erro ao deletar oportunidade");
   }
 
   return response;
@@ -108,13 +108,13 @@ export const deleteOpportunityById = async ({ opportunityId, token }) => {
 
 export const batchSyncEntidades = async ({ items, token }) => {
   const response = await fetch(`${API_URL}/entidades/batch/sync`, {
-    method: 'PUT',
+    method: "PUT",
     headers: jsonHeaders(token),
     body: JSON.stringify({ items }),
   });
 
   if (!response.ok) {
-    throw new Error('Erro ao sincronizar entidades em lote');
+    throw new Error("Erro ao sincronizar entidades em lote");
   }
 
   return response.json();

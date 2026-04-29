@@ -1,17 +1,21 @@
-import React, { useContext } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import EditablePipeline from './Pipeline/EditablePipeline';
-import Close from '../Helper/Close';
-import styles from './OpportunityDetail.module.css';
-import { UserContext } from '../../Context/UserContext';
-import { EntidadesContext } from '../../Context/EntidadesContext';
-import OpportunitySummary from './Detail/OpportunitySummary';
-import TopicCard from './Detail/TopicCard';
-import TimelineCard from './Detail/TimelineCard';
-import OpportunityTopBar from './Detail/OpportunityTopBar';
-import HiddenSection from './Detail/HiddenSection';
-import useOpportunityDetailState from './Detail/useOpportunityDetailState';
-import WorkflowPanel from './Detail/WorkflowPanel';
+import React, { useContext } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import EditablePipeline from "./Pipeline/EditablePipeline";
+import Close from "../Helper/Close";
+import styles from "./OpportunityDetail.module.css";
+import { UserContext } from "../../Context/UserContext";
+import { EntidadesContext } from "../../Context/EntidadesContext";
+import OpportunitySummary from "./Detail/OpportunitySummary";
+import OpportunityDocumentsCard from "./Detail/OpportunityDocumentsCard";
+import TimelineCard from "./Detail/TimelineCard";
+import OpportunityTopBar from "./Detail/OpportunityTopBar";
+import HiddenSection from "./Detail/HiddenSection";
+import ProductsCard from "./Detail/ProductsCard";
+import QuotesCard from "./Detail/QuotesCard";
+import ContactsCard from "./Detail/ContactsCard";
+import ActivityTimeline from "../Activities/ActivityTimeline";
+import OpportunityProcessosCard from "./Detail/OpportunityProcessosCard";
+import useOpportunityDetailState from "./Detail/useOpportunityDetailState";
 import {
   buildOpportunityAutoTimelineItems,
   buildBpmnEntitiesForCatalog,
@@ -19,11 +23,91 @@ import {
   buildOpportunityPayload,
   deleteOpportunity,
   saveOpportunity,
-} from './Detail/opportunityService';
-import { getUserDisplayName } from './opportunityOwnershipRules';
-import { getAuthToken, fetchOpportunitiesPage } from './opportunityApi';
-import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
-import { WORKFLOW_TASKS_LIST, WORKFLOW_TASK_DELETE } from '../../Api';
+} from "./Detail/opportunityService";
+import { getUserDisplayName } from "./opportunityOwnershipRules";
+import { getAuthToken, fetchOpportunitiesPage } from "./opportunityApi";
+import { isReadOnlyAccessLevelOne } from "../../Utils/accessControl";
+
+// ─── Componente de resumo do passo ──────────────────────────────────────────
+const StepResumeCard = ({ form, stageLabel, styles }) => {
+  const fields = form?.header?.fields || [];
+  const sections = form?.sections || [];
+  const normalizeLabel = (value) =>
+    String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase();
+
+  const isDescriptionLabel = (label) => {
+    const normalized = normalizeLabel(label);
+    return normalized === "descricao" || normalized.startsWith("descricao ");
+  };
+
+  const descriptionField = fields.find(
+    (field) =>
+      isDescriptionLabel(field?.label) &&
+      String(field?.value || "").trim().length > 0,
+  );
+
+  const descriptionFromSection = sections.find(
+    (section) =>
+      isDescriptionLabel(section?.heading) &&
+      String(section?.body || "").trim().length > 0,
+  );
+
+  const descriptionValue =
+    String(descriptionField?.value || "").trim() ||
+    String(descriptionFromSection?.body || "").trim();
+
+  const hasContent =
+    fields.some((f) => String(f.value || "").trim()) ||
+    sections.some((s) => String(s.body || "").trim());
+
+  if (!hasContent) return null;
+
+  return (
+    <div className={styles.resumeCard}>
+      <div className={styles.resumeCardHeader}>
+        <span className={styles.resumeCardTitle}>
+          📋 {stageLabel ? stageLabel : "Resumo do passo"}
+        </span>
+      </div>
+      <div className={styles.resumeCardContent}>
+        {descriptionValue && (
+          <div className={styles.resumeFieldRow}>
+            <span className={styles.resumeFieldLabel}>Descrição:</span>
+            <span className={styles.resumeFieldValue}>{descriptionValue}</span>
+          </div>
+        )}
+        {fields
+          .filter(
+            (f) =>
+              String(f.value || "").trim() && !isDescriptionLabel(f?.label),
+          )
+          .map((f, i) => (
+            <div key={i} className={styles.resumeFieldRow}>
+              <span className={styles.resumeFieldLabel}>{f.label}:</span>
+              <span className={styles.resumeFieldValue}>{f.value}</span>
+            </div>
+          ))}
+        {sections
+          .filter(
+            (s) =>
+              String(s.body || "").trim() && !isDescriptionLabel(s?.heading),
+          )
+          .map((s, i) => (
+            <div key={i} className={styles.resumeSection}>
+              {s.heading && (
+                <p className={styles.resumeSectionTitle}>{s.heading}</p>
+              )}
+              <p className={styles.resumeSectionBody}>{s.body}</p>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+};
 
 const OpportunityDetail = () => {
   const { user } = useContext(UserContext);
@@ -34,10 +118,10 @@ const OpportunityDetail = () => {
   const { slug } = useParams();
   const locationOpportunity = location.state?.opportunity || null;
   const [opportunity, setOpportunity] = React.useState(locationOpportunity);
-  const owner = getUserDisplayName(user) || 'Nome da conta';
-  const actorId = String(user?.id || user?._id || user?.userId || '').trim();
+  const owner = getUserDisplayName(user) || "Nome da conta";
+  const actorId = String(user?.id || user?._id || user?.userId || "").trim();
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
-  const [noticeMessage, setNoticeMessage] = React.useState('');
+  const [noticeMessage, setNoticeMessage] = React.useState("");
 
   // When navigating from Workflows, only {id, name} is passed.
   // Fetch the full opportunity so BPMN/pipeline data is available.
@@ -47,32 +131,75 @@ const OpportunityDetail = () => {
     const fetchFull = async () => {
       try {
         const token = getAuthToken();
-        const res = await fetchOpportunitiesPage({ page: 1, limit: 200, token });
+        const res = await fetchOpportunitiesPage({
+          page: 1,
+          limit: 200,
+          token,
+        });
         if (cancelled) return;
         const rows = Array.isArray(res?.data) ? res.data : [];
-        const full = rows.find((r) => String(r?.id ?? '') === String(opportunity.id));
-        if (full) setOpportunity(full);
+        const full = rows.find(
+          (r) => String(r?.id ?? "") === String(opportunity.id),
+        );
+        if (full) {
+          setOpportunity(full);
+          if (Array.isArray(full.products)) setProducts(full.products);
+          if (Array.isArray(full.quotes)) setQuotes(full.quotes);
+          if (Array.isArray(full.contacts)) setContacts(full.contacts);
+          if (full.probabilidade !== undefined)
+            setProbabilidade(full.probabilidade);
+          if (full.origemLead !== undefined) setOrigemLead(full.origemLead);
+          if (full.motivoFechamento !== undefined)
+            setMotivoFechamento(full.motivoFechamento);
+        }
       } catch {
         // silent — keep minimal object
       }
     };
     fetchFull();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [opportunity]);
 
-  const [workflowActive, setWorkflowActive] = React.useState(false);
-  const [visibleStageCount, setVisibleStageCount] = React.useState(null);
-  const [workflowCurrentNodeId, setWorkflowCurrentNodeId] = React.useState(null);
-  const [workflowExecuted, setWorkflowExecuted] = React.useState([]);
-  const [workflowNote, setWorkflowNote] = React.useState(null);
   const [isSavingPipeline, setIsSavingPipeline] = React.useState(false);
-  const [pipelineSaveMsg, setPipelineSaveMsg] = React.useState('');
+  const [pipelineSaveMsg, setPipelineSaveMsg] = React.useState("");
+  const [activeStageLabel, setActiveStageLabel] = React.useState(null);
+  const [activeTab, setActiveTab] = React.useState("resumo");
+  const [currentStepForm, setCurrentStepForm] = React.useState(null);
+
+  const handleFormChange = React.useCallback((form, activeDoc) => {
+    setCurrentStepForm(form);
+  }, []);
+  const [products, setProducts] = React.useState(() =>
+    Array.isArray(locationOpportunity?.products)
+      ? locationOpportunity.products
+      : [],
+  );
+  const [quotes, setQuotes] = React.useState(() =>
+    Array.isArray(locationOpportunity?.quotes)
+      ? locationOpportunity.quotes
+      : [],
+  );
+  const [contacts, setContacts] = React.useState(() =>
+    Array.isArray(locationOpportunity?.contacts)
+      ? locationOpportunity.contacts
+      : [],
+  );
+  const [probabilidade, setProbabilidade] = React.useState(
+    () => locationOpportunity?.probabilidade ?? "",
+  );
+  const [origemLead, setOrigemLead] = React.useState(
+    () => locationOpportunity?.origemLead ?? "",
+  );
+  const [motivoFechamento, setMotivoFechamento] = React.useState(
+    () => locationOpportunity?.motivoFechamento ?? "",
+  );
   const {
     deleteConfirm,
     setDeleteConfirm,
     isEditing,
     showPipeline,
-    showTopico,
     showTimeline,
     pipelineTitle,
     setPipelineTitle,
@@ -94,13 +221,14 @@ const OpportunityDetail = () => {
     endDate,
     setEndDate,
     effectiveStatus,
-    isBpmnDrivenPipeline,
-    currentBpmnStageName,
-    bpmnActivitySnapshot,
     toggleEditing,
     togglePipeline,
-    toggleTopico,
     toggleTimeline,
+    timelineNoteTitle,
+    setTimelineNoteTitle,
+    timelineNoteDescription,
+    setTimelineNoteDescription,
+    handleAddTimelineItem,
   } = useOpportunityDetailState({
     opportunity,
     slug,
@@ -110,10 +238,64 @@ const OpportunityDetail = () => {
     isReadOnlyMode,
   });
 
+  const normalizeStageLabel = React.useCallback(
+    (value) =>
+      String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .toLowerCase(),
+    [],
+  );
+
+  // Garante etapa ativa válida mesmo quando a pipeline carrega de forma assíncrona.
+  React.useEffect(() => {
+    if (!Array.isArray(stages) || stages.length === 0) return;
+
+    const currentKey = normalizeStageLabel(activeStageLabel);
+    const hasCurrent = stages.some(
+      (stage) => normalizeStageLabel(stage?.label) === currentKey,
+    );
+    if (hasCurrent) return;
+
+    const firstOpen = stages.find((stage) => stage?.done !== true) || stages[0];
+    const nextLabel = String(firstOpen?.label || "").trim();
+    if (nextLabel) setActiveStageLabel(nextLabel);
+  }, [activeStageLabel, stages, normalizeStageLabel]);
+
+  const handleSaveStepComplete = React.useCallback(() => {
+    // Reset resumo
+    setCurrentStepForm(null);
+
+    if (!activeStageLabel || !Array.isArray(stages) || stages.length === 0) {
+      return;
+    }
+
+    const normalizedActiveLabel = normalizeStageLabel(activeStageLabel);
+    const currentIndex = stages.findIndex(
+      (stage) => normalizeStageLabel(stage?.label) === normalizedActiveLabel,
+    );
+
+    if (currentIndex < 0) return;
+
+    // O pipeline renderiza progresso usando `stage.done`.
+    // Sem atualizar essa flag, o próximo passo não aparece visualmente.
+    setStages((previous) =>
+      previous.map((stage, index) =>
+        index === currentIndex ? { ...stage, done: true } : stage,
+      ),
+    );
+
+    if (currentIndex < stages.length - 1) {
+      const nextStage = stages[currentIndex + 1];
+      setActiveStageLabel(String(nextStage?.label || ""));
+    }
+  }, [activeStageLabel, stages, setStages, normalizeStageLabel]);
+
   const handleDeleteClick = () => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        'Seu nível de acesso permite apenas visualização de oportunidades.',
+        "Seu nível de acesso permite apenas visualização de oportunidades.",
       );
       return;
     }
@@ -128,29 +310,54 @@ const OpportunityDetail = () => {
         await deleteOpportunity({ token, opportunityId: opportunity.id });
       }
 
-      localStorage.removeItem('atribuirOportunidade');
+      localStorage.removeItem("atribuirOportunidade");
       setDeleteConfirm(false);
-      navigate('/oportunidades');
+      navigate("/oportunidades");
     } catch (error) {
-      setNoticeMessage(error.message || 'Erro ao deletar oportunidade');
+      setNoticeMessage(error.message || "Erro ao deletar oportunidade");
     }
   };
 
-  const isCreating = location.pathname === '/oportunidades/criar';
+  const handleDocumentSaved = ({ action, title }) => {
+    if (isReadOnlyMode) return;
+
+    let noteTitle = "";
+    let noteDescription = "";
+
+    if (action === "created") {
+      noteTitle = `Tópico criado: "${title}"`;
+      noteDescription = `Novo tópico "${title}" foi criado no passo "${activeStageLabel || "sem passo definido"}".`;
+    } else if (action === "updated") {
+      noteTitle = `Tópico atualizado: "${title}"`;
+      noteDescription = `Tópico "${title}" foi atualizado no passo "${activeStageLabel || "sem passo definido"}".`;
+    }
+
+    if (noteTitle && noteDescription) {
+      setTimelineNoteTitle(noteTitle);
+      setTimelineNoteDescription(noteDescription);
+
+      // Usar setTimeout para garantir que as states foram setadas antes de chamar handleAddTimelineItem
+      setTimeout(() => {
+        handleAddTimelineItem();
+      }, 0);
+    }
+  };
+
+  const isCreating = location.pathname === "/oportunidades/criar";
 
   React.useEffect(() => {
     if (isReadOnlyMode && isCreating) {
       setNoticeMessage(
-        'Seu nível de acesso permite apenas visualização. Criação de oportunidades está bloqueada.',
+        "Seu nível de acesso permite apenas visualização. Criação de oportunidades está bloqueada.",
       );
-      navigate('/oportunidades', { replace: true });
+      navigate("/oportunidades", { replace: true });
     }
   }, [isCreating, isReadOnlyMode, navigate]);
 
   const handleSaveOpportunity = async () => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        'Seu nível de acesso permite apenas visualização de oportunidades.',
+        "Seu nível de acesso permite apenas visualização de oportunidades.",
       );
       return;
     }
@@ -171,8 +378,6 @@ const OpportunityDetail = () => {
         pipelineTitle,
         pipelineSubtitle,
         showPipeline,
-        showTopico,
-        showTimeline,
         timelineItems,
       });
 
@@ -189,13 +394,17 @@ const OpportunityDetail = () => {
         pipelineSubtitle,
         timelineItems: timelineItemsWithAutoNotes,
         showPipeline,
-        showTopico,
-        showTimeline,
+        products,
+        quotes,
+        contacts,
+        probabilidade,
+        origemLead,
+        motivoFechamento,
       });
 
       const isExistingOpportunity = Boolean(opportunity?.id);
       if (!isCreating && !isExistingOpportunity) {
-        throw new Error('Oportunidade não encontrada para edição');
+        throw new Error("Oportunidade não encontrada para edição");
       }
 
       const bpmnEntities = buildBpmnEntitiesForCatalog({
@@ -227,16 +436,16 @@ const OpportunityDetail = () => {
         opportunityId: opportunity?.id,
       });
 
-      navigate('/oportunidades');
+      navigate("/oportunidades");
     } catch (err) {
-      setNoticeMessage(err.message || 'Não foi possível salvar a oportunidade');
+      setNoticeMessage(err.message || "Não foi possível salvar a oportunidade");
     }
   };
 
   const handleSavePipelineOnly = React.useCallback(async () => {
     if (isReadOnlyMode || isCreating || !opportunity?.id) return;
     setIsSavingPipeline(true);
-    setPipelineSaveMsg('');
+    setPipelineSaveMsg("");
     try {
       const token = getAuthToken();
       const payload = buildOpportunityPayload({
@@ -252,269 +461,50 @@ const OpportunityDetail = () => {
         pipelineSubtitle,
         timelineItems,
         showPipeline,
-        showTopico,
-        showTimeline,
+        products,
+        quotes,
+        contacts,
+        probabilidade,
+        origemLead,
+        motivoFechamento,
       });
-      await saveOpportunity({ payload, token, isCreating: false, opportunityId: opportunity.id });
-      setPipelineSaveMsg('Pipeline salva!');
-      setTimeout(() => setPipelineSaveMsg(''), 2500);
+      await saveOpportunity({
+        payload,
+        token,
+        isCreating: false,
+        opportunityId: opportunity.id,
+      });
+      setPipelineSaveMsg("Pipeline salva!");
+      setTimeout(() => setPipelineSaveMsg(""), 2500);
     } catch (err) {
-      setPipelineSaveMsg(err.message || 'Erro ao salvar');
-      setTimeout(() => setPipelineSaveMsg(''), 3000);
+      setPipelineSaveMsg(err.message || "Erro ao salvar");
+      setTimeout(() => setPipelineSaveMsg(""), 3000);
     } finally {
       setIsSavingPipeline(false);
     }
   }, [
-    isReadOnlyMode, isCreating, opportunity?.id,
-    title, selectedOwner, owner, createdDate, endDate, effectiveStatus,
-    stages, infoRows, pipelineTitle, pipelineSubtitle, timelineItems,
-    showPipeline, showTopico, showTimeline,
+    isReadOnlyMode,
+    isCreating,
+    opportunity?.id,
+    title,
+    selectedOwner,
+    owner,
+    createdDate,
+    endDate,
+    effectiveStatus,
+    stages,
+    infoRows,
+    pipelineTitle,
+    pipelineSubtitle,
+    timelineItems,
+    showPipeline,
+    products,
+    quotes,
+    contacts,
+    probabilidade,
+    origemLead,
+    motivoFechamento,
   ]);
-
-  const handleWorkflowStateChange = React.useCallback(
-    (newState) => {
-      const workflowStatus = newState?.workflowStatus ?? newState?.status ?? null;
-      const currentNodeId = String(newState?.currentNodeId || '').trim();
-
-      // Capture executed steps and current node for dynamic pipeline injection
-      if (Array.isArray(newState?.executed)) {
-        setWorkflowExecuted(newState.executed);
-      } else if (!newState) {
-        setWorkflowExecuted([]);
-      }
-      setWorkflowCurrentNodeId(currentNodeId || null);
-
-      // When workflow completes, deactivate so manual stage clicks work again
-      if (workflowStatus === 'completed') {
-        setWorkflowActive(false);
-
-        // Delete entities from catalog that were NOT completed in the workflow
-        const executed = Array.isArray(newState?.executed) ? newState.executed : [];
-        const completedNodeIds = new Set(
-          executed
-            .filter((e) => e?.status === 'completed')
-            .map((e) => String(e?.nodeId || ''))
-            .filter(Boolean),
-        );
-        const bpmnNodes = Array.isArray(opportunity?.bpmn?.nodes) ? opportunity.bpmn.nodes : [];
-        const token = getAuthToken();
-        const oppName = String(opportunity?.nome || opportunity?.name || '').trim().toLowerCase();
-        bpmnNodes.forEach((node) => {
-          if (!node || node.active === false) return;
-          const nodeType = String(node.nodeType || '').toLowerCase();
-          if (nodeType !== 'entidade') return;
-          const nodeId = String(node.id || '');
-          if (completedNodeIds.has(nodeId)) return;
-          // This entity node was NOT completed — delete from catalog
-          const entidadeId = node.entidadeId;
-          const entidadeNome = String(node.entidadeNome || node.label || '').trim().toLowerCase();
-          const match = entidades.find((e) => {
-            // Scope to this opportunity's category to avoid deleting entities from other processes
-            const cat = String(e.categoria || '').trim().toLowerCase();
-            if (oppName && cat && cat !== oppName) return false;
-            if (entidadeId && String(e.id) === String(entidadeId)) return true;
-            return String(e.nome || '').trim().toLowerCase() === entidadeNome;
-          });
-          if (match?.id != null) {
-            deletarEntidade(match.id, token);
-          }
-        });
-
-        // Delete tasks whose BPMN node was NOT completed in the workflow
-        const opId = opportunity?.id ?? opportunity?.opportunityId;
-        if (opId) {
-          const req = WORKFLOW_TASKS_LIST(token, { opportunityId: opId });
-          fetch(req.url, req.options)
-            .then((r) => r.ok ? r.json() : [])
-            .then((taskList) => {
-              (Array.isArray(taskList) ? taskList : []).forEach((t) => {
-                const tNodeId = String(t.nodeId || '');
-                if (!tNodeId || completedNodeIds.has(tNodeId)) return;
-                const delReq = WORKFLOW_TASK_DELETE(t.taskId, token);
-                fetch(delReq.url, delReq.options).catch(() => {});
-              });
-            })
-            .catch(() => {});
-        }
-      }
-
-      setStages((prev) => {
-        // All stages done when workflow is completed
-        if (workflowStatus === 'completed') {
-          return prev.map((stage) => ({ ...stage, done: true, pending: false }));
-        }
-
-        // Not started or no current node → reset all to not done
-        if (!workflowStatus || workflowStatus === 'not_started' || !currentNodeId) {
-          return prev.map((stage) => ({ ...stage, done: false, pending: false }));
-        }
-
-        // Build a set of completed node IDs from the executed history
-        const executedNodeIds = new Set(
-          Array.isArray(newState?.executed)
-            ? newState.executed
-                .filter((s) => s?.status === 'completed')
-                .map((s) => String(s.nodeId || ''))
-            : [],
-        );
-
-        // All executed node IDs (any status) — used to identify the current node
-        const allExecutedIds = new Set(
-          Array.isArray(newState?.executed)
-            ? newState.executed.map((s) => String(s.nodeId || ''))
-            : [],
-        );
-
-        // When running (not paused), also count the current node as reached
-        if (workflowStatus === 'running') {
-          executedNodeIds.add(currentNodeId);
-        }
-
-        // Try to find the active stage index by sourceNodeId match
-        let activeIndex = prev.findIndex(
-          (stage) => String(stage.sourceNodeId || '') === currentNodeId,
-        );
-
-        // Fall back to numeric stageIndex
-        if (activeIndex < 0) {
-          const stageIndex =
-            typeof newState?.stageIndex === 'number' ? newState.stageIndex : -1;
-          if (stageIndex >= 0) activeIndex = Math.min(stageIndex, prev.length - 1);
-        }
-
-        // Pipeline sync rules:
-        // - task: workflow stops here (user must confirm completion) → NOT done yet
-        // - condicional: workflow stops here (user must choose Sim/Não) → NOT done yet
-        // - entidade: pass-through, marked done as soon as workflow arrives
-        const currentStageType = activeIndex >= 0 ? prev[activeIndex]?.stageType : null;
-        const isStopPoint =
-          currentStageType === 'task' || currentStageType === 'condicional';
-        // Fallback to pausedReason when stageType is not available
-        // task → user_input, condicional → decision
-        const pausedReason = newState?.workflowPausedReason ?? newState?.paused_reason ?? null;
-        const isStopPointFallback =
-          pausedReason === 'decision' ||
-          pausedReason === 'decision_required' ||
-          pausedReason === 'user_input' ||
-          pausedReason === 'user_action_required';
-        const shouldHoldCurrent =
-          workflowStatus === 'paused' &&
-          (currentStageType ? isStopPoint : isStopPointFallback);
-        // The pending stage is the one the workflow is currently waiting on
-        const pendingIndex = shouldHoldCurrent ? activeIndex : -1;
-
-        return prev.map((stage, i) => {
-          const nodeId = String(stage.sourceNodeId || '');
-          // Mark done only based on the executed history (not by index position)
-          // This ensures stages from non-taken branches aren't wrongly marked
-          const byExecuted = nodeId && executedNodeIds.has(nodeId);
-          // For the current (held) stage, it's not done yet but it is pending
-          const isPending = i === pendingIndex;
-          return { ...stage, done: byExecuted && !isPending, pending: isPending };
-        });
-      });
-
-      // Progressive reveal: update how many stages are visible
-      if (workflowStatus === 'completed') {
-        setVisibleStageCount(null); // show all on completion
-      } else if (!workflowStatus || workflowStatus === 'not_started' || !currentNodeId) {
-        setVisibleStageCount(null); // show all when workflow is off
-      } else {
-        const stageIdx = typeof newState?.stageIndex === 'number' ? newState.stageIndex : 0;
-        setVisibleStageCount((prev) => {
-          const target = stageIdx + 1; // reveal up to and including current stage
-          return prev === null ? target : Math.max(prev, target);
-        });
-      }
-    },
-    [setStages, setVisibleStageCount, setWorkflowExecuted, setWorkflowCurrentNodeId, opportunity, entidades, deletarEntidade],
-  );
-
-  // When workflow is active, inject any executed nao-path nodes that aren't in the static stages list
-  // AND filter out stages from non-taken branches so only the actual execution path is shown.
-  const effectiveStages = React.useMemo(() => {
-    if (!workflowActive || workflowExecuted.length === 0) return stages;
-
-    const executedNodeIds = new Set(
-      workflowExecuted.map((e) => String(e?.nodeId || '')).filter(Boolean),
-    );
-
-    const existingIds = new Set(stages.map((s) => String(s.sourceNodeId || '')).filter(Boolean));
-
-    // Build extra stages from executed nodes not already in stages (alternate-path nodes)
-    // Deduplicate by nodeId — keep the last occurrence (most recent status)
-    const seenExtraIds = new Set();
-    const extras = workflowExecuted
-      .filter((e) => e?.nodeId && !existingIds.has(String(e.nodeId)))
-      .reduceRight((acc, e) => {
-        const nid = String(e.nodeId);
-        if (seenExtraIds.has(nid)) return acc;
-        seenExtraIds.add(nid);
-        acc.unshift({
-          id: `exec-${e.nodeId}`,
-          label: String(e.label || e.nodeId),
-          done: e.status === 'completed',
-          pending: e.status === 'waiting_user' || e.status === 'waiting_decision',
-          fromBpmn: true,
-          sourceNodeId: String(e.nodeId),
-          stageType: e.nodeType || 'task',
-          dynamic: true,
-        });
-        return acc;
-      }, []);
-
-    // Find the last static stage that was executed — any static stages AFTER it
-    // on the primary path are future stages that the workflow will still reach
-    // (e.g. merge-point nodes after a gateway).
-    let lastExecutedStaticIdx = -1;
-    stages.forEach((s, i) => {
-      if (executedNodeIds.has(String(s.sourceNodeId || ''))) lastExecutedStaticIdx = i;
-    });
-
-    // Filter static stages: keep executed ones + future ones after the last executed
-    // This removes only stages from non-taken branches that are positioned BETWEEN
-    // executed stages in the BFS order.
-    const filtered = stages.filter((s, i) => {
-      const nodeId = String(s.sourceNodeId || '');
-      if (executedNodeIds.has(nodeId)) return true;
-      // Keep stages that come after the last executed stage (future primary-path stages)
-      if (i > lastExecutedStaticIdx) return true;
-      return false;
-    });
-
-    if (extras.length === 0) return filtered;
-
-    // Insert each extra node right after the node that precedes it in the executed sequence
-    const result = [...filtered];
-    for (const extra of extras) {
-      const execIdx = workflowExecuted.findIndex((e) => e?.nodeId === extra.sourceNodeId);
-      if (execIdx > 0) {
-        const prevNodeId = String(workflowExecuted[execIdx - 1]?.nodeId || '');
-        const insertAfterIdx = result.findIndex((s) => String(s.sourceNodeId || '') === prevNodeId);
-        if (insertAfterIdx >= 0) {
-          result.splice(insertAfterIdx + 1, 0, extra);
-        } else {
-          result.push(extra);
-        }
-      } else {
-        result.unshift(extra);
-      }
-    }
-    return result;
-  }, [workflowActive, workflowExecuted, stages]);
-
-  // When workflow is active, effectiveStages already filters to only the execution path.
-  // We still slice up to the current node for progressive reveal.
-  const stagesToDisplay = React.useMemo(() => {
-    if (!workflowActive) return effectiveStages;
-    if (!workflowCurrentNodeId) return effectiveStages;
-    const idx = effectiveStages.findIndex(
-      (s) => String(s.sourceNodeId || '') === workflowCurrentNodeId,
-    );
-    if (idx >= 0) return effectiveStages.slice(0, idx + 1);
-    // current node not in effectiveStages — show all executed stages
-    return effectiveStages;
-  }, [workflowActive, workflowCurrentNodeId, effectiveStages]);
 
   return (
     <section className={styles.container}>
@@ -541,10 +531,18 @@ const OpportunityDetail = () => {
         setManualStatus={setManualStatus}
         selectedOwner={selectedOwner}
         setSelectedOwner={setSelectedOwner}
+        products={products}
+        quotes={quotes}
+        probabilidade={probabilidade}
+        setProbabilidade={setProbabilidade}
+        origemLead={origemLead}
+        setOrigemLead={setOrigemLead}
+        motivoFechamento={motivoFechamento}
+        setMotivoFechamento={setMotivoFechamento}
       />
 
       {showPipeline && (
-        <div className={isEditing ? styles.editableSection : ''}>
+        <div className={isEditing ? styles.editableSection : ""}>
           {isEditing && (
             <div className={styles.editControls}>
               <span className={styles.editLabel}>Pipeline</span>
@@ -559,55 +557,18 @@ const OpportunityDetail = () => {
           )}
           <EditablePipeline
             isReadOnlyMode={isReadOnlyMode}
-            isWorkflowActive={workflowActive}
-            stages={workflowActive ? stagesToDisplay : effectiveStages}
+            stages={stages}
             setStages={setStages}
             infoRows={infoRows}
             pipelineTitle={pipelineTitle}
             setPipelineTitle={setPipelineTitle}
             pipelineSubtitle={pipelineSubtitle}
-            setPipelineSubtitle={setPipelineSubtitle}            noteOverride={workflowNote}            workflowSlot={
-              (isBpmnDrivenPipeline || opportunity?.bpmn?.nodes?.length > 0) && !isCreating ? (
-                <WorkflowPanel
-                  compact
-                  inCard
-                  opportunity={opportunity}
-                  stages={stages}
-                  onStateChange={handleWorkflowStateChange}
-                  isWorkflowActive={workflowActive}
-                  onActivate={() => {
-                    setStages((prev) =>
-                      prev
-                        .filter((s) => !s.dynamic)
-                        .map((s) => ({ ...s, done: false, pending: false }))
-                    );
-                    setWorkflowExecuted([]);
-                    setWorkflowCurrentNodeId(null);
-                    setWorkflowNote(null);
-                    setVisibleStageCount(1);
-                    setWorkflowActive(true);
-                  }}
-                  onDeactivate={() => {
-                    const visitedIds = new Set(
-                      stagesToDisplay.map((s) => String(s.sourceNodeId || s.id || ''))
-                    );
-                    setStages(
-                      effectiveStages.map((s) => ({
-                        ...s,
-                        done: visitedIds.has(String(s.sourceNodeId || s.id || '')) ? s.done : false,
-                        pending: false,
-                      }))
-                    );
-                    setWorkflowActive(false);
-                    setVisibleStageCount(null);
-                    setWorkflowCurrentNodeId(null);
-                    setWorkflowExecuted([]);
-                    setWorkflowNote(null);
-                  }}
-                  onHintChange={setWorkflowNote}
-                />
-              ) : null
+            setPipelineSubtitle={setPipelineSubtitle}
+            onActiveStage={(stage) =>
+              setActiveStageLabel(stage ? String(stage.label || "") : null)
             }
+            bpmnNodes={opportunity?.bpmn?.nodes || []}
+            bpmnConnections={opportunity?.bpmn?.connections || []}
           />
         </div>
       )}
@@ -621,46 +582,126 @@ const OpportunityDetail = () => {
         />
       )}
 
-      <div className={styles.contentGrid}>
-        <TopicCard
-          isReadOnlyMode={isReadOnlyMode}
-          showTopico={showTopico}
-          isEditing={isEditing}
-          showPipeline={showPipeline}
-          infoRows={infoRows}
-          setInfoRows={setInfoRows}
-          isBpmnDrivenPipeline={isBpmnDrivenPipeline}
-          toggleTopico={toggleTopico}
-          workflowActive={workflowActive}
-          workflowExecuted={workflowExecuted}
-          workflowCurrentNodeId={workflowCurrentNodeId}
-          bpmnNodes={opportunity?.bpmn?.nodes}
-        />
-
-        {!showTopico && isEditing && (
-          <HiddenSection
-            label="Tópico oculto"
-            buttonLabel="Mostrar Tópico"
-            onShow={toggleTopico}
-          />
-        )}
-
-        <TimelineCard
-          showTimeline={showTimeline}
-          isEditing={isEditing}
-          showPipeline={showPipeline}
-          toggleTimeline={toggleTimeline}
-          timelineItems={timelineItems}
-        />
-
-        {!showTimeline && isEditing && (
-          <HiddenSection
-            label="Linha do Tempo oculta"
-            buttonLabel="Mostrar Linha do Tempo"
-            onShow={toggleTimeline}
-          />
-        )}
+      {/* ── Tabs Dynamics-style ── */}
+      <div className={styles.detailTabs}>
+        {[
+          { key: "resumo", label: "Resumo" },
+          { key: "contatos", label: "Contatos" },
+          { key: "produtos", label: "Produtos" },
+          { key: "cotacoes", label: "Cotações" },
+          { key: "processos", label: "Processos" },
+          { key: "atividades", label: "Atividades" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            className={`${styles.detailTab} ${activeTab === tab.key ? styles.detailTabActive : ""}`}
+            onClick={() => setActiveTab(tab.key)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
+
+      {activeTab === "resumo" && (
+        <div className={styles.contentGrid}>
+          <OpportunityDocumentsCard
+            opportunityId={opportunity?.id}
+            ownerName={owner}
+            isReadOnlyMode={isReadOnlyMode}
+            activeStageLabel={activeStageLabel}
+            stages={stages}
+            infoRows={infoRows}
+            onDocumentSaved={handleDocumentSaved}
+            onFormChange={handleFormChange}
+            onSaveComplete={handleSaveStepComplete}
+          />
+
+          <div>
+            <TimelineCard
+              showTimeline={showTimeline}
+              isEditing={isEditing}
+              showPipeline={showPipeline}
+              toggleTimeline={toggleTimeline}
+              timelineItems={timelineItems}
+              stages={stages}
+              activeStageLabel={activeStageLabel}
+              noteTitle={timelineNoteTitle}
+              setNoteTitle={setTimelineNoteTitle}
+              noteDescription={timelineNoteDescription}
+              setNoteDescription={setTimelineNoteDescription}
+              onAddNote={handleAddTimelineItem}
+              isReadOnlyMode={isReadOnlyMode}
+            />
+            {currentStepForm && (
+              <StepResumeCard
+                form={currentStepForm}
+                stageLabel={activeStageLabel}
+                styles={styles}
+              />
+            )}
+          </div>
+
+          {!showTimeline && isEditing && (
+            <HiddenSection
+              label="Timeline oculta"
+              buttonLabel="Mostrar Timeline"
+              onShow={toggleTimeline}
+            />
+          )}
+        </div>
+      )}
+
+      {activeTab === "produtos" && (
+        <div className={styles.tabContent}>
+          <ProductsCard
+            products={products}
+            onChange={setProducts}
+            isReadOnlyMode={isReadOnlyMode}
+          />
+        </div>
+      )}
+
+      {activeTab === "cotacoes" && (
+        <div className={styles.tabContent}>
+          <QuotesCard
+            quotes={quotes}
+            products={products}
+            onChange={setQuotes}
+            isReadOnlyMode={isReadOnlyMode}
+            opportunityTitle={title}
+          />
+        </div>
+      )}
+
+      {activeTab === "contatos" && (
+        <div className={styles.tabContent}>
+          <ContactsCard
+            contacts={contacts}
+            onChange={setContacts}
+            isReadOnlyMode={isReadOnlyMode}
+          />
+        </div>
+      )}
+
+      {activeTab === "processos" && (
+        <div className={styles.tabContent}>
+          <OpportunityProcessosCard opportunityId={opportunity?.id} />
+        </div>
+      )}
+
+      {activeTab === "atividades" && (
+        <div className={styles.tabContent}>
+          <div style={{ padding: "1rem 0" }}>
+            <ActivityTimeline
+              entityType="oportunidade"
+              entityId={String(opportunity?.id || "")}
+              limit={20}
+              onAddActivity={() => setActiveTab("atividades")}
+            />
+          </div>
+        </div>
+      )}
 
       {deleteConfirm && (
         <Close
@@ -675,8 +716,8 @@ const OpportunityDetail = () => {
         <Close
           title="Aviso"
           message={noticeMessage}
-          onConfirm={() => setNoticeMessage('')}
-          onCancel={() => setNoticeMessage('')}
+          onConfirm={() => setNoticeMessage("")}
+          onCancel={() => setNoticeMessage("")}
           confirmLabel="OK"
           hideCancel
         />

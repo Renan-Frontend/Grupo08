@@ -1,94 +1,63 @@
-import React from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import styles from './Entidades.module.css';
-import Button from '../Forms/Button';
-import Pagination from '../Common/Pagination';
-import { useBpmnOpportunities } from '../../Hooks/useBpmnOpportunities';
+import React from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import styles from "./Entidades.module.css";
+import Pagination from "../Common/Pagination";
+import { useBpmnOpportunities } from "../../Hooks/useBpmnOpportunities";
+import {
+  deleteOpportunityById,
+  getAuthToken,
+} from "../Opportunities/opportunityApi";
+import { API_URL } from "../../Api";
 import {
   ENTIDADE_FIELD_TYPES,
   EntidadesContext,
-} from '../../Context/EntidadesContext';
-import { UserContext } from '../../Context/UserContext';
+} from "../../Context/EntidadesContext";
+import { UserContext } from "../../Context/UserContext";
 import {
   canCreateByAccessLevel,
   canDeleteByAccessLevel,
   isEditOnlyAccessLevelTwo,
   isReadOnlyAccessLevelOne,
-} from '../../Utils/accessControl';
-import Close from '../Helper/Close';
+} from "../../Utils/accessControl";
+import Close from "../Helper/Close";
+import {
+  buildBpmnFieldsByEntityKey,
+  buildBpmnUsageCountByEntityKey,
+  buildTableSections,
+  formatDateTimeLabel,
+  getEntidadeId,
+  getEntityTypeLabel,
+  getFieldKeyLabel,
+  getFieldRelationshipLabel,
+  getOpportunityName,
+  mergeEntityFields,
+  normalizeText,
+  toEntitySlug,
+} from "./helpers/entidadesSelectors";
+import EntityCard from "./components/EntityCard";
+import EntityFieldsDrawer from "./components/EntityFieldsDrawer";
 
-const normalizeText = (value) =>
-  String(value || '')
-    .trim()
-    .toLowerCase();
+const TABS = [
+  { id: "processos", label: "Por Processo BPMN" },
+  { id: "catalogo", label: "Entidades" },
+  { id: "atividades", label: "Atividades" },
+  { id: "condicionais", label: "Condicionais" },
+];
 
-const toEntitySlug = (value) =>
-  String(value || '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-const formatDateTimeLabel = (value) => {
-  const raw = String(value || '').trim();
-  if (!raw) return '-';
-
-  const date = new Date(raw);
-  if (Number.isNaN(date.getTime())) return raw;
-
-  return date.toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
-const getOpportunityId = (opportunity) =>
-  opportunity?.id ?? opportunity?._id ?? null;
-
-const getEntidadeId = (entidade) => entidade?.id ?? entidade?._id ?? null;
-
-const getOpportunityName = (opportunity) =>
-  String(opportunity?.name || opportunity?.nome || '').trim();
-
-const getEntityMatchKeys = (entidade) => {
-  const keys = [];
-  const entityId = getEntidadeId(entidade);
-  const normalizedName = normalizeText(
-    entidade?.nome || entidade?.name || entidade?.titulo,
-  );
-
-  if (entityId !== null && entityId !== undefined && String(entityId).trim()) {
-    keys.push(`id:${String(entityId).trim()}`);
-  }
-  if (normalizedName) {
-    keys.push(`name:${normalizedName}`);
-  }
-
-  return keys;
-};
-
-const getTableIdFromCategory = (categoryName) => {
-  const normalized = normalizeText(categoryName || 'Sem categoria');
-  return `table:${normalized || 'sem-categoria'}`;
-};
-
-const getEntityTableNameKey = (entityName, tableName) => {
-  const normalizedEntityName = normalizeText(entityName);
-  const normalizedTableName = normalizeText(tableName || 'Sem categoria');
-  if (!normalizedEntityName || !normalizedTableName) return null;
-  return `table:${normalizedTableName}::name:${normalizedEntityName}`;
+const EMPTY_BPMN_FORM = {
+  nome: "",
+  tipo: "",
+  obrigatorio: "",
+  keyType: "",
+  referencia: "",
 };
 
 const Entidades = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { entidadeSlug = '', entidadeId: entidadeIdFromRoute = '' } =
+  const { entidadeSlug = "", entidadeId: entidadeIdFromRoute = "" } =
     useParams();
+
   const {
     entidades: entidadesRaw,
     loading: entidadesLoading,
@@ -110,11 +79,18 @@ const Entidades = () => {
   const isEditOnlyMode = isEditOnlyAccessLevelTwo(user);
   const canCreate = canCreateByAccessLevel(user);
   const canDelete = canDeleteByAccessLevel(user);
+
   const entidades = React.useMemo(
     () => (Array.isArray(entidadesRaw) ? entidadesRaw : []),
     [entidadesRaw],
   );
-  const [filtro, setFiltro] = React.useState('todas');
+
+  // ── UI state ──────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = React.useState("processos");
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [drawerEntityId, setDrawerEntityId] = React.useState(null);
+  const [paginasPorTabela, setPaginasPorTabela] = React.useState({});
+  const itemsPorPagina = 11;
   const [deleteConfirm, setDeleteConfirm] = React.useState(null);
   const [deleteTabelaConfirm, setDeleteTabelaConfirm] = React.useState(null);
   const [skipDeleteEntidadeConfirm, setSkipDeleteEntidadeConfirm] =
@@ -125,1171 +101,1347 @@ const Entidades = () => {
   ] = React.useState(false);
   const [campoEmEdicao, setCampoEmEdicao] = React.useState(null);
   const [campoConfigForm, setCampoConfigForm] = React.useState({
-    nome: '',
-    tipo: '',
-    obrigatorio: '',
-    keyType: '',
-    referencia: '',
+    nome: "",
+    tipo: "",
+    obrigatorio: "",
+    keyType: "",
+    referencia: "",
   });
-  const [camposConfigError, setCamposConfigError] = React.useState('');
-  const [tabelaPaginaAtual, setTabelaPaginaAtual] = React.useState(1);
-  const [paginasPorTabela, setPaginasPorTabela] = React.useState({});
-  const itemsPorPagina = 11;
-  const { opportunities: bpmnOpportunities } = useBpmnOpportunities();
-  const entityIdFromQuery = React.useMemo(() => {
-    const searchParams = new URLSearchParams(location.search || '');
-    const rawId = String(searchParams.get('entidadeId') || '').trim();
-    return rawId || null;
-  }, [location.search]);
-  const selectedEntityId = React.useMemo(() => {
-    const routeId = String(entidadeIdFromRoute || '').trim();
-    if (routeId) return routeId;
-    if (entityIdFromQuery) return entityIdFromQuery;
-    return null;
-  }, [entidadeIdFromRoute, entityIdFromQuery]);
+  const [camposConfigError, setCamposConfigError] = React.useState("");
+  const [drawerBpmnNode, setDrawerBpmnNode] = React.useState(null);
+  const [deleteBpmnNodeConfirm, setDeleteBpmnNodeConfirm] =
+    React.useState(null);
+  const [bpmnCampoEmEdicao, setBpmnCampoEmEdicao] = React.useState(null);
+  const [bpmnCampoConfigForm, setBpmnCampoConfigForm] = React.useState({
+    nome: "",
+    tipo: "",
+    obrigatorio: "",
+    keyType: "",
+    referencia: "",
+  });
+  const [bpmnCamposError, setBpmnCamposError] = React.useState("");
+
+  // ── Catálogo preservado de tasks/condicionais (sobrevivem à deleção do BPMN) ──
+  const [preservedTasksCatalog, setPreservedTasksCatalog] = React.useState([]);
+  const [preservedCondicionaisCatalog, setPreservedCondicionaisCatalog] =
+    React.useState([]);
 
   React.useEffect(() => {
-    const savedPreference =
-      window.localStorage.getItem('entidades:skipDeleteEntidadeConfirm') ===
-      'true';
-    setSkipDeleteEntidadeConfirm(savedPreference);
+    const token = getAuthToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    Promise.all([
+      fetch(`${API_URL}/api/bpmn-catalog/tasks`, { headers }).then((r) =>
+        r.ok ? r.json() : [],
+      ),
+      fetch(`${API_URL}/api/bpmn-catalog/condicionais`, { headers }).then(
+        (r) => (r.ok ? r.json() : []),
+      ),
+    ])
+      .then(([tasks, conds]) => {
+        setPreservedTasksCatalog(Array.isArray(tasks) ? tasks : []);
+        setPreservedCondicionaisCatalog(Array.isArray(conds) ? conds : []);
+      })
+      .catch(() => {});
   }, []);
 
+  React.useEffect(() => {
+    const saved =
+      window.localStorage.getItem("entidades:skipDeleteEntidadeConfirm") ===
+      "true";
+    setSkipDeleteEntidadeConfirm(saved);
+  }, []);
+
+  // Handle incoming deep links
+  const entityIdFromQuery = React.useMemo(() => {
+    const params = new URLSearchParams(location.search || "");
+    return String(params.get("entidadeId") || "").trim() || null;
+  }, [location.search]);
+
+  React.useEffect(() => {
+    const targetId =
+      String(entidadeIdFromRoute || "").trim() || entityIdFromQuery;
+    if (targetId) {
+      setDrawerEntityId(targetId);
+      return;
+    }
+    if (entidadeSlug) {
+      const slug = toEntitySlug(entidadeSlug);
+      const matched = entidades.find((e) => toEntitySlug(e?.nome) === slug);
+      if (matched) setDrawerEntityId(String(getEntidadeId(matched) ?? ""));
+    }
+  }, [entidadeIdFromRoute, entityIdFromQuery, entidadeSlug, entidades]);
+
+  // Always keep drawer entity fresh from context
+  const drawerEntity = React.useMemo(() => {
+    if (!drawerEntityId) return null;
+    return (
+      entidades.find((e) => String(getEntidadeId(e)) === drawerEntityId) ?? null
+    );
+  }, [drawerEntityId, entidades]);
+
+  // Reset field form when drawer entity changes
+  React.useEffect(() => {
+    setCamposConfigError("");
+    setCampoEmEdicao(null);
+    setCampoConfigForm({
+      nome: "",
+      tipo: "",
+      obrigatorio: "",
+      keyType: "",
+      referencia: "",
+    });
+  }, [drawerEntityId]);
+
+  // ── BPMN-derived data ─────────────────────────────────────────────────────
+  const {
+    opportunities: bpmnOpportunities,
+    removeOpportunity,
+    updateOpportunityData,
+  } = useBpmnOpportunities();
+
   const bpmnSectionNames = React.useMemo(() => {
-    const safeOpportunities = Array.isArray(bpmnOpportunities)
-      ? bpmnOpportunities
-      : [];
+    const safe = Array.isArray(bpmnOpportunities) ? bpmnOpportunities : [];
     const used = new Set();
     const ordered = [];
-
-    safeOpportunities.forEach((opportunity) => {
-      const name = getOpportunityName(opportunity);
+    safe.forEach((opp) => {
+      const name = getOpportunityName(opp);
       const key = normalizeText(name);
       if (!key || used.has(key)) return;
       used.add(key);
       ordered.push(name);
     });
-
     return ordered;
   }, [bpmnOpportunities]);
 
-  const tableSections = React.useMemo(() => {
-    const categoryNamesFromEntities = Array.from(
-      new Set(
-        entidades
-          .map((entidade) => String(entidade?.categoria || '').trim())
-          .map((categoria) => categoria || 'Sem categoria')
-          .filter(Boolean),
-      ),
-    );
-
-    const orderedTableNames = [...bpmnSectionNames];
-    const seen = new Set(orderedTableNames.map((name) => normalizeText(name)));
-
-    categoryNamesFromEntities.forEach((categoryName) => {
-      const categoryNorm = normalizeText(categoryName);
-      if (!categoryNorm || seen.has(categoryNorm)) return;
-      seen.add(categoryNorm);
-      orderedTableNames.push(categoryName);
-    });
-
-    return orderedTableNames.map((tableName) => {
-      const tableNorm = normalizeText(tableName);
-      const entitiesInTable = entidades.filter((entidade) => {
-        const entityCategory = String(entidade?.categoria || '').trim();
-        const normalizedCategory = normalizeText(
-          entityCategory || 'Sem categoria',
-        );
-        return normalizedCategory === tableNorm;
-      });
-
-      return {
-        key: getTableIdFromCategory(tableName),
-        tableId: getTableIdFromCategory(tableName),
-        title: tableName,
-        entities: entitiesInTable,
-      };
-    });
-  }, [bpmnSectionNames, entidades]);
-
-  const sectionKeys = React.useMemo(
-    () => new Set(tableSections.map((section) => section.key)),
-    [tableSections],
+  const tableSections = React.useMemo(
+    () => buildTableSections({ entidades, bpmnSectionNames }),
+    [bpmnSectionNames, entidades],
   );
 
-  const bpmnFieldsByEntityKey = React.useMemo(() => {
-    const map = new Map();
-    const safeOpportunities = Array.isArray(bpmnOpportunities)
-      ? bpmnOpportunities
-      : [];
+  const bpmnFieldsByEntityKey = React.useMemo(
+    () => buildBpmnFieldsByEntityKey(bpmnOpportunities),
+    [bpmnOpportunities],
+  );
 
-    const ensureEntityFieldMap = (entityKey) => {
-      if (!map.has(entityKey)) {
-        map.set(entityKey, new Map());
-      }
-      return map.get(entityKey);
-    };
-
-    const getFieldUniqueKey = (field) => {
-      const id = String(field?.id || '').trim();
-      if (id) return `id:${id}`;
-      const normalizedName = normalizeText(field?.nome);
-      if (normalizedName) return `name:${normalizedName}`;
-      return null;
-    };
-
-    safeOpportunities.forEach((opportunity) => {
-      const opportunityTableName = getOpportunityName(opportunity);
-      const nodes = Array.isArray(opportunity?.bpmn?.nodes)
-        ? opportunity.bpmn.nodes
-        : [];
-
-      nodes.forEach((node) => {
-        if (node?.active === false) return;
-
-        const nodeType = normalizeText(node?.nodeType);
-        if (nodeType === 'task' || nodeType === 'condicional') return;
-
-        const entityKeys = [];
-        if (
-          node?.entidadeId !== null &&
-          node?.entidadeId !== undefined &&
-          String(node.entidadeId).trim()
-        ) {
-          entityKeys.push(`id:${String(node.entidadeId).trim()}`);
-        }
-
-        const nodeEntityName = normalizeText(
-          node?.entidadeNome || node?.label || node?.subtitle,
-        );
-        if (nodeEntityName && opportunityTableName) {
-          const tableNameKey = getEntityTableNameKey(
-            nodeEntityName,
-            opportunityTableName,
-          );
-          if (tableNameKey) {
-            entityKeys.push(tableNameKey);
-          }
-        }
-
-        if (entityKeys.length === 0) return;
-
-        const nodeFields = Array.isArray(node?.selectedEntityFields)
-          ? node.selectedEntityFields
-          : [];
-
-        const normalizedFields = nodeFields
-          .map((field) => ({
-            id: String(field?.id || '').trim(),
-            nome: String(field?.nome || '').trim(),
-            tipo: String(field?.tipo || '').trim() || 'Texto',
-            obrigatorio:
-              field?.obrigatorio === true ||
-              String(field?.obrigatorio || '') === 'Sim',
-            keyType: String(field?.keyType || field?.chave || 'NORMAL')
-              .trim()
-              .toUpperCase(),
-            relacionamento: String(field?.relacionamento || '').trim() || null,
-          }))
-          .filter((field) => field.nome);
-
-        if (normalizedFields.length === 0) return;
-
-        entityKeys.forEach((entityKey) => {
-          const fieldsMap = ensureEntityFieldMap(entityKey);
-          normalizedFields.forEach((field) => {
-            const uniqueKey = getFieldUniqueKey(field);
-            if (!uniqueKey) return;
-            if (fieldsMap.has(uniqueKey)) return;
-            fieldsMap.set(uniqueKey, {
-              ...field,
-              source: 'bpmn',
-            });
-          });
-        });
-      });
-    });
-
-    return map;
-  }, [bpmnOpportunities]);
-
-  // Ler filtro da navegação
-  React.useEffect(() => {
-    if (selectedEntityId) {
-      const byId = entidades.find(
-        (entidade) => String(getEntidadeId(entidade)) === selectedEntityId,
-      );
-
-      if (byId?.nome) {
-        setFiltro(normalizeText(byId.nome));
-        setTabelaPaginaAtual(1);
-        return;
-      }
-    }
-
-    if (location.state?.entidade) {
-      setFiltro(location.state.entidade.toLowerCase());
-    } else if (entidadeSlug) {
-      const normalizedSlug = toEntitySlug(entidadeSlug);
-      const entidadeSelecionada = entidades.find(
-        (entidade) => toEntitySlug(entidade?.nome) === normalizedSlug,
-      );
-
-      if (entidadeSelecionada?.nome) {
-        setFiltro(normalizeText(entidadeSelecionada.nome));
-      } else {
-        setFiltro(normalizeText(entidadeSlug));
-      }
-    } else if (location.pathname === '/entidades') {
-      setFiltro('todas');
-    }
-    setTabelaPaginaAtual(1); // Reset paginação ao mudar filtro
-  }, [
-    entidadeSlug,
-    entidades,
-    selectedEntityId,
-    location.state,
-    location.pathname,
-  ]);
-
-  const entidadeSelecionada = React.useMemo(() => {
-    if (selectedEntityId) {
-      const byId = entidades.find(
-        (entidade) => String(getEntidadeId(entidade)) === selectedEntityId,
-      );
-      if (byId) return byId;
-    }
-
-    return (
-      entidades.find(
-        (entidade) => normalizeText(entidade?.nome) === normalizeText(filtro),
-      ) || null
-    );
-  }, [entidades, selectedEntityId, filtro]);
+  const bpmnUsageCountByEntityKey = React.useMemo(
+    () => buildBpmnUsageCountByEntityKey(bpmnOpportunities),
+    [bpmnOpportunities],
+  );
 
   const getMergedEntityFields = React.useCallback(
-    (entidade) => {
-      if (!entidade) return [];
-
-      const baseFields = Array.isArray(entidade?.campos) ? entidade.campos : [];
-      const mergedMap = new Map();
-
-      baseFields.forEach((field) => {
-        const id = String(field?.id || '').trim();
-        const nameKey = normalizeText(field?.nome);
-        const uniqueKey = id ? `id:${id}` : nameKey ? `name:${nameKey}` : null;
-        if (!uniqueKey) return;
-
-        mergedMap.set(uniqueKey, {
-          ...field,
-          id,
-          nome: String(field?.nome || '').trim(),
-          tipo: String(field?.tipo || '').trim() || 'Texto',
-          obrigatorio:
-            field?.obrigatorio === true ||
-            String(field?.obrigatorio || '') === 'Sim',
-          keyType: String(field?.keyType || field?.chave || 'NORMAL')
-            .trim()
-            .toUpperCase(),
-          relacionamento: String(field?.relacionamento || '').trim() || null,
-          source: 'entidade',
-          entidadeId: getEntidadeId(entidade),
-          entidadeNome: String(entidade?.nome || '').trim(),
-        });
-      });
-
-      const entityId = getEntidadeId(entidade);
-      const entityName =
-        entidade?.nome || entidade?.name || entidade?.titulo || '';
-      const entityCategory = entidade?.categoria || 'Sem categoria';
-      const entityKeys = [
-        entityId !== null && entityId !== undefined && String(entityId).trim()
-          ? `id:${String(entityId).trim()}`
-          : null,
-        getEntityTableNameKey(entityName, entityCategory),
-      ].filter(Boolean);
-
-      entityKeys.forEach((entityKey) => {
-        const bpmnFields = bpmnFieldsByEntityKey.get(entityKey);
-        if (!bpmnFields) return;
-
-        bpmnFields.forEach((field, fieldKey) => {
-          if (mergedMap.has(fieldKey)) return;
-
-          mergedMap.set(fieldKey, {
-            ...field,
-            id:
-              String(field?.id || '').trim() ||
-              `bpmn-${normalizeText(entidade?.nome)}-${normalizeText(field?.nome)}`,
-            entidadeId: getEntidadeId(entidade),
-            entidadeNome: String(entidade?.nome || '').trim(),
-            readonlyFromBpmn: true,
-          });
-        });
-      });
-
-      return Array.from(mergedMap.values());
-    },
+    (entidade) => mergeEntityFields({ entidade, bpmnFieldsByEntityKey }),
     [bpmnFieldsByEntityKey],
   );
 
-  const camposFiltrados = React.useMemo(() => {
-    if (!entidadeSelecionada) return [];
-    return getMergedEntityFields(entidadeSelecionada);
-  }, [entidadeSelecionada, getMergedEntityFields]);
+  const getEntityFieldCount = React.useCallback(
+    (item) => getMergedEntityFields(item).length,
+    [getMergedEntityFields],
+  );
 
-  React.useEffect(() => {
-    setCamposConfigError('');
-    setCampoEmEdicao(null);
-    setCampoConfigForm({
-      nome: '',
-      tipo: '',
-      obrigatorio: '',
-      keyType: '',
-      referencia: '',
+  const getEntityBpmnUsageCount = React.useCallback(
+    (item) => {
+      const id = item?.id ?? item?._id ?? null;
+      const name = item?.nome || item?.name || item?.titulo || "";
+      const keys = [
+        id !== null && id !== undefined && String(id).trim()
+          ? `id:${String(id).trim()}`
+          : null,
+        normalizeText(name) ? `name:${normalizeText(name)}` : null,
+      ].filter(Boolean);
+      if (keys.length === 0) return 0;
+      return keys.reduce(
+        (hi, k) => Math.max(hi, bpmnUsageCountByEntityKey.get(k) || 0),
+        0,
+      );
+    },
+    [bpmnUsageCountByEntityKey],
+  );
+
+  // ── Header stats ──────────────────────────────────────────────────────────
+  const totalFields = React.useMemo(
+    () => entidades.reduce((acc, e) => acc + getEntityFieldCount(e), 0),
+    [entidades, getEntityFieldCount],
+  );
+
+  // ── BPMN task / condicional catalog ───────────────────────────────────────
+  const bpmnTaskCatalog = React.useMemo(() => {
+    const seen = new Set();
+    const nodes = [];
+    (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).forEach(
+      (opp) => {
+        const bpmnNodes = Array.isArray(opp?.bpmn?.nodes) ? opp.bpmn.nodes : [];
+        let taskCount = 0;
+        bpmnNodes.forEach((node) => {
+          if (node?.nodeType !== "task") return;
+          const nome = String(node?.taskNome || node?.label || "").trim();
+          if (!nome) return;
+          const oppId = String(opp?.id ?? opp?._id ?? "");
+          // Dedup within each opportunity, not globally across all opportunities
+          const key = `${oppId}|${normalizeText(nome)}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          nodes.push({
+            ...node,
+            _oppId: opp?.id ?? opp?._id,
+            _oppName: getOpportunityName(opp),
+            _oppSlug:
+              String(getOpportunityName(opp) || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "novo-bpmn",
+          });
+          taskCount++;
+        });
+        if (taskCount > 0) {
+        }
+      },
+    );
+
+    // Adicionar entradas preservadas cujo BPMN foi deletado
+    const liveOppIds = new Set(
+      (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).map((opp) =>
+        String(opp?.id ?? opp?._id ?? ""),
+      ),
+    );
+    preservedTasksCatalog.forEach((node) => {
+      const oppId = String(node._oppId ?? "");
+      if (liveOppIds.has(oppId)) return; // BPMN ainda existe, já está no catálogo acima
+      const nome = String(node?.taskNome || node?.label || "").trim();
+      const key = `${oppId}|${normalizeText(nome)}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      nodes.push(node);
     });
-  }, [entidadeSelecionada]);
 
-  const handleEdit = (item, section) => {
+    return nodes;
+  }, [bpmnOpportunities, preservedTasksCatalog]);
+
+  const bpmnCondicionalCatalog = React.useMemo(() => {
+    const seen = new Set();
+    const nodes = [];
+    (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).forEach(
+      (opp) => {
+        const bpmnNodes = Array.isArray(opp?.bpmn?.nodes) ? opp.bpmn.nodes : [];
+        bpmnNodes.forEach((node) => {
+          if (node?.nodeType !== "condicional") return;
+          const nome = String(
+            node?.condicionalNome || node?.label || "",
+          ).trim();
+          if (!nome) return;
+          const oppId = String(opp?.id ?? opp?._id ?? "");
+          // Dedup within each opportunity, not globally across all opportunities
+          const key = `${oppId}|${normalizeText(nome)}`;
+          if (seen.has(key)) return;
+          seen.add(key);
+          nodes.push({
+            ...node,
+            _oppId: opp?.id ?? opp?._id,
+            _oppName: getOpportunityName(opp),
+            _oppSlug:
+              String(getOpportunityName(opp) || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "") || "novo-bpmn",
+          });
+        });
+      },
+    );
+
+    // Adicionar entradas preservadas cujo BPMN foi deletado
+    const liveOppIds = new Set(
+      (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).map((opp) =>
+        String(opp?.id ?? opp?._id ?? ""),
+      ),
+    );
+    preservedCondicionaisCatalog.forEach((node) => {
+      const oppId = String(node._oppId ?? "");
+      if (liveOppIds.has(oppId)) return; // BPMN ainda existe, já está no catálogo acima
+      const nome = String(node?.condicionalNome || node?.label || "").trim();
+      const key = `${oppId}|${normalizeText(nome)}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      nodes.push(node);
+    });
+
+    return nodes;
+  }, [bpmnOpportunities, preservedCondicionaisCatalog]);
+
+  const bpmnLinkedCount = React.useMemo(
+    () => entidades.filter((e) => getEntityBpmnUsageCount(e) > 0).length,
+    [entidades, getEntityBpmnUsageCount],
+  );
+
+  // ── BPMN nodes grouped by process name ───────────────────────────────────
+  const bpmnTasksByProcess = React.useMemo(() => {
+    const map = new Map();
+    bpmnTaskCatalog.forEach((node) => {
+      const key = normalizeText(node._oppName || "");
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(node);
+    });
+    return map;
+  }, [bpmnTaskCatalog]);
+
+  const bpmnCondicionalsByProcess = React.useMemo(() => {
+    const map = new Map();
+    bpmnCondicionalCatalog.forEach((node) => {
+      const key = normalizeText(node._oppName || "");
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(node);
+    });
+    return map;
+  }, [bpmnCondicionalCatalog]);
+
+  // ── BPMN node usage counts (how many opportunities contain that node name) ─
+  const bpmnTaskUsageByName = React.useMemo(() => {
+    const map = new Map();
+    (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).forEach(
+      (opp) => {
+        (Array.isArray(opp?.bpmn?.nodes) ? opp.bpmn.nodes : []).forEach(
+          (node) => {
+            if (node?.nodeType !== "task") return;
+            const key = normalizeText(
+              String(node?.taskNome || node?.label || "").trim(),
+            );
+            if (!key) return;
+            map.set(key, (map.get(key) || 0) + 1);
+          },
+        );
+      },
+    );
+    return map;
+  }, [bpmnOpportunities]);
+
+  const bpmnCondicionalUsageByName = React.useMemo(() => {
+    const map = new Map();
+    (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).forEach(
+      (opp) => {
+        (Array.isArray(opp?.bpmn?.nodes) ? opp.bpmn.nodes : []).forEach(
+          (node) => {
+            if (node?.nodeType !== "condicional") return;
+            const key = normalizeText(
+              String(node?.condicionalNome || node?.label || "").trim(),
+            );
+            if (!key) return;
+            map.set(key, (map.get(key) || 0) + 1);
+          },
+        );
+      },
+    );
+    return map;
+  }, [bpmnOpportunities]);
+
+  // ── Opportunity lookup by id ──────────────────────────────────────────────
+  const bpmnOppById = React.useMemo(() => {
+    const map = new Map();
+    (Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []).forEach(
+      (opp) => {
+        if (opp?.id) map.set(String(opp.id), opp);
+      },
+    );
+    return map;
+  }, [bpmnOpportunities]);
+
+  // ── Filtered entities for catalog tab ────────────────────────────────────
+  const filteredEntities = React.useMemo(() => {
+    const query = normalizeText(searchQuery);
+    return entidades.filter((e) => {
+      if (query) {
+        const nome = normalizeText(e?.nome || "");
+        const desc = normalizeText(e?.descricao || "");
+        const cat = normalizeText(e?.categoria || "");
+        if (
+          !nome.includes(query) &&
+          !desc.includes(query) &&
+          !cat.includes(query)
+        )
+          return false;
+      }
+      return true;
+    });
+  }, [entidades, searchQuery]);
+
+  // ── Drawer fields ─────────────────────────────────────────────────────────
+  const drawerFields = React.useMemo(
+    () => (drawerEntity ? getMergedEntityFields(drawerEntity) : []),
+    [drawerEntity, getMergedEntityFields],
+  );
+
+  // ── CRUD handlers ─────────────────────────────────────────────────────────
+  const handleEdit = (item) => {
     if (isReadOnlyMode) return;
-
     const entidadeId = getEntidadeId(item);
     if (entidadeId === null || entidadeId === undefined) return;
-
-    const tableId = String(section?.tableId || '').trim();
-    const query = new URLSearchParams();
-    query.set('entidadeId', String(entidadeId));
-    if (tableId) {
-      query.set('tabelaId', tableId);
-    }
-
-    navigate(`/entidades/criar?${query.toString()}`);
-  };
-
-  const handleViewEntityFields = (item) => {
-    const entidadeId = getEntidadeId(item);
-    const entidadeNome = String(
-      item?.nome || item?.name || item?.titulo || '',
-    ).trim();
-
-    if (
-      entidadeId !== null &&
-      entidadeId !== undefined &&
-      String(entidadeId).trim()
-    ) {
-      navigate(
-        `/entidades?entidadeId=${encodeURIComponent(String(entidadeId).trim())}`,
-      );
-      return;
-    }
-
-    if (entidadeNome) {
-      setFiltro(normalizeText(entidadeNome));
-      setTabelaPaginaAtual(1);
-    }
-  };
-
-  const handleFiltroChange = (valor) => {
-    if (valor === 'todas') {
-      navigate('/entidades');
-      setFiltro('todas');
-    } else {
-      setFiltro(valor);
-    }
-    setTabelaPaginaAtual(1);
-    setPaginasPorTabela({});
-  };
-
-  const confirmDelete = () => {
-    if (isReadOnlyMode) return;
-    if (!deleteConfirm) return;
-
-    const { type, id, categoria } = deleteConfirm;
-
-    if (type === 'entidade' && disableDeleteEntidadePromptDraft) {
-      window.localStorage.setItem(
-        'entidades:skipDeleteEntidadeConfirm',
-        'true',
-      );
-      setSkipDeleteEntidadeConfirm(true);
-    }
-
-    if (type === 'entidade') {
-      deletarEntidade(id);
-    } else if (type === 'campo') {
-      deletarCampo(id);
-    }
-
-    setDeleteConfirm(null);
-    setDisableDeleteEntidadePromptDraft(false);
+    navigate(
+      `/cadastros/criar?entidadeId=${encodeURIComponent(String(entidadeId))}`,
+    );
   };
 
   const handleDelete = (id) => {
-    if (!canDelete) return;
-    if (id === null || id === undefined) return;
-
+    if (!canDelete || id === null || id === undefined) return;
     if (skipDeleteEntidadeConfirm) {
       deletarEntidade(id);
       return;
     }
-
-    setDeleteConfirm({ type: 'entidade', id });
+    setDeleteConfirm({ type: "entidade", id });
   };
+
   const handleDeleteCampo = (id) => {
     if (!canDelete) return;
-    setDeleteConfirm({ type: 'campo', id });
+    setDeleteConfirm({ type: "campo", id });
   };
 
   const handleDeleteTabela = async () => {
     if (!canDelete || !deleteTabelaConfirm) return;
-    const entities = deleteTabelaConfirm.entities || [];
-    for (const entity of entities) {
+
+    const sectionKey = normalizeText(deleteTabelaConfirm.title);
+    const linkedOpportunities = (
+      Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []
+    ).filter((opp) => normalizeText(getOpportunityName(opp)) === sectionKey);
+
+    for (const entity of deleteTabelaConfirm.entities || []) {
       const id = getEntidadeId(entity);
       if (id !== null && id !== undefined) {
-        await deletarEntidade(id);
+        await Promise.resolve(deletarEntidade(id));
       }
     }
+
+    for (const opp of linkedOpportunities) {
+      const opportunityId = opp?.id ?? opp?._id;
+      if (opportunityId === null || opportunityId === undefined) continue;
+      await deleteOpportunityById({
+        opportunityId,
+        token: getAuthToken(),
+      });
+      removeOpportunity(opportunityId);
+    }
+
     setDeleteTabelaConfirm(null);
   };
+
+  const confirmDelete = () => {
+    if (isReadOnlyMode || !deleteConfirm) return;
+    if (deleteConfirm.type === "entidade" && disableDeleteEntidadePromptDraft) {
+      window.localStorage.setItem(
+        "entidades:skipDeleteEntidadeConfirm",
+        "true",
+      );
+      setSkipDeleteEntidadeConfirm(true);
+    }
+    if (deleteConfirm.type === "entidade") deletarEntidade(deleteConfirm.id);
+    else if (deleteConfirm.type === "campo") deletarCampo(deleteConfirm.id);
+    setDeleteConfirm(null);
+    setDisableDeleteEntidadePromptDraft(false);
+  };
+
   const handleEditCampo = (campo) => {
-    if (isReadOnlyMode) return;
-    if (!campo) return;
-
-    const obrigatorioAtual =
-      campo.obrigatorio === true || campo.obrigatorio === 'Sim';
-
-    const keyTypeRaw = String(campo?.keyType || campo?.chave || 'NORMAL')
+    if (isReadOnlyMode || !campo) return;
+    const obrigatorio =
+      campo.obrigatorio === true || campo.obrigatorio === "Sim";
+    const keyTypeRaw = String(campo?.keyType || campo?.chave || "NORMAL")
       .trim()
       .toUpperCase();
-    const keyType = ['PK', 'FK', 'NORMAL'].includes(keyTypeRaw)
+    const keyType = ["PK", "FK", "NORMAL"].includes(keyTypeRaw)
       ? keyTypeRaw
-      : 'NORMAL';
-
-    const relacionamento = campo?.relacionamento;
+      : "NORMAL";
+    const rel = campo?.relacionamento;
     const referencia = (() => {
-      if (!relacionamento) return '';
-      if (typeof relacionamento === 'string') return relacionamento;
-
-      const targetEntity = String(
-        relacionamento?.entidade || relacionamento?.targetEntity || '',
-      ).trim();
-      const targetField = String(
-        relacionamento?.campo || relacionamento?.targetField || '',
-      ).trim();
-
-      if (targetEntity && targetField) return `${targetEntity}.${targetField}`;
-      return targetEntity || targetField || '';
+      if (!rel) return "";
+      if (typeof rel === "string") return rel;
+      const e = String(rel?.entidade || rel?.targetEntity || "").trim();
+      const c = String(rel?.campo || rel?.targetField || "").trim();
+      return e && c ? `${e}.${c}` : e || c || "";
     })();
-
     setCampoEmEdicao({
       campoId: campo.id,
       entidadeRef:
         campo.entidadeId ||
         campo.entidadeNome ||
-        entidadeSelecionada?.id ||
-        entidadeSelecionada?._id ||
-        entidadeSelecionada?.nome ||
+        drawerEntity?.id ||
+        drawerEntity?._id ||
+        drawerEntity?.nome ||
         null,
     });
-
     setCampoConfigForm({
-      nome: String(campo.nome || ''),
-      tipo: String(campo.tipo || 'Texto'),
-      obrigatorio: obrigatorioAtual ? 'Sim' : 'Não',
+      nome: String(campo.nome || ""),
+      tipo: String(campo.tipo || "Texto"),
+      obrigatorio: obrigatorio ? "Sim" : "Não",
       keyType,
       referencia,
     });
-
-    setCamposConfigError('');
+    setCamposConfigError("");
   };
 
-  const handleAddCampoConfiguracao = async () => {
-    if (isReadOnlyMode) return;
-    if (!entidadeSelecionada) return;
-
-    const nome = String(campoConfigForm.nome || '').trim();
+  const handleAddOrEditCampo = async () => {
+    if (isReadOnlyMode || !drawerEntity) return;
+    const nome = String(campoConfigForm.nome || "").trim();
     if (!nome) {
-      setCamposConfigError('Informe o nome do campo para adicionar.');
+      setCamposConfigError("Informe o nome do campo.");
       return;
     }
-
-    if (!String(campoConfigForm.tipo || '').trim()) {
-      setCamposConfigError('Selecione o tipo do campo.');
+    if (!campoConfigForm.tipo) {
+      setCamposConfigError("Selecione o tipo do campo.");
       return;
     }
-
-    if (!String(campoConfigForm.obrigatorio || '').trim()) {
-      setCamposConfigError('Selecione se o campo é obrigatório.');
+    if (!campoConfigForm.obrigatorio) {
+      setCamposConfigError("Selecione se o campo é obrigatório.");
       return;
     }
-
-    if (!String(campoConfigForm.keyType || '').trim()) {
-      setCamposConfigError('Selecione o tipo de chave do campo.');
+    if (!campoConfigForm.keyType) {
+      setCamposConfigError("Selecione o tipo de chave.");
       return;
     }
-
-    setCamposConfigError('');
-
+    setCamposConfigError("");
     try {
+      const payload = {
+        nome,
+        tipo: campoConfigForm.tipo,
+        obrigatorio: campoConfigForm.obrigatorio === "Sim",
+        keyType: String(campoConfigForm.keyType || "NORMAL")
+          .trim()
+          .toUpperCase(),
+        relacionamento: String(campoConfigForm.referencia || "").trim() || null,
+      };
       if (campoEmEdicao?.campoId && campoEmEdicao?.entidadeRef) {
         await editarCampoEntidade(
           campoEmEdicao.entidadeRef,
           campoEmEdicao.campoId,
-          {
-            nome,
-            tipo: campoConfigForm.tipo,
-            obrigatorio: campoConfigForm.obrigatorio === 'Sim',
-            keyType: String(campoConfigForm.keyType || 'NORMAL')
-              .trim()
-              .toUpperCase(),
-            relacionamento:
-              String(campoConfigForm.referencia || '').trim() || null,
-          },
+          payload,
         );
       } else {
-        await adicionarCampoEntidade(entidadeSelecionada, {
-          nome,
-          tipo: campoConfigForm.tipo,
-          obrigatorio: campoConfigForm.obrigatorio === 'Sim',
-          keyType: String(campoConfigForm.keyType || 'NORMAL')
-            .trim()
-            .toUpperCase(),
-          relacionamento:
-            String(campoConfigForm.referencia || '').trim() || null,
-        });
+        await adicionarCampoEntidade(drawerEntity, payload);
       }
-
       setCampoConfigForm({
-        nome: '',
-        tipo: '',
-        obrigatorio: '',
-        keyType: '',
-        referencia: '',
+        nome: "",
+        tipo: "",
+        obrigatorio: "",
+        keyType: "",
+        referencia: "",
       });
       setCampoEmEdicao(null);
     } catch (error) {
       setCamposConfigError(
-        String(
-          error?.message ||
-            (campoEmEdicao
-              ? 'Não foi possível atualizar o campo.'
-              : 'Não foi possível adicionar o campo.'),
-        ),
+        String(error?.message || "Não foi possível salvar o campo."),
       );
     }
+  };
+
+  const handleCampoConfigChange = (key, value) => {
+    setCampoConfigForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleCancelarEdicaoCampo = () => {
     setCampoEmEdicao(null);
     setCampoConfigForm({
-      nome: '',
-      tipo: '',
-      obrigatorio: '',
-      keyType: '',
-      referencia: '',
+      nome: "",
+      tipo: "",
+      obrigatorio: "",
+      keyType: "",
+      referencia: "",
     });
-    setCamposConfigError('');
+    setCamposConfigError("");
   };
 
-  const getEntityTypeLabel = (item) => {
-    const explicitType = normalizeText(item?.tipoEntidade);
-    if (explicitType === 'principal') return 'Principal';
-    if (explicitType === 'apoio') return 'Apoio';
-    if (explicitType === 'associativa') return 'Associativa';
-    if (explicitType === 'externa') return 'Externa';
-    return item?.isPrimaryEntity === true ? 'Principal' : 'Apoio';
-  };
-
-  const getEntityFieldCount = (item) => getMergedEntityFields(item).length;
-
-  const getEntityBpmnUsageCount = (item) => {
-    const entityId = item?.id ?? item?._id ?? null;
-    const entityName = item?.nome || item?.name || item?.titulo || '';
-
-    const keys = [
-      entityId !== null && entityId !== undefined && String(entityId).trim()
-        ? `id:${String(entityId).trim()}`
-        : null,
-      normalizeText(entityName) ? `name:${normalizeText(entityName)}` : null,
-    ].filter(Boolean);
-
-    if (keys.length === 0) return 0;
-
-    return keys.reduce(
-      (highest, key) =>
-        Math.max(highest, bpmnUsageCountByEntityKey.get(key) || 0),
-      0,
-    );
-  };
-
-  const bpmnUsageCountByEntityKey = (() => {
-    const usageByKey = new Map();
-    const safeOpportunities = Array.isArray(bpmnOpportunities)
-      ? bpmnOpportunities
-      : [];
-
-    safeOpportunities.forEach((opportunity) => {
-      const opportunityId = getOpportunityId(opportunity);
-      if (opportunityId === null || opportunityId === undefined) return;
-
-      const nodes = Array.isArray(opportunity?.bpmn?.nodes)
-        ? opportunity.bpmn.nodes
-        : [];
-      if (nodes.length === 0) return;
-
-      const keysInOpportunity = new Set();
-
-      nodes.forEach((node) => {
-        if (node?.active === false) return;
-
-        const nodeType = String(node?.nodeType || '')
-          .trim()
-          .toLowerCase();
-        if (nodeType === 'task' || nodeType === 'condicional') return;
-
-        const nodeEntityId = node?.entidadeId;
-        if (
-          nodeEntityId !== null &&
-          nodeEntityId !== undefined &&
-          String(nodeEntityId).trim()
-        ) {
-          keysInOpportunity.add(`id:${String(nodeEntityId).trim()}`);
-        }
-
-        const nodeEntityName = String(
-          node?.entidadeNome || node?.label || node?.subtitle || '',
-        ).trim();
-        const normalizedEntityName = normalizeText(nodeEntityName);
-        if (normalizedEntityName) {
-          keysInOpportunity.add(`name:${normalizedEntityName}`);
-        }
-      });
-
-      keysInOpportunity.forEach((key) => {
-        usageByKey.set(key, (usageByKey.get(key) || 0) + 1);
-      });
-    });
-
-    return usageByKey;
-  })();
-
-  const getFieldKeyLabel = (campo, entidadeAtributoChave) => {
-    const explicitKeyType = normalizeText(campo?.keyType || campo?.chave);
-    if (explicitKeyType === 'pk') return 'PK';
-    if (explicitKeyType === 'fk') return 'FK';
-    if (explicitKeyType === 'normal') return 'Normal';
-
-    const campoNome = normalizeText(campo?.nome);
-    const atributoChaveNome = normalizeText(entidadeAtributoChave);
-
-    if (campoNome && atributoChaveNome && campoNome === atributoChaveNome) {
-      return 'PK';
+  const handleCloseDrawer = () => {
+    setDrawerEntityId(null);
+    if (location.search.includes("entidadeId")) {
+      navigate("/cadastros", { replace: true });
     }
-
-    return 'Normal';
   };
 
-  const getFieldRelationshipLabel = (campo) => {
-    const relationship = campo?.relacionamento;
-    if (!relationship) return '-';
+  // ── BPMN node campo handlers ──────────────────────────────────────────────
+  const handleBpmnCampoConfigChange = React.useCallback((field, value) => {
+    setBpmnCampoConfigForm((prev) => ({ ...prev, [field]: value }));
+    setBpmnCamposError("");
+  }, []);
 
-    if (typeof relationship === 'string') {
-      return String(relationship).trim() || '-';
-    }
+  const handleBpmnCancelEdit = React.useCallback(() => {
+    setBpmnCampoEmEdicao(null);
+    setBpmnCampoConfigForm(EMPTY_BPMN_FORM);
+    setBpmnCamposError("");
+  }, []);
 
-    const targetEntity = String(
-      relationship?.entidade || relationship?.targetEntity || '',
-    ).trim();
-    const targetField = String(
-      relationship?.campo || relationship?.targetField || '',
-    ).trim();
+  const handleBpmnCloseDawer = React.useCallback(() => {
+    setDrawerBpmnNode(null);
+    setBpmnCampoEmEdicao(null);
+    setBpmnCampoConfigForm(EMPTY_BPMN_FORM);
+    setBpmnCamposError("");
+  }, []);
 
-    if (targetEntity && targetField) return `${targetEntity}.${targetField}`;
-    if (targetEntity) return targetEntity;
-    if (targetField) return targetField;
-
-    return '-';
-  };
-
-  const renderTable = (section) => {
-    const entidadesCategoria = Array.isArray(section?.entities)
-      ? section.entities
-      : [];
-    // Pagina tanto na visão geral quanto na visão de tabela específica.
-    const usaPaginacao = filtro === 'todas' || filtro === section.key;
-
-    let dadosExibidos, temProxima, temAnterior, paginaAtual;
-
-    if (usaPaginacao) {
-      const totalPaginas = Math.max(
-        1,
-        Math.ceil(entidadesCategoria.length / itemsPorPagina),
+  const persistBpmnNodeFields = React.useCallback(
+    async (node, newFields) => {
+      if (!node?._oppId) return;
+      const opp = (
+        Array.isArray(bpmnOpportunities) ? bpmnOpportunities : []
+      ).find((o) => String(o?.id ?? o?._id) === String(node._oppId));
+      if (!opp) return;
+      const updatedNodes = (
+        Array.isArray(opp?.bpmn?.nodes) ? opp.bpmn.nodes : []
+      ).map((n) =>
+        n?.id === node?.id ? { ...n, selectedEntityFields: newFields } : n,
       );
-      const paginaBase =
-        filtro === 'todas'
-          ? Number(paginasPorTabela[section.key] || 1)
-          : tabelaPaginaAtual;
-      paginaAtual = Math.min(Math.max(1, paginaBase), totalPaginas);
-      const inicio = (paginaAtual - 1) * itemsPorPagina;
-      dadosExibidos = entidadesCategoria.slice(inicio, inicio + itemsPorPagina);
-      temProxima = paginaAtual < totalPaginas;
-      temAnterior = paginaAtual > 1;
-    } else {
-      // Visualização resumida sem limite artificial
-      dadosExibidos = entidadesCategoria;
+      await updateOpportunityData({
+        selectedOpportunity: opp,
+        patch: { bpmn: { ...opp.bpmn, nodes: updatedNodes } },
+      });
+      setDrawerBpmnNode((prev) =>
+        prev ? { ...prev, selectedEntityFields: newFields } : prev,
+      );
+    },
+    [bpmnOpportunities, updateOpportunityData],
+  );
+
+  const handleBpmnAddOrEditCampo = React.useCallback(async () => {
+    const { nome, tipo, obrigatorio, keyType } = bpmnCampoConfigForm;
+    if (!nome.trim()) {
+      setBpmnCamposError("Nome é obrigatório.");
+      return;
+    }
+    if (!tipo) {
+      setBpmnCamposError("Tipo é obrigatório.");
+      return;
+    }
+    if (!obrigatorio) {
+      setBpmnCamposError("Obrigatório é obrigatório.");
+      return;
+    }
+    if (!keyType) {
+      setBpmnCamposError("Chave é obrigatória.");
+      return;
     }
 
-    const temMuitos = false;
+    const currentFields = Array.isArray(drawerBpmnNode?.selectedEntityFields)
+      ? drawerBpmnNode.selectedEntityFields
+      : [];
+
+    let newFields;
+    if (bpmnCampoEmEdicao) {
+      newFields = currentFields.map((c) =>
+        c?.id === bpmnCampoEmEdicao?.id ? { ...c, ...bpmnCampoConfigForm } : c,
+      );
+    } else {
+      const newId = `bpmn-campo-${Date.now()}`;
+      newFields = [...currentFields, { id: newId, ...bpmnCampoConfigForm }];
+    }
+
+    await persistBpmnNodeFields(drawerBpmnNode, newFields);
+    setBpmnCampoEmEdicao(null);
+    setBpmnCampoConfigForm(EMPTY_BPMN_FORM);
+    setBpmnCamposError("");
+  }, [
+    bpmnCampoConfigForm,
+    bpmnCampoEmEdicao,
+    drawerBpmnNode,
+    persistBpmnNodeFields,
+  ]);
+
+  const handleBpmnEditCampo = React.useCallback((campo) => {
+    setBpmnCampoEmEdicao(campo);
+    setBpmnCampoConfigForm({
+      nome: campo.nome || "",
+      tipo: campo.tipo || "",
+      obrigatorio: campo.obrigatorio || "",
+      keyType: campo.keyType || "",
+      referencia: campo.referencia || "",
+    });
+    setBpmnCamposError("");
+  }, []);
+
+  const handleBpmnDeleteCampo = React.useCallback(
+    async (campoId) => {
+      const currentFields = Array.isArray(drawerBpmnNode?.selectedEntityFields)
+        ? drawerBpmnNode.selectedEntityFields
+        : [];
+      const newFields = currentFields.filter((c) => c?.id !== campoId);
+      await persistBpmnNodeFields(drawerBpmnNode, newFields);
+    },
+    [drawerBpmnNode, persistBpmnNodeFields],
+  );
+
+  // ── Process tab renderTable ───────────────────────────────────────────────
+  const renderTable = (section) => {
+    const sectionKey = normalizeText(section.title);
+    const cats = Array.isArray(section?.entities) ? section.entities : [];
+    const tasks = bpmnTasksByProcess.get(sectionKey) || [];
+    const condicionais = bpmnCondicionalsByProcess.get(sectionKey) || [];
+
+    // Build merged rows: entities first, then tasks, then condicionais
+    const entityRows = cats.map((item) => ({ _kind: "entity", item }));
+    const taskRows = tasks.map((node) => ({ _kind: "task", node }));
+    const condicionalRows = condicionais.map((node) => ({
+      _kind: "condicional",
+      node,
+    }));
+    const allRows = [...entityRows, ...taskRows, ...condicionalRows];
+    const rows = allRows;
 
     return (
-      <div className={styles.sectionGroup}>
+      <div className={styles.sectionGroup} key={section.key}>
         <div className={styles.sectionTopRow}>
           <h2 className={styles.tableTitle}>{section.title}</h2>
-          {canDelete && entidadesCategoria.length > 0 && (
+          {canDelete && rows.length > 0 && (
             <button
               className={styles.deleteTabelaBtn}
               onClick={() => setDeleteTabelaConfirm(section)}
-              title="Deletar a tabela inteira"
             >
               🗑️ Deletar tabela
             </button>
           )}
         </div>
-        <div className={styles.tableSection}>
-          <div className={styles.tableWrapper}>
-            <table className={`${styles.table} ${styles.entityTable}`}>
-              <thead>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Campos</th>
+                <th>Usos BPMN</th>
+                <th>Tipo</th>
+                <th>Atualizado em</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
                 <tr>
-                  <th>Nome</th>
-                  <th>Descrição</th>
-                  <th>Qtd. Campos</th>
-                  <th>Usada em BPMN</th>
-                  <th>Tipo da Entidade</th>
-                  <th>Usuário</th>
-                  <th>Atualizado em</th>
-                  <th>Ações</th>
+                  <td colSpan={7} className={styles.emptyState}>
+                    Nenhum item nesta categoria
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {dadosExibidos.map((item) => (
-                  <tr key={getEntidadeId(item) ?? item.nome}>
-                    <td
-                      className={styles.nameCell}
-                      onClick={() => {
-                        handleViewEntityFields(item);
-                      }}
-                      style={{ cursor: 'pointer' }}
-                      title="Clique para visualizar os campos da entidade"
-                    >
-                      {item.nome}
-                    </td>
-                    <td>{item.descricao}</td>
-                    <td>{getEntityFieldCount(item)}</td>
-                    <td>{getEntityBpmnUsageCount(item)}</td>
-                    <td>{getEntityTypeLabel(item)}</td>
-                    <td className={styles.creatorCell}>{item.criadoPor}</td>
-                    <td>
-                      {formatDateTimeLabel(item.updated_at || item.created_at)}
-                    </td>
-                    <td className={styles.actionsCell}>
-                      <div className={styles.actions}>
-                        {isReadOnlyMode ? (
-                          <span className={styles.viewOnlyBadge}>
-                            Visualizar
-                          </span>
-                        ) : null}
-                        {!isReadOnlyMode ? (
-                          <button
-                            className={styles.editBtn}
-                            onClick={() => handleEdit(item, section)}
-                            title="Editar"
-                          >
-                            ✏️
-                          </button>
-                        ) : null}
-                        {canDelete ? (
-                          <button
-                            className={styles.deleteBtn}
-                            onClick={() => handleDelete(getEntidadeId(item))}
-                            title="Deletar"
-                          >
-                            🗑️
-                          </button>
-                        ) : null}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {usaPaginacao &&
-            Math.ceil(entidadesCategoria.length / itemsPorPagina) > 1 && (
-              <Pagination
-                currentPage={paginaAtual}
-                totalPages={Math.ceil(
-                  entidadesCategoria.length / itemsPorPagina,
-                )}
-                onPrevious={() => {
-                  if (filtro === 'todas') {
-                    setPaginasPorTabela((prev) => ({
-                      ...prev,
-                      [section.key]: Math.max(
-                        1,
-                        Number(prev[section.key] || 1) - 1,
-                      ),
-                    }));
-                    return;
+              ) : (
+                rows.map((row, idx) => {
+                  if (row._kind === "entity") {
+                    const item = row.item;
+                    return (
+                      <tr key={getEntidadeId(item) ?? item.nome}>
+                        <td
+                          className={styles.nameCell}
+                          onClick={() =>
+                            setDrawerEntityId(
+                              String(getEntidadeId(item) ?? item.nome),
+                            )
+                          }
+                          style={{ cursor: "pointer" }}
+                          title="Clique para ver os campos"
+                        >
+                          {item.nome}
+                        </td>
+                        <td className={styles.descCell}>
+                          {item.descricao || "-"}
+                        </td>
+                        <td>{getEntityFieldCount(item)}</td>
+                        <td>{getEntityBpmnUsageCount(item)}</td>
+                        <td>{getEntityTypeLabel(item)}</td>
+                        <td>
+                          {formatDateTimeLabel(
+                            item.updated_at || item.created_at,
+                          )}
+                        </td>
+                        <td className={styles.actionsCell}>
+                          <div className={styles.actions}>
+                            {!isReadOnlyMode && (
+                              <button
+                                className={styles.iconBtn}
+                                onClick={() => handleEdit(item)}
+                                title="Editar"
+                              >
+                                ✏️
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                                onClick={() =>
+                                  handleDelete(getEntidadeId(item))
+                                }
+                                title="Deletar"
+                              >
+                                🗑️
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
                   }
-                  setTabelaPaginaAtual((prev) => Math.max(1, prev - 1));
-                }}
-                onNext={() => {
-                  const totalPags = Math.ceil(
-                    entidadesCategoria.length / itemsPorPagina,
-                  );
-                  if (filtro === 'todas') {
-                    setPaginasPorTabela((prev) => ({
-                      ...prev,
-                      [section.key]: Math.min(
-                        totalPags,
-                        Number(prev[section.key] || 1) + 1,
-                      ),
-                    }));
-                    return;
+
+                  if (row._kind === "task") {
+                    const node = row.node;
+                    const nome = String(
+                      node?.taskNome || node?.label || "",
+                    ).trim();
+                    const descricao = String(node?.taskDescricao || "").trim();
+                    const campos = Array.isArray(node?.selectedEntityFields)
+                      ? node.selectedEntityFields.filter((c) =>
+                          String(c?.nome || "").trim(),
+                        )
+                      : [];
+                    return (
+                      <tr key={`task-${node?.id ?? idx}`}>
+                        <td
+                          className={`${styles.nameCell} ${styles.nameCellTask}`}
+                          onClick={() => setDrawerBpmnNode(node)}
+                          style={{ cursor: "pointer" }}
+                          title="Clique para ver os campos"
+                        >
+                          {nome || "—"}
+                        </td>
+                        <td className={styles.descCell}>{descricao || "-"}</td>
+                        <td>{campos.length}</td>
+                        <td>
+                          {bpmnTaskUsageByName.get(normalizeText(nome)) || 1}
+                        </td>
+                        <td>Atividade</td>
+                        <td>
+                          {formatDateTimeLabel(
+                            bpmnOppById.get(String(node._oppId ?? ""))
+                              ?.updated_at ||
+                              bpmnOppById.get(String(node._oppId ?? ""))
+                                ?.created_at,
+                          )}
+                        </td>
+                        <td className={styles.actionsCell}>
+                          <div className={styles.actions}>
+                            <button
+                              className={styles.iconBtn}
+                              onClick={() => setDrawerBpmnNode(node)}
+                              title="Ver/editar campos"
+                            >
+                              ▤
+                            </button>
+                            {!isReadOnlyMode && (
+                              <button
+                                className={styles.iconBtn}
+                                onClick={() =>
+                                  navigate(`/gerar-bpmn/${node._oppSlug}`)
+                                }
+                                title="Editar no BPMN"
+                              >
+                                ✏️
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
                   }
-                  setTabelaPaginaAtual((prev) => Math.min(totalPags, prev + 1));
-                }}
-              />
-            )}
-          {temMuitos && !usaPaginacao && (
-            <button
-              className={styles.viewMoreBtn}
-              onClick={() => setFiltro(section.key)}
-            >
-              Ver a tabela completa
-            </button>
-          )}
-          {!temMuitos && <div className={styles.tableBorder}></div>}
-        </div>
-      </div>
-    );
-  };
 
-  const renderCamposView = () => {
-    const atributoChaveEntidade = entidadeSelecionada?.atributoChave;
-    const totalCamposConfigurados = camposFiltrados.length;
-
-    return (
-      <div className={styles.camposView}>
-        <div className={styles.tableSection}>
-          <div className={styles.configContainer}>
-            <h3 className={styles.configTitle}>Configuração dos campos</h3>
-
-            <div className={styles.configRow}>
-              <input
-                type="text"
-                className={styles.configInput}
-                name="campoNome"
-                placeholder="Nome do novo campo"
-                value={campoConfigForm.nome}
-                disabled={isReadOnlyMode}
-                onChange={(event) =>
-                  setCampoConfigForm((previous) => ({
-                    ...previous,
-                    nome: event.target.value,
-                  }))
-                }
-              />
-
-              <select
-                className={styles.filter}
-                name="campoTipo"
-                value={campoConfigForm.tipo}
-                disabled={isReadOnlyMode}
-                onChange={(event) =>
-                  setCampoConfigForm((previous) => ({
-                    ...previous,
-                    tipo: event.target.value,
-                  }))
-                }
-              >
-                <option value="" disabled className={styles.selectPlaceholder}>
-                  Tipo:
-                </option>
-                {ENTIDADE_FIELD_TYPES.map((tipo) => (
-                  <option key={tipo} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                className={styles.filter}
-                name="campoObrigatorio"
-                value={campoConfigForm.obrigatorio}
-                disabled={isReadOnlyMode}
-                onChange={(event) =>
-                  setCampoConfigForm((previous) => ({
-                    ...previous,
-                    obrigatorio: event.target.value,
-                  }))
-                }
-              >
-                <option value="" disabled className={styles.selectPlaceholder}>
-                  Obrigatório?
-                </option>
-                <option value="Sim">Sim</option>
-                <option value="Não">Não</option>
-              </select>
-
-              <select
-                className={styles.filter}
-                name="campoKeyType"
-                value={campoConfigForm.keyType}
-                disabled={isReadOnlyMode}
-                onChange={(event) =>
-                  setCampoConfigForm((previous) => ({
-                    ...previous,
-                    keyType: event.target.value,
-                  }))
-                }
-              >
-                <option value="" disabled className={styles.selectPlaceholder}>
-                  Chave:
-                </option>
-                <option value="NORMAL">Normal</option>
-                <option value="PK">PK</option>
-                <option value="FK">FK</option>
-              </select>
-
-              <input
-                type="text"
-                className={styles.configInput}
-                name="campoReferencia"
-                placeholder="Referência (ex: cliente.id)"
-                value={campoConfigForm.referencia}
-                disabled={isReadOnlyMode}
-                onChange={(event) =>
-                  setCampoConfigForm((previous) => ({
-                    ...previous,
-                    referencia: event.target.value,
-                  }))
-                }
-              />
-
-              <button
-                type="button"
-                className={styles.applyConfigBtn}
-                onClick={handleAddCampoConfiguracao}
-                disabled={isReadOnlyMode}
-              >
-                {campoEmEdicao ? 'Salvar edição' : 'Adicionar campo'}
-              </button>
-
-              {campoEmEdicao ? (
-                <button
-                  type="button"
-                  className={styles.cancelBtn}
-                  onClick={handleCancelarEdicaoCampo}
-                  disabled={isReadOnlyMode}
-                >
-                  Cancelar
-                </button>
-              ) : null}
-            </div>
-
-            <p className={styles.configInfo}>
-              Campos configurados atualmente: {totalCamposConfigurados}
-            </p>
-            {camposConfigError ? (
-              <p className={styles.configError}>{camposConfigError}</p>
-            ) : null}
-          </div>
-        </div>
-
-        <div className={styles.tableSection}>
-          <div className={styles.tableWrapper}>
-            <table className={`${styles.table} ${styles.fieldsTable}`}>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Tipo</th>
-                  <th>Obrigatório</th>
-                  <th>Chave</th>
-                  <th>Referência</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {camposFiltrados.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className={styles.emptyState}>
-                      Nenhum campo cadastrado para esta entidade
-                    </td>
-                  </tr>
-                ) : (
-                  camposFiltrados.map((campo) => (
-                    <tr key={campo.id}>
-                      <td className={styles.nameCell}>{campo.nome}</td>
-                      <td>{campo.tipo || '-'}</td>
-                      <td>
-                        {campo.obrigatorio === true ||
-                        campo.obrigatorio === 'Sim'
-                          ? 'Sim'
-                          : 'Não'}
+                  // condicional
+                  const node = row.node;
+                  const nome = String(
+                    node?.condicionalNome || node?.label || "",
+                  ).trim();
+                  const descricao = String(
+                    node?.condicionalDescricao || "",
+                  ).trim();
+                  const campos = Array.isArray(node?.selectedEntityFields)
+                    ? node.selectedEntityFields.filter((c) =>
+                        String(c?.nome || "").trim(),
+                      )
+                    : [];
+                  return (
+                    <tr key={`cond-${node?.id ?? idx}`}>
+                      <td
+                        className={`${styles.nameCell} ${styles.nameCellCondicional}`}
+                        onClick={() => setDrawerBpmnNode(node)}
+                        style={{ cursor: "pointer" }}
+                        title="Clique para ver os campos"
+                      >
+                        {nome || "—"}
                       </td>
-                      <td>{getFieldKeyLabel(campo, atributoChaveEntidade)}</td>
-                      <td>{getFieldRelationshipLabel(campo)}</td>
+                      <td className={styles.descCell}>{descricao || "-"}</td>
+                      <td>{campos.length}</td>
+                      <td>
+                        {bpmnCondicionalUsageByName.get(normalizeText(nome)) ||
+                          1}
+                      </td>
+                      <td>Condicional</td>
+                      <td>
+                        {formatDateTimeLabel(
+                          bpmnOppById.get(String(node._oppId ?? ""))
+                            ?.updated_at ||
+                            bpmnOppById.get(String(node._oppId ?? ""))
+                              ?.created_at,
+                        )}
+                      </td>
                       <td className={styles.actionsCell}>
                         <div className={styles.actions}>
-                          {isReadOnlyMode ? (
-                            <span className={styles.viewOnlyBadge}>
-                              Visualizar
-                            </span>
-                          ) : null}
-                          {!isReadOnlyMode ? (
+                          <button
+                            className={styles.iconBtn}
+                            onClick={() => setDrawerBpmnNode(node)}
+                            title="Ver/editar campos"
+                          >
+                            ▤
+                          </button>
+                          {!isReadOnlyMode && (
                             <button
-                              className={`${styles.iconBtn} ${styles.editBtn}`}
-                              disabled={campo.readonlyFromBpmn === true}
-                              onClick={() => handleEditCampo(campo)}
-                              title={
-                                campo.readonlyFromBpmn
-                                  ? 'Campo vindo do BPMN. Salve a entidade para editar aqui.'
-                                  : 'Editar'
+                              className={styles.iconBtn}
+                              onClick={() =>
+                                navigate(`/gerar-bpmn/${node._oppSlug}`)
                               }
+                              title="Editar no BPMN"
                             >
                               ✏️
                             </button>
-                          ) : null}
-                          {canDelete ? (
-                            <button
-                              className={`${styles.iconBtn} ${styles.deleteBtn}`}
-                              disabled={campo.readonlyFromBpmn === true}
-                              onClick={() => handleDeleteCampo(campo.id)}
-                              title={
-                                campo.readonlyFromBpmn
-                                  ? 'Campo vindo do BPMN. Salve a entidade para remover aqui.'
-                                  : 'Deletar'
-                              }
-                            >
-                              🗑️
-                            </button>
-                          ) : null}
+                          )}
                         </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     );
   };
 
-  const isEntityFieldsView = filtro !== 'todas' && !sectionKeys.has(filtro);
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <section className={styles.container}>
-      <div className={styles.content}>
-        {entidadesLoading && entidades.length === 0 ? (
-          <p>Carregando entidades...</p>
-        ) : null}
-        {entidadesError && entidades.length === 0 ? (
-          <p className={styles.configError}>
-            Erro ao carregar entidades: {entidadesError}
+    <section className={styles.page}>
+      {/* Page Header */}
+      <div className={styles.pageHeader}>
+        <div className={styles.pageHeaderLeft}>
+          <h1 className={styles.pageTitle}>Cadastros do Sistema</h1>
+          <p className={styles.pageSubtitle}>
+            Entidades, campos e relacionamentos cadastrados
           </p>
-        ) : null}
-        {(() => {
-          return (
-            <div className={styles.header}>
-              <div className={styles.headerLeft}>
-                <div>
-                  <h1 className={styles.title}>
-                    {isEntityFieldsView ? 'Campo de Entidade' : 'Entidades'}
-                  </h1>
-                  <p className={styles.titleSub}>
-                    {isEntityFieldsView
-                      ? 'Configure os campos desta entidade.'
-                      : 'Gerencie as entidades e seus campos customizados.'}
-                  </p>
-                </div>
+        </div>
 
-                {!isEntityFieldsView && (
-                  <select
-                    className={styles.filter}
-                    name="filtroEntidade"
-                    value={filtro}
-                    onChange={(e) => handleFiltroChange(e.target.value)}
-                  >
-                    <option value="todas">Todas as Entidades</option>
-                    {tableSections.map((section) => (
-                      <option key={section.key} value={section.key}>
-                        {section.title}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+        <div className={styles.statsRow}>
+          <div className={styles.statCard}>
+            <span className={styles.statValue}>{entidades.length}</span>
+            <span className={styles.statLabel}>Entidades</span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statValue}>{totalFields}</span>
+            <span className={styles.statLabel}>Campos</span>
+          </div>
+          <div className={styles.statCard}>
+            <span className={styles.statValue}>{bpmnLinkedCount}</span>
+            <span className={styles.statLabel}>Em processos</span>
+          </div>
+        </div>
 
-              <div className={styles.headerActions}>
-                {isReadOnlyMode ? (
-                  <span className={styles.topReadOnlyBadge}>
-                    Modo somente visualizacao ativo para o seu nivel de acesso.
-                  </span>
-                ) : null}
-                {isEditOnlyMode ? (
-                  <span className={styles.topReadOnlyBadge}>
-                    Nivel 2: edicao e visualizacao.
-                  </span>
-                ) : null}
-                {filtro === 'todas' && canCreate && (
-                  <Button
-                    className={styles.createBtn}
-                    onClick={() => navigate('/entidades/criar')}
-                  >
-                    Criar Entidade
-                  </Button>
-                )}
-                {isEntityFieldsView && (
-                  <Button
-                    className={styles.createBtn}
-                    onClick={() => navigate('/entidades')}
-                  >
-                    Salvar
-                  </Button>
-                )}
-              </div>
+        <div className={styles.pageHeaderActions}>
+          {(isReadOnlyMode || isEditOnlyMode) && (
+            <span className={styles.accessBadge}>
+              {isReadOnlyMode ? "Somente leitura" : "Edição limitada"}
+            </span>
+          )}
+          {canCreate && (
+            <button
+              className={styles.newEntityBtn}
+              onClick={() => navigate("/cadastros/criar")}
+            >
+              + Nova Entidade
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Tab bar */}
+      <div className={styles.tabBar}>
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            className={`${styles.tab} ${activeTab === tab.id ? styles.tabActive : ""}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Catalog tab */}
+      {activeTab === "catalogo" && (
+        <>
+          <div className={styles.toolbar}>
+            <div className={styles.searchWrapper}>
+              <span className={styles.searchIcon}>🔍</span>
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Buscar por nome, descrição ou categoria..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  className={styles.clearSearch}
+                  onClick={() => setSearchQuery("")}
+                  title="Limpar busca"
+                >
+                  ✕
+                </button>
+              )}
             </div>
+          </div>
+
+          {entidadesLoading && entidades.length === 0 ? (
+            <div className={styles.stateCenter}>
+              <div className={styles.spinner} />
+              <p>Carregando entidades...</p>
+            </div>
+          ) : entidadesError && entidades.length === 0 ? (
+            <div className={styles.stateCenter}>
+              <p className={styles.stateError}>
+                Erro ao carregar entidades: {entidadesError}
+              </p>
+            </div>
+          ) : filteredEntities.length === 0 ? (
+            <div className={styles.stateCenter}>
+              <span className={styles.stateEmoji}>📭</span>
+              <p>
+                {searchQuery
+                  ? "Nenhuma entidade encontrada com esse filtro"
+                  : "Nenhuma entidade cadastrada"}
+              </p>
+              {canCreate && !searchQuery && (
+                <button
+                  className={styles.newEntityBtn}
+                  onClick={() => navigate("/cadastros/criar")}
+                  style={{ marginTop: "0.5rem" }}
+                >
+                  + Criar primeira entidade
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className={styles.cardGrid}>
+              {filteredEntities.map((entity) => (
+                <EntityCard
+                  key={getEntidadeId(entity) ?? entity.nome}
+                  entity={entity}
+                  fieldCount={getEntityFieldCount(entity)}
+                  bpmnUsageCount={getEntityBpmnUsageCount(entity)}
+                  onViewFields={() =>
+                    setDrawerEntityId(
+                      String(getEntidadeId(entity) ?? entity.nome),
+                    )
+                  }
+                  onEdit={() => handleEdit(entity)}
+                  onDelete={() => handleDelete(getEntidadeId(entity))}
+                  canEdit={!isReadOnlyMode}
+                  canDelete={canDelete}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Processes tab */}
+      {activeTab === "processos" && (
+        <div className={styles.sectionsWrapper}>
+          {tableSections.filter((s) => {
+            if (s.entities.length > 0) return true;
+            const key = normalizeText(s.title);
+            return (
+              (bpmnTasksByProcess.get(key)?.length ?? 0) > 0 ||
+              (bpmnCondicionalsByProcess.get(key)?.length ?? 0) > 0
+            );
+          }).length === 0 ? (
+            <div className={styles.stateCenter}>
+              <span className={styles.stateEmoji}>🔄</span>
+              <p>Nenhum processo BPMN cadastrado</p>
+            </div>
+          ) : (
+            tableSections
+              .filter((s) => {
+                if (s.entities.length > 0) return true;
+                const key = normalizeText(s.title);
+                return (
+                  (bpmnTasksByProcess.get(key)?.length ?? 0) > 0 ||
+                  (bpmnCondicionalsByProcess.get(key)?.length ?? 0) > 0
+                );
+              })
+              .map((section) => renderTable(section))
+          )}
+        </div>
+      )}
+
+      {/* Atividades tab */}
+      {activeTab === "atividades" && (
+        <>
+          {bpmnTaskCatalog.length === 0 ? (
+            <div className={styles.stateCenter}>
+              <span className={styles.stateEmoji}>⏱️</span>
+              <p>Nenhuma atividade cadastrada nos processos BPMN</p>
+            </div>
+          ) : (
+            <div className={styles.cardGrid}>
+              {bpmnTaskCatalog.map((node, idx) => {
+                const nome = String(node?.taskNome || node?.label || "").trim();
+                const descricao = String(node?.taskDescricao || "").trim();
+                const campos = Array.isArray(node?.selectedEntityFields)
+                  ? node.selectedEntityFields.filter((c) =>
+                      String(c?.nome || "").trim(),
+                    )
+                  : [];
+                return (
+                  <article key={node?.id ?? idx} className={styles.bpmnCard}>
+                    <div className={styles.bpmnCardAccent} />
+                    <div className={styles.cardInner}>
+                      <div className={styles.topRow}>
+                        <span
+                          className={`${styles.typeBadge} ${styles.typeBadgeTask}`}
+                        >
+                          ⏱ Atividade
+                        </span>
+                        {node._oppName && (
+                          <span className={styles.bpmnBadge}>
+                            {node._oppName}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className={styles.entityName}>
+                        {nome || (
+                          <span className={styles.unnamed}>Sem nome</span>
+                        )}
+                      </h3>
+                      {descricao ? (
+                        <p className={styles.entityDesc}>{descricao}</p>
+                      ) : (
+                        <p className={styles.entityDescEmpty}>Sem descrição</p>
+                      )}
+                      <div className={styles.metaRow}>
+                        <span className={styles.metaItem}>
+                          <span className={styles.metaIcon}>▤</span>
+                          {campos.length}{" "}
+                          {campos.length === 1 ? "campo" : "campos"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.cardFooter}>
+                      <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnPrimary}`}
+                        onClick={() => setDrawerBpmnNode(node)}
+                        title="Ver campos da atividade"
+                      >
+                        ▤ Campos
+                      </button>
+                      {!isReadOnlyMode && (
+                        <button
+                          type="button"
+                          className={styles.btn}
+                          onClick={() =>
+                            navigate(`/gerar-bpmn/${node._oppSlug}`)
+                          }
+                          title="Editar no BPMN"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className={`${styles.btn} ${styles.btnDanger}`}
+                          onClick={() => setDeleteBpmnNodeConfirm(node)}
+                          title="Remover atividade"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Condicionais tab */}
+      {activeTab === "condicionais" && (
+        <>
+          {bpmnCondicionalCatalog.length === 0 ? (
+            <div className={styles.stateCenter}>
+              <span className={styles.stateEmoji}>🔀</span>
+              <p>Nenhuma condicional cadastrada nos processos BPMN</p>
+            </div>
+          ) : (
+            <div className={styles.cardGrid}>
+              {bpmnCondicionalCatalog.map((node, idx) => {
+                const nome = String(
+                  node?.condicionalNome || node?.label || "",
+                ).trim();
+                const descricao = String(
+                  node?.condicionalDescricao || "",
+                ).trim();
+                const campos = Array.isArray(node?.selectedEntityFields)
+                  ? node.selectedEntityFields.filter((c) =>
+                      String(c?.nome || "").trim(),
+                    )
+                  : [];
+                return (
+                  <article key={node?.id ?? idx} className={styles.bpmnCard}>
+                    <div
+                      className={`${styles.bpmnCardAccent} ${styles.bpmnCardAccentCondicional}`}
+                    />
+                    <div className={styles.cardInner}>
+                      <div className={styles.topRow}>
+                        <span
+                          className={`${styles.typeBadge} ${styles.typeBadgeCondicional}`}
+                        >
+                          🔀 Decisão
+                        </span>
+                        {node._oppName && (
+                          <span className={styles.bpmnBadge}>
+                            {node._oppName}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className={styles.entityName}>
+                        {nome || (
+                          <span className={styles.unnamed}>Sem nome</span>
+                        )}
+                      </h3>
+                      {descricao ? (
+                        <p className={styles.entityDesc}>{descricao}</p>
+                      ) : (
+                        <p className={styles.entityDescEmpty}>Sem descrição</p>
+                      )}
+                      <div className={styles.metaRow}>
+                        <span className={styles.metaItem}>
+                          <span className={styles.metaIcon}>▤</span>
+                          {campos.length}{" "}
+                          {campos.length === 1 ? "campo" : "campos"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={styles.cardFooter}>
+                      <button
+                        type="button"
+                        className={`${styles.btn} ${styles.btnPrimary}`}
+                        onClick={() => setDrawerBpmnNode(node)}
+                        title="Ver campos da condicional"
+                      >
+                        ▤ Campos
+                      </button>
+                      {!isReadOnlyMode && (
+                        <button
+                          type="button"
+                          className={styles.btn}
+                          onClick={() =>
+                            navigate(`/gerar-bpmn/${node._oppSlug}`)
+                          }
+                          title="Editar no BPMN"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      {canDelete && (
+                        <button
+                          type="button"
+                          className={`${styles.btn} ${styles.btnDanger}`}
+                          onClick={() => setDeleteBpmnNodeConfirm(node)}
+                          title="Remover condicional"
+                        >
+                          🗑️
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Fields Drawer – BPMN node (task / condicional) */}
+      {drawerBpmnNode &&
+        (() => {
+          const isTask = drawerBpmnNode?.nodeType === "task";
+          const nodeName = String(
+            isTask
+              ? drawerBpmnNode?.taskNome
+              : drawerBpmnNode?.condicionalNome || drawerBpmnNode?.label || "",
+          ).trim();
+          const nodeFields = Array.isArray(drawerBpmnNode?.selectedEntityFields)
+            ? drawerBpmnNode.selectedEntityFields.filter((c) =>
+                String(c?.nome || "").trim(),
+              )
+            : [];
+          const fakeEntity = {
+            nome: nodeName || (isTask ? "Atividade" : "Condicional"),
+            atributoChave: "",
+          };
+          return (
+            <EntityFieldsDrawer
+              entity={fakeEntity}
+              fields={nodeFields}
+              campoEmEdicao={bpmnCampoEmEdicao}
+              campoConfigForm={bpmnCampoConfigForm}
+              camposConfigError={bpmnCamposError}
+              onClose={handleBpmnCloseDawer}
+              onAddOrEditField={handleBpmnAddOrEditCampo}
+              onEditField={handleBpmnEditCampo}
+              onDeleteField={handleBpmnDeleteCampo}
+              onCampoConfigChange={handleBpmnCampoConfigChange}
+              onCancelEdit={handleBpmnCancelEdit}
+              isReadOnly={isReadOnlyMode}
+              canDelete={canDelete}
+            />
           );
         })()}
 
-        <div className={styles.sectionsWrapper}>
-          {filtro === 'todas'
-            ? tableSections
-                .filter((section) => section.entities.length > 0)
-                .map((section) => (
-                  <React.Fragment key={section.key}>
-                    {renderTable(section)}
-                  </React.Fragment>
-                ))
-            : sectionKeys.has(filtro)
-              ? renderTable(
-                  tableSections.find((section) => section.key === filtro) || {
-                    key: filtro,
-                    title: filtro,
-                    entities: [],
-                  },
-                )
-              : renderCamposView()}
-        </div>
-      </div>
+      {/* Fields Drawer */}
+      {drawerEntity && (
+        <EntityFieldsDrawer
+          entity={drawerEntity}
+          fields={drawerFields}
+          campoEmEdicao={campoEmEdicao}
+          campoConfigForm={campoConfigForm}
+          camposConfigError={camposConfigError}
+          onClose={handleCloseDrawer}
+          onAddOrEditField={handleAddOrEditCampo}
+          onEditField={handleEditCampo}
+          onDeleteField={handleDeleteCampo}
+          onCampoConfigChange={handleCampoConfigChange}
+          onCancelEdit={handleCancelarEdicaoCampo}
+          isReadOnly={isReadOnlyMode}
+          canDelete={canDelete}
+        />
+      )}
+
+      {/* Delete confirms */}
+      {deleteBpmnNodeConfirm &&
+        (() => {
+          const isTask = deleteBpmnNodeConfirm?.nodeType === "task";
+          const nodeName =
+            String(
+              isTask
+                ? deleteBpmnNodeConfirm?.taskNome
+                : deleteBpmnNodeConfirm?.condicionalNome ||
+                    deleteBpmnNodeConfirm?.label ||
+                    "",
+            ).trim() || (isTask ? "Atividade" : "Condicional");
+          return (
+            <Close
+              title={`Remover ${isTask ? "atividade" : "condicional"}`}
+              message={`Para remover "${nodeName}" acesse o editor BPMN do processo "${deleteBpmnNodeConfirm._oppName || ""}" e exclua o elemento lá.`}
+              onConfirm={() => {
+                navigate(`/gerar-bpmn/${deleteBpmnNodeConfirm._oppSlug}`);
+                setDeleteBpmnNodeConfirm(null);
+              }}
+              onCancel={() => setDeleteBpmnNodeConfirm(null)}
+              confirmLabel="Ir para o BPMN"
+            />
+          );
+        })()}
 
       {deleteTabelaConfirm && (
         <Close
           title="Deletar tabela inteira"
-          message={`Tem certeza que deseja deletar todas as ${deleteTabelaConfirm.entities.length} entidades da tabela "${deleteTabelaConfirm.title}"? Esta ação não pode ser desfeita.`}
+          message={`Tem certeza que deseja deletar a tabela "${deleteTabelaConfirm.title}"? Isso removerá ${deleteTabelaConfirm.entities.length} entidade(s) e o processo BPMN vinculado.`}
           onConfirm={handleDeleteTabela}
           onCancel={() => setDeleteTabelaConfirm(null)}
         />
@@ -1298,14 +1450,14 @@ const Entidades = () => {
       {deleteConfirm && (
         <Close
           title={
-            deleteConfirm.type === 'entidade'
-              ? 'Deletar Entidade'
-              : 'Deletar Campo'
+            deleteConfirm.type === "entidade"
+              ? "Deletar Entidade"
+              : "Deletar Campo"
           }
           message={
-            deleteConfirm.type === 'entidade'
-              ? 'Tem certeza que deseja deletar esta entidade? Esta ação não pode ser desfeita.'
-              : 'Tem certeza que deseja deletar este campo? Esta ação não pode ser desfeita.'
+            deleteConfirm.type === "entidade"
+              ? "Tem certeza que deseja deletar esta entidade? Esta ação não pode ser desfeita."
+              : "Tem certeza que deseja deletar este campo? Esta ação não pode ser desfeita."
           }
           onConfirm={confirmDelete}
           onCancel={() => {
@@ -1313,19 +1465,18 @@ const Entidades = () => {
             setDisableDeleteEntidadePromptDraft(false);
           }}
         >
-          {deleteConfirm.type === 'entidade' ? (
+          {deleteConfirm.type === "entidade" && (
             <label className={styles.deleteConfirmOptOut}>
               <input
                 type="checkbox"
-                name="disableDeletePrompt"
                 checked={disableDeleteEntidadePromptDraft}
-                onChange={(event) =>
-                  setDisableDeleteEntidadePromptDraft(event.target.checked)
+                onChange={(e) =>
+                  setDisableDeleteEntidadePromptDraft(e.target.checked)
                 }
               />
               Não quero receber essa mensagem novamente.
             </label>
-          ) : null}
+          )}
         </Close>
       )}
     </section>

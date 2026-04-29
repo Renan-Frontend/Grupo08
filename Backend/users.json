@@ -45,12 +45,12 @@
     "id": 5,
     "nome": "teste",
     "email": "teste@hotmail.com",
-    "senha": "ae6ee2d9efe52f7d0398a1668f38ef29f003f7501adbdc3bedc1691ff960706c",
+    "senha": "$2b$12$Og9QjKBFi/EfVUsBGO37/elJssAIeVYL1Wt6dKOMbaIdapTKBC0TS",
     "ativo": true,
     "created_at": "2026-03-19T07:43:10.462329",
-    "admin": false,
+    "admin": true,
     "role": "user",
-    "nivel": "1",
+    "nivel": 3,
     "cargo": ""
   }
 ]

@@ -1,20 +1,20 @@
-import React from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { BPMN_EDITOR_STATE_GET, BPMN_EDITOR_STATE_PUT } from '../../Api';
+import React from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { BPMN_EDITOR_STATE_GET, BPMN_EDITOR_STATE_PUT } from "../../Api";
 import {
   batchSyncEntidades,
   createOpportunity,
   fetchOpportunitiesPage,
   getAuthToken,
   updateOpportunityById,
-} from '../Opportunities/opportunityApi';
-import { EntidadesContext } from '../../Context/EntidadesContext';
-import { UserContext } from '../../Context/UserContext';
-import { isReadOnlyAccessLevelOne } from '../../Utils/accessControl';
-import { applyBpmnAutoLayout } from '../../Utils/bpmnAutoLayout';
-import BpmnFlow from '../Common/BpmnFlow';
-import Close from '../Helper/Close';
-import GerarBPMNContextSidebar from './contextSidebar/GerarBPMNContextSidebar';
+} from "../Opportunities/opportunityApi";
+import { EntidadesContext } from "../../Context/EntidadesContext";
+import { UserContext } from "../../Context/UserContext";
+import { isReadOnlyAccessLevelOne } from "../../Utils/accessControl";
+import { applyBpmnAutoLayout } from "../../Utils/bpmnAutoLayout";
+import BpmnFlow from "../Common/BpmnFlow";
+import Close from "../Helper/Close";
+import GerarBPMNContextSidebar from "./contextSidebar/GerarBPMNContextSidebar";
 import {
   BPMN_EDITOR_LOCAL_STORAGE_KEY,
   BPMN_EDITOR_SAVED_OPPORTUNITY_MAP_KEY,
@@ -38,41 +38,42 @@ import {
   sanitizeStageNameByNodeType,
   slugifyBpmnName,
   toRequiredLabel,
-} from './gerarBpmnCreate.shared';
-import styles from './GerarBPMNCreate.module.css';
+} from "./gerarBpmnCreate.shared";
+import styles from "./GerarBPMNCreate.module.css";
 
 const NOOP = () => {};
+const BPMN_CARD_WIDTH = 220;
+const BPMN_CARD_HEIGHT = 110;
 
 const getEntityTypeInfoLabel = (rawType) => {
-  const normalized = String(rawType || '')
+  const normalized = String(rawType || "")
     .trim()
     .toLowerCase();
 
-  if (normalized === 'principal') return 'Entidade: Principal';
-  if (normalized === 'associativa') return 'Entidade: Associativa';
-  if (normalized === 'externa') return 'Entidade: Externa';
-  return 'Entidade: Apoio';
+  if (normalized === "contato") return "Entidade: Contato";
+  if (normalized === "processo") return "Entidade: Processo";
+  return "";
 };
 
 const createEmptyEntityFieldDraft = () => ({
   id: null,
-  nome: '',
-  tipo: '',
+  nome: "",
+  tipo: "",
   obrigatorio: null,
-  keyType: '',
-  referencia: '',
+  keyType: "",
+  referencia: "",
 });
 
 const normalizeEntityFieldEntry = (field) => ({
-  id: String(field?.id || '').trim(),
-  nome: String(field?.nome || '').trim(),
-  tipo: String(field?.tipo || '').trim(),
+  id: String(field?.id || "").trim(),
+  nome: String(field?.nome || "").trim(),
+  tipo: String(field?.tipo || "").trim(),
   obrigatorio:
-    field?.obrigatorio === true || String(field?.obrigatorio || '') === 'Sim',
-  keyType: String(field?.keyType || field?.chave || 'NORMAL')
+    field?.obrigatorio === true || String(field?.obrigatorio || "") === "Sim",
+  keyType: String(field?.keyType || field?.chave || "NORMAL")
     .trim()
     .toUpperCase(),
-  relacionamento: String(field?.relacionamento || '').trim() || null,
+  relacionamento: String(field?.relacionamento || "").trim() || null,
 });
 
 const mergeEntityFieldEntries = (baseFields = [], extraFields = []) => {
@@ -83,7 +84,7 @@ const mergeEntityFieldEntries = (baseFields = [], extraFields = []) => {
     const normalizedField = normalizeEntityFieldEntry(field);
     const byId = normalizedField.id
       ? `id:${normalizedField.id}`
-      : `name:${String(normalizedField.nome || '')
+      : `name:${String(normalizedField.nome || "")
           .trim()
           .toLowerCase()}`;
 
@@ -93,7 +94,7 @@ const mergeEntityFieldEntries = (baseFields = [], extraFields = []) => {
     seen.add(byId);
     merged.push({
       ...normalizedField,
-      id: normalizedField.id || generateUniqueId('field'),
+      id: normalizedField.id || generateUniqueId("field"),
     });
   };
 
@@ -105,102 +106,102 @@ const mergeEntityFieldEntries = (baseFields = [], extraFields = []) => {
 
 const extractNodeParticipant = (node) => {
   const directParticipant = String(
-    node?.participant || node?.lane || node?.pool || '',
+    node?.participant || node?.lane || node?.pool || "",
   ).trim();
   if (directParticipant) return directParticipant;
 
-  const info = String(node?.info || '').trim();
+  const info = String(node?.info || "").trim();
   const infoMatch = info.match(/Raia:\s*([^|]+)/i);
   if (infoMatch) {
-    return String(infoMatch[1] || '').trim();
+    return String(infoMatch[1] || "").trim();
   }
 
-  const descricaoValue = String(node?.descricao || '').trim();
+  const descricaoValue = String(node?.descricao || "").trim();
   const descricaoMatch = descricaoValue.match(/Participante:\s*(.+)$/i);
   if (descricaoMatch) {
-    return String(descricaoMatch[1] || '').trim();
+    return String(descricaoMatch[1] || "").trim();
   }
 
-  return '';
+  return "";
 };
 
 const normalizeDecisionBranchKey = (decisionValue, fallbackIndex = 0) => {
-  const normalizedDecision = String(decisionValue || '')
+  const normalizedDecision = String(decisionValue || "")
     .trim()
     .toLowerCase();
 
   if (!normalizedDecision) {
-    return fallbackIndex <= 0 ? 'main' : `branch:${fallbackIndex}`;
+    return fallbackIndex <= 0 ? "main" : `branch:${fallbackIndex}`;
   }
 
   if (
-    normalizedDecision === 'sim' ||
-    normalizedDecision === 'yes' ||
-    normalizedDecision === 'true' ||
-    normalizedDecision === 'ok' ||
-    normalizedDecision === 'aprovado'
+    normalizedDecision === "sim" ||
+    normalizedDecision === "yes" ||
+    normalizedDecision === "true" ||
+    normalizedDecision === "ok" ||
+    normalizedDecision === "aprovado"
   ) {
-    return 'main';
+    return "main";
   }
 
   if (
-    normalizedDecision === 'nao' ||
-    normalizedDecision === 'não' ||
-    normalizedDecision === 'no' ||
-    normalizedDecision === 'false' ||
-    normalizedDecision === 'reprovado'
+    normalizedDecision === "nao" ||
+    normalizedDecision === "não" ||
+    normalizedDecision === "no" ||
+    normalizedDecision === "false" ||
+    normalizedDecision === "reprovado"
   ) {
-    return 'alternate';
+    return "alternate";
   }
 
   return `branch:${normalizedDecision}`;
 };
 
 const normalizeAiCanvasDraft = (rawDraft) => {
-  if (!rawDraft || typeof rawDraft !== 'object') return null;
+  if (!rawDraft || typeof rawDraft !== "object") return null;
 
-  const draftName = String(rawDraft.name || '').trim();
+  const draftName = String(rawDraft.name || "").trim();
 
   const stageEntries = Array.isArray(rawDraft.stages)
     ? rawDraft.stages
         .map((stage, index) => {
-          if (!stage || typeof stage !== 'object') return null;
+          if (!stage || typeof stage !== "object") return null;
 
           const label = String(
-            stage.nome || stage.name || stage.label || '',
+            stage.nome || stage.name || stage.label || "",
           ).trim();
           if (!label) return null;
 
-          const stageTypeRaw = String(stage.tipo || stage.type || 'task')
+          const stageTypeRaw = String(stage.tipo || stage.type || "task")
             .trim()
             .toLowerCase();
           const normalizedStageType = stageTypeRaw
-            .replace(/[^a-z0-9]+/g, ' ')
+            .replace(/[^a-z0-9]+/g, " ")
             .trim();
           const isConditionalType = [
-            'condicional',
-            'conditional',
-            'gateway',
-            'gate',
-            'decision',
-            'decisao',
-            'decisão',
+            "condicional",
+            "conditional",
+            "gateway",
+            "gate",
+            "decision",
+            "decisao",
+            "decisão",
           ].includes(normalizedStageType);
           const isEntityType = [
-            'entidade',
-            'dados',
-            'data',
-            'data entity',
-            'dataentity',
-            'entity',
-            'entidade de dados',
-            'data record',
+            "entidade",
+            "dados",
+            "data",
+            "data entity",
+            "dataentity",
+            "entity",
+            "entidade de dados",
+            "data record",
           ].includes(normalizedStageType);
           const nodeType = isConditionalType
-            ? 'condicional'
+            ? "condicional"
             : isEntityType
-              ? 'entidade'
-              : 'task';
+              ? "entidade"
+              : "task";
 
           const participant = String(
             stage.participante ||
@@ -208,7 +209,7 @@ const normalizeAiCanvasDraft = (rawDraft) => {
               stage.lane ||
               stage.pool ||
               stage.responsavel ||
-              '',
+              "",
           ).trim();
 
           return {
@@ -232,7 +233,7 @@ const normalizeAiCanvasDraft = (rawDraft) => {
 
   let normalizedNodes = Array.isArray(rawDraft.nodes)
     ? rawDraft.nodes
-        .filter((node) => node && typeof node === 'object')
+        .filter((node) => node && typeof node === "object")
         .map((node, index) => normalizeEditorNode(node, index))
     : [];
 
@@ -243,10 +244,10 @@ const normalizeAiCanvasDraft = (rawDraft) => {
           id: stage.id || `ai-stage-${index + 1}`,
           label: stage.label,
           nodeType: stage.nodeType,
-          taskNome: stage.nodeType === 'task' ? stage.label : '',
-          condicionalNome: stage.nodeType === 'condicional' ? stage.label : '',
-          entidadeNome: stage.nodeType === 'entidade' ? stage.label : '',
-          info: stage.participant ? `Raia: ${stage.participant}` : '',
+          taskNome: stage.nodeType === "task" ? stage.label : "",
+          condicionalNome: stage.nodeType === "condicional" ? stage.label : "",
+          entidadeNome: stage.nodeType === "entidade" ? stage.label : "",
+          info: stage.participant ? `Raia: ${stage.participant}` : "",
           x: 140 + index * 230,
           y: 140,
         },
@@ -256,10 +257,10 @@ const normalizeAiCanvasDraft = (rawDraft) => {
   }
 
   normalizedNodes = normalizedNodes.map((node, index) => {
-    const nodeId = String(node?.id || '')
+    const nodeId = String(node?.id || "")
       .trim()
       .toLowerCase();
-    const label = String(node?.label || '')
+    const label = String(node?.label || "")
       .trim()
       .toLowerCase();
     const matchedStage =
@@ -272,13 +273,13 @@ const normalizeAiCanvasDraft = (rawDraft) => {
       return node;
       // For entity nodes, info = atributoChave and descricao = description.
       // don't override them with participant lane data.
-      if (node?.nodeType === 'entidade') {
+      if (node?.nodeType === "entidade") {
         return node;
       }
     }
 
     const participantTag = `Raia: ${matchedStage.participant}`;
-    const currentInfo = String(node?.info || '').trim();
+    const currentInfo = String(node?.info || "").trim();
     const nextInfo = currentInfo
       ? currentInfo.includes(participantTag)
         ? currentInfo
@@ -289,27 +290,27 @@ const normalizeAiCanvasDraft = (rawDraft) => {
       ...node,
       info: nextInfo,
       descricao:
-        String(node?.descricao || '').trim() ||
+        String(node?.descricao || "").trim() ||
         `Participante: ${matchedStage.participant}`,
     };
   });
 
   const nodeIds = new Set(
     normalizedNodes
-      .map((node) => String(node?.id || '').trim())
+      .map((node) => String(node?.id || "").trim())
       .filter(Boolean),
   );
 
   let normalizedConnections = Array.isArray(rawDraft.connections)
     ? rawDraft.connections
-        .filter((connection) => connection && typeof connection === 'object')
+        .filter((connection) => connection && typeof connection === "object")
         .map((connection, index) =>
           normalizeEditorConnection(connection, index),
         )
         .filter(
           (connection) =>
-            nodeIds.has(String(connection?.from || '').trim()) &&
-            nodeIds.has(String(connection?.to || '').trim()),
+            nodeIds.has(String(connection?.from || "").trim()) &&
+            nodeIds.has(String(connection?.to || "").trim()),
         )
     : [];
 
@@ -341,9 +342,9 @@ const normalizeAiCanvasDraft = (rawDraft) => {
 const GerarBPMNCreate = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { bpmnSlug = '' } = useParams();
+  const { bpmnSlug = "" } = useParams();
   const BPMN_EDITOR_NAME_DRAFT_KEY = React.useMemo(
-    () => `bpmn_editor_name_draft:${String(bpmnSlug || '').trim() || 'create'}`,
+    () => `bpmn_editor_name_draft:${String(bpmnSlug || "").trim() || "create"}`,
     [bpmnSlug],
   );
   const viewportRef = React.useRef(null);
@@ -353,8 +354,8 @@ const GerarBPMNCreate = () => {
   const hasHydratedBpmnRef = React.useRef(false);
   const skipNavigationPromptRef = React.useRef(false);
   const isPageUnloadingRef = React.useRef(false);
-  const currentPageUrlRef = React.useRef('');
-  const lastSelectedNodeIdRef = React.useRef('');
+  const currentPageUrlRef = React.useRef("");
+  const lastSelectedNodeIdRef = React.useRef("");
   const pendingTimelineItemsRef = React.useRef([]);
   const currentDraftRef = React.useRef({
     name: DEFAULT_BPMN_NAME,
@@ -377,41 +378,41 @@ const GerarBPMNCreate = () => {
   const baseCanvasHeight = 2600;
   const [name, setName] = React.useState(() => {
     const fallbackName = bpmnNameFromSlug(bpmnSlug);
-    const isCreateMode = !String(bpmnSlug || '').trim();
+    const isCreateMode = !String(bpmnSlug || "").trim();
 
-    if (!isCreateMode || typeof window === 'undefined') {
+    if (!isCreateMode || typeof window === "undefined") {
       return fallbackName;
     }
 
     // Prioridade 1: nome vindo do painel de IA (processName ou aiCanvasDraft.name)
     const aiProcessName =
-      String(location?.state?.aiCanvasDraft?.name || '').trim() ||
-      String(location?.state?.processName || '').trim();
+      String(location?.state?.aiCanvasDraft?.name || "").trim() ||
+      String(location?.state?.processName || "").trim();
     if (aiProcessName) return aiProcessName;
 
     // Prioridade 2: rascunho salvo na sessão
     try {
       const savedName = window.sessionStorage.getItem(
-        'bpmn_editor_name_draft:create',
+        "bpmn_editor_name_draft:create",
       );
-      window.localStorage.removeItem('bpmn_editor_name_draft:create');
-      const normalizedSavedName = String(savedName || '').trim();
+      window.localStorage.removeItem("bpmn_editor_name_draft:create");
+      const normalizedSavedName = String(savedName || "").trim();
       return normalizedSavedName || fallbackName;
     } catch {
       return fallbackName;
     }
   });
   const [nodes, setNodes] = React.useState([
-    createNode('node-1', 'Entidade', 20, 30),
-    createNode('node-2', 'Entidade', 300, 30),
-    createNode('node-3', 'Entidade', 580, 30),
+    createNode("node-1", "Entidade", 20, 30),
+    createNode("node-2", "Entidade", 300, 30),
+    createNode("node-3", "Entidade", 580, 30),
   ]);
   const [connections, setConnections] = React.useState([]);
-  const [selectedNodeId, setSelectedNodeId] = React.useState('');
-  const [selectedConnectionId, setSelectedConnectionId] = React.useState('');
-  const [connectTarget, setConnectTarget] = React.useState('');
+  const [selectedNodeId, setSelectedNodeId] = React.useState("");
+  const [selectedConnectionId, setSelectedConnectionId] = React.useState("");
+  const [connectTarget, setConnectTarget] = React.useState("");
   const [connectorRevealMode, setConnectorRevealMode] =
-    React.useState('hover-side');
+    React.useState("hover-side");
   const [isCanvasFullscreen, setIsCanvasFullscreen] = React.useState(false);
   const [isSidebarHidden, setIsSidebarHidden] = React.useState(false);
   const [isPropertiesPinned, setIsPropertiesPinned] = React.useState(false);
@@ -421,24 +422,24 @@ const GerarBPMNCreate = () => {
     React.useState(false);
   const [tutorialSpotlight, setTutorialSpotlight] = React.useState(null);
   const [tutorialPopoverStyle, setTutorialPopoverStyle] = React.useState({
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
   });
   const [isDecisionPromptOpen, setIsDecisionPromptOpen] = React.useState(false);
   const [pendingDecisionConnectionId, setPendingDecisionConnectionId] =
-    React.useState('');
+    React.useState("");
   const [decisionPromptCustomValue, setDecisionPromptCustomValue] =
-    React.useState('');
+    React.useState("");
   const [sidebarConnectionDecisionDraft, setSidebarConnectionDecisionDraft] =
-    React.useState('');
+    React.useState("");
   const [isSavingBpmn, setIsSavingBpmn] = React.useState(false);
   const [isLoadingBpmn, setIsLoadingBpmn] = React.useState(true);
-  const [invalidEntityNodeId, setInvalidEntityNodeId] = React.useState('');
+  const [invalidEntityNodeId, setInvalidEntityNodeId] = React.useState("");
   const [noticeModal, setNoticeModal] = React.useState({
     open: false,
-    title: 'Aviso',
-    message: '',
+    title: "Aviso",
+    message: "",
   });
   const [createNodeFromConnectionDraft, setCreateNodeFromConnectionDraft] =
     React.useState(null);
@@ -475,8 +476,8 @@ const GerarBPMNCreate = () => {
   });
   const [isDesktopSidebarHidden, setIsDesktopSidebarHidden] = React.useState(
     () => {
-      if (typeof window === 'undefined') return false;
-      return window.localStorage.getItem('desktopSidebarHidden') === 'true';
+      if (typeof window === "undefined") return false;
+      return window.localStorage.getItem("desktopSidebarHidden") === "true";
     },
   );
   const [isTouchDevice, setIsTouchDevice] = React.useState(false);
@@ -506,18 +507,18 @@ const GerarBPMNCreate = () => {
   const actorAccountName = React.useMemo(
     () =>
       String(
-        user?.nome || user?.name || user?.username || user?.email || '',
-      ).trim() || 'Conta atual',
+        user?.nome || user?.name || user?.username || user?.email || "",
+      ).trim() || "Conta atual",
     [user],
   );
   const actorAccountId = React.useMemo(
-    () => String(user?.id || user?._id || user?.userId || '').trim(),
+    () => String(user?.id || user?._id || user?.userId || "").trim(),
     [user],
   );
 
   React.useEffect(() => {
     if (isReadOnlyMode && !bpmnSlug) {
-      navigate('/gerar-bpmn', { replace: true });
+      navigate("/gerar-bpmn", { replace: true });
     }
   }, [bpmnSlug, isReadOnlyMode, navigate]);
 
@@ -525,18 +526,18 @@ const GerarBPMNCreate = () => {
     refetchEntidades().catch(() => {});
   }, [refetchEntidades]);
 
-  const [entityMode, setEntityMode] = React.useState('nova');
-  const [stageConfigMode, setStageConfigMode] = React.useState('');
+  const [entityMode, setEntityMode] = React.useState("nova");
+  const [stageConfigMode, setStageConfigMode] = React.useState("");
   const [selectedExistingEntityId, setSelectedExistingEntityId] =
-    React.useState('');
-  const [entityError, setEntityError] = React.useState('');
-  const [entitySavedNotice, setEntitySavedNotice] = React.useState('');
+    React.useState("");
+  const [entityError, setEntityError] = React.useState("");
+  const [entitySavedNotice, setEntitySavedNotice] = React.useState("");
   const [entitySavedNoticeNodeId, setEntitySavedNoticeNodeId] =
-    React.useState('');
+    React.useState("");
   const [editorNameSaveFeedback, setEditorNameSaveFeedback] =
-    React.useState('');
+    React.useState("");
   const [entitySuggestionEntityId, setEntitySuggestionEntityId] =
-    React.useState('');
+    React.useState("");
   const [isEntitySuggestionBusy, setIsEntitySuggestionBusy] =
     React.useState(false);
   const [newEntityForm, setNewEntityForm] = React.useState(EMPTY_ENTITY_FORM);
@@ -544,7 +545,7 @@ const GerarBPMNCreate = () => {
     EMPTY_CONDITIONAL_FORM,
   );
   const [taskForm, setTaskForm] = React.useState(EMPTY_TASK_FORM);
-  const [gatewayTypeDraft, setGatewayTypeDraft] = React.useState('xor');
+  const [gatewayTypeDraft, setGatewayTypeDraft] = React.useState("xor");
   const [newEntityFields, setNewEntityFields] = React.useState([]);
   const [selectedDataFieldIds, setSelectedDataFieldIds] = React.useState([]);
   const [entityDraftsByNodeId, setEntityDraftsByNodeId] = React.useState({});
@@ -556,11 +557,11 @@ const GerarBPMNCreate = () => {
   );
   const [linkedEntityFieldsDraft, setLinkedEntityFieldsDraft] =
     React.useState(null);
-  const [activeSidebarTab, setActiveSidebarTab] = React.useState('entidade');
+  const [activeSidebarTab, setActiveSidebarTab] = React.useState("entidade");
   const [pendingAiContextPanel, setPendingAiContextPanel] = React.useState(
     () => {
       const raw = location?.state?.aiContextPanel;
-      return raw && typeof raw === 'object' ? raw : null;
+      return raw && typeof raw === "object" ? raw : null;
     },
   );
   const [pendingAiCanvasDraft, setPendingAiCanvasDraft] = React.useState(() =>
@@ -593,144 +594,144 @@ const GerarBPMNCreate = () => {
   const tutorialSteps = React.useMemo(
     () => [
       {
-        id: 'process-name',
-        title: 'Nome do processo',
+        id: "process-name",
+        title: "Nome do processo",
         description:
-          'Comece por aqui: defina um nome claro e objetivo para identificar este BPMN na listagem e durante as edições futuras.',
-        hint: 'Dica: use nomes curtos e específicos, por exemplo: Aprovação de orçamento.',
+          "Comece por aqui: defina um nome claro e objetivo para identificar este BPMN na listagem e durante as edições futuras.",
+        hint: "Dica: use nomes curtos e específicos, por exemplo: Aprovação de orçamento.",
         selector: '[data-tutorial-id="process-name"]',
       },
       {
-        id: 'reset-layout',
-        title: '↺ Voltar ao padrão',
+        id: "reset-layout",
+        title: "↺ Voltar ao padrão",
         description:
-          'Reorganiza os retângulos no layout padrão automaticamente, útil quando o desenho ficou muito espalhado ou desordenado.',
-        hint: 'Dica: use este botão antes de apresentar o fluxo, para deixar o layout mais legível.',
+          "Reorganiza os retângulos no layout padrão automaticamente, útil quando o desenho ficou muito espalhado ou desordenado.",
+        hint: "Dica: use este botão antes de apresentar o fluxo, para deixar o layout mais legível.",
         selector: '[data-tutorial-id="reset-layout"]',
       },
       {
-        id: 'fullscreen-toggle',
-        title: '⛶ Tela cheia',
+        id: "fullscreen-toggle",
+        title: "⛶ Tela cheia",
         description:
-          'Alterna para modo tela cheia para ganhar mais espaço de edição e melhorar a visualização de fluxos maiores.',
-        hint: 'Dica: em fluxos grandes, combine tela cheia + zoom para navegar com mais precisão.',
+          "Alterna para modo tela cheia para ganhar mais espaço de edição e melhorar a visualização de fluxos maiores.",
+        hint: "Dica: em fluxos grandes, combine tela cheia + zoom para navegar com mais precisão.",
         selector: '[data-tutorial-id="fullscreen-toggle"]',
       },
       {
-        id: 'desktop-sidebar-toggle',
-        title: 'Seta do menu lateral',
+        id: "desktop-sidebar-toggle",
+        title: "Seta do menu lateral",
         description:
-          'Essa seta lateral recolhe/expande o menu principal do sistema. Ao recolher, aumenta o espaço útil da tela para trabalhar no BPMN.',
-        hint: 'Dica: clique na seta quando quiser mais área horizontal para visualizar e editar o fluxo.',
+          "Essa seta lateral recolhe/expande o menu principal do sistema. Ao recolher, aumenta o espaço útil da tela para trabalhar no BPMN.",
+        hint: "Dica: clique na seta quando quiser mais área horizontal para visualizar e editar o fluxo.",
         selector: '[data-tutorial-id="desktop-sidebar-toggle"]',
       },
       {
-        id: 'save-bpmn',
-        title: 'SALVAR',
+        id: "save-bpmn",
+        title: "SALVAR",
         description:
-          'Salva etapas, conexões e configurações do processo e depois retorna para a lista de BPMNs.',
-        hint: 'Dica: como salvar retorna para a listagem, use quando concluir um bloco importante de alterações.',
+          "Salva etapas, conexões e configurações do processo e depois retorna para a lista de BPMNs.",
+        hint: "Dica: como salvar retorna para a listagem, use quando concluir um bloco importante de alterações.",
         selector: '[data-tutorial-id="save-bpmn"]',
       },
       {
-        id: 'add-node',
-        title: '▭+ Adicionar retângulo',
+        id: "add-node",
+        title: "▭+ Adicionar retângulo",
         description:
-          'Cria uma nova etapa no fluxo. Depois, escolha a categoria da etapa: Entidade, Atividade ou Decisão.',
-        hint: 'Dica: adicione as etapas principais primeiro e depois refine detalhes e conexões.',
+          "Cria uma nova etapa no fluxo. Depois, escolha a categoria da etapa: Entidade, Atividade ou Decisão.",
+        hint: "Dica: adicione as etapas principais primeiro e depois refine detalhes e conexões.",
         selector: '[data-tutorial-id="add-node"]',
       },
       {
-        id: 'zoom-toggle',
-        title: '− / + Zoom',
+        id: "zoom-toggle",
+        title: "− / + Zoom",
         description:
-          'Ajusta o nível de zoom do canvas para facilitar leitura detalhada ou visão geral do processo.',
-        hint: 'Dica: reduza o zoom para visão macro e aumente para editar condições e textos com calma.',
+          "Ajusta o nível de zoom do canvas para facilitar leitura detalhada ou visão geral do processo.",
+        hint: "Dica: reduza o zoom para visão macro e aumente para editar condições e textos com calma.",
         selector: '[data-tutorial-id="zoom-toggle"]',
       },
       {
-        id: 'properties-toggle',
-        title: '▤ Propriedades fixas',
+        id: "properties-toggle",
+        title: "▤ Propriedades fixas",
         description:
-          'Mantém o painel de propriedades fixo enquanto você navega pelo fluxo, agilizando ajustes em sequência.',
-        hint: 'Dica: deixe fixo quando for configurar várias etapas em sequência.',
+          "Mantém o painel de propriedades fixo enquanto você navega pelo fluxo, agilizando ajustes em sequência.",
+        hint: "Dica: deixe fixo quando for configurar várias etapas em sequência.",
         selector: '[data-tutorial-id="properties-toggle"]',
       },
       {
-        id: 'canvas',
-        title: 'Canvas do fluxo',
+        id: "canvas",
+        title: "Canvas do fluxo",
         description:
-          'Área principal de modelagem: selecione etapas, arraste para reposicionar e crie conexões para montar a lógica do processo.',
-        hint: 'Dica: clique no fundo para limpar seleção e passe o mouse nos botões para ver a função de cada um.',
+          "Área principal de modelagem: selecione etapas, arraste para reposicionar e crie conexões para montar a lógica do processo.",
+        hint: "Dica: clique no fundo para limpar seleção e passe o mouse nos botões para ver a função de cada um.",
         selector: '[data-tutorial-id="canvas-viewport"]',
       },
       {
-        id: 'canvas-rectangles',
-        title: 'Retângulos (etapas)',
+        id: "canvas-rectangles",
+        title: "Retângulos (etapas)",
         description:
-          'Cada retângulo representa uma etapa do processo. Clique para selecionar, arraste para reposicionar, use o botão ✕ no canto para excluir e observe os conectores com ✓ (sim/correto) e ✕ (não) nas saídas de decisão.',
-        hint: 'Dica: organize as etapas da esquerda para a direita e valide os conectores ✓ e ✕ para garantir o caminho correto da decisão.',
+          "Cada retângulo representa uma etapa do processo. Clique para selecionar, arraste para reposicionar, use o botão ✕ no canto para excluir e observe os conectores com ✓ (sim/correto) e ✕ (não) nas saídas de decisão.",
+        hint: "Dica: organize as etapas da esquerda para a direita e valide os conectores ✓ e ✕ para garantir o caminho correto da decisão.",
         selector: '[data-tutorial-id="canvas-rectangle"]',
       },
       {
-        id: 'canvas-bands',
-        title: 'Faixas coloridas dos cards',
+        id: "canvas-bands",
+        title: "Faixas coloridas dos cards",
         description:
-          'A faixa no topo do retângulo indica o tipo da etapa: Entidade (verde), Decisão (azul), Atividade (amarelo); cinza quando sem ligação.',
-        hint: 'Dica: use as faixas para bater o olho e validar rapidamente se os tipos do fluxo estão corretos.',
+          "A faixa no topo do retângulo indica o tipo da etapa: Entidade (verde), Decisão (azul), Atividade (amarelo); cinza quando sem ligação.",
+        hint: "Dica: use as faixas para bater o olho e validar rapidamente se os tipos do fluxo estão corretos.",
         selector: '[data-tutorial-id="canvas-color-band"]',
       },
       {
-        id: 'canvas-minimap',
-        title: 'Minimapa e centralização',
+        id: "canvas-minimap",
+        title: "Minimapa e centralização",
         description:
-          'O minimapa mostra a visão geral do fluxo. A seta dentro do círculo (botão de centralizar) reposiciona a visualização no conjunto de etapas.',
-        hint: 'Dica: use a seta do minimapa para voltar rapidamente ao centro quando navegar para áreas distantes.',
+          "O minimapa mostra a visão geral do fluxo. A seta dentro do círculo (botão de centralizar) reposiciona a visualização no conjunto de etapas.",
+        hint: "Dica: use a seta do minimapa para voltar rapidamente ao centro quando navegar para áreas distantes.",
         selector: '[data-tutorial-id="canvas-minimap"]',
-        popoverPlacement: 'left',
+        popoverPlacement: "left",
       },
       {
-        id: 'sidebar-overview',
-        title: 'Painel contextual (visão geral)',
+        id: "sidebar-overview",
+        title: "Painel contextual (visão geral)",
         description:
-          'Este painel muda conforme a seleção do canvas. Clique em um retângulo para editar a etapa selecionada.',
-        hint: 'Dica: se o painel não aparecer, selecione uma etapa no canvas para ativar a edição contextual.',
+          "Este painel muda conforme a seleção do canvas. Clique em um retângulo para editar a etapa selecionada.",
+        hint: "Dica: se o painel não aparecer, selecione uma etapa no canvas para ativar a edição contextual.",
         selector: '[data-tutorial-id="context-sidebar"]',
-        popoverPlacement: 'left',
+        popoverPlacement: "left",
       },
       {
-        id: 'sidebar-category',
-        title: 'Categoria da etapa',
+        id: "sidebar-category",
+        title: "Categoria da etapa",
         description:
-          'Aqui você define o tipo da etapa: Entidade, Atividade ou Decisão. Ao trocar a categoria, os campos de configuração do painel são ajustados automaticamente.',
-        hint: 'Dica: escolha a categoria primeiro; isso evita preencher campos que não serão usados.',
+          "Aqui você define o tipo da etapa: Entidade, Atividade ou Decisão. Ao trocar a categoria, os campos de configuração do painel são ajustados automaticamente.",
+        hint: "Dica: escolha a categoria primeiro; isso evita preencher campos que não serão usados.",
         selector: '[data-tutorial-id="sidebar-stage-category"]',
-        popoverPlacement: 'left',
+        popoverPlacement: "left",
       },
       {
-        id: 'sidebar-config',
-        title: 'Área de configuração',
+        id: "sidebar-config",
+        title: "Área de configuração",
         description:
-          'Nesta área você preenche os detalhes da etapa selecionada: dados da entidade, campos, informações da atividade ou definição da decisão.',
-        hint: 'Dica: edite um bloco por vez (categoria → entidade → salvar) para reduzir erros de validação.',
+          "Nesta área você preenche os detalhes da etapa selecionada: dados da entidade, campos, informações da atividade ou definição da decisão.",
+        hint: "Dica: edite um bloco por vez (categoria → entidade → salvar) para reduzir erros de validação.",
         selector: '[data-tutorial-id="sidebar-config-area"]',
-        popoverPlacement: 'left',
+        popoverPlacement: "left",
       },
       {
-        id: 'sidebar-save',
-        title: 'Salvar alterações',
+        id: "sidebar-save",
+        title: "Salvar alterações",
         description:
-          'Aplica no fluxo as alterações do item selecionado no painel. Use este botão sempre que finalizar uma edição da etapa ou conexão atual.',
-        hint: 'Dica: confirme no card do canvas se a alteração refletiu antes de seguir para a próxima etapa.',
+          "Aplica no fluxo as alterações do item selecionado no painel. Use este botão sempre que finalizar uma edição da etapa ou conexão atual.",
+        hint: "Dica: confirme no card do canvas se a alteração refletiu antes de seguir para a próxima etapa.",
         selector: '[data-tutorial-id="sidebar-save-button"]',
-        popoverPlacement: 'left',
+        popoverPlacement: "left",
       },
       {
-        id: 'tutorial',
-        title: 'TUTORIAL',
+        id: "tutorial",
+        title: "TUTORIAL",
         description:
-          'Reabre este guia dinâmico sempre que precisar revisar o fluxo de uso e o papel de cada botão.',
-        hint: 'Dica: use as setas ← e → para navegar rapidamente entre as etapas do tutorial.',
+          "Reabre este guia dinâmico sempre que precisar revisar o fluxo de uso e o papel de cada botão.",
+        hint: "Dica: use as setas ← e → para navegar rapidamente entre as etapas do tutorial.",
         selector: '[data-tutorial-id="tutorial-button"]',
       },
     ],
@@ -789,7 +790,7 @@ const GerarBPMNCreate = () => {
     if (!selectedNodeId) return;
 
     setIsSidebarHidden(false);
-    setSelectedConnectionId('');
+    setSelectedConnectionId("");
   }, [selectedNodeId]);
 
   const entityOptions = React.useMemo(
@@ -798,7 +799,7 @@ const GerarBPMNCreate = () => {
         .map((entidade) => ({
           id: getEntidadeId(entidade),
           nome: getEntidadeNome(entidade),
-          categoria: String(entidade?.categoria || '').trim(),
+          categoria: String(entidade?.categoria || "").trim(),
         }))
         .filter((entidade) => entidade.nome),
     [entidades],
@@ -829,14 +830,14 @@ const GerarBPMNCreate = () => {
   const resolveLinkedEntityFromNode = React.useCallback(
     (node) => {
       if (!node) return null;
-      if (node.nodeType === 'task') return null;
+      if (node.nodeType === "task") return null;
 
       if (node.entidadeId !== null && node.entidadeId !== undefined) {
         const byId = entidadesById.get(String(node.entidadeId));
         if (byId) return byId;
       }
 
-      const legacyName = normalizeEntityName(node.entidadeNome || '');
+      const legacyName = normalizeEntityName(node.entidadeNome || "");
       if (!legacyName) return null;
       return entidadesByNormalizedName.get(legacyName) || null;
     },
@@ -867,20 +868,20 @@ const GerarBPMNCreate = () => {
   const nodesForCanvas = React.useMemo(
     () =>
       nodes.map((node) => {
-        if (node.nodeType === 'task') {
-          const taskLabel = String(node.taskNome || '').trim() || 'Atividade';
+        if (node.nodeType === "task") {
+          const taskLabel = String(node.taskNome || "").trim() || "Atividade";
 
           // Priority: form (selected) > draft (saved) > AI-generated (node data)
           const taskDraftDesc = String(
-            entityDraftsByNodeId[node.id]?.taskForm?.descricao || '',
+            entityDraftsByNodeId[node.id]?.taskForm?.descricao || "",
           ).trim();
-          const aiDesc = String(node.taskDescricao || '').trim();
+          const aiDesc = String(node.taskDescricao || "").trim();
           const stripTask = (t) =>
-            t && t.toLowerCase() !== taskLabel.toLowerCase() ? t : '';
+            t && t.toLowerCase() !== taskLabel.toLowerCase() ? t : "";
 
-          let descricao = '';
+          let descricao = "";
           if (selectedNodeId === node.id) {
-            descricao = stripTask(String(taskForm.descricao || '').trim());
+            descricao = stripTask(String(taskForm.descricao || "").trim());
           } else if (taskDraftDesc) {
             descricao = stripTask(taskDraftDesc);
           } else {
@@ -891,26 +892,28 @@ const GerarBPMNCreate = () => {
             ...node,
             label: taskLabel,
             descricao,
-            info: 'Configuração da atividade',
+            info: "Configuração da atividade",
           };
         }
 
-        if (node.nodeType === 'condicional') {
+        if (node.nodeType === "condicional") {
           let label =
-            String(node.condicionalNome || '').trim() || 'Condicional';
+            String(node.condicionalNome || "").trim() || "Condicional";
 
           // Priority: form (selected) > draft (saved) > AI-generated (node data)
           const condDraftDesc = String(
-            entityDraftsByNodeId[node.id]?.conditionalForm?.descricao || '',
+            entityDraftsByNodeId[node.id]?.conditionalForm?.descricao || "",
           ).trim();
-          const aiDesc = String(node.condicionalDescricao || '').trim();
+          const aiDesc = String(node.condicionalDescricao || "").trim();
           const stripCond = (t) =>
-            t && t.toLowerCase() !== label.toLowerCase() ? t : '';
+            t && t.toLowerCase() !== label.toLowerCase() ? t : "";
 
-          let descricao = '';
-          if (selectedNodeId === node.id && stageConfigMode === 'condicional') {
-            label = String(conditionalForm.nome || '').trim() || 'Condicional';
-            descricao = stripCond(String(conditionalForm.descricao || '').trim());
+          let descricao = "";
+          if (selectedNodeId === node.id && stageConfigMode === "condicional") {
+            label = String(conditionalForm.nome || "").trim() || "Condicional";
+            descricao = stripCond(
+              String(conditionalForm.descricao || "").trim(),
+            );
           } else if (condDraftDesc) {
             descricao = stripCond(condDraftDesc);
           } else {
@@ -921,58 +924,65 @@ const GerarBPMNCreate = () => {
             ...node,
             label,
             descricao,
-            info: `Decisão ${String(node.gatewayType || 'xor').toUpperCase()}`,
+            info: `Decisão ${String(node.gatewayType || "xor").toUpperCase()}`,
           };
         }
 
-        const linkedEntity = resolveLinkedEntityFromNode(node)
-          || (Array.isArray(entidades) ? entidades : []).find((e) => {
+        const linkedEntity =
+          resolveLinkedEntityFromNode(node) ||
+          (Array.isArray(entidades) ? entidades : []).find((e) => {
             const eId = getEntidadeId(e);
             const eName = normalizeEntityName(getEntidadeNome(e));
             const nodeEntidadeId =
               node.entidadeId !== null && node.entidadeId !== undefined
                 ? String(node.entidadeId)
-                : '';
-            const nodeEntidadeName = normalizeEntityName(node.entidadeNome || '');
+                : "";
+            const nodeEntidadeName = normalizeEntityName(
+              node.entidadeNome || "",
+            );
             return (
               (nodeEntidadeId && String(eId) === nodeEntidadeId) ||
               (nodeEntidadeName && eName === nodeEntidadeName)
             );
-          }) || null;
+          }) ||
+          null;
         const entityName = linkedEntity
           ? getEntidadeNome(linkedEntity)
-          : String(node.entidadeNome || node.label || '').trim();
-        let label = entityName || 'Entidade';
+          : String(node.entidadeNome || node.label || "").trim();
+        let label = entityName || "Entidade";
 
         // Helper: return empty string when text is just the entity name repeated
         const stripIfName = (text) => {
-          const t = String(text || '').trim();
-          return t.toLowerCase() === label.toLowerCase() ? '' : t;
+          const t = String(text || "").trim();
+          return t.toLowerCase() === label.toLowerCase() ? "" : t;
         };
 
         const catalogDesc = stripIfName(
-          linkedEntity ? getEntidadeDescricao(linkedEntity) : '',
+          linkedEntity ? getEntidadeDescricao(linkedEntity) : "",
         );
         const nodeDraftDesc = stripIfName(
-          String(entityDraftsByNodeId[node.id]?.newEntityForm?.descricao || '').trim(),
+          String(
+            entityDraftsByNodeId[node.id]?.newEntityForm?.descricao || "",
+          ).trim(),
         );
         const aiDesc = stripIfName(node.descricao);
         let descricao = nodeDraftDesc || catalogDesc || aiDesc;
 
-        // Prefer catalog entity type as source of truth over AI-assigned type
+        // Prefer node's explicit type (set by user/AI on the canvas) over catalog entity type
         let info = getEntityTypeInfoLabel(
-          (linkedEntity?.tipoEntidade) ||
-            String(node?.tipoEntidade || '').trim(),
+          String(node?.tipoEntidade || "").trim() || linkedEntity?.tipoEntidade,
         );
 
-        if (selectedNodeId === node.id && entityMode === 'nova') {
-          const formNome = String(newEntityForm.nome || '').trim();
-          label = formNome || entityName || 'Entidade';
-          const formDesc = stripIfName(String(newEntityForm.descricao || '').trim());
+        if (selectedNodeId === node.id && entityMode === "nova") {
+          const formNome = String(newEntityForm.nome || "").trim();
+          label = formNome || entityName || "Entidade";
+          const formDesc = stripIfName(
+            String(newEntityForm.descricao || "").trim(),
+          );
           descricao = formDesc || nodeDraftDesc || catalogDesc || aiDesc;
           info = getEntityTypeInfoLabel(
-            (linkedEntity?.tipoEntidade) ||
-              String(node?.tipoEntidade || '').trim(),
+            String(node?.tipoEntidade || "").trim() ||
+              linkedEntity?.tipoEntidade,
           );
         }
 
@@ -1002,8 +1012,8 @@ const GerarBPMNCreate = () => {
   const selectedNodeLinkedEntity = React.useMemo(() => {
     if (!selectedNode) return null;
     if (
-      selectedNode.nodeType === 'condicional' ||
-      selectedNode.nodeType === 'task'
+      selectedNode.nodeType === "condicional" ||
+      selectedNode.nodeType === "task"
     ) {
       return null;
     }
@@ -1011,8 +1021,8 @@ const GerarBPMNCreate = () => {
     const selectedId =
       selectedNode.entidadeId !== null && selectedNode.entidadeId !== undefined
         ? String(selectedNode.entidadeId)
-        : '';
-    const selectedName = normalizeEntityName(selectedNode.entidadeNome || '');
+        : "";
+    const selectedName = normalizeEntityName(selectedNode.entidadeNome || "");
 
     return (
       (Array.isArray(entidades) ? entidades : []).find((entidade) => {
@@ -1028,13 +1038,13 @@ const GerarBPMNCreate = () => {
 
   const fieldEntityTarget = React.useMemo(() => {
     if (
-      selectedNode?.nodeType === 'condicional' ||
-      selectedNode?.nodeType === 'task'
+      selectedNode?.nodeType === "condicional" ||
+      selectedNode?.nodeType === "task"
     ) {
       return null;
     }
 
-    if (entityMode === 'existente' && selectedExistingEntityId) {
+    if (entityMode === "existente" && selectedExistingEntityId) {
       return (
         (Array.isArray(entidades) ? entidades : []).find(
           (entidade) =>
@@ -1068,16 +1078,16 @@ const GerarBPMNCreate = () => {
   const selectedDataFieldsForNode = React.useMemo(() => {
     const fieldMap = new Map(
       (Array.isArray(newEntityFields) ? newEntityFields : []).map((field) => [
-        String(field?.id ?? '').trim(),
+        String(field?.id ?? "").trim(),
         {
-          id: String(field?.id ?? '').trim(),
-          nome: String(field?.nome || '').trim(),
+          id: String(field?.id ?? "").trim(),
+          nome: String(field?.nome || "").trim(),
         },
       ]),
     );
 
     return (Array.isArray(selectedDataFieldIds) ? selectedDataFieldIds : [])
-      .map((fieldId) => fieldMap.get(String(fieldId || '').trim()))
+      .map((fieldId) => fieldMap.get(String(fieldId || "").trim()))
       .filter(Boolean);
   }, [newEntityFields, selectedDataFieldIds]);
 
@@ -1101,11 +1111,11 @@ const GerarBPMNCreate = () => {
   );
 
   const suggestedEntity = React.useMemo(() => {
-    if (stageConfigMode === 'condicional') {
+    if (stageConfigMode === "condicional") {
       return null;
     }
 
-    if (entityMode === 'existente' && selectedExistingEntity) {
+    if (entityMode === "existente" && selectedExistingEntity) {
       return selectedExistingEntity;
     }
 
@@ -1126,7 +1136,7 @@ const GerarBPMNCreate = () => {
   ]);
 
   const isDuplicateSuggestion =
-    entityMode === 'nova' && Boolean(entitySuggestionEntityId);
+    entityMode === "nova" && Boolean(entitySuggestionEntityId);
 
   const isEditingEntityAction = Boolean(entityActionTarget);
 
@@ -1181,7 +1191,7 @@ const GerarBPMNCreate = () => {
   ]);
 
   React.useEffect(() => {
-    const currentSelectedNodeId = selectedNode?.id || '';
+    const currentSelectedNodeId = selectedNode?.id || "";
     const hasNodeChanged =
       currentSelectedNodeId !== lastSelectedNodeIdRef.current;
     lastSelectedNodeIdRef.current = currentSelectedNodeId;
@@ -1192,20 +1202,20 @@ const GerarBPMNCreate = () => {
       entitySavedNoticeNodeId &&
       currentSelectedNodeId !== entitySavedNoticeNodeId
     ) {
-      setEntitySavedNotice('');
-      setEntitySavedNoticeNodeId('');
+      setEntitySavedNotice("");
+      setEntitySavedNoticeNodeId("");
     }
 
     if (!selectedNode) {
-      setEntityError('');
-      setStageConfigMode('');
+      setEntityError("");
+      setStageConfigMode("");
       setConditionalForm(EMPTY_CONDITIONAL_FORM);
       setTaskForm(EMPTY_TASK_FORM);
-      setGatewayTypeDraft('xor');
+      setGatewayTypeDraft("xor");
       setSelectedDataFieldIds([]);
       setEntityFieldDraft(createEmptyEntityFieldDraft());
       setLinkedFieldDraft(createEmptyEntityFieldDraft());
-      setEntitySuggestionEntityId('');
+      setEntitySuggestionEntityId("");
       return;
     }
 
@@ -1215,26 +1225,26 @@ const GerarBPMNCreate = () => {
 
     const savedDraft = entityDraftsByNodeId[currentSelectedNodeId];
     const defaultStageMode =
-      selectedNode.nodeType === 'condicional' ? 'condicional' : '';
+      selectedNode.nodeType === "condicional" ? "condicional" : "";
     const normalizedGatewayType =
-      selectedNode.gatewayType === 'and' || selectedNode.gatewayType === 'or'
+      selectedNode.gatewayType === "and" || selectedNode.gatewayType === "or"
         ? selectedNode.gatewayType
-        : 'xor';
+        : "xor";
     setGatewayTypeDraft(normalizedGatewayType);
     setTaskForm({
-      nome: String(selectedNode.taskNome || '').trim(),
-      descricao: String(selectedNode.taskDescricao || '').trim(),
+      nome: String(selectedNode.taskNome || "").trim(),
+      descricao: String(selectedNode.taskDescricao || "").trim(),
     });
 
     if (savedDraft) {
       setStageConfigMode(savedDraft.stageConfigMode || defaultStageMode);
-      setEntityMode('nova');
-      setSelectedExistingEntityId('');
+      setEntityMode("nova");
+      setSelectedExistingEntityId("");
       setNewEntityForm(savedDraft.newEntityForm || EMPTY_ENTITY_FORM);
       setConditionalForm(
         savedDraft.conditionalForm || {
-          nome: String(selectedNode.condicionalNome || '').trim(),
-          descricao: String(selectedNode.condicionalDescricao || '').trim(),
+          nome: String(selectedNode.condicionalNome || "").trim(),
+          descricao: String(selectedNode.condicionalDescricao || "").trim(),
         },
       );
       setNewEntityFields(
@@ -1245,60 +1255,65 @@ const GerarBPMNCreate = () => {
       setSelectedDataFieldIds(
         Array.isArray(savedDraft.selectedDataFieldIds)
           ? savedDraft.selectedDataFieldIds
-              .map((value) => String(value || '').trim())
+              .map((value) => String(value || "").trim())
               .filter(Boolean)
           : (Array.isArray(savedDraft.newEntityFields)
               ? savedDraft.newEntityFields
               : []
             )
-              .map((field) => String(field?.id ?? '').trim())
+              .map((field) => String(field?.id ?? "").trim())
               .filter(Boolean),
       );
       setEntityFieldDraft(createEmptyEntityFieldDraft());
       setLinkedFieldDraft(createEmptyEntityFieldDraft());
-      setEntityError('');
+      setEntityError("");
       return;
     }
 
     setStageConfigMode(defaultStageMode);
-    if (defaultStageMode === 'condicional') {
+    if (defaultStageMode === "condicional") {
       setConditionalForm({
-        nome: String(selectedNode.condicionalNome || '').trim(),
-        descricao: String(selectedNode.condicionalDescricao || '').trim(),
+        nome: String(selectedNode.condicionalNome || "").trim(),
+        descricao: String(selectedNode.condicionalDescricao || "").trim(),
       });
     } else {
       setConditionalForm(EMPTY_CONDITIONAL_FORM);
     }
 
     const stripIfName = (text, nodeLabel) => {
-      const value = String(text || '').trim();
-      if (!value) return '';
+      const value = String(text || "").trim();
+      if (!value) return "";
       if (!nodeLabel) return value;
-      return value.toLowerCase() === String(nodeLabel || '').trim().toLowerCase()
-        ? ''
+      return value.toLowerCase() ===
+        String(nodeLabel || "")
+          .trim()
+          .toLowerCase()
+        ? ""
         : value;
     };
 
     if (selectedNodeLinkedEntity) {
-      setSelectedExistingEntityId('');
-      setEntityMode('nova');
-      
+      setSelectedExistingEntityId("");
+      setEntityMode("nova");
+
       const linkedEntityDesc = String(
-        selectedNodeLinkedEntity.descricao || '',
+        selectedNodeLinkedEntity.descricao || "",
       ).trim();
-      const nodeDescValue = String(selectedNode.descricao || '').trim();
+      const nodeDescValue = String(selectedNode.descricao || "").trim();
       const nodeLabel =
-        String(selectedNodeLinkedEntity.nome || '').trim() ||
-        String(selectedNode.entidadeNome || selectedNode.label || '').trim();
-      
-      const isSameAsLabel = nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
-      const finalDesc = linkedEntityDesc || (isSameAsLabel ? '' : nodeDescValue);
-      
+        String(selectedNodeLinkedEntity.nome || "").trim() ||
+        String(selectedNode.entidadeNome || selectedNode.label || "").trim();
+
+      const isSameAsLabel =
+        nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
+      const finalDesc =
+        linkedEntityDesc || (isSameAsLabel ? "" : nodeDescValue);
+
       setNewEntityForm({
-        nome: String(selectedNodeLinkedEntity.nome || '').trim(),
+        nome: String(selectedNodeLinkedEntity.nome || "").trim(),
         descricao: finalDesc,
         atributoChave: String(
-          selectedNodeLinkedEntity.atributoChave || '',
+          selectedNodeLinkedEntity.atributoChave || "",
         ).trim(),
       });
 
@@ -1318,7 +1333,7 @@ const GerarBPMNCreate = () => {
       setNewEntityFields(mergedFields);
       const availableFieldIds = new Set(
         mergedFields
-          .map((field) => String(field?.id ?? '').trim())
+          .map((field) => String(field?.id ?? "").trim())
           .filter(Boolean),
       );
       const storedNodeFieldIds = (
@@ -1326,7 +1341,7 @@ const GerarBPMNCreate = () => {
           ? selectedNode.selectedEntityFieldIds
           : []
       )
-        .map((value) => String(value || '').trim())
+        .map((value) => String(value || "").trim())
         .filter((value) => availableFieldIds.has(value));
 
       setSelectedDataFieldIds(
@@ -1335,34 +1350,35 @@ const GerarBPMNCreate = () => {
           : Array.from(availableFieldIds),
       );
     } else if (hasNodeChanged) {
-      setSelectedExistingEntityId('');
-      setEntityMode('nova');
+      setSelectedExistingEntityId("");
+      setEntityMode("nova");
       const nodeLabel =
-        String(selectedNode.entidadeNome || '').trim() ||
-        String(selectedNode.label || '').trim();
-      const nodeDescValue = String(selectedNode.descricao || '').trim();
-      
-      const isSameAsLabel = nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
-      
+        String(selectedNode.entidadeNome || "").trim() ||
+        String(selectedNode.label || "").trim();
+      const nodeDescValue = String(selectedNode.descricao || "").trim();
+
+      const isSameAsLabel =
+        nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
+
       setNewEntityForm({
         nome: nodeLabel,
-        descricao: isSameAsLabel ? '' : nodeDescValue,
-        atributoChave: String(selectedNode.info || '').trim(),
+        descricao: isSameAsLabel ? "" : nodeDescValue,
+        atributoChave: String(selectedNode.info || "").trim(),
       });
       const restoredNodeFields = Array.isArray(
         selectedNode?.selectedEntityFields,
       )
         ? selectedNode.selectedEntityFields.map((field) => ({
-            id: String(field?.id || '').trim(),
-            nome: String(field?.nome || '').trim(),
-            tipo: String(field?.tipo || '').trim(),
+            id: String(field?.id || "").trim(),
+            nome: String(field?.nome || "").trim(),
+            tipo: String(field?.tipo || "").trim(),
             obrigatorio:
               field?.obrigatorio === true ||
-              String(field?.obrigatorio || '') === 'Sim',
-            keyType: String(field?.keyType || field?.chave || 'NORMAL')
+              String(field?.obrigatorio || "") === "Sim",
+            keyType: String(field?.keyType || field?.chave || "NORMAL")
               .trim()
               .toUpperCase(),
-            relacionamento: String(field?.relacionamento || '').trim() || null,
+            relacionamento: String(field?.relacionamento || "").trim() || null,
           }))
         : [];
       setNewEntityFields(restoredNodeFields);
@@ -1373,22 +1389,22 @@ const GerarBPMNCreate = () => {
               ? selectedNode.selectedEntityFieldIds
               : []
           )
-            .map((value) => String(value || '').trim())
+            .map((value) => String(value || "").trim())
             .filter(Boolean);
 
           if (restoredIds.length > 0) return restoredIds;
 
           return restoredNodeFields
-            .map((field) => String(field?.id || '').trim())
+            .map((field) => String(field?.id || "").trim())
             .filter(Boolean);
         })(),
       );
       setEntityFieldDraft(createEmptyEntityFieldDraft());
     }
 
-    setEntityError('');
-    if (entityMode === 'existente') {
-      setEntitySuggestionEntityId('');
+    setEntityError("");
+    if (entityMode === "existente") {
+      setEntitySuggestionEntityId("");
     }
   }, [
     entityDraftsByNodeId,
@@ -1407,10 +1423,10 @@ const GerarBPMNCreate = () => {
       setNodes((previous) =>
         previous.map((node) => {
           if (node.id !== nodeId) return node;
-          if (node.nodeType === 'task') {
+          if (node.nodeType === "task") {
             return { ...node, taskNome: newLabel };
           }
-          if (node.nodeType === 'condicional') {
+          if (node.nodeType === "condicional") {
             return { ...node, condicionalNome: newLabel };
           }
           return node;
@@ -1425,9 +1441,7 @@ const GerarBPMNCreate = () => {
       if (isReadOnlyMode) return;
       setConnections((prev) =>
         prev.map((c) =>
-          c.id === connectionId
-            ? { ...c, waypoints: newWaypoints }
-            : c,
+          c.id === connectionId ? { ...c, waypoints: newWaypoints } : c,
         ),
       );
     },
@@ -1436,7 +1450,7 @@ const GerarBPMNCreate = () => {
 
   const handleSelectNode = React.useCallback((nodeId) => {
     setSelectedNodeId(nodeId);
-    setInvalidEntityNodeId('');
+    setInvalidEntityNodeId("");
     if (nodeId) {
       setIsSidebarHidden(false);
     }
@@ -1448,50 +1462,50 @@ const GerarBPMNCreate = () => {
 
     if (viewportWidth <= 420) {
       return {
-        nodeWidth: 92,
-        nodeHeight: 64,
-        rowStep: 72,
-        sidePadding: 6,
-        minimumHorizontalGap: 4,
+        nodeWidth: BPMN_CARD_WIDTH,
+        nodeHeight: BPMN_CARD_HEIGHT,
+        rowStep: 178,
+        sidePadding: 18,
+        minimumHorizontalGap: 30,
       };
     }
 
     if (viewportWidth <= 560) {
       return {
-        nodeWidth: 104,
-        nodeHeight: 70,
-        rowStep: 80,
-        sidePadding: 8,
-        minimumHorizontalGap: 4,
+        nodeWidth: BPMN_CARD_WIDTH,
+        nodeHeight: BPMN_CARD_HEIGHT,
+        rowStep: 184,
+        sidePadding: 20,
+        minimumHorizontalGap: 32,
       };
     }
 
     if (viewportWidth <= 768) {
       return {
-        nodeWidth: 120,
-        nodeHeight: 76,
-        rowStep: 88,
-        sidePadding: 10,
-        minimumHorizontalGap: 6,
+        nodeWidth: BPMN_CARD_WIDTH,
+        nodeHeight: BPMN_CARD_HEIGHT,
+        rowStep: 190,
+        sidePadding: 22,
+        minimumHorizontalGap: 34,
       };
     }
 
     if (viewportWidth <= 900) {
       return {
-        nodeWidth: 132,
-        nodeHeight: 82,
-        rowStep: 96,
-        sidePadding: 12,
-        minimumHorizontalGap: 6,
+        nodeWidth: BPMN_CARD_WIDTH,
+        nodeHeight: BPMN_CARD_HEIGHT,
+        rowStep: 196,
+        sidePadding: 24,
+        minimumHorizontalGap: 36,
       };
     }
 
     return {
-      nodeWidth: 220,
-      nodeHeight: 110,
-      rowStep: 170,
-      sidePadding: 28,
-      minimumHorizontalGap: 22,
+      nodeWidth: BPMN_CARD_WIDTH,
+      nodeHeight: BPMN_CARD_HEIGHT,
+      rowStep: 204,
+      sidePadding: 30,
+      minimumHorizontalGap: 42,
     };
   }, [viewportGridWidth]);
 
@@ -1557,31 +1571,31 @@ const GerarBPMNCreate = () => {
       } = nodeLayoutMetrics;
       const topPadding = 30;
       const horizontalStep = Math.max(
-        nodeWidth + minimumHorizontalGap + 18,
-        Math.round(nodeWidth * 1.14),
+        nodeWidth + minimumHorizontalGap + 36,
+        Math.round(nodeWidth * 1.32),
       );
       const stackStep = Math.max(
-        viewportGridWidth <= 768 ? 54 : 72,
-        Math.round(nodeHeight * 0.66),
+        viewportGridWidth <= 768 ? 142 : 156,
+        Math.round(nodeHeight * 1.34),
       );
       const branchStepUnits = 2;
-      const laneGap = Math.max(20, Math.round(rowStep * 0.24));
+      const laneGap = Math.max(56, Math.round(rowStep * 0.42));
 
       const nodeOrder = new Map(
-        nodeList.map((node, index) => [String(node?.id || ''), index]),
+        nodeList.map((node, index) => [String(node?.id || ""), index]),
       );
       const outgoingById = new Map();
       const incomingById = new Map();
 
       nodeList.forEach((node) => {
-        outgoingById.set(String(node?.id || ''), []);
-        incomingById.set(String(node?.id || ''), []);
+        outgoingById.set(String(node?.id || ""), []);
+        incomingById.set(String(node?.id || ""), []);
       });
 
       (Array.isArray(connectionList) ? connectionList : []).forEach(
         (connection) => {
-          const fromId = String(connection?.from || '').trim();
-          const toId = String(connection?.to || '').trim();
+          const fromId = String(connection?.from || "").trim();
+          const toId = String(connection?.to || "").trim();
           if (!nodeOrder.has(fromId) || !nodeOrder.has(toId)) return;
 
           outgoingById.get(fromId)?.push(connection);
@@ -1591,32 +1605,32 @@ const GerarBPMNCreate = () => {
 
       outgoingById.forEach((items) => {
         items.sort((left, right) => {
-          const leftDecision = String(left?.decision || '')
+          const leftDecision = String(left?.decision || "")
             .trim()
             .toLowerCase();
-          const rightDecision = String(right?.decision || '')
+          const rightDecision = String(right?.decision || "")
             .trim()
             .toLowerCase();
           if (leftDecision === rightDecision) {
             return (
-              (nodeOrder.get(String(left?.to || '').trim()) ?? 0) -
-              (nodeOrder.get(String(right?.to || '').trim()) ?? 0)
+              (nodeOrder.get(String(left?.to || "").trim()) ?? 0) -
+              (nodeOrder.get(String(right?.to || "").trim()) ?? 0)
             );
           }
 
-          if (leftDecision === 'sim' || leftDecision === 'yes') return -1;
-          if (rightDecision === 'sim' || rightDecision === 'yes') return 1;
+          if (leftDecision === "sim" || leftDecision === "yes") return -1;
+          if (rightDecision === "sim" || rightDecision === "yes") return 1;
           if (
-            leftDecision === 'nao' ||
-            leftDecision === 'não' ||
-            leftDecision === 'no'
+            leftDecision === "nao" ||
+            leftDecision === "não" ||
+            leftDecision === "no"
           ) {
             return 1;
           }
           if (
-            rightDecision === 'nao' ||
-            rightDecision === 'não' ||
-            rightDecision === 'no'
+            rightDecision === "nao" ||
+            rightDecision === "não" ||
+            rightDecision === "no"
           ) {
             return -1;
           }
@@ -1627,22 +1641,22 @@ const GerarBPMNCreate = () => {
 
       const depthById = new Map();
       const rootNodes = nodeList.filter(
-        (node) => (incomingById.get(String(node?.id || '')) || []).length === 0,
+        (node) => (incomingById.get(String(node?.id || "")) || []).length === 0,
       );
       const traversalQueue = rootNodes.length ? [...rootNodes] : [...nodeList];
 
       traversalQueue.forEach((node) => {
-        depthById.set(String(node?.id || ''), 0);
+        depthById.set(String(node?.id || ""), 0);
       });
 
       for (let index = 0; index < traversalQueue.length; index += 1) {
         const currentNode = traversalQueue[index];
-        const currentId = String(currentNode?.id || '').trim();
+        const currentId = String(currentNode?.id || "").trim();
         const currentDepth = depthById.get(currentId) ?? 0;
         const outgoing = outgoingById.get(currentId) || [];
 
         outgoing.forEach((connection) => {
-          const targetId = String(connection?.to || '').trim();
+          const targetId = String(connection?.to || "").trim();
           const nextDepth = currentDepth + 1;
           if (!depthById.has(targetId)) {
             depthById.set(targetId, nextDepth);
@@ -1662,7 +1676,7 @@ const GerarBPMNCreate = () => {
 
       let fallbackDepth = 0;
       nodeList.forEach((node) => {
-        const nodeId = String(node?.id || '').trim();
+        const nodeId = String(node?.id || "").trim();
         if (depthById.has(nodeId)) {
           fallbackDepth = Math.max(fallbackDepth, depthById.get(nodeId) ?? 0);
           return;
@@ -1675,7 +1689,7 @@ const GerarBPMNCreate = () => {
       const laneOrder = [];
       const laneIndexByKey = new Map();
       nodeList.forEach((node) => {
-        const laneKey = extractNodeParticipant(node) || '__default__';
+        const laneKey = extractNodeParticipant(node) || "__default__";
         if (laneIndexByKey.has(laneKey)) return;
         laneIndexByKey.set(laneKey, laneOrder.length);
         laneOrder.push(laneKey);
@@ -1687,26 +1701,26 @@ const GerarBPMNCreate = () => {
       const placementByNodeId = new Map();
 
       nodeList.forEach((node, index) => {
-        const nodeId = String(node?.id || '').trim();
-        const laneKey = extractNodeParticipant(node) || '__default__';
+        const nodeId = String(node?.id || "").trim();
+        const laneKey = extractNodeParticipant(node) || "__default__";
         const incoming = incomingById.get(nodeId) || [];
-        let branchKey = 'main';
+        let branchKey = "main";
 
         if (incoming.length > 0) {
           const prioritizedIncoming = [...incoming].sort((left, right) => {
             const leftSourceOrder =
-              nodeOrder.get(String(left?.from || '').trim()) ??
+              nodeOrder.get(String(left?.from || "").trim()) ??
               Number.MAX_SAFE_INTEGER;
             const rightSourceOrder =
-              nodeOrder.get(String(right?.from || '').trim()) ??
+              nodeOrder.get(String(right?.from || "").trim()) ??
               Number.MAX_SAFE_INTEGER;
             return leftSourceOrder - rightSourceOrder;
           });
           const selectedIncoming = prioritizedIncoming[0];
-          const selectedSourceId = String(selectedIncoming?.from || '').trim();
+          const selectedSourceId = String(selectedIncoming?.from || "").trim();
           const siblingConnections = outgoingById.get(selectedSourceId) || [];
           const siblingIndex = siblingConnections.findIndex(
-            (connection) => String(connection?.to || '').trim() === nodeId,
+            (connection) => String(connection?.to || "").trim() === nodeId,
           );
           branchKey = normalizeDecisionBranchKey(
             selectedIncoming?.decision,
@@ -1720,8 +1734,8 @@ const GerarBPMNCreate = () => {
             (key) => key.startsWith(`${laneKey}:`),
           );
           let nextBranchIndex = laneBranches.length;
-          if (branchKey === 'main') nextBranchIndex = 0;
-          if (branchKey === 'alternate')
+          if (branchKey === "main") nextBranchIndex = 0;
+          if (branchKey === "alternate")
             nextBranchIndex = Math.max(1, laneBranches.length);
           branchRowByLane.set(laneBranchKey, nextBranchIndex);
         }
@@ -1732,7 +1746,15 @@ const GerarBPMNCreate = () => {
         const bucketIndex = placementCounter.get(bucketKey) ?? 0;
         placementCounter.set(bucketKey, bucketIndex + 1);
 
-        const rowUnit = branchRow * branchStepUnits + bucketIndex;
+        const isAlternateBranch =
+          branchKey === "alternate" ||
+          String(branchKey).startsWith("branch:nao") ||
+          String(branchKey).startsWith("branch:não") ||
+          String(branchKey).startsWith("branch:no");
+        const alternateBranchOffset = isAlternateBranch ? 1 : 0;
+
+        const rowUnit =
+          branchRow * branchStepUnits + bucketIndex + alternateBranchOffset;
         const currentLaneSpan = laneSpanByKey.get(laneKey) ?? 0;
         laneSpanByKey.set(laneKey, Math.max(currentLaneSpan, rowUnit + 1));
         placementByNodeId.set(nodeId, { laneKey, depth, rowUnit });
@@ -1747,7 +1769,7 @@ const GerarBPMNCreate = () => {
       });
 
       return nodeList.map((node, index) => {
-        const nodeId = String(node?.id || '').trim();
+        const nodeId = String(node?.id || "").trim();
         const placement = placementByNodeId.get(nodeId);
 
         if (!placement) {
@@ -1773,27 +1795,27 @@ const GerarBPMNCreate = () => {
   );
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     const updateDesktopSidebarHidden = () => {
       setIsDesktopSidebarHidden(
-        window.localStorage.getItem('desktopSidebarHidden') === 'true',
+        window.localStorage.getItem("desktopSidebarHidden") === "true",
       );
     };
 
     updateDesktopSidebarHidden();
     window.addEventListener(
-      'desktopSidebarHiddenChange',
+      "desktopSidebarHiddenChange",
       updateDesktopSidebarHidden,
     );
-    window.addEventListener('storage', updateDesktopSidebarHidden);
+    window.addEventListener("storage", updateDesktopSidebarHidden);
 
     return () => {
       window.removeEventListener(
-        'desktopSidebarHiddenChange',
+        "desktopSidebarHiddenChange",
         updateDesktopSidebarHidden,
       );
-      window.removeEventListener('storage', updateDesktopSidebarHidden);
+      window.removeEventListener("storage", updateDesktopSidebarHidden);
     };
   }, []);
 
@@ -1830,7 +1852,7 @@ const GerarBPMNCreate = () => {
   };
 
   const executeCreateNodeFromConnection = React.useCallback(
-    ({ fromId, fromHandle = 'right', pointer }) => {
+    ({ fromId, fromHandle = "right", pointer }) => {
       if (isReadOnlyMode) return;
       if (!fromId) return;
 
@@ -1860,15 +1882,15 @@ const GerarBPMNCreate = () => {
       };
 
       const sourceNode = nodes.find((node) => node.id === fromId) || null;
-      const validHandles = ['left', 'right', 'top', 'bottom'];
+      const validHandles = ["left", "right", "top", "bottom"];
       const normalizedFromHandle = validHandles.includes(fromHandle)
         ? fromHandle
-        : 'right';
+        : "right";
       const oppositeHandleBySource = {
-        left: 'right',
-        right: 'left',
-        top: 'bottom',
-        bottom: 'top',
+        left: "right",
+        right: "left",
+        top: "bottom",
+        bottom: "top",
       };
 
       let computedToHandle = oppositeHandleBySource[normalizedFromHandle];
@@ -1882,14 +1904,14 @@ const GerarBPMNCreate = () => {
         const deltaY = targetCenterY - sourceCenterY;
 
         if (Math.abs(deltaX) >= Math.abs(deltaY)) {
-          computedToHandle = deltaX >= 0 ? 'left' : 'right';
+          computedToHandle = deltaX >= 0 ? "left" : "right";
         } else {
-          computedToHandle = deltaY >= 0 ? 'top' : 'bottom';
+          computedToHandle = deltaY >= 0 ? "top" : "bottom";
         }
       }
 
       const nextConnectionId = `conn-${Date.now()}-${fromId}-${nextId}`;
-      const isSourceConditional = sourceNode?.nodeType === 'condicional';
+      const isSourceConditional = sourceNode?.nodeType === "condicional";
 
       setNodes((previous) => [...previous, nextNode]);
 
@@ -1901,14 +1923,14 @@ const GerarBPMNCreate = () => {
           to: nextId,
           fromHandle: normalizedFromHandle,
           toHandle: computedToHandle,
-          decision: '',
+          decision: "",
         },
       ]);
 
       if (isSourceConditional) {
         setSelectedNodeId(fromId);
         setPendingDecisionConnectionId(nextConnectionId);
-        setDecisionPromptCustomValue('');
+        setDecisionPromptCustomValue("");
         setDecisionPromptPosition({ x: null, y: null });
         setIsDecisionPromptOpen(true);
         setIsSidebarHidden(false);
@@ -1995,7 +2017,7 @@ const GerarBPMNCreate = () => {
       if (!nodeId) return;
 
       const fallbackSelectedNodeId =
-        nodes.find((node) => node.id !== nodeId)?.id || '';
+        nodes.find((node) => node.id !== nodeId)?.id || "";
 
       setNodes((previous) => previous.filter((node) => node.id !== nodeId));
 
@@ -2010,7 +2032,7 @@ const GerarBPMNCreate = () => {
         if (removedConnectionIds.length > 0) {
           const removedIdsSet = new Set(removedConnectionIds);
           setSelectedConnectionId((current) =>
-            removedIdsSet.has(current) ? '' : current,
+            removedIdsSet.has(current) ? "" : current,
           );
         }
 
@@ -2023,7 +2045,7 @@ const GerarBPMNCreate = () => {
       setSelectedNodeId((current) =>
         current === nodeId ? fallbackSelectedNodeId : current,
       );
-      setConnectTarget((current) => (current === nodeId ? '' : current));
+      setConnectTarget((current) => (current === nodeId ? "" : current));
     },
     [isReadOnlyMode, nodes],
   );
@@ -2048,18 +2070,18 @@ const GerarBPMNCreate = () => {
         id: nextConnectionId,
         from: selectedNodeId,
         to: connectTarget,
-        decision: '',
+        decision: "",
       },
     ]);
 
     const sourceNode = nodes.find((node) => node.id === selectedNodeId) || null;
-    const isSourceConditional = sourceNode?.nodeType === 'condicional';
+    const isSourceConditional = sourceNode?.nodeType === "condicional";
 
     if (isSourceConditional) {
       setIsSidebarHidden(false);
       setSelectedNodeId(selectedNodeId);
       setPendingDecisionConnectionId(nextConnectionId);
-      setDecisionPromptCustomValue('');
+      setDecisionPromptCustomValue("");
       setDecisionPromptPosition({ x: null, y: null });
       setIsDecisionPromptOpen(true);
     }
@@ -2069,8 +2091,8 @@ const GerarBPMNCreate = () => {
     (
       fromId,
       toId,
-      fromHandle = 'right',
-      toHandle = 'left',
+      fromHandle = "right",
+      toHandle = "left",
       pointerClientPosition = null,
     ) => {
       if (!fromId || !toId || fromId === toId) return;
@@ -2078,17 +2100,19 @@ const GerarBPMNCreate = () => {
       // Não permite ligação entre duas condições
       const sourceNode = nodes.find((node) => node.id === fromId) || null;
       const targetNode = nodes.find((node) => node.id === toId) || null;
-      if (sourceNode?.nodeType === 'condicional' && targetNode?.nodeType === 'condicional') return;
+      if (
+        sourceNode?.nodeType === "condicional" &&
+        targetNode?.nodeType === "condicional"
+      )
+        return;
 
       const exists = connections.some(
-        (connection) =>
-          connection.from === fromId &&
-          connection.to === toId,
+        (connection) => connection.from === fromId && connection.to === toId,
       );
       if (exists) return;
 
       const nextConnectionId = `conn-${Date.now()}-${fromId}-${toId}`;
-      const isSourceConditional = sourceNode?.nodeType === 'condicional';
+      const isSourceConditional = sourceNode?.nodeType === "condicional";
 
       setConnections((previous) => [
         ...previous,
@@ -2098,7 +2122,7 @@ const GerarBPMNCreate = () => {
           to: toId,
           fromHandle,
           toHandle,
-          decision: '',
+          decision: "",
         },
       ]);
 
@@ -2106,7 +2130,7 @@ const GerarBPMNCreate = () => {
         setSelectedNodeId(fromId);
         setIsSidebarHidden(false);
         setPendingDecisionConnectionId(nextConnectionId);
-        setDecisionPromptCustomValue('');
+        setDecisionPromptCustomValue("");
         if (
           pointerClientPosition &&
           Number.isFinite(pointerClientPosition.clientX) &&
@@ -2121,7 +2145,7 @@ const GerarBPMNCreate = () => {
         }
         setIsDecisionPromptOpen(true);
       } else {
-        setSelectedConnectionId('');
+        setSelectedConnectionId("");
       }
     },
     [connections, nodes],
@@ -2133,7 +2157,7 @@ const GerarBPMNCreate = () => {
       previous.filter((connection) => connection.id !== connectionId),
     );
     setSelectedConnectionId((previous) =>
-      previous === connectionId ? '' : previous,
+      previous === connectionId ? "" : previous,
     );
   }, []);
 
@@ -2163,7 +2187,7 @@ const GerarBPMNCreate = () => {
 
   React.useEffect(() => {
     setSidebarConnectionDecisionDraft(
-      String(selectedConnection?.decision || '').trim(),
+      String(selectedConnection?.decision || "").trim(),
     );
   }, [selectedConnection?.decision, selectedConnection?.id]);
 
@@ -2176,12 +2200,12 @@ const GerarBPMNCreate = () => {
     (draft) => {
       if (!draft?.id || !draft?.type) return;
 
-      if (draft.type === 'connection') {
+      if (draft.type === "connection") {
         handleRemoveConnection(draft.id);
         return;
       }
 
-      if (draft.type === 'node') {
+      if (draft.type === "node") {
         handleRemoveNodeById(draft.id);
       }
     },
@@ -2191,12 +2215,12 @@ const GerarBPMNCreate = () => {
   const requestDeleteSelection = React.useCallback(() => {
     const nextDraft = selectedConnectionId
       ? {
-          type: 'connection',
+          type: "connection",
           id: selectedConnectionId,
         }
       : selectedNodeId
         ? {
-            type: 'node',
+            type: "node",
             id: selectedNodeId,
           }
         : null;
@@ -2250,29 +2274,29 @@ const GerarBPMNCreate = () => {
   }, [connections, selectedConnection]);
 
   const sidebarContextType = selectedConnection
-    ? 'connection'
+    ? "connection"
     : selectedNode
-      ? 'entity'
-      : 'none';
+      ? "entity"
+      : "none";
 
   const sidebarTabs = React.useMemo(() => {
-    if (sidebarContextType === 'connection') {
-      return [{ id: 'connection', label: 'Conexão' }];
+    if (sidebarContextType === "connection") {
+      return [{ id: "connection", label: "Conexão" }];
     }
 
-    if (sidebarContextType === 'gateway') {
+    if (sidebarContextType === "gateway") {
       return [
-        { id: 'gateway', label: 'Gateway' },
-        { id: 'conexoes', label: 'Conexões' },
+        { id: "gateway", label: "Gateway" },
+        { id: "conexoes", label: "Conexões" },
       ];
     }
 
-    if (sidebarContextType === 'task') {
-      return [{ id: 'task', label: 'Task' }];
+    if (sidebarContextType === "task") {
+      return [{ id: "task", label: "Task" }];
     }
 
-    if (sidebarContextType === 'entity') {
-      return [{ id: 'entidade', label: 'Painel contextual' }];
+    if (sidebarContextType === "entity") {
+      return [{ id: "entidade", label: "Painel contextual" }];
     }
 
     return [];
@@ -2300,12 +2324,12 @@ const GerarBPMNCreate = () => {
 
   const handleDecisionPromptChoice = React.useCallback(
     (decision) => {
-      const normalizedDecision = String(decision || '').trim();
+      const normalizedDecision = String(decision || "").trim();
       if (!normalizedDecision) return;
 
       if (!pendingDecisionConnectionId) {
         setIsDecisionPromptOpen(false);
-        setDecisionPromptCustomValue('');
+        setDecisionPromptCustomValue("");
         setDecisionPromptPosition({ x: null, y: null });
         return;
       }
@@ -2319,8 +2343,8 @@ const GerarBPMNCreate = () => {
       );
 
       setIsDecisionPromptOpen(false);
-      setPendingDecisionConnectionId('');
-      setDecisionPromptCustomValue('');
+      setPendingDecisionConnectionId("");
+      setDecisionPromptCustomValue("");
       setDecisionPromptPosition({ x: null, y: null });
     },
     [pendingDecisionConnectionId],
@@ -2335,9 +2359,9 @@ const GerarBPMNCreate = () => {
     }
 
     const viewportWidth =
-      typeof window !== 'undefined' ? window.innerWidth || 1200 : 1200;
+      typeof window !== "undefined" ? window.innerWidth || 1200 : 1200;
     const viewportHeight =
-      typeof window !== 'undefined' ? window.innerHeight || 800 : 800;
+      typeof window !== "undefined" ? window.innerHeight || 800 : 800;
     const panelWidth = 320;
     const panelHeight = 124;
     const offsetX = -(panelWidth / 2) + 4;
@@ -2404,29 +2428,29 @@ const GerarBPMNCreate = () => {
     ({
       title,
       description,
-      actionType = 'update',
+      actionType = "update",
       elementType,
       itemName,
-      before = '',
-      after = '',
+      before = "",
+      after = "",
     }) => {
       const autoKey = `sidebar-draft:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
       const newItem = {
         id: Date.now() + Math.floor(Math.random() * 1000),
         title,
         description,
-        time: new Date().toLocaleString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
+        time: new Date().toLocaleString("pt-BR", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
         }),
         timestamp: new Date().toISOString(),
         actor: actorAccountName,
         actorId: actorAccountId,
         autoGenerated: true,
-        source: 'bpmn-sidebar-draft',
+        source: "bpmn-sidebar-draft",
         autoKey,
         actionType,
         elementType,
@@ -2458,7 +2482,7 @@ const GerarBPMNCreate = () => {
       const syncSidebarDraftToOpportunity = async () => {
         try {
           const currentBpmnSlug = slugifyBpmnName(name);
-          const originalBpmnSlug = String(bpmnSlug || '').trim();
+          const originalBpmnSlug = String(bpmnSlug || "").trim();
 
           const rawMap = window.localStorage.getItem(
             BPMN_EDITOR_SAVED_OPPORTUNITY_MAP_KEY,
@@ -2493,8 +2517,8 @@ const GerarBPMNCreate = () => {
           if (
             existingTimelineItems.some(
               (item) =>
-                String(item?.autoKey || '').trim() ===
-                String(newItem.autoKey || '').trim(),
+                String(item?.autoKey || "").trim() ===
+                String(newItem.autoKey || "").trim(),
             )
           ) {
             return;
@@ -2544,52 +2568,64 @@ const GerarBPMNCreate = () => {
       if (!selectedNodeId || !entidade) return;
 
       const previousName =
-        String(selectedNode?.entidadeNome || '').trim() ||
-        String(selectedNode?.label || '').trim() ||
-        '-';
+        String(selectedNode?.entidadeNome || "").trim() ||
+        String(selectedNode?.label || "").trim() ||
+        "-";
 
       const entidadeId = getEntidadeId(entidade);
-      const nextName = String(getEntidadeNome(entidade) || '').trim() || '-';
+      const nextName = String(getEntidadeNome(entidade) || "").trim() || "-";
+
+      const entidadeTipo = String(entidade?.tipoEntidade || "")
+        .trim()
+        .toLowerCase();
+      const resolvedEntidadeTipo =
+        entidadeTipo === "contato"
+          ? "contato"
+          : entidadeTipo === "processo"
+            ? "processo"
+            : "processo";
 
       updateSelectedNode({
-        nodeType: 'entidade',
-        gatewayType: 'xor',
+        nodeType: "entidade",
+        gatewayType: "xor",
         entidadeId,
-        entidadeNome: '',
-        condicionalNome: '',
-        condicionalDescricao: '',
-        taskNome: '',
-        taskDescricao: '',
+        tipoEntidade: resolvedEntidadeTipo,
+        isPrimaryEntity: resolvedEntidadeTipo === "contato",
+        entidadeNome: "",
+        condicionalNome: "",
+        condicionalDescricao: "",
+        taskNome: "",
+        taskDescricao: "",
         selectedEntityFieldIds: selectedDataFieldsForNode.map((field) =>
-          String(field.id || '').trim(),
+          String(field.id || "").trim(),
         ),
         selectedEntityFieldNames: selectedDataFieldsForNode
-          .map((field) => String(field.nome || '').trim())
+          .map((field) => String(field.nome || "").trim())
           .filter(Boolean),
         selectedEntityFields: selectedDataFieldsForNode.map((field) => ({
-          id: String(field?.id || '').trim(),
-          nome: String(field?.nome || '').trim(),
-          tipo: String(field?.tipo || '').trim(),
+          id: String(field?.id || "").trim(),
+          nome: String(field?.nome || "").trim(),
+          tipo: String(field?.tipo || "").trim(),
           obrigatorio:
             field?.obrigatorio === true ||
-            String(field?.obrigatorio || '') === 'Sim',
-          keyType: String(field?.keyType || field?.chave || 'NORMAL')
+            String(field?.obrigatorio || "") === "Sim",
+          keyType: String(field?.keyType || field?.chave || "NORMAL")
             .trim()
             .toUpperCase(),
-          relacionamento: String(field?.relacionamento || '').trim() || null,
+          relacionamento: String(field?.relacionamento || "").trim() || null,
         })),
       });
 
       appendPendingSidebarTimelineItem({
-        title: 'Entidade atualizada no BPMN',
+        title: "Entidade atualizada no BPMN",
         description: `Antes: ${previousName} → Agora: ${nextName}`,
-        actionType: 'update',
-        elementType: 'entidade',
+        actionType: "update",
+        elementType: "entidade",
         itemName: nextName,
         before: previousName,
         after: nextName,
       });
-      setEntityError('');
+      setEntityError("");
     },
     [
       appendPendingSidebarTimelineItem,
@@ -2609,7 +2645,7 @@ const GerarBPMNCreate = () => {
     );
 
     if (!targetEntity) {
-      setEntityError('Selecione uma entidade existente para vincular.');
+      setEntityError("Selecione uma entidade existente para vincular.");
       return;
     }
 
@@ -2623,35 +2659,35 @@ const GerarBPMNCreate = () => {
 
   const handleSaveEntityFieldDraft = React.useCallback(() => {
     const isEditingField = Boolean(entityFieldDraft.id);
-    const nome = String(entityFieldDraft.nome || '').trim();
+    const nome = String(entityFieldDraft.nome || "").trim();
     if (!nome) {
-      setEntitySavedNotice('');
-      setEntityError('Nome do campo é obrigatório.');
+      setEntitySavedNotice("");
+      setEntityError("Nome do campo é obrigatório.");
       return null;
     }
 
-    if (!String(entityFieldDraft.tipo || '').trim()) {
-      setEntitySavedNotice('');
-      setEntityError('Selecione o tipo do campo.');
+    if (!String(entityFieldDraft.tipo || "").trim()) {
+      setEntitySavedNotice("");
+      setEntityError("Selecione o tipo do campo.");
       return null;
     }
 
-    if (typeof entityFieldDraft.obrigatorio !== 'boolean') {
-      setEntitySavedNotice('');
-      setEntityError('Informe se o campo é obrigatório.');
+    if (typeof entityFieldDraft.obrigatorio !== "boolean") {
+      setEntitySavedNotice("");
+      setEntityError("Informe se o campo é obrigatório.");
       return null;
     }
 
-    if (!String(entityFieldDraft.keyType || '').trim()) {
-      setEntitySavedNotice('');
-      setEntityError('Selecione o tipo de chave do campo.');
+    if (!String(entityFieldDraft.keyType || "").trim()) {
+      setEntitySavedNotice("");
+      setEntityError("Selecione o tipo de chave do campo.");
       return null;
     }
 
-    const normalizedKeyType = String(entityFieldDraft.keyType || 'NORMAL')
+    const normalizedKeyType = String(entityFieldDraft.keyType || "NORMAL")
       .trim()
       .toUpperCase();
-    const referencia = String(entityFieldDraft.referencia || '').trim();
+    const referencia = String(entityFieldDraft.referencia || "").trim();
 
     const duplicated = validarNomeCampoDuplicado(
       newEntityFields,
@@ -2660,8 +2696,8 @@ const GerarBPMNCreate = () => {
     );
 
     if (duplicated) {
-      setEntitySavedNotice('');
-      setEntityError('Já existe um campo com esse nome na entidade.');
+      setEntitySavedNotice("");
+      setEntityError("Já existe um campo com esse nome na entidade.");
       return null;
     }
 
@@ -2681,7 +2717,7 @@ const GerarBPMNCreate = () => {
       : [
           ...newEntityFields,
           {
-            id: generateUniqueId('field'),
+            id: generateUniqueId("field"),
             nome,
             tipo: entityFieldDraft.tipo,
             obrigatorio: entityFieldDraft.obrigatorio,
@@ -2693,11 +2729,11 @@ const GerarBPMNCreate = () => {
     setNewEntityFields(nextFields);
     setSelectedDataFieldIds((previous) => {
       const validIds = nextFields
-        .map((field) => String(field?.id ?? '').trim())
+        .map((field) => String(field?.id ?? "").trim())
         .filter(Boolean);
       const validSet = new Set(validIds);
       const preservedIds = (Array.isArray(previous) ? previous : [])
-        .map((value) => String(value || '').trim())
+        .map((value) => String(value || "").trim())
         .filter((value) => validSet.has(value));
 
       if (entityFieldDraft.id) {
@@ -2705,19 +2741,19 @@ const GerarBPMNCreate = () => {
       }
 
       const createdFieldId = String(
-        nextFields[nextFields.length - 1]?.id || '',
+        nextFields[nextFields.length - 1]?.id || "",
       ).trim();
       if (!createdFieldId) return preservedIds;
       return Array.from(new Set([...preservedIds, createdFieldId]));
     });
 
-    setEntityError('');
+    setEntityError("");
     setEntitySavedNotice(
       isEditingField
-        ? 'Campo atualizado na configuracao da etapa.'
-        : 'Campo adicionado na configuracao da etapa.',
+        ? "Campo atualizado na configuracao da etapa."
+        : "Campo adicionado na configuracao da etapa.",
     );
-    setEntitySavedNoticeNodeId(String(selectedNode?.id || '').trim());
+    setEntitySavedNoticeNodeId(String(selectedNode?.id || "").trim());
 
     if (!isEditingField) {
       setEntityFieldDraft(createEmptyEntityFieldDraft());
@@ -2735,53 +2771,53 @@ const GerarBPMNCreate = () => {
     if (!field) return;
 
     setEntityFieldDraft({
-      id: String(field?.id || '').trim() || null,
-      nome: String(field?.nome || '').trim(),
-      tipo: String(field?.tipo || field?.type || '').trim(),
+      id: String(field?.id || "").trim() || null,
+      nome: String(field?.nome || "").trim(),
+      tipo: String(field?.tipo || field?.type || "").trim(),
       obrigatorio:
-        field?.obrigatorio === true || String(field?.obrigatorio) === 'Sim',
-      keyType: String(field?.keyType || field?.chave || 'NORMAL')
+        field?.obrigatorio === true || String(field?.obrigatorio) === "Sim",
+      keyType: String(field?.keyType || field?.chave || "NORMAL")
         .trim()
         .toUpperCase(),
-      referencia: String(field?.relacionamento || '').trim(),
+      referencia: String(field?.relacionamento || "").trim(),
     });
-    setEntityError('');
+    setEntityError("");
   }, []);
 
   const handleSelectCreateNewEntityMode = React.useCallback(() => {
-    setEntityMode('nova');
-    setSelectedExistingEntityId('');
+    setEntityMode("nova");
+    setSelectedExistingEntityId("");
     setNewEntityForm(EMPTY_ENTITY_FORM);
     setNewEntityFields([]);
     setSelectedDataFieldIds([]);
     setEntityFieldDraft(createEmptyEntityFieldDraft());
-    setEntityError('');
-    setEntitySavedNotice('');
+    setEntityError("");
+    setEntitySavedNotice("");
   }, []);
 
   const handleRemoveEntityFieldDraft = React.useCallback(
     (fieldId) => {
-      const normalizedId = String(fieldId || '').trim();
+      const normalizedId = String(fieldId || "").trim();
       if (!normalizedId) return;
 
       const nextFields = (
         Array.isArray(newEntityFields) ? newEntityFields : []
-      ).filter((field) => String(field?.id || '').trim() !== normalizedId);
+      ).filter((field) => String(field?.id || "").trim() !== normalizedId);
 
       setNewEntityFields(nextFields);
       setSelectedDataFieldIds((previous) =>
         (Array.isArray(previous) ? previous : []).filter(
-          (value) => String(value || '').trim() !== normalizedId,
+          (value) => String(value || "").trim() !== normalizedId,
         ),
       );
 
-      if (String(entityFieldDraft?.id || '').trim() === normalizedId) {
+      if (String(entityFieldDraft?.id || "").trim() === normalizedId) {
         setEntityFieldDraft(createEmptyEntityFieldDraft());
       }
 
-      setEntitySavedNotice('Campo removido da configuracao da etapa.');
-      setEntitySavedNoticeNodeId(String(selectedNode?.id || '').trim());
-      setEntityError('');
+      setEntitySavedNotice("Campo removido da configuracao da etapa.");
+      setEntitySavedNoticeNodeId(String(selectedNode?.id || "").trim());
+      setEntityError("");
     },
     [entityFieldDraft?.id, newEntityFields, selectedNode?.id],
   );
@@ -2790,19 +2826,19 @@ const GerarBPMNCreate = () => {
     async (fieldsOverride) => {
       if (!selectedNode) return;
 
-      setEntitySavedNotice('');
-      setEntitySavedNoticeNodeId('');
+      setEntitySavedNotice("");
+      setEntitySavedNoticeNodeId("");
 
-      const nome = String(newEntityForm.nome || '').trim();
-      const descricao = String(newEntityForm.descricao || '').trim();
-      const atributoChave = String(newEntityForm.atributoChave || '').trim();
+      const nome = String(newEntityForm.nome || "").trim();
+      const descricao = String(newEntityForm.descricao || "").trim();
+      const atributoChave = String(newEntityForm.atributoChave || "").trim();
       const tipoEntidade =
-        String(selectedNode?.tipoEntidade || '').trim() ||
-        (selectedNode?.isPrimaryEntity === true ? 'Principal' : 'Apoio');
+        String(selectedNode?.tipoEntidade || "").trim() ||
+        String(selectedNode?.isPrimaryEntity === true ? "contato" : "processo");
       const isPrimaryEntity =
-        String(tipoEntidade || '')
+        String(tipoEntidade || "")
           .trim()
-          .toLowerCase() === 'principal';
+          .toLowerCase() === "contato";
       const effectiveFields = Array.isArray(fieldsOverride)
         ? fieldsOverride
         : newEntityFields;
@@ -2821,22 +2857,22 @@ const GerarBPMNCreate = () => {
           const targetId = getEntidadeId(updateTarget);
           if (targetId !== null && targetId !== undefined) {
             const nomeFinal =
-              String(nome || '').trim() ||
-              String(updateTarget?.nome || '').trim();
+              String(nome || "").trim() ||
+              String(updateTarget?.nome || "").trim();
             const descricaoFinal =
-              String(descricao || '').trim() ||
-              String(updateTarget?.descricao || '').trim() ||
-              'Entidade gerada pelo BPMN';
+              String(descricao || "").trim() ||
+              String(updateTarget?.descricao || "").trim() ||
+              "Entidade gerada pelo BPMN";
             const atributoChaveFinal =
-              String(atributoChave || '').trim() ||
-              String(updateTarget?.atributoChave || '').trim();
+              String(atributoChave || "").trim() ||
+              String(updateTarget?.atributoChave || "").trim();
             const camposFinais =
               Array.isArray(effectiveFields) && effectiveFields.length > 0
                 ? effectiveFields
                 : getCamposEntidade(updateTarget);
 
             if (!nomeFinal) {
-              setEntityError('Preencha ao menos o nome da entidade.');
+              setEntityError("Preencha ao menos o nome da entidade.");
               return;
             }
 
@@ -2848,7 +2884,7 @@ const GerarBPMNCreate = () => {
                 atributoChave: atributoChaveFinal,
                 tipoEntidade,
                 isPrimaryEntity,
-                categoria: updateTarget?.categoria || 'BPMN',
+                categoria: updateTarget?.categoria || "BPMN",
                 campos: camposFinais,
                 updated_at: new Date().toISOString(),
               },
@@ -2867,9 +2903,9 @@ const GerarBPMNCreate = () => {
             };
 
             applyEntityToSelectedNode(entidadeAtualizada);
-            setEntitySuggestionEntityId('');
-            setEntityError('');
-            setEntitySavedNotice('Entidade atualizada na página de Entidades.');
+            setEntitySuggestionEntityId("");
+            setEntityError("");
+            setEntitySavedNotice("Entidade atualizada na página de Entidades.");
             setEntitySavedNoticeNodeId(selectedNode.id);
             return;
           }
@@ -2877,15 +2913,15 @@ const GerarBPMNCreate = () => {
 
         if (!nome || !descricao || !atributoChave) {
           setEntityError(
-            'Preencha nome, descrição e atributo chave da entidade.',
+            "Preencha nome, descrição e atributo chave da entidade.",
           );
           return;
         }
 
         if (!Array.isArray(effectiveFields) || effectiveFields.length === 0) {
-          setActiveSidebarTab('entidade');
+          setActiveSidebarTab("entidade");
           setEntityError(
-            'Adicione pelo menos um campo na seção Campos para salvar a Entidade.',
+            "Adicione pelo menos um campo na seção Campos para salvar a Entidade.",
           );
           return;
         }
@@ -2897,21 +2933,21 @@ const GerarBPMNCreate = () => {
             atributoChave,
             tipoEntidade,
             isPrimaryEntity,
-            categoria: 'BPMN',
+            categoria: "BPMN",
             campos: effectiveFields,
           },
           token,
         );
 
         applyEntityToSelectedNode(entidadeCriada);
-        setEntitySuggestionEntityId('');
-        setEntityError('');
-        setEntitySavedNotice('Entidade salva na página de Entidades.');
+        setEntitySuggestionEntityId("");
+        setEntityError("");
+        setEntitySavedNotice("Entidade salva na página de Entidades.");
         setEntitySavedNoticeNodeId(selectedNode.id);
       } catch (err) {
-        setEntityError(err?.message || 'Não foi possível criar a entidade.');
-        setEntitySavedNotice('');
-        setEntitySavedNoticeNodeId('');
+        setEntityError(err?.message || "Não foi possível criar a entidade.");
+        setEntitySavedNotice("");
+        setEntitySavedNoticeNodeId("");
       }
     },
     [
@@ -2933,60 +2969,65 @@ const GerarBPMNCreate = () => {
   const handleSaveConditionalStage = React.useCallback(() => {
     if (!selectedNode) return;
 
-    setEntitySavedNotice('');
-    setEntitySavedNoticeNodeId('');
+    setEntitySavedNotice("");
+    setEntitySavedNoticeNodeId("");
 
     const nome = sanitizeStageNameByNodeType(
       conditionalForm.nome,
-      'condicional',
-      'Condicional',
+      "condicional",
+      "Condicional",
     );
-    const descricao = String(conditionalForm.descricao || '').trim();
+    const descricao = String(conditionalForm.descricao || "").trim();
     const previousNome =
-      String(selectedNode?.condicionalNome || '').trim() ||
-      String(selectedNode?.label || '').trim() ||
-      '-';
+      String(selectedNode?.condicionalNome || "").trim() ||
+      String(selectedNode?.label || "").trim() ||
+      "-";
 
     if (!nome || !descricao) {
-      setEntityError('Preencha nome e descrição da condicional.');
+      setEntityError("Preencha nome e descrição da condicional.");
       return;
     }
 
     updateSelectedNode({
-      nodeType: 'condicional',
+      nodeType: "condicional",
       gatewayType:
-        gatewayTypeDraft === 'and' || gatewayTypeDraft === 'or'
+        gatewayTypeDraft === "and" || gatewayTypeDraft === "or"
           ? gatewayTypeDraft
-          : 'xor',
+          : "xor",
       condicionalNome: nome,
       condicionalDescricao: descricao,
       entidadeId: null,
-      entidadeNome: '',
-      taskNome: '',
-      taskDescricao: '',
-      selectedEntityFieldIds: [],
-      selectedEntityFieldNames: [],
-      selectedEntityFields: [],
+      entidadeNome: "",
+      taskNome: "",
+      taskDescricao: "",
+      selectedEntityFieldIds: newEntityFields
+        .map((f) => String(f?.id || "").trim())
+        .filter(Boolean),
+      selectedEntityFieldNames: newEntityFields
+        .map((f) => String(f?.nome || "").trim())
+        .filter(Boolean),
+      selectedEntityFields: newEntityFields.map((f) => ({ ...f })),
     });
 
     appendPendingSidebarTimelineItem({
-      title: 'Condição atualizada no BPMN',
+      title: "Condição atualizada no BPMN",
       description: `Antes: ${previousNome} → Agora: ${nome}`,
-      actionType: 'update',
-      elementType: 'elemento-bpmn',
+      actionType: "update",
+      elementType: "elemento-bpmn",
       itemName: nome,
       before: previousNome,
       after: nome,
     });
 
-    setEntityError('');
-    setEntitySavedNotice('Decisão salva no fluxo.');
+    setEntityError("");
+    setEntitySavedNotice("Decisão salva no fluxo.");
     setEntitySavedNoticeNodeId(selectedNode.id);
   }, [
     appendPendingSidebarTimelineItem,
     conditionalForm.descricao,
     conditionalForm.nome,
     gatewayTypeDraft,
+    newEntityFields,
     selectedNode,
     updateSelectedNode,
   ]);
@@ -2996,48 +3037,53 @@ const GerarBPMNCreate = () => {
 
     const nome = sanitizeStageNameByNodeType(
       taskForm.nome,
-      'task',
-      'Atividade',
+      "task",
+      "Atividade",
     );
-    const descricao = String(taskForm.descricao || '').trim();
+    const descricao = String(taskForm.descricao || "").trim();
     const previousNome =
-      String(selectedNode?.taskNome || '').trim() ||
-      String(selectedNode?.label || '').trim() ||
-      '-';
+      String(selectedNode?.taskNome || "").trim() ||
+      String(selectedNode?.label || "").trim() ||
+      "-";
 
     if (!nome) {
-      setEntityError('Preencha o nome da atividade.');
+      setEntityError("Preencha o nome da atividade.");
       return;
     }
 
     updateSelectedNode({
-      nodeType: 'task',
+      nodeType: "task",
       taskNome: nome,
       taskDescricao: descricao,
       entidadeId: null,
-      entidadeNome: '',
-      condicionalNome: '',
-      condicionalDescricao: '',
-      selectedEntityFieldIds: [],
-      selectedEntityFieldNames: [],
-      selectedEntityFields: [],
+      entidadeNome: "",
+      condicionalNome: "",
+      condicionalDescricao: "",
+      selectedEntityFieldIds: newEntityFields
+        .map((f) => String(f?.id || "").trim())
+        .filter(Boolean),
+      selectedEntityFieldNames: newEntityFields
+        .map((f) => String(f?.nome || "").trim())
+        .filter(Boolean),
+      selectedEntityFields: newEntityFields.map((f) => ({ ...f })),
     });
 
     appendPendingSidebarTimelineItem({
-      title: 'Atividade atualizada no BPMN',
+      title: "Atividade atualizada no BPMN",
       description: `Antes: ${previousNome} → Agora: ${nome}`,
-      actionType: 'update',
-      elementType: 'elemento-bpmn',
+      actionType: "update",
+      elementType: "elemento-bpmn",
       itemName: nome,
       before: previousNome,
       after: nome,
     });
 
-    setEntityError('');
-    setEntitySavedNotice('Atividade salva no fluxo.');
+    setEntityError("");
+    setEntitySavedNotice("Atividade salva no fluxo.");
     setEntitySavedNoticeNodeId(selectedNode.id);
   }, [
     appendPendingSidebarTimelineItem,
+    newEntityFields,
     selectedNode,
     taskForm.descricao,
     taskForm.nome,
@@ -3047,70 +3093,70 @@ const GerarBPMNCreate = () => {
   const handleSaveEntityStageLocal = React.useCallback(() => {
     if (!selectedNode) return;
 
-    setEntitySavedNotice('');
-    setEntitySavedNoticeNodeId('');
+    setEntitySavedNotice("");
+    setEntitySavedNoticeNodeId("");
 
     const nome = sanitizeStageNameByNodeType(
       newEntityForm.nome,
-      'entidade',
-      'Entidade',
+      "entidade",
+      "Entidade",
     );
-    const descricao = String(newEntityForm.descricao || '').trim();
-    const atributoChave = String(newEntityForm.atributoChave || '').trim();
+    const descricao = String(newEntityForm.descricao || "").trim();
+    const atributoChave = String(newEntityForm.atributoChave || "").trim();
     const previousNome =
-      String(selectedNode?.entidadeNome || '').trim() ||
-      String(selectedNode?.label || '').trim() ||
-      '-';
+      String(selectedNode?.entidadeNome || "").trim() ||
+      String(selectedNode?.label || "").trim() ||
+      "-";
 
     if (!nome) {
-      setEntityError('Preencha o nome da entidade.');
+      setEntityError("Preencha o nome da entidade.");
       return;
     }
 
     updateSelectedNode({
-      nodeType: 'entidade',
-      gatewayType: 'xor',
+      nodeType: "entidade",
+      gatewayType: "xor",
       entidadeId: null,
       entidadeNome: nome,
       label: nome,
       descricao,
       info: atributoChave,
-      condicionalNome: '',
-      condicionalDescricao: '',
-      taskNome: '',
-      taskDescricao: '',
+      condicionalNome: "",
+      condicionalDescricao: "",
+      taskNome: "",
+      taskDescricao: "",
       selectedEntityFieldIds: selectedDataFieldsForNode.map((field) =>
-        String(field.id || '').trim(),
+        String(field.id || "").trim(),
       ),
       selectedEntityFieldNames: selectedDataFieldsForNode
-        .map((field) => String(field.nome || '').trim())
+        .map((field) => String(field.nome || "").trim())
         .filter(Boolean),
       selectedEntityFields: selectedDataFieldsForNode.map((field) => ({
-        id: String(field?.id || '').trim(),
-        nome: String(field?.nome || '').trim(),
-        tipo: String(field?.tipo || '').trim(),
+        id: String(field?.id || "").trim(),
+        nome: String(field?.nome || "").trim(),
+        tipo: String(field?.tipo || "").trim(),
         obrigatorio:
           field?.obrigatorio === true ||
-          String(field?.obrigatorio || '') === 'Sim',
-        keyType: String(field?.keyType || field?.chave || 'NORMAL')
+          String(field?.obrigatorio || "") === "Sim",
+        keyType: String(field?.keyType || field?.chave || "NORMAL")
           .trim()
           .toUpperCase(),
-        relacionamento: String(field?.relacionamento || '').trim() || null,
+        relacionamento: String(field?.relacionamento || "").trim() || null,
       })),
     });
 
     appendPendingSidebarTimelineItem({
-      title: 'Entidade atualizada no BPMN',
+      title: "Entidade atualizada no BPMN",
       description: `Antes: ${previousNome} → Agora: ${nome}`,
-      actionType: 'update',
-      elementType: 'entidade',
+      actionType: "update",
+      elementType: "entidade",
       itemName: nome,
       before: previousNome,
       after: nome,
     });
 
-    setEntityError('');
-    setEntitySavedNotice('Entidade salva no BPMN.');
+    setEntityError("");
+    setEntitySavedNotice("Entidade salva no BPMN.");
     setEntitySavedNoticeNodeId(selectedNode.id);
   }, [
     appendPendingSidebarTimelineItem,
@@ -3126,14 +3172,14 @@ const GerarBPMNCreate = () => {
     if (!selectedNode) return;
 
     updateSelectedNode({
-      nodeType: 'condicional',
+      nodeType: "condicional",
       gatewayType:
-        gatewayTypeDraft === 'and' || gatewayTypeDraft === 'or'
+        gatewayTypeDraft === "and" || gatewayTypeDraft === "or"
           ? gatewayTypeDraft
-          : 'xor',
+          : "xor",
     });
 
-    setEntitySavedNotice('Tipo da decisão atualizado.');
+    setEntitySavedNotice("Tipo da decisão atualizado.");
     setEntitySavedNoticeNodeId(selectedNode.id);
   }, [gatewayTypeDraft, selectedNode, updateSelectedNode]);
 
@@ -3141,42 +3187,42 @@ const GerarBPMNCreate = () => {
     (nextType) => {
       if (!selectedNode) return;
 
-      if (nextType === 'task') {
-        setStageConfigMode('');
+      if (nextType === "task") {
+        setStageConfigMode("");
         updateSelectedNode({
-          nodeType: 'task',
+          nodeType: "task",
           isPrimaryEntity: false,
           entidadeId: null,
-          entidadeNome: '',
-          condicionalNome: '',
-          condicionalDescricao: '',
+          entidadeNome: "",
+          condicionalNome: "",
+          condicionalDescricao: "",
           selectedEntityFieldIds: [],
           selectedEntityFieldNames: [],
           selectedEntityFields: [],
           taskNome:
-            String(selectedNode.taskNome || '').trim() ||
-            String(selectedNode.label || '').trim(),
+            String(selectedNode.taskNome || "").trim() ||
+            String(selectedNode.label || "").trim(),
           taskDescricao:
-            String(selectedNode.taskDescricao || '').trim() ||
-            String(selectedNode.descricao || '').trim(),
+            String(selectedNode.taskDescricao || "").trim() ||
+            String(selectedNode.descricao || "").trim(),
         });
         return;
       }
 
-      if (nextType === 'condicional') {
-        setStageConfigMode('condicional');
+      if (nextType === "condicional") {
+        setStageConfigMode("condicional");
         updateSelectedNode({
-          nodeType: 'condicional',
+          nodeType: "condicional",
           isPrimaryEntity: false,
-          tipoEntidade: '',
+          tipoEntidade: "",
           gatewayType:
-            gatewayTypeDraft === 'and' || gatewayTypeDraft === 'or'
+            gatewayTypeDraft === "and" || gatewayTypeDraft === "or"
               ? gatewayTypeDraft
-              : 'xor',
+              : "xor",
           entidadeId: null,
-          entidadeNome: '',
-          taskNome: '',
-          taskDescricao: '',
+          entidadeNome: "",
+          taskNome: "",
+          taskDescricao: "",
           selectedEntityFieldIds: [],
           selectedEntityFieldNames: [],
           selectedEntityFields: [],
@@ -3184,13 +3230,13 @@ const GerarBPMNCreate = () => {
         return;
       }
 
-      setStageConfigMode('entidade');
+      setStageConfigMode("entidade");
       updateSelectedNode({
-        nodeType: 'entidade',
-        condicionalNome: '',
-        condicionalDescricao: '',
-        taskNome: '',
-        taskDescricao: '',
+        nodeType: "entidade",
+        condicionalNome: "",
+        condicionalDescricao: "",
+        taskNome: "",
+        taskDescricao: "",
       });
     },
     [gatewayTypeDraft, selectedNode, updateSelectedNode],
@@ -3203,7 +3249,7 @@ const GerarBPMNCreate = () => {
       setNodes((previous) =>
         previous.map((node) => {
           const isEntityNode =
-            node.nodeType !== 'task' && node.nodeType !== 'condicional';
+            node.nodeType !== "task" && node.nodeType !== "condicional";
           if (!isEntityNode) {
             return { ...node, isPrimaryEntity: false };
           }
@@ -3226,24 +3272,21 @@ const GerarBPMNCreate = () => {
     (nextEntityType) => {
       if (!selectedNodeId) return;
 
-      const normalizedType = String(nextEntityType || '')
+      const normalizedType = String(nextEntityType || "")
         .trim()
         .toLowerCase();
       const resolvedType =
-        normalizedType === 'principal' ||
-        normalizedType === 'apoio' ||
-        normalizedType === 'associativa' ||
-        normalizedType === 'externa'
+        normalizedType === "contato" || normalizedType === "processo"
           ? normalizedType
-          : 'apoio';
-      const nextIsPrimary = resolvedType === 'principal';
+          : "processo";
+      const nextIsPrimary = resolvedType === "contato";
 
       setNodes((previous) =>
         previous.map((node) => {
           const isEntityNode =
-            node.nodeType !== 'task' && node.nodeType !== 'condicional';
+            node.nodeType !== "task" && node.nodeType !== "condicional";
           if (!isEntityNode) {
-            return { ...node, isPrimaryEntity: false, tipoEntidade: '' };
+            return { ...node, isPrimaryEntity: false, tipoEntidade: "" };
           }
 
           if (node.id === selectedNodeId) {
@@ -3267,181 +3310,178 @@ const GerarBPMNCreate = () => {
 
     if (!selectedNode) {
       if (Array.isArray(nodes) && nodes.length > 0) {
-        setSelectedNodeId(String(nodes[0].id || ''));
+        setSelectedNodeId(String(nodes[0].id || ""));
       }
       return;
     }
 
     const suggestion =
-      pendingAiContextPanel && typeof pendingAiContextPanel === 'object'
+      pendingAiContextPanel && typeof pendingAiContextPanel === "object"
         ? pendingAiContextPanel
         : {};
-    const stageCategory = String(suggestion.stageCategory || 'dados')
+    const stageCategory = String(suggestion.stageCategory || "dados")
       .trim()
       .toLowerCase();
     const stageNodeType =
-      stageCategory === 'task'
-        ? 'task'
-        : stageCategory === 'condicional'
-          ? 'condicional'
-          : 'entidade';
+      stageCategory === "task"
+        ? "task"
+        : stageCategory === "condicional"
+          ? "condicional"
+          : "entidade";
 
-    const entityTypeCandidate = String(suggestion.entityType || 'apoio')
+    const entityTypeCandidate = String(suggestion.entityType || "processo")
       .trim()
       .toLowerCase();
     const entityType =
-      entityTypeCandidate === 'principal' ||
-      entityTypeCandidate === 'apoio' ||
-      entityTypeCandidate === 'associativa' ||
-      entityTypeCandidate === 'externa'
+      entityTypeCandidate === "contato" || entityTypeCandidate === "processo"
         ? entityTypeCandidate
-        : 'apoio';
+        : "processo";
 
-    const entityModeCandidate = String(suggestion.entityMode || 'nova')
+    const entityModeCandidate = String(suggestion.entityMode || "nova")
       .trim()
       .toLowerCase();
     const entityModeNext =
-      entityModeCandidate === 'existente' ? 'existente' : 'nova';
+      entityModeCandidate === "existente" ? "existente" : "nova";
 
     const newEntity =
-      suggestion.newEntity && typeof suggestion.newEntity === 'object'
+      suggestion.newEntity && typeof suggestion.newEntity === "object"
         ? suggestion.newEntity
         : {};
     const task =
-      suggestion.task && typeof suggestion.task === 'object'
+      suggestion.task && typeof suggestion.task === "object"
         ? suggestion.task
         : {};
     const conditional =
-      suggestion.conditional && typeof suggestion.conditional === 'object'
+      suggestion.conditional && typeof suggestion.conditional === "object"
         ? suggestion.conditional
         : {};
     const rawFields = Array.isArray(suggestion.fields) ? suggestion.fields : [];
 
     const mappedFields = rawFields
       .map((field) => {
-        if (!field || typeof field !== 'object') return null;
-        const nome = String(field.nome || '').trim();
+        if (!field || typeof field !== "object") return null;
+        const nome = String(field.nome || "").trim();
         if (!nome) return null;
-        const tipo = String(field.tipo || 'Texto').trim() || 'Texto';
-        const keyTypeRaw = String(field.keyType || 'NORMAL')
+        const tipo = String(field.tipo || "Texto").trim() || "Texto";
+        const keyTypeRaw = String(field.keyType || "NORMAL")
           .trim()
           .toUpperCase();
-        const keyType = ['PK', 'FK', 'NORMAL'].includes(keyTypeRaw)
+        const keyType = ["PK", "FK", "NORMAL"].includes(keyTypeRaw)
           ? keyTypeRaw
-          : 'NORMAL';
+          : "NORMAL";
         return {
-          id: generateUniqueId('field'),
+          id: generateUniqueId("field"),
           nome,
           tipo,
           obrigatorio: field.obrigatorio === true,
           keyType,
-          relacionamento: String(field.referencia || '').trim() || null,
+          relacionamento: String(field.referencia || "").trim() || null,
         };
       })
       .filter(Boolean);
 
-    setActiveSidebarTab('entidade');
+    setActiveSidebarTab("entidade");
     setStageConfigMode(
-      stageNodeType === 'condicional' ? 'condicional' : 'entidade',
+      stageNodeType === "condicional" ? "condicional" : "entidade",
     );
     setEntityMode(entityModeNext);
     setConditionalForm({
-      nome: String(conditional.nome || '').trim(),
-      descricao: String(conditional.descricao || '').trim(),
+      nome: String(conditional.nome || "").trim(),
+      descricao: String(conditional.descricao || "").trim(),
     });
     setTaskForm({
-      nome: String(task.nome || '').trim(),
-      descricao: String(task.descricao || '').trim(),
+      nome: String(task.nome || "").trim(),
+      descricao: String(task.descricao || "").trim(),
     });
     setNewEntityForm({
-      nome: String(newEntity.nome || '').trim(),
-      descricao: String(newEntity.descricao || '').trim(),
-      atributoChave: String(newEntity.atributoChave || '').trim(),
+      nome: String(newEntity.nome || "").trim(),
+      descricao: String(newEntity.descricao || "").trim(),
+      atributoChave: String(newEntity.atributoChave || "").trim(),
     });
     setNewEntityFields(mappedFields);
     setSelectedDataFieldIds(
       mappedFields
-        .map((field) => String(field?.id || '').trim())
+        .map((field) => String(field?.id || "").trim())
         .filter(Boolean),
     );
     setEntityFieldDraft(createEmptyEntityFieldDraft());
 
     const selectedEntityByName =
-      entityModeNext === 'existente'
+      entityModeNext === "existente"
         ? (Array.isArray(entityOptions) ? entityOptions : []).find(
             (item) =>
-              normalizeEntityName(item?.nome || '') ===
-              normalizeEntityName(newEntity.nome || ''),
+              normalizeEntityName(item?.nome || "") ===
+              normalizeEntityName(newEntity.nome || ""),
           )
         : null;
 
     setSelectedExistingEntityId(
-      selectedEntityByName ? String(selectedEntityByName.id || '') : '',
+      selectedEntityByName ? String(selectedEntityByName.id || "") : "",
     );
 
     updateSelectedNode({
       nodeType: stageNodeType,
-      isPrimaryEntity: entityType === 'principal',
-      tipoEntidade: stageNodeType === 'entidade' ? entityType : '',
+      isPrimaryEntity: entityType === "contato",
+      tipoEntidade: stageNodeType === "entidade" ? entityType : "",
       condicionalNome:
-        stageNodeType === 'condicional'
-          ? String(conditional.nome || '').trim()
-          : '',
+        stageNodeType === "condicional"
+          ? String(conditional.nome || "").trim()
+          : "",
       condicionalDescricao:
-        stageNodeType === 'condicional'
-          ? String(conditional.descricao || '').trim()
-          : '',
-      taskNome: stageNodeType === 'task' ? String(task.nome || '').trim() : '',
+        stageNodeType === "condicional"
+          ? String(conditional.descricao || "").trim()
+          : "",
+      taskNome: stageNodeType === "task" ? String(task.nome || "").trim() : "",
       taskDescricao:
-        stageNodeType === 'task' ? String(task.descricao || '').trim() : '',
+        stageNodeType === "task" ? String(task.descricao || "").trim() : "",
       entidadeId: null,
       entidadeNome:
-        stageNodeType === 'entidade' ? String(newEntity.nome || '').trim() : '',
+        stageNodeType === "entidade" ? String(newEntity.nome || "").trim() : "",
       label:
-        stageNodeType === 'entidade'
-          ? String(newEntity.nome || '').trim()
-          : stageNodeType === 'task'
-            ? String(task.nome || '').trim()
-            : String(conditional.nome || '').trim(),
+        stageNodeType === "entidade"
+          ? String(newEntity.nome || "").trim()
+          : stageNodeType === "task"
+            ? String(task.nome || "").trim()
+            : String(conditional.nome || "").trim(),
       descricao:
-        stageNodeType === 'entidade'
-          ? String(newEntity.descricao || '').trim()
-          : stageNodeType === 'task'
-            ? String(task.descricao || '').trim()
-            : String(conditional.descricao || '').trim(),
+        stageNodeType === "entidade"
+          ? String(newEntity.descricao || "").trim()
+          : stageNodeType === "task"
+            ? String(task.descricao || "").trim()
+            : String(conditional.descricao || "").trim(),
       selectedEntityFieldIds:
-        stageNodeType === 'entidade'
+        stageNodeType === "entidade"
           ? mappedFields
-              .map((field) => String(field?.id || '').trim())
+              .map((field) => String(field?.id || "").trim())
               .filter(Boolean)
           : [],
       selectedEntityFieldNames:
-        stageNodeType === 'entidade'
+        stageNodeType === "entidade"
           ? mappedFields
-              .map((field) => String(field?.nome || '').trim())
+              .map((field) => String(field?.nome || "").trim())
               .filter(Boolean)
           : [],
       selectedEntityFields:
-        stageNodeType === 'entidade'
+        stageNodeType === "entidade"
           ? mappedFields.map((field) => ({
-              id: String(field?.id || '').trim(),
-              nome: String(field?.nome || '').trim(),
-              tipo: String(field?.tipo || '').trim(),
+              id: String(field?.id || "").trim(),
+              nome: String(field?.nome || "").trim(),
+              tipo: String(field?.tipo || "").trim(),
               obrigatorio: field?.obrigatorio === true,
-              keyType: String(field?.keyType || 'NORMAL')
+              keyType: String(field?.keyType || "NORMAL")
                 .trim()
                 .toUpperCase(),
               relacionamento:
-                String(field?.relacionamento || '').trim() || null,
+                String(field?.relacionamento || "").trim() || null,
             }))
           : [],
     });
 
-    setEntityError('');
+    setEntityError("");
     setEntitySavedNotice(
-      'Configuração sugerida pela IA aplicada no painel contextual.',
+      "Configuração sugerida pela IA aplicada no painel contextual.",
     );
-    setEntitySavedNoticeNodeId(String(selectedNode.id || '').trim());
+    setEntitySavedNoticeNodeId(String(selectedNode.id || "").trim());
     aiContextAppliedRef.current = true;
     setPendingAiContextPanel(null);
   }, [
@@ -3458,15 +3498,15 @@ const GerarBPMNCreate = () => {
     const entityId = getEntidadeId(suggestedEntity);
     if (entityId === null || entityId === undefined) return;
 
-    setEntityMode('existente');
+    setEntityMode("existente");
     setSelectedExistingEntityId(String(entityId));
     setNewEntityForm({
-      nome: String(suggestedEntity.nome || '').trim(),
-      descricao: String(suggestedEntity.descricao || '').trim(),
-      atributoChave: String(suggestedEntity.atributoChave || '').trim(),
+      nome: String(suggestedEntity.nome || "").trim(),
+      descricao: String(suggestedEntity.descricao || "").trim(),
+      atributoChave: String(suggestedEntity.atributoChave || "").trim(),
     });
-    setEntityError('');
-    setEntitySuggestionEntityId('');
+    setEntityError("");
+    setEntitySuggestionEntityId("");
   }, [suggestedEntity]);
 
   const executeDeleteSuggestedEntity = React.useCallback(
@@ -3483,29 +3523,29 @@ const GerarBPMNCreate = () => {
         await deletarEntidade(entityId, token);
 
         if (selectedExistingEntityId === String(entityId)) {
-          setSelectedExistingEntityId('');
-          if (entityMode === 'existente') {
-            setEntityMode('nova');
+          setSelectedExistingEntityId("");
+          if (entityMode === "existente") {
+            setEntityMode("nova");
           }
         }
 
         if (
           selectedNode &&
-          String(resolveEntityIdFromNode(selectedNode) || '') ===
+          String(resolveEntityIdFromNode(selectedNode) || "") ===
             String(entityId)
         ) {
           updateSelectedNode({
             entidadeId: null,
-            entidadeNome: '',
+            entidadeNome: "",
           });
         }
 
-        setEntitySuggestionEntityId('');
-        setEntityError('');
-        setEntitySavedNotice('Entidade removida da lista.');
-        setEntitySavedNoticeNodeId(selectedNode?.id || '');
+        setEntitySuggestionEntityId("");
+        setEntityError("");
+        setEntitySavedNotice("Entidade removida da lista.");
+        setEntitySavedNoticeNodeId(selectedNode?.id || "");
       } catch (err) {
-        setEntityError(err?.message || 'Não foi possível remover a entidade.');
+        setEntityError(err?.message || "Não foi possível remover a entidade.");
       } finally {
         setIsEntitySuggestionBusy(false);
       }
@@ -3565,8 +3605,8 @@ const GerarBPMNCreate = () => {
     async (fieldsOverride) => {
       if (!selectedNode) return;
 
-      setEntitySavedNotice('');
-      setEntitySavedNoticeNodeId('');
+      setEntitySavedNotice("");
+      setEntitySavedNoticeNodeId("");
 
       const effectiveFields = Array.isArray(fieldsOverride)
         ? fieldsOverride
@@ -3575,48 +3615,48 @@ const GerarBPMNCreate = () => {
       if (isEditingEntityAction && entityActionTarget) {
         const entidadeId = getEntidadeId(entityActionTarget);
         if (entidadeId === null || entidadeId === undefined) {
-          setEntityError('Selecione uma entidade para editar.');
-          setEntitySavedNotice('');
+          setEntityError("Selecione uma entidade para editar.");
+          setEntitySavedNotice("");
           return;
         }
 
-        const nomeDraft = String(newEntityForm.nome || '').trim();
-        const descricaoDraft = String(newEntityForm.descricao || '').trim();
+        const nomeDraft = String(newEntityForm.nome || "").trim();
+        const descricaoDraft = String(newEntityForm.descricao || "").trim();
         const atributoChaveDraft = String(
-          newEntityForm.atributoChave || '',
+          newEntityForm.atributoChave || "",
         ).trim();
 
         const nome =
-          nomeDraft || String(entityActionTarget?.nome || '').trim() || '';
+          nomeDraft || String(entityActionTarget?.nome || "").trim() || "";
         const descricao =
           descricaoDraft ||
-          String(entityActionTarget?.descricao || '').trim() ||
-          'Entidade gerada pelo BPMN';
+          String(entityActionTarget?.descricao || "").trim() ||
+          "Entidade gerada pelo BPMN";
         const atributoChave =
           atributoChaveDraft ||
-          String(entityActionTarget?.atributoChave || '').trim();
+          String(entityActionTarget?.atributoChave || "").trim();
         const tipoEntidade =
           String(
             selectedNode?.tipoEntidade ||
               entityActionTarget?.tipoEntidade ||
-              '',
+              "",
           ).trim() ||
           (selectedNode?.isPrimaryEntity === true ||
           entityActionTarget?.isPrimaryEntity === true
-            ? 'Principal'
-            : 'Apoio');
+            ? "contato"
+            : "processo");
         const isPrimaryEntity =
-          String(tipoEntidade || '')
+          String(tipoEntidade || "")
             .trim()
-            .toLowerCase() === 'principal';
+            .toLowerCase() === "contato";
         const camposParaSalvar =
           Array.isArray(effectiveFields) && effectiveFields.length > 0
             ? effectiveFields
             : getCamposEntidade(entityActionTarget);
 
         if (!nome) {
-          setEntityError('Preencha ao menos o nome da entidade.');
-          setEntitySavedNotice('');
+          setEntityError("Preencha ao menos o nome da entidade.");
+          setEntitySavedNotice("");
           return;
         }
 
@@ -3630,7 +3670,7 @@ const GerarBPMNCreate = () => {
               atributoChave,
               tipoEntidade,
               isPrimaryEntity,
-              categoria: entityActionTarget.categoria || 'BPMN',
+              categoria: entityActionTarget.categoria || "BPMN",
               campos: camposParaSalvar,
             },
             token,
@@ -3650,13 +3690,13 @@ const GerarBPMNCreate = () => {
           setSelectedExistingEntityId(
             String(getEntidadeId(entidadeAtualizada)),
           );
-          setEntityError('');
-          setEntitySavedNotice('Entidade salva na página de Entidades.');
+          setEntityError("");
+          setEntitySavedNotice("Entidade salva na página de Entidades.");
           setEntitySavedNoticeNodeId(selectedNode.id);
         } catch (err) {
-          setEntityError(err?.message || 'Não foi possível editar a entidade.');
-          setEntitySavedNotice('');
-          setEntitySavedNoticeNodeId('');
+          setEntityError(err?.message || "Não foi possível editar a entidade.");
+          setEntitySavedNotice("");
+          setEntitySavedNoticeNodeId("");
         }
 
         return;
@@ -3680,24 +3720,25 @@ const GerarBPMNCreate = () => {
   );
 
   React.useEffect(() => {
-    if (entityMode !== 'existente') return;
+    if (entityMode !== "existente") return;
     if (!selectedExistingEntity) return;
 
-    const existingName = String(selectedExistingEntity.nome || '').trim();
-    const existingDesc = String(selectedExistingEntity.descricao || '').trim();
-    const nodeDescValue = String(selectedNode?.descricao || '').trim();
+    const existingName = String(selectedExistingEntity.nome || "").trim();
+    const existingDesc = String(selectedExistingEntity.descricao || "").trim();
+    const nodeDescValue = String(selectedNode?.descricao || "").trim();
     const nodeLabel =
       existingName ||
-      String(selectedNode?.entidadeNome || selectedNode?.label || '').trim();
-    
-    const isSameAsLabel = nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
-    const descFallback = isSameAsLabel ? '' : nodeDescValue;
+      String(selectedNode?.entidadeNome || selectedNode?.label || "").trim();
+
+    const isSameAsLabel =
+      nodeDescValue.toLowerCase() === nodeLabel.toLowerCase();
+    const descFallback = isSameAsLabel ? "" : nodeDescValue;
 
     setNewEntityForm((previous) => ({
       ...previous,
       nome: existingName,
       descricao: existingDesc || descFallback,
-      atributoChave: String(selectedExistingEntity.atributoChave || '').trim(),
+      atributoChave: String(selectedExistingEntity.atributoChave || "").trim(),
     }));
 
     const existingFields = getCamposEntidade(selectedExistingEntity).map(
@@ -3714,7 +3755,7 @@ const GerarBPMNCreate = () => {
     setNewEntityFields(mergedFields);
     setSelectedDataFieldIds(
       mergedFields
-        .map((field) => String(field?.id ?? '').trim())
+        .map((field) => String(field?.id ?? "").trim())
         .filter(Boolean),
     );
   }, [
@@ -3741,35 +3782,35 @@ const GerarBPMNCreate = () => {
       null;
 
     if (!resolvedFieldEntityTarget) {
-      setEntityError('Selecione uma entidade existente para adicionar campo.');
+      setEntityError("Selecione uma entidade existente para adicionar campo.");
       return;
     }
 
-    const nome = String(linkedFieldDraft.nome || '').trim();
+    const nome = String(linkedFieldDraft.nome || "").trim();
     if (!nome) {
-      setEntityError('Nome do campo é obrigatório.');
+      setEntityError("Nome do campo é obrigatório.");
       return;
     }
 
-    if (!String(linkedFieldDraft.tipo || '').trim()) {
-      setEntityError('Selecione o tipo do campo.');
+    if (!String(linkedFieldDraft.tipo || "").trim()) {
+      setEntityError("Selecione o tipo do campo.");
       return;
     }
 
-    if (typeof linkedFieldDraft.obrigatorio !== 'boolean') {
-      setEntityError('Informe se o campo é obrigatório.');
+    if (typeof linkedFieldDraft.obrigatorio !== "boolean") {
+      setEntityError("Informe se o campo é obrigatório.");
       return;
     }
 
-    if (!String(linkedFieldDraft.keyType || '').trim()) {
-      setEntityError('Selecione o tipo de chave do campo.');
+    if (!String(linkedFieldDraft.keyType || "").trim()) {
+      setEntityError("Selecione o tipo de chave do campo.");
       return;
     }
 
-    const normalizedKeyType = String(linkedFieldDraft.keyType || 'NORMAL')
+    const normalizedKeyType = String(linkedFieldDraft.keyType || "NORMAL")
       .trim()
       .toUpperCase();
-    const referencia = String(linkedFieldDraft.referencia || '').trim();
+    const referencia = String(linkedFieldDraft.referencia || "").trim();
 
     const duplicated = validarNomeCampoDuplicado(
       linkedEntityFieldsForPanel,
@@ -3778,7 +3819,7 @@ const GerarBPMNCreate = () => {
     );
 
     if (duplicated) {
-      setEntityError('Já existe um campo com esse nome na entidade vinculada.');
+      setEntityError("Já existe um campo com esse nome na entidade vinculada.");
       return;
     }
 
@@ -3815,9 +3856,9 @@ const GerarBPMNCreate = () => {
       );
 
       setLinkedFieldDraft(createEmptyEntityFieldDraft());
-      setEntityError('');
+      setEntityError("");
     } catch (err) {
-      setEntityError(err?.message || 'Não foi possível salvar o campo.');
+      setEntityError(err?.message || "Não foi possível salvar o campo.");
     }
   }, [
     adicionarCampoEntidade,
@@ -3846,35 +3887,35 @@ const GerarBPMNCreate = () => {
           setLinkedFieldDraft(createEmptyEntityFieldDraft());
         }
       } catch (err) {
-        setEntityError(err?.message || 'Não foi possível remover o campo.');
+        setEntityError(err?.message || "Não foi possível remover o campo.");
       }
     },
     [fieldEntityTarget, linkedFieldDraft.id, removerCampoEntidade],
   );
 
-  const isConnectionTabActive = activeSidebarTab === 'connection';
-  const isGatewayInfoTabActive = activeSidebarTab === 'conexoes';
-  const isTaskNodeSelected = selectedNode?.nodeType === 'task';
-  const isDecisionNodeSelected = selectedNode?.nodeType === 'condicional';
-  const isDataNodeSelected = selectedNode?.nodeType === 'entidade';
+  const isConnectionTabActive = activeSidebarTab === "connection";
+  const isGatewayInfoTabActive = activeSidebarTab === "conexoes";
+  const isTaskNodeSelected = selectedNode?.nodeType === "task";
+  const isDecisionNodeSelected = selectedNode?.nodeType === "condicional";
+  const isDataNodeSelected = selectedNode?.nodeType === "entidade";
   const isStageModeSelected =
-    stageConfigMode === 'entidade' || stageConfigMode === 'condicional';
+    stageConfigMode === "entidade" || stageConfigMode === "condicional";
   const isConditionalStageMode =
-    stageConfigMode === 'condicional'
+    stageConfigMode === "condicional"
       ? true
-      : stageConfigMode === 'entidade'
+      : stageConfigMode === "entidade"
         ? false
-        : selectedNode?.nodeType === 'condicional';
+        : selectedNode?.nodeType === "condicional";
   const shouldAutoSaveFieldDraft = React.useMemo(() => {
     if (!entityFieldDraft) return false;
 
-    const hasName = Boolean(String(entityFieldDraft.nome || '').trim());
-    const hasType = Boolean(String(entityFieldDraft.tipo || '').trim());
-    const hasRequired = typeof entityFieldDraft.obrigatorio === 'boolean';
+    const hasName = Boolean(String(entityFieldDraft.nome || "").trim());
+    const hasType = Boolean(String(entityFieldDraft.tipo || "").trim());
+    const hasRequired = typeof entityFieldDraft.obrigatorio === "boolean";
     const hasEditingId =
       entityFieldDraft.id !== null &&
       entityFieldDraft.id !== undefined &&
-      String(entityFieldDraft.id).trim() !== '';
+      String(entityFieldDraft.id).trim() !== "";
 
     return hasEditingId || (hasName && hasType && hasRequired);
   }, [entityFieldDraft]);
@@ -3917,7 +3958,7 @@ const GerarBPMNCreate = () => {
       return;
     }
 
-    if (isDataNodeSelected && entityMode === 'nova' && !isEditingEntityAction) {
+    if (isDataNodeSelected && entityMode === "nova" && !isEditingEntityAction) {
       handleSaveEntityStageLocal();
       persistEditorDraftToLocalStorage();
       return;
@@ -3941,7 +3982,7 @@ const GerarBPMNCreate = () => {
     }
 
     if (!isDataNodeSelected) {
-      setEntityError('Selecione uma categoria válida para salvar.');
+      setEntityError("Selecione uma categoria válida para salvar.");
       return;
     }
 
@@ -3972,7 +4013,7 @@ const GerarBPMNCreate = () => {
     if (!shouldShowSidebarPrimaryAction) return true;
     if (!selectedNode) return true;
     if (isTaskNodeSelected) {
-      return !String(taskForm.nome || '').trim();
+      return !String(taskForm.nome || "").trim();
     }
 
     if (isDecisionNodeSelected) {
@@ -3997,70 +4038,68 @@ const GerarBPMNCreate = () => {
   ]);
 
   const selectedNodeTypeSelectorValue = selectedNode
-    ? selectedNode.nodeType === 'task'
-      ? 'task'
-      : selectedNode.nodeType === 'condicional'
-        ? 'condicional'
-        : 'entidade'
-    : 'entidade';
+    ? selectedNode.nodeType === "task"
+      ? "task"
+      : selectedNode.nodeType === "condicional"
+        ? "condicional"
+        : "entidade"
+    : "entidade";
 
   const selectedNodeIsPrimaryEntity = Boolean(
-    selectedNode?.nodeType !== 'task' &&
-    selectedNode?.nodeType !== 'condicional' &&
+    selectedNode?.nodeType !== "task" &&
+    selectedNode?.nodeType !== "condicional" &&
     selectedNode?.isPrimaryEntity === true,
   );
 
   const selectedNodeEntityType = React.useMemo(() => {
-    if (!selectedNode) return 'apoio';
+    if (!selectedNode) return "processo";
     if (
-      selectedNode?.nodeType === 'task' ||
-      selectedNode?.nodeType === 'condicional'
+      selectedNode?.nodeType === "task" ||
+      selectedNode?.nodeType === "condicional"
     ) {
-      return 'apoio';
+      return "processo";
     }
 
-    const normalized = String(selectedNode?.tipoEntidade || '')
+    const normalized = String(selectedNode?.tipoEntidade || "")
       .trim()
       .toLowerCase();
 
-    if (
-      normalized === 'principal' ||
-      normalized === 'apoio' ||
-      normalized === 'associativa' ||
-      normalized === 'externa'
-    ) {
+    if (normalized === "contato" || normalized === "processo") {
       return normalized;
     }
 
-    return selectedNode?.isPrimaryEntity === true ? 'principal' : 'apoio';
+    // Legacy mapping: old "principal" values map to "contato"
+    if (normalized === "principal") return "contato";
+
+    return selectedNode?.isPrimaryEntity === true ? "contato" : "processo";
   }, [selectedNode]);
 
   const filteredEntityOptions = React.useMemo(() => {
     const categoriaAtual = selectedNodeTypeSelectorValue;
 
     return entityOptions.filter((entidade) => {
-      const normalizedCategory = normalizeEntityName(entidade.categoria || '');
+      const normalizedCategory = normalizeEntityName(entidade.categoria || "");
 
-      if (categoriaAtual === 'entidade') {
+      if (categoriaAtual === "entidade") {
         return (
           !normalizedCategory ||
-          !['task', 'atividade', 'gateway', 'condicional', 'decisao'].includes(
+          !["task", "atividade", "gateway", "condicional", "decisao"].includes(
             normalizedCategory,
           )
         );
       }
 
-      if (categoriaAtual === 'task') {
+      if (categoriaAtual === "task") {
         return (
-          normalizedCategory === 'task' || normalizedCategory === 'atividade'
+          normalizedCategory === "task" || normalizedCategory === "atividade"
         );
       }
 
-      if (categoriaAtual === 'condicional') {
+      if (categoriaAtual === "condicional") {
         return (
-          normalizedCategory === 'gateway' ||
-          normalizedCategory === 'condicional' ||
-          normalizedCategory === 'decisao'
+          normalizedCategory === "gateway" ||
+          normalizedCategory === "condicional" ||
+          normalizedCategory === "decisao"
         );
       }
 
@@ -4069,7 +4108,7 @@ const GerarBPMNCreate = () => {
   }, [entityOptions, selectedNodeTypeSelectorValue]);
 
   React.useEffect(() => {
-    if (entityMode !== 'existente') return;
+    if (entityMode !== "existente") return;
     if (!selectedExistingEntityId) return;
 
     const stillAvailable = filteredEntityOptions.some(
@@ -4077,7 +4116,7 @@ const GerarBPMNCreate = () => {
     );
 
     if (!stillAvailable) {
-      setSelectedExistingEntityId('');
+      setSelectedExistingEntityId("");
     }
   }, [
     entityMode,
@@ -4103,24 +4142,24 @@ const GerarBPMNCreate = () => {
 
   React.useEffect(() => {
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = isTouchDevice ? 'auto' : 'hidden';
+    document.body.style.overflow = isTouchDevice ? "auto" : "hidden";
     return () => {
       document.body.style.overflow = previousOverflow;
     };
   }, [isTouchDevice]);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
+    if (typeof window === "undefined" || !window.matchMedia) return;
 
-    const mediaQuery = window.matchMedia('(pointer: coarse)');
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
     const updateTouchMode = () => {
       setIsTouchDevice(mediaQuery.matches);
     };
 
     updateTouchMode();
     if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener('change', updateTouchMode);
-      return () => mediaQuery.removeEventListener('change', updateTouchMode);
+      mediaQuery.addEventListener("change", updateTouchMode);
+      return () => mediaQuery.removeEventListener("change", updateTouchMode);
     }
 
     mediaQuery.addListener(updateTouchMode);
@@ -4134,52 +4173,52 @@ const GerarBPMNCreate = () => {
   }, [isTouchDevice]);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
+    if (typeof window === "undefined" || !window.matchMedia) return;
 
-    const landscapeQuery = window.matchMedia('(orientation: landscape)');
+    const landscapeQuery = window.matchMedia("(orientation: landscape)");
 
     const updateLandscapeMode = () => {
-      const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+      const isCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
       setIsMobileLandscape(landscapeQuery.matches && isCoarsePointer);
     };
 
     updateLandscapeMode();
 
     if (landscapeQuery.addEventListener) {
-      landscapeQuery.addEventListener('change', updateLandscapeMode);
-      window.addEventListener('resize', updateLandscapeMode);
+      landscapeQuery.addEventListener("change", updateLandscapeMode);
+      window.addEventListener("resize", updateLandscapeMode);
       return () => {
-        landscapeQuery.removeEventListener('change', updateLandscapeMode);
-        window.removeEventListener('resize', updateLandscapeMode);
+        landscapeQuery.removeEventListener("change", updateLandscapeMode);
+        window.removeEventListener("resize", updateLandscapeMode);
       };
     }
 
     landscapeQuery.addListener(updateLandscapeMode);
-    window.addEventListener('resize', updateLandscapeMode);
+    window.addEventListener("resize", updateLandscapeMode);
     return () => {
       landscapeQuery.removeListener(updateLandscapeMode);
-      window.removeEventListener('resize', updateLandscapeMode);
+      window.removeEventListener("resize", updateLandscapeMode);
     };
   }, []);
 
   React.useEffect(() => {
     const handleKeyDown = (event) => {
-      if (event.code === 'Space') {
+      if (event.code === "Space") {
         setIsSpacePressed(true);
       }
     };
 
     const handleKeyUp = (event) => {
-      if (event.code === 'Space') {
+      if (event.code === "Space") {
         setIsSpacePressed(false);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
     };
   }, []);
 
@@ -4187,8 +4226,8 @@ const GerarBPMNCreate = () => {
     if (isReadOnlyMode) return;
     setNodes((previous) => getCompactLayoutedNodes(previous, connections));
 
-    setConnectorRevealMode('hover-side');
-    setSelectedConnectionId('');
+    setConnectorRevealMode("hover-side");
+    setSelectedConnectionId("");
   }, [connections, getCompactLayoutedNodes, isReadOnlyMode]);
 
   React.useEffect(() => {
@@ -4211,9 +4250,9 @@ const GerarBPMNCreate = () => {
 
     updateViewportWidth();
 
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', updateViewportWidth);
-      return () => window.removeEventListener('resize', updateViewportWidth);
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateViewportWidth);
+      return () => window.removeEventListener("resize", updateViewportWidth);
     }
 
     const observer = new ResizeObserver(updateViewportWidth);
@@ -4382,12 +4421,12 @@ const GerarBPMNCreate = () => {
   const syncBpmnNodesToEntidadesCatalog = React.useCallback(
     async (resolvedNodes = []) => {
       const bpmnCategoryName =
-        String(name || DEFAULT_BPMN_NAME || '').trim() || 'BPMN';
+        String(name || DEFAULT_BPMN_NAME || "").trim() || "BPMN";
       const normalizedBpmnCategoryName = normalizeEntityName(bpmnCategoryName);
       const buildNameCategoryKey = (entityName, categoryName) => {
         const normalizedEntityName = normalizeEntityName(entityName);
         const normalizedCategoryName = normalizeEntityName(categoryName);
-        if (!normalizedEntityName || !normalizedCategoryName) return '';
+        if (!normalizedEntityName || !normalizedCategoryName) return "";
         return `${normalizedEntityName}@@${normalizedCategoryName}`;
       };
       const syncedNodes = (
@@ -4403,41 +4442,44 @@ const GerarBPMNCreate = () => {
         if (entityId === null || entityId === undefined) return;
 
         syncedNodes.forEach((node) => {
-          const nodeType = String(node?.nodeType || '')
+          const nodeType = String(node?.nodeType || "")
             .trim()
             .toLowerCase();
-          if (nodeType !== 'entidade') return;
+          if (nodeType !== "entidade") return;
 
           const matchesById =
             rawEntityId &&
-            String(node?.entidadeId ?? '').trim() === rawEntityId;
+            String(node?.entidadeId ?? "").trim() === rawEntityId;
           const matchesByName =
             !rawEntityId &&
             normalizeEntityName(
-              node?.entidadeNome || node?.label || node?.descricao || '',
+              node?.entidadeNome || node?.label || node?.descricao || "",
             ) === normalizedName;
 
           if (!matchesById && !matchesByName) return;
 
           node.entidadeId = entityId;
           node.entidadeNome = String(
-            entityName || node?.entidadeNome || '',
+            entityName || node?.entidadeNome || "",
           ).trim();
         });
       };
       const getNodeNome = (node) => {
         return String(
-          node?.entidadeNome || node?.label || node?.descricao || '',
+          node?.entidadeNome || node?.label || node?.descricao || "",
         ).trim();
       };
 
       const getNodeDescricao = (node) => {
-        const rawDescricao = String(node?.descricao || '').trim();
-        const rawLabel = String(node?.label || '').trim();
-        if (rawDescricao && rawDescricao.toLowerCase() !== rawLabel.toLowerCase()) {
+        const rawDescricao = String(node?.descricao || "").trim();
+        const rawLabel = String(node?.label || "").trim();
+        if (
+          rawDescricao &&
+          rawDescricao.toLowerCase() !== rawLabel.toLowerCase()
+        ) {
           return rawDescricao;
         }
-        return '';
+        return "";
       };
 
       const getNodeCampos = (node) => {
@@ -4448,17 +4490,17 @@ const GerarBPMNCreate = () => {
         return rawFields
           .map((field) => ({
             id:
-              String(field?.id || '').trim() ||
+              String(field?.id || "").trim() ||
               `campo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            nome: String(field?.nome || '').trim(),
-            tipo: String(field?.tipo || '').trim() || 'Texto',
+            nome: String(field?.nome || "").trim(),
+            tipo: String(field?.tipo || "").trim() || "Texto",
             obrigatorio:
               field?.obrigatorio === true ||
-              String(field?.obrigatorio || '') === 'Sim',
-            keyType: String(field?.keyType || field?.chave || 'NORMAL')
+              String(field?.obrigatorio || "") === "Sim",
+            keyType: String(field?.keyType || field?.chave || "NORMAL")
               .trim()
               .toUpperCase(),
-            relacionamento: String(field?.relacionamento || '').trim() || null,
+            relacionamento: String(field?.relacionamento || "").trim() || null,
           }))
           .filter((field) => field.nome);
       };
@@ -4467,11 +4509,11 @@ const GerarBPMNCreate = () => {
       (Array.isArray(resolvedNodes) ? resolvedNodes : []).forEach((node) => {
         if (node?.active === false) return;
 
-        const normalizedType = String(node?.nodeType || '')
+        const normalizedType = String(node?.nodeType || "")
           .trim()
           .toLowerCase();
 
-        if (normalizedType !== 'entidade') {
+        if (normalizedType !== "entidade") {
           return;
         }
 
@@ -4480,12 +4522,12 @@ const GerarBPMNCreate = () => {
         const rawEntityId =
           node?.entidadeId !== null && node?.entidadeId !== undefined
             ? String(node.entidadeId).trim()
-            : '';
+            : "";
         const dedupeKey = rawEntityId
           ? `id:${rawEntityId}`
           : normalizedName
             ? `name:${normalizedName}`
-            : '';
+            : "";
 
         if (!dedupeKey) return;
 
@@ -4497,12 +4539,12 @@ const GerarBPMNCreate = () => {
             nome,
             categoria: bpmnCategoryName,
             tipoEntidade:
-              String(node?.tipoEntidade || '').trim() ||
-              (node?.isPrimaryEntity === true ? 'Principal' : 'Apoio'),
+              String(node?.tipoEntidade || "").trim() ||
+              (node?.isPrimaryEntity === true ? "Principal" : "Apoio"),
             isPrimaryEntity: node?.isPrimaryEntity === true,
             descricao: getNodeDescricao(node),
             atributoChave: String(
-              node?.atributoChave || node?.info || '',
+              node?.atributoChave || node?.info || "",
             ).trim(),
             ativo: true,
             criadoPor: actorAccountName,
@@ -4524,7 +4566,7 @@ const GerarBPMNCreate = () => {
           .map((entidade) => [
             buildNameCategoryKey(
               getEntidadeNome(entidade),
-              String(entidade?.categoria || '').trim(),
+              String(entidade?.categoria || "").trim(),
             ),
             entidade,
           ])
@@ -4539,7 +4581,7 @@ const GerarBPMNCreate = () => {
           const nameCategoryKey =
             normalizedName && normalizedBpmnCategoryName
               ? `${normalizedName}@@${normalizedBpmnCategoryName}`
-              : '';
+              : "";
 
           const existingByEntityId = rawEntityId
             ? existingById.get(rawEntityId)
@@ -4547,7 +4589,7 @@ const GerarBPMNCreate = () => {
           const existingByEntityIdCategoryMatches =
             existingByEntityId &&
             normalizeEntityName(
-              String(existingByEntityId?.categoria || '').trim(),
+              String(existingByEntityId?.categoria || "").trim(),
             ) === normalizedBpmnCategoryName;
           const existingByEntityNameAndCategory = nameCategoryKey
             ? existingByNameAndCategory.get(nameCategoryKey)
@@ -4559,7 +4601,7 @@ const GerarBPMNCreate = () => {
           const existingId = existing ? getEntidadeId(existing) : null;
 
           return {
-            action: 'upsert',
+            action: "upsert",
             id:
               existingId !== null && existingId !== undefined
                 ? existingId
@@ -4596,7 +4638,7 @@ const GerarBPMNCreate = () => {
           });
         });
       } catch (syncErr) {
-        console.warn('[BPMN Sync] Falha no batch de entidades:', syncErr);
+        console.warn("[BPMN Sync] Falha no batch de entidades:", syncErr);
       }
 
       return syncedNodes;
@@ -4608,9 +4650,9 @@ const GerarBPMNCreate = () => {
     if (isReadOnlyMode) {
       setNoticeModal({
         open: true,
-        title: 'Sem permissão',
+        title: "Sem permissão",
         message:
-          'Seu nível de acesso permite apenas visualização. Edição de BPMN está bloqueada.',
+          "Seu nível de acesso permite apenas visualização. Edição de BPMN está bloqueada.",
       });
       return;
     }
@@ -4627,28 +4669,28 @@ const GerarBPMNCreate = () => {
         return {
           ...node,
           nodeType:
-            node.nodeType === 'task'
-              ? 'task'
-              : node.nodeType === 'condicional'
-                ? 'condicional'
-                : 'entidade',
+            node.nodeType === "task"
+              ? "task"
+              : node.nodeType === "condicional"
+                ? "condicional"
+                : "entidade",
           entidadeId:
             resolvedEntityId !== null && resolvedEntityId !== undefined
               ? resolvedEntityId
               : null,
           entidadeNome: resolvedEntity
             ? getEntidadeNome(resolvedEntity)
-            : String(node.entidadeNome || node.label || '').trim(),
+            : String(node.entidadeNome || node.label || "").trim(),
         };
       });
 
       const resolvedNodesWithDrafts = resolvedNodes.map((node) => {
-        if (node?.nodeType === 'condicional' || node?.nodeType === 'task') {
+        if (node?.nodeType === "condicional" || node?.nodeType === "task") {
           return node;
         }
 
         const draftByNode = entityDraftsByNodeId[node.id] || null;
-        const isCurrentNode = String(node.id) === String(selectedNodeId || '');
+        const isCurrentNode = String(node.id) === String(selectedNodeId || "");
 
         const currentNodeDraft = isCurrentNode
           ? {
@@ -4669,52 +4711,52 @@ const GerarBPMNCreate = () => {
             ? effectiveDraft.selectedDataFieldIds
             : []
         )
-          .map((value) => String(value || '').trim())
+          .map((value) => String(value || "").trim())
           .filter(Boolean);
 
         const shouldUseAllFields = selectedFieldIds.length === 0;
         const selectedFields = fieldsFromDraft
           .filter((field) => {
             if (shouldUseAllFields) return true;
-            const fieldId = String(field?.id || '').trim();
+            const fieldId = String(field?.id || "").trim();
             return fieldId && selectedFieldIds.includes(fieldId);
           })
           .map((field) => ({
-            id: String(field?.id || '').trim(),
-            nome: String(field?.nome || '').trim(),
-            tipo: String(field?.tipo || '').trim() || 'Texto',
+            id: String(field?.id || "").trim(),
+            nome: String(field?.nome || "").trim(),
+            tipo: String(field?.tipo || "").trim() || "Texto",
             obrigatorio:
               field?.obrigatorio === true ||
-              String(field?.obrigatorio || '') === 'Sim',
-            keyType: String(field?.keyType || field?.chave || 'NORMAL')
+              String(field?.obrigatorio || "") === "Sim",
+            keyType: String(field?.keyType || field?.chave || "NORMAL")
               .trim()
               .toUpperCase(),
-            relacionamento: String(field?.relacionamento || '').trim() || null,
+            relacionamento: String(field?.relacionamento || "").trim() || null,
           }))
           .filter((field) => field.id || field.nome);
 
         const draftName = String(
-          effectiveDraft?.newEntityForm?.nome || '',
+          effectiveDraft?.newEntityForm?.nome || "",
         ).trim();
         const draftDescricao = String(
-          effectiveDraft?.newEntityForm?.descricao || '',
+          effectiveDraft?.newEntityForm?.descricao || "",
         ).trim();
         const draftAtributoChave = String(
-          effectiveDraft?.newEntityForm?.atributoChave || '',
+          effectiveDraft?.newEntityForm?.atributoChave || "",
         ).trim();
 
         return {
           ...node,
           entidadeNome:
-            draftName || String(node?.entidadeNome || node?.label || '').trim(),
-          label: draftName || String(node?.label || '').trim(),
-          descricao: draftDescricao || String(node?.descricao || '').trim(),
-          info: draftAtributoChave || String(node?.info || '').trim(),
+            draftName || String(node?.entidadeNome || node?.label || "").trim(),
+          label: draftName || String(node?.label || "").trim(),
+          descricao: draftDescricao || String(node?.descricao || "").trim(),
+          info: draftAtributoChave || String(node?.info || "").trim(),
           selectedEntityFieldIds: selectedFields
-            .map((field) => String(field?.id || '').trim())
+            .map((field) => String(field?.id || "").trim())
             .filter(Boolean),
           selectedEntityFieldNames: selectedFields
-            .map((field) => String(field?.nome || '').trim())
+            .map((field) => String(field?.nome || "").trim())
             .filter(Boolean),
           selectedEntityFields: selectedFields,
         };
@@ -4722,7 +4764,7 @@ const GerarBPMNCreate = () => {
 
       const hasConfiguredEntity = (node) => {
         if (!node) return false;
-        if (node.nodeType === 'condicional' || node.nodeType === 'task') {
+        if (node.nodeType === "condicional" || node.nodeType === "task") {
           return true;
         }
 
@@ -4731,7 +4773,7 @@ const GerarBPMNCreate = () => {
         if (hasEntityId) return true;
 
         const hasEntityName = Boolean(
-          String(node.entidadeNome || node.label || '').trim(),
+          String(node.entidadeNome || node.label || "").trim(),
         );
 
         return hasEntityName;
@@ -4740,8 +4782,8 @@ const GerarBPMNCreate = () => {
       const nodeWithoutEntity = resolvedNodesWithDrafts.find(
         (node) =>
           node.active !== false &&
-          node.nodeType !== 'condicional' &&
-          node.nodeType !== 'task' &&
+          node.nodeType !== "condicional" &&
+          node.nodeType !== "task" &&
           !hasConfiguredEntity(node),
       );
 
@@ -4751,15 +4793,15 @@ const GerarBPMNCreate = () => {
             nodeWithoutEntity.entidadeNome ||
               nodeWithoutEntity.label ||
               nodeWithoutEntity.descricao ||
-              '',
-          ).trim() || `ID ${String(nodeWithoutEntity.id || '').trim()}`;
+              "",
+          ).trim() || `ID ${String(nodeWithoutEntity.id || "").trim()}`;
 
         setInvalidEntityNodeId(nodeWithoutEntity.id);
         setSelectedNodeId(nodeWithoutEntity.id);
         setIsSidebarHidden(false);
         setNoticeModal({
           open: true,
-          title: 'Entidade obrigatória',
+          title: "Entidade obrigatória",
           message: `O bloco "${nodeDisplayName}" está ativo e ainda não possui entidade vinculada/configurada.`,
         });
         return;
@@ -4775,8 +4817,8 @@ const GerarBPMNCreate = () => {
 
       const hasEntityIdUpgrade = finalResolvedNodes.some(
         (node, index) =>
-          String(node.entidadeId ?? '') !==
-          String(nodes[index]?.entidadeId ?? ''),
+          String(node.entidadeId ?? "") !==
+          String(nodes[index]?.entidadeId ?? ""),
       );
 
       if (hasEntityIdUpgrade) {
@@ -4788,13 +4830,13 @@ const GerarBPMNCreate = () => {
         sanitizeConnectionForPersistence,
       );
 
-      setInvalidEntityNodeId('');
+      setInvalidEntityNodeId("");
 
       const explicitPrimaryNodeWithEntity = finalResolvedNodes.find(
         (node) =>
           node.active !== false &&
-          node.nodeType !== 'condicional' &&
-          node.nodeType !== 'task' &&
+          node.nodeType !== "condicional" &&
+          node.nodeType !== "task" &&
           node.isPrimaryEntity === true &&
           node.entidadeId !== null &&
           node.entidadeId !== undefined,
@@ -4803,8 +4845,8 @@ const GerarBPMNCreate = () => {
       const firstActiveNodeWithEntity = finalResolvedNodes.find(
         (node) =>
           node.active !== false &&
-          node.nodeType !== 'condicional' &&
-          node.nodeType !== 'task' &&
+          node.nodeType !== "condicional" &&
+          node.nodeType !== "task" &&
           node.entidadeId !== null &&
           node.entidadeId !== undefined,
       );
@@ -4817,7 +4859,7 @@ const GerarBPMNCreate = () => {
         : null;
       const primaryEntityName = primaryEntity
         ? getEntidadeNome(primaryEntity)
-        : '';
+        : "";
       const primaryEntityId = primaryEntity
         ? getEntidadeId(primaryEntity)
         : null;
@@ -4832,13 +4874,13 @@ const GerarBPMNCreate = () => {
 
         if (rawMap) {
           const parsedMap = JSON.parse(rawMap);
-          if (parsedMap && typeof parsedMap === 'object') {
+          if (parsedMap && typeof parsedMap === "object") {
             savedOpportunityBySlug = parsedMap;
           }
         }
       } catch (error) {}
 
-      const originalBpmnSlug = String(bpmnSlug || '').trim();
+      const originalBpmnSlug = String(bpmnSlug || "").trim();
       let resolvedOpportunityId =
         Number(
           savedOpportunityBySlug[currentBpmnSlug] ||
@@ -4869,15 +4911,15 @@ const GerarBPMNCreate = () => {
       ]);
 
       if (!bpmnStateResponse.ok) {
-        let detail = '';
+        let detail = "";
         try {
           const errorPayload = await bpmnStateResponse.json();
-          detail = String(errorPayload?.detail || '').trim();
+          detail = String(errorPayload?.detail || "").trim();
         } catch (error) {
           // no-op
         }
 
-        throw new Error(detail || 'Falha ao salvar BPMN');
+        throw new Error(detail || "Falha ao salvar BPMN");
       }
 
       const allOpportunities = Array.isArray(opportunitiesPage?.data)
@@ -4891,42 +4933,42 @@ const GerarBPMNCreate = () => {
         : null;
 
       const buildNodeLabel = (node) => {
-        if (!node) return 'Etapa';
-        if (node?.nodeType === 'task') {
-          return String(node?.taskNome || '').trim() || 'Atividade';
+        if (!node) return "Etapa";
+        if (node?.nodeType === "task") {
+          return String(node?.taskNome || "").trim() || "Atividade";
         }
-        if (node?.nodeType === 'condicional') {
-          return String(node?.condicionalNome || '').trim() || 'Condicional';
+        if (node?.nodeType === "condicional") {
+          return String(node?.condicionalNome || "").trim() || "Condicional";
         }
-        return String(node?.entidadeNome || '').trim() || 'Entidade';
+        return String(node?.entidadeNome || "").trim() || "Entidade";
       };
 
-      const getNodeMapByType = (nodes = [], nodeType = 'entidade') => {
+      const getNodeMapByType = (nodes = [], nodeType = "entidade") => {
         const map = new Map();
 
         (Array.isArray(nodes) ? nodes : []).forEach((node) => {
           if (node?.active === false) return;
 
           const isEntity =
-            nodeType === 'entidade' &&
-            node?.nodeType !== 'task' &&
-            node?.nodeType !== 'condicional';
-          const isTask = nodeType === 'task' && node?.nodeType === 'task';
+            nodeType === "entidade" &&
+            node?.nodeType !== "task" &&
+            node?.nodeType !== "condicional";
+          const isTask = nodeType === "task" && node?.nodeType === "task";
           const isConditional =
-            nodeType === 'condicional' && node?.nodeType === 'condicional';
+            nodeType === "condicional" && node?.nodeType === "condicional";
 
           if (!isEntity && !isTask && !isConditional) return;
 
-          const id = String(node?.id || '').trim();
+          const id = String(node?.id || "").trim();
           if (!id) return;
 
           const label = buildNodeLabel(node);
           const fingerprint =
-            nodeType === 'task'
-              ? `${String(node?.taskNome || '').trim()}|${String(node?.taskDescricao || '').trim()}`
-              : nodeType === 'condicional'
-                ? `${String(node?.condicionalNome || '').trim()}|${String(node?.condicionalDescricao || '').trim()}`
-                : `${String(node?.entidadeId ?? '')}|${String(node?.entidadeNome || '').trim()}`;
+            nodeType === "task"
+              ? `${String(node?.taskNome || "").trim()}|${String(node?.taskDescricao || "").trim()}`
+              : nodeType === "condicional"
+                ? `${String(node?.condicionalNome || "").trim()}|${String(node?.condicionalDescricao || "").trim()}`
+                : `${String(node?.entidadeId ?? "")}|${String(node?.entidadeNome || "").trim()}`;
 
           map.set(id, {
             id,
@@ -4980,8 +5022,8 @@ const GerarBPMNCreate = () => {
         ? resolvedExistingOpportunity.bpmn.connections
         : [];
 
-      const previousEntityMap = getNodeMapByType(previousNodes, 'entidade');
-      const nextEntityMap = getNodeMapByType(persistedNodes, 'entidade');
+      const previousEntityMap = getNodeMapByType(previousNodes, "entidade");
+      const nextEntityMap = getNodeMapByType(persistedNodes, "entidade");
       const entityDiff = computeNodeDiffNames(previousEntityMap, nextEntityMap);
 
       const existingTimelineItemsRaw = Array.isArray(
@@ -5003,13 +5045,13 @@ const GerarBPMNCreate = () => {
         const merged = [];
 
         groups.flat().forEach((item, index) => {
-          if (!item || typeof item !== 'object') return;
+          if (!item || typeof item !== "object") return;
 
-          const autoKey = String(item?.autoKey || '').trim();
-          const source = String(item?.source || '').trim();
-          const idValue = String(item?.id || '').trim();
-          const title = String(item?.title || '').trim();
-          const time = String(item?.time || '').trim();
+          const autoKey = String(item?.autoKey || "").trim();
+          const source = String(item?.source || "").trim();
+          const idValue = String(item?.id || "").trim();
+          const title = String(item?.title || "").trim();
+          const time = String(item?.time || "").trim();
 
           const uniqueKey = autoKey
             ? `auto:${autoKey}`
@@ -5025,12 +5067,12 @@ const GerarBPMNCreate = () => {
         return merged;
       };
 
-      const nowTime = new Date().toLocaleString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      const nowTime = new Date().toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
       const nowTimestamp = new Date().toISOString();
 
@@ -5039,21 +5081,21 @@ const GerarBPMNCreate = () => {
       let noteIdOffset = 0;
 
       const getTypeLabel = (node) => {
-        if (node?.nodeType === 'task') return 'Atividade';
-        if (node?.nodeType === 'condicional') return 'Condicional';
-        return 'Entidade';
+        if (node?.nodeType === "task") return "Atividade";
+        if (node?.nodeType === "condicional") return "Condicional";
+        return "Entidade";
       };
 
       const getWrittenText = (node) => {
-        if (node?.nodeType === 'task') {
-          return String(node?.taskDescricao || node?.taskNome || '').trim();
+        if (node?.nodeType === "task") {
+          return String(node?.taskDescricao || node?.taskNome || "").trim();
         }
-        if (node?.nodeType === 'condicional') {
+        if (node?.nodeType === "condicional") {
           return String(
-            node?.condicionalDescricao || node?.condicionalNome || '',
+            node?.condicionalDescricao || node?.condicionalNome || "",
           ).trim();
         }
-        return String(node?.entidadeNome || '').trim();
+        return String(node?.entidadeNome || "").trim();
       };
 
       const orderedActiveNodes = [...persistedNodes]
@@ -5065,15 +5107,15 @@ const GerarBPMNCreate = () => {
           const yDiff = (Number(nodeA?.y) || 0) - (Number(nodeB?.y) || 0);
           if (yDiff !== 0) return yDiff;
 
-          return String(nodeA?.id || '').localeCompare(String(nodeB?.id || ''));
+          return String(nodeA?.id || "").localeCompare(String(nodeB?.id || ""));
         });
 
       const orderedActiveNodeEntries = orderedActiveNodes.map((node, index) => {
         const typeLabel = getTypeLabel(node);
         const label = buildNodeLabel(node);
-        const writtenText = getWrittenText(node) || '-';
+        const writtenText = getWrittenText(node) || "-";
         return {
-          id: String(node?.id || ''),
+          id: String(node?.id || ""),
           order: index + 1,
           label,
           typeLabel,
@@ -5091,14 +5133,14 @@ const GerarBPMNCreate = () => {
           const yDiff = (Number(nodeA?.y) || 0) - (Number(nodeB?.y) || 0);
           if (yDiff !== 0) return yDiff;
 
-          return String(nodeA?.id || '').localeCompare(String(nodeB?.id || ''));
+          return String(nodeA?.id || "").localeCompare(String(nodeB?.id || ""));
         })
         .map((node, index) => {
           const typeLabel = getTypeLabel(node);
           const label = buildNodeLabel(node);
-          const writtenText = getWrittenText(node) || '-';
+          const writtenText = getWrittenText(node) || "-";
           return {
-            id: String(node?.id || ''),
+            id: String(node?.id || ""),
             order: index + 1,
             label,
             typeLabel,
@@ -5130,16 +5172,16 @@ const GerarBPMNCreate = () => {
 
       timelineGeneratedItems.push({
         id: noteIdBase + noteIdOffset,
-        title: resolvedOpportunityId ? 'BPMN atualizado' : 'BPMN criado',
+        title: resolvedOpportunityId ? "BPMN atualizado" : "BPMN criado",
         description: `Nós ${previousNodes.length}→${persistedNodes.length} | Conexões ${previousConnections.length}→${persistedConnections.length}`,
         time: nowTime,
         timestamp: nowTimestamp,
         actor: actorAccountName,
         actorId: actorAccountId,
         autoGenerated: true,
-        source: 'bpmn-save',
-        actionType: resolvedOpportunityId ? 'update' : 'create',
-        elementType: 'bpmn',
+        source: "bpmn-save",
+        actionType: resolvedOpportunityId ? "update" : "create",
+        elementType: "bpmn",
         itemName: name || DEFAULT_BPMN_NAME,
         before: `Nós ${previousNodes.length} | Conexões ${previousConnections.length}`,
         after: `Nós ${persistedNodes.length} | Conexões ${persistedConnections.length}`,
@@ -5147,7 +5189,7 @@ const GerarBPMNCreate = () => {
       noteIdOffset += 1;
 
       const formatEntrySummary = (entry) => {
-        if (!entry) return '—';
+        if (!entry) return "—";
         return `${entry.label} - ${entry.typeLabel} (ordem ${entry.order})`;
       };
 
@@ -5155,7 +5197,7 @@ const GerarBPMNCreate = () => {
         title,
         beforeEntry = null,
         afterEntry = null,
-        actionType = 'update',
+        actionType = "update",
       }) => {
         timelineGeneratedItems.push({
           id: noteIdBase + noteIdOffset,
@@ -5166,12 +5208,12 @@ const GerarBPMNCreate = () => {
           actor: actorAccountName,
           actorId: actorAccountId,
           autoGenerated: true,
-          source: 'bpmn-save',
+          source: "bpmn-save",
           actionType,
-          elementType: 'elemento-bpmn',
+          elementType: "elemento-bpmn",
           itemName:
-            String(afterEntry?.label || beforeEntry?.label || '').trim() ||
-            'Elemento BPMN',
+            String(afterEntry?.label || beforeEntry?.label || "").trim() ||
+            "Elemento BPMN",
           before: formatEntrySummary(beforeEntry),
           after: formatEntrySummary(afterEntry),
         });
@@ -5184,7 +5226,7 @@ const GerarBPMNCreate = () => {
             title: `${entry.label} foi adicionada`,
             beforeEntry: null,
             afterEntry: entry,
-            actionType: 'create',
+            actionType: "create",
           });
         });
       } else {
@@ -5193,7 +5235,7 @@ const GerarBPMNCreate = () => {
             title: `${entry.label} foi adicionada`,
             beforeEntry: null,
             afterEntry: entry,
-            actionType: 'create',
+            actionType: "create",
           });
         });
 
@@ -5203,7 +5245,7 @@ const GerarBPMNCreate = () => {
             title: `${entry.label} foi atualizada`,
             beforeEntry: previousEntry,
             afterEntry: entry,
-            actionType: 'update',
+            actionType: "update",
           });
         });
 
@@ -5212,7 +5254,7 @@ const GerarBPMNCreate = () => {
             title: `${entry.label} foi removida`,
             beforeEntry: entry,
             afterEntry: null,
-            actionType: 'delete',
+            actionType: "delete",
           });
         });
       }
@@ -5221,7 +5263,7 @@ const GerarBPMNCreate = () => {
         name || DEFAULT_BPMN_NAME,
       );
       const duplicated = allOpportunities.find((item) => {
-        const itemName = item?.name || item?.nome || '';
+        const itemName = item?.name || item?.nome || "";
         const sameName = normalizeBpmnName(itemName) === normalizedCurrentName;
         if (!sameName) return false;
 
@@ -5236,8 +5278,8 @@ const GerarBPMNCreate = () => {
         } else {
           setNoticeModal({
             open: true,
-            title: 'Nome duplicado',
-            message: 'Já existe um BPMN com esse nome na tabela.',
+            title: "Nome duplicado",
+            message: "Já existe um BPMN com esse nome na tabela.",
           });
           return;
         }
@@ -5247,49 +5289,49 @@ const GerarBPMNCreate = () => {
         // Keep table metadata synchronized with the diagram structure.
         stages: orderedActiveNodeEntries.map((entry, index) => {
           const baseNode = orderedActiveNodes[index] || {};
-          const infoText = String(baseNode?.info || '').trim();
-          const participant = infoText.includes('Raia:')
-            ? infoText.split('Raia:')[1].split('|')[0].trim()
-            : '';
-          const rawType = String(baseNode?.nodeType || 'entidade')
+          const infoText = String(baseNode?.info || "").trim();
+          const participant = infoText.includes("Raia:")
+            ? infoText.split("Raia:")[1].split("|")[0].trim()
+            : "";
+          const rawType = String(baseNode?.nodeType || "entidade")
             .trim()
             .toLowerCase();
           const stageType =
-            rawType === 'task'
-              ? 'task'
-              : rawType === 'condicional'
-                ? 'condicional'
-                : 'entidade';
+            rawType === "task"
+              ? "task"
+              : rawType === "condicional"
+                ? "condicional"
+                : "entidade";
 
           return {
-            id: String(entry?.id || '').trim() || `stage-${index + 1}`,
+            id: String(entry?.id || "").trim() || `stage-${index + 1}`,
             index,
-            nome: String(entry?.label || '').trim() || `Etapa ${index + 1}`,
+            nome: String(entry?.label || "").trim() || `Etapa ${index + 1}`,
             tipo: stageType,
             participante: participant,
           };
         }),
         nome: name || DEFAULT_BPMN_NAME,
         name: name || DEFAULT_BPMN_NAME,
-        status: 'Prospecção',
+        status: "Prospecção",
         stageIndex: 0,
         currentNodeId:
-          String(selectedNodeId || '').trim() ||
-          String(orderedActiveNodes[0]?.id || '').trim() ||
+          String(selectedNodeId || "").trim() ||
+          String(orderedActiveNodes[0]?.id || "").trim() ||
           null,
         activeNodeId:
-          String(selectedNodeId || '').trim() ||
-          String(orderedActiveNodes[0]?.id || '').trim() ||
+          String(selectedNodeId || "").trim() ||
+          String(orderedActiveNodes[0]?.id || "").trim() ||
           null,
         bpmnNodeId:
-          String(selectedNodeId || '').trim() ||
-          String(orderedActiveNodes[0]?.id || '').trim() ||
+          String(selectedNodeId || "").trim() ||
+          String(orderedActiveNodes[0]?.id || "").trim() ||
           null,
         bpmnCurrentNodeId:
-          String(selectedNodeId || '').trim() ||
-          String(orderedActiveNodes[0]?.id || '').trim() ||
+          String(selectedNodeId || "").trim() ||
+          String(orderedActiveNodes[0]?.id || "").trim() ||
           null,
-        sourceNodeId: String(orderedActiveNodes[0]?.id || '').trim() || null,
+        sourceNodeId: String(orderedActiveNodes[0]?.id || "").trim() || null,
         timelineItems: mergeUniqueTimelineItems(
           timelineGeneratedItems,
           pendingDraftTimelineItems,
@@ -5302,30 +5344,30 @@ const GerarBPMNCreate = () => {
               entity: primaryEntityName,
             }
           : {}),
-        source: 'bpmn-create',
+        source: "bpmn-create",
         bpmn: {
           nodes: persistedNodes,
           connections: persistedConnections,
           stages: orderedActiveNodeEntries.map((entry, index) => {
             const baseNode = orderedActiveNodes[index] || {};
-            const infoText = String(baseNode?.info || '').trim();
-            const participant = infoText.includes('Raia:')
-              ? infoText.split('Raia:')[1].split('|')[0].trim()
-              : '';
-            const rawType = String(baseNode?.nodeType || 'entidade')
+            const infoText = String(baseNode?.info || "").trim();
+            const participant = infoText.includes("Raia:")
+              ? infoText.split("Raia:")[1].split("|")[0].trim()
+              : "";
+            const rawType = String(baseNode?.nodeType || "entidade")
               .trim()
               .toLowerCase();
             const stageType =
-              rawType === 'task'
-                ? 'task'
-                : rawType === 'condicional'
-                  ? 'condicional'
-                  : 'entidade';
+              rawType === "task"
+                ? "task"
+                : rawType === "condicional"
+                  ? "condicional"
+                  : "entidade";
 
             return {
-              id: String(entry?.id || '').trim() || `stage-${index + 1}`,
+              id: String(entry?.id || "").trim() || `stage-${index + 1}`,
               index,
-              nome: String(entry?.label || '').trim() || `Etapa ${index + 1}`,
+              nome: String(entry?.label || "").trim() || `Etapa ${index + 1}`,
               tipo: stageType,
               participante: participant,
             };
@@ -5390,20 +5432,20 @@ const GerarBPMNCreate = () => {
         window.localStorage.removeItem(BPMN_EDITOR_LOCAL_STORAGE_KEY);
       } catch (error) {}
     } catch (error) {
-      console.error('[BPMN Save Error]', error);
+      console.error("[BPMN Save Error]", error);
       setNoticeModal({
         open: true,
-        title: 'Falha ao salvar',
+        title: "Falha ao salvar",
         message:
-          String(error?.message || '').trim() ||
-          'Não foi possível salvar o BPMN agora.',
+          String(error?.message || "").trim() ||
+          "Não foi possível salvar o BPMN agora.",
       });
     } finally {
       setIsSavingBpmn(false);
 
       if (saveSucceeded) {
         skipNavigationPromptRef.current = true;
-        navigate('/gerar-bpmn');
+        navigate("/gerar-bpmn");
       }
     }
   }, [
@@ -5433,8 +5475,8 @@ const GerarBPMNCreate = () => {
       let loadedFromLocalStorage = false;
 
       if (isCreateMode && pendingAiCanvasDraft && !aiCanvasAppliedRef.current) {
-        if (typeof pendingAiCanvasDraft.name === 'string') {
-          const nextName = String(pendingAiCanvasDraft.name || '').trim();
+        if (typeof pendingAiCanvasDraft.name === "string") {
+          const nextName = String(pendingAiCanvasDraft.name || "").trim();
           if (nextName) {
             setName(nextName);
           }
@@ -5448,19 +5490,23 @@ const GerarBPMNCreate = () => {
             : [];
 
           try {
-            const _layoutResult = await applyBpmnAutoLayout(_finalNodes, _finalConns);
+            const _layoutResult = await applyBpmnAutoLayout(
+              _finalNodes,
+              _finalConns,
+            );
             _finalNodes = _layoutResult.nodes;
             _finalConns = _layoutResult.connections;
           } catch (_layoutErr) {
-            console.warn('[GerarBPMN] auto-layout falhou, usando posições do backend:', _layoutErr);
+            console.warn(
+              "[GerarBPMN] auto-layout falhou, usando posições do backend:",
+              _layoutErr,
+            );
           }
 
           setNodes(_finalNodes);
           setConnections(_finalConns);
 
-          const firstNodeId = String(
-            _finalNodes[0]?.id || '',
-          ).trim();
+          const firstNodeId = String(_finalNodes[0]?.id || "").trim();
           if (firstNodeId) {
             setSelectedNodeId(firstNodeId);
           }
@@ -5531,8 +5577,21 @@ const GerarBPMNCreate = () => {
           if (localDraftRaw) {
             const localDraft = JSON.parse(localDraftRaw);
 
-            if (localDraft && typeof localDraft === 'object') {
-              if (typeof localDraft.name === 'string') {
+            // Se o rascunho tem nós e um nome que corresponde a um BPMN já salvo
+            // (slug não-vazio), ignora — pertence a uma sessão de edição anterior.
+            const draftSlug = slugifyBpmnName(localDraft?.name || "");
+            if (
+              draftSlug &&
+              Array.isArray(localDraft?.nodes) &&
+              localDraft.nodes.length > 0
+            ) {
+              throw new Error(
+                "Rascunho de edição existente ignorado no modo criação",
+              );
+            }
+
+            if (localDraft && typeof localDraft === "object") {
+              if (typeof localDraft.name === "string") {
                 setName(localDraft.name);
               }
 
@@ -5574,13 +5633,13 @@ const GerarBPMNCreate = () => {
         if (localDraftRaw) {
           const localDraft = JSON.parse(localDraftRaw);
 
-          if (localDraft && typeof localDraft === 'object') {
-            const localDraftSlug = slugifyBpmnName(localDraft.name || '');
+          if (localDraft && typeof localDraft === "object") {
+            const localDraftSlug = slugifyBpmnName(localDraft.name || "");
             if (localDraftSlug !== bpmnSlug) {
-              throw new Error('Rascunho local não corresponde ao BPM atual');
+              throw new Error("Rascunho local não corresponde ao BPM atual");
             }
 
-            if (typeof localDraft.name === 'string') {
+            if (typeof localDraft.name === "string") {
               setName(localDraft.name);
             }
 
@@ -5619,13 +5678,13 @@ const GerarBPMNCreate = () => {
         const response = await fetch(url, options);
 
         if (!response.ok) {
-          throw new Error('Falha ao carregar BPMN');
+          throw new Error("Falha ao carregar BPMN");
         }
 
         const data = await response.json();
-        if (!isMounted || !data || typeof data !== 'object') return;
+        if (!isMounted || !data || typeof data !== "object") return;
 
-        if (typeof data.name === 'string') {
+        if (typeof data.name === "string") {
           setName(data.name);
         }
 
@@ -5703,28 +5762,28 @@ const GerarBPMNCreate = () => {
   }, [connections, name, nodes]);
 
   const handleSaveEditorNameDraft = React.useCallback(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === "undefined") return;
 
     try {
-      const normalizedName = String(name || '').trim();
+      const normalizedName = String(name || "").trim();
       if (normalizedName) {
         window.sessionStorage.setItem(
           BPMN_EDITOR_NAME_DRAFT_KEY,
           normalizedName,
         );
         window.localStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
-        setEditorNameSaveFeedback('Nome do editor salvo nesta sessao.');
+        setEditorNameSaveFeedback("Nome do editor salvo nesta sessao.");
         return;
       }
 
       window.sessionStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
       window.localStorage.removeItem(BPMN_EDITOR_NAME_DRAFT_KEY);
       setEditorNameSaveFeedback(
-        'Nome do editor removido do rascunho desta sessao.',
+        "Nome do editor removido do rascunho desta sessao.",
       );
     } catch {
       setEditorNameSaveFeedback(
-        'Nao foi possivel salvar o nome do editor agora.',
+        "Nao foi possivel salvar o nome do editor agora.",
       );
     }
   }, [BPMN_EDITOR_NAME_DRAFT_KEY, name]);
@@ -5733,7 +5792,7 @@ const GerarBPMNCreate = () => {
     if (!editorNameSaveFeedback) return undefined;
 
     const timeoutId = window.setTimeout(() => {
-      setEditorNameSaveFeedback('');
+      setEditorNameSaveFeedback("");
     }, 2200);
 
     return () => {
@@ -5742,7 +5801,7 @@ const GerarBPMNCreate = () => {
   }, [editorNameSaveFeedback]);
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') return undefined;
+    if (typeof window === "undefined") return undefined;
 
     currentPageUrlRef.current = window.location.href;
 
@@ -5771,7 +5830,7 @@ const GerarBPMNCreate = () => {
 
       if (skipNavigationPromptRef.current) return;
       event.preventDefault();
-      event.returnValue = '';
+      event.returnValue = "";
     };
 
     const handleDocumentClickCapture = (event) => {
@@ -5782,13 +5841,13 @@ const GerarBPMNCreate = () => {
         return;
       }
 
-      const anchor = event.target?.closest?.('a[href]');
+      const anchor = event.target?.closest?.("a[href]");
       if (!anchor) return;
-      if (anchor.target && anchor.target !== '_self') return;
-      if (anchor.hasAttribute('download')) return;
+      if (anchor.target && anchor.target !== "_self") return;
+      if (anchor.hasAttribute("download")) return;
 
-      const href = anchor.getAttribute('href') || '';
-      if (!href || href.startsWith('#')) return;
+      const href = anchor.getAttribute("href") || "";
+      if (!href || href.startsWith("#")) return;
 
       const nextUrl = new URL(anchor.href, window.location.href);
       const currentUrl = new URL(window.location.href);
@@ -5849,7 +5908,7 @@ const GerarBPMNCreate = () => {
       }
 
       const targetUrl = window.location.href;
-      window.history.pushState(null, '', currentPageUrlRef.current);
+      window.history.pushState(null, "", currentPageUrlRef.current);
 
       openLeavePageModal(() => {
         const parsed = new URL(targetUrl);
@@ -5861,14 +5920,14 @@ const GerarBPMNCreate = () => {
       });
     };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('click', handleDocumentClickCapture, true);
-    window.addEventListener('popstate', handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    document.addEventListener("click", handleDocumentClickCapture, true);
+    window.addEventListener("popstate", handlePopState);
 
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('click', handleDocumentClickCapture, true);
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      document.removeEventListener("click", handleDocumentClickCapture, true);
+      window.removeEventListener("popstate", handlePopState);
       window.history.pushState = originalPushState;
     };
   }, [openLeavePageModal, navigate]);
@@ -5898,8 +5957,6 @@ const GerarBPMNCreate = () => {
       });
     });
   }, [fitNodesToViewport, nodes.length]);
-
-
 
   const applyZoomStep = React.useCallback(
     (direction) => {
@@ -5943,12 +6000,12 @@ const GerarBPMNCreate = () => {
     const viewport = viewportRef.current;
     if (!viewport) return undefined;
 
-    viewport.addEventListener('wheel', handleViewportWheel, {
+    viewport.addEventListener("wheel", handleViewportWheel, {
       passive: false,
     });
 
     return () => {
-      viewport.removeEventListener('wheel', handleViewportWheel);
+      viewport.removeEventListener("wheel", handleViewportWheel);
     };
   }, [handleViewportWheel]);
 
@@ -5983,12 +6040,12 @@ const GerarBPMNCreate = () => {
       }
     };
 
-    viewport.addEventListener('touchstart', onTouchStart, { passive: false });
-    viewport.addEventListener('touchmove', onTouchMove, { passive: false });
+    viewport.addEventListener("touchstart", onTouchStart, { passive: false });
+    viewport.addEventListener("touchmove", onTouchMove, { passive: false });
 
     return () => {
-      viewport.removeEventListener('touchstart', onTouchStart);
-      viewport.removeEventListener('touchmove', onTouchMove);
+      viewport.removeEventListener("touchstart", onTouchStart);
+      viewport.removeEventListener("touchmove", onTouchMove);
     };
   }, [isTouchDevice, zoom]);
 
@@ -6008,9 +6065,9 @@ const GerarBPMNCreate = () => {
 
   const handleViewportPointerDown = (event) => {
     const clickedNode = event.target?.closest?.('[data-bpmn-node="true"]');
-    const clickedConnector = event.target?.closest?.('[data-connector-handle]');
+    const clickedConnector = event.target?.closest?.("[data-connector-handle]");
     const isTouchPointer =
-      event.pointerType === 'touch' || event.pointerType === 'pen';
+      event.pointerType === "touch" || event.pointerType === "pen";
 
     const shouldPanWithMouse =
       event.button === 1 ||
@@ -6044,7 +6101,7 @@ const GerarBPMNCreate = () => {
       viewport.scrollLeft = panRef.current.startScrollLeft - dx;
       viewport.scrollTop = panRef.current.startScrollTop - dy;
 
-      if (event.pointerType === 'touch' || event.pointerType === 'pen') {
+      if (event.pointerType === "touch" || event.pointerType === "pen") {
         event.preventDefault();
       }
     };
@@ -6062,13 +6119,13 @@ const GerarBPMNCreate = () => {
       setIsPanning(false);
     };
 
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', stopPan);
-    window.addEventListener('pointercancel', stopPan);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopPan);
+    window.addEventListener("pointercancel", stopPan);
     return () => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', stopPan);
-      window.removeEventListener('pointercancel', stopPan);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopPan);
+      window.removeEventListener("pointercancel", stopPan);
     };
   }, [isPanning]);
 
@@ -6080,7 +6137,7 @@ const GerarBPMNCreate = () => {
       const key = event.key.toLowerCase();
       const panStep = event.shiftKey ? 160 : 80;
 
-      if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (event.key === "Delete" || event.key === "Backspace") {
         if (isReadOnlyMode) return;
         if (selectedConnectionId || selectedNodeId) {
           event.preventDefault();
@@ -6089,25 +6146,25 @@ const GerarBPMNCreate = () => {
         return;
       }
 
-      if (event.key === 'ArrowLeft' || key === 'a') {
+      if (event.key === "ArrowLeft" || key === "a") {
         event.preventDefault();
         viewport.scrollLeft -= panStep;
         return;
       }
 
-      if (event.key === 'ArrowRight' || key === 'd') {
+      if (event.key === "ArrowRight" || key === "d") {
         event.preventDefault();
         viewport.scrollLeft += panStep;
         return;
       }
 
-      if (event.key === 'ArrowUp' || key === 'w') {
+      if (event.key === "ArrowUp" || key === "w") {
         event.preventDefault();
         viewport.scrollTop -= panStep;
         return;
       }
 
-      if (event.key === 'ArrowDown' || key === 's') {
+      if (event.key === "ArrowDown" || key === "s") {
         event.preventDefault();
         viewport.scrollTop += panStep;
       }
@@ -6129,17 +6186,17 @@ const GerarBPMNCreate = () => {
 
       const targetTag = event.target?.tagName?.toLowerCase();
       const isTypingField =
-        targetTag === 'input' ||
-        targetTag === 'textarea' ||
-        targetTag === 'select' ||
+        targetTag === "input" ||
+        targetTag === "textarea" ||
+        targetTag === "select" ||
         event.target?.isContentEditable;
       if (isTypingField) return;
 
       handleViewportKeyDown(event);
     };
 
-    window.addEventListener('keydown', handleGlobalKeyDown);
-    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [handleViewportKeyDown, isViewportHovered]);
 
   const handleToggleCanvasFullscreen = React.useCallback(async () => {
@@ -6161,9 +6218,9 @@ const GerarBPMNCreate = () => {
       );
     };
 
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () =>
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
   const closeTutorial = React.useCallback(() => {
@@ -6201,9 +6258,9 @@ const GerarBPMNCreate = () => {
     if (!currentStep?.selector) {
       setTutorialSpotlight(null);
       setTutorialPopoverStyle({
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
       });
       setIsTutorialLayoutReady(true);
       return;
@@ -6213,9 +6270,9 @@ const GerarBPMNCreate = () => {
     if (!target) {
       setTutorialSpotlight(null);
       setTutorialPopoverStyle({
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
       });
       setIsTutorialLayoutReady(true);
       return;
@@ -6252,13 +6309,13 @@ const GerarBPMNCreate = () => {
       let rawLeft = margin;
       let rawTop = margin;
 
-      if (placement === 'left') {
+      if (placement === "left") {
         rawLeft = spotlightRect.left - cardWidth - gap;
         rawTop = spotlightRect.top + spotlightRect.height / 2 - cardHeight / 2;
-      } else if (placement === 'right') {
+      } else if (placement === "right") {
         rawLeft = spotlightRect.left + spotlightRect.width + gap;
         rawTop = spotlightRect.top + spotlightRect.height / 2 - cardHeight / 2;
-      } else if (placement === 'top') {
+      } else if (placement === "top") {
         rawLeft = spotlightRect.left + spotlightRect.width / 2 - cardWidth / 2;
         rawTop = spotlightRect.top - cardHeight - gap;
       } else {
@@ -6287,13 +6344,13 @@ const GerarBPMNCreate = () => {
       };
     };
 
-    const preferredPlacement = String(currentStep?.popoverPlacement || '');
+    const preferredPlacement = String(currentStep?.popoverPlacement || "");
     const placementOrder = [
-      preferredPlacement || 'bottom',
-      'right',
-      'left',
-      'top',
-      'bottom',
+      preferredPlacement || "bottom",
+      "right",
+      "left",
+      "top",
+      "bottom",
     ].filter(
       (placement, index, list) =>
         placement && list.indexOf(placement) === index,
@@ -6308,7 +6365,7 @@ const GerarBPMNCreate = () => {
     setTutorialPopoverStyle({
       top: `${bestCandidate.top}px`,
       left: `${bestCandidate.left}px`,
-      transform: 'none',
+      transform: "none",
     });
     setIsTutorialLayoutReady(true);
   }, [activeTutorialSteps, isTutorialOpen, tutorialStepIndex]);
@@ -6317,22 +6374,22 @@ const GerarBPMNCreate = () => {
     if (!isTutorialOpen) return;
 
     const currentStep = activeTutorialSteps[tutorialStepIndex];
-    const isSidebarStep = String(currentStep?.id || '').startsWith('sidebar');
+    const isSidebarStep = String(currentStep?.id || "").startsWith("sidebar");
     if (isSidebarStep) {
       if (isSidebarHidden) {
         setIsSidebarHidden(false);
       }
 
       if (selectedConnectionId) {
-        setSelectedConnectionId('');
+        setSelectedConnectionId("");
       }
 
       if (!selectedNodeId && Array.isArray(nodes) && nodes.length > 0) {
         setSelectedNodeId(nodes[0].id);
       }
 
-      if (activeSidebarTab !== 'entidade') {
-        setActiveSidebarTab('entidade');
+      if (activeSidebarTab !== "entidade") {
+        setActiveSidebarTab("entidade");
       }
     }
 
@@ -6343,9 +6400,9 @@ const GerarBPMNCreate = () => {
 
     if (target) {
       target.scrollIntoView({
-        behavior: 'auto',
-        block: 'center',
-        inline: 'center',
+        behavior: "auto",
+        block: "center",
+        inline: "center",
       });
     }
 
@@ -6378,18 +6435,18 @@ const GerarBPMNCreate = () => {
     if (!isTutorialOpen) return;
 
     const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         closeTutorial();
         return;
       }
 
-      if (event.key === 'ArrowRight') {
+      if (event.key === "ArrowRight") {
         event.preventDefault();
         handleNextTutorialStep();
         return;
       }
 
-      if (event.key === 'ArrowLeft') {
+      if (event.key === "ArrowLeft") {
         event.preventDefault();
         handlePreviousTutorialStep();
       }
@@ -6399,14 +6456,14 @@ const GerarBPMNCreate = () => {
       updateTutorialLayout();
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('resize', handleWindowUpdate);
-    window.addEventListener('scroll', handleWindowUpdate, true);
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleWindowUpdate);
+    window.addEventListener("scroll", handleWindowUpdate, true);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('resize', handleWindowUpdate);
-      window.removeEventListener('scroll', handleWindowUpdate, true);
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleWindowUpdate);
+      window.removeEventListener("scroll", handleWindowUpdate, true);
     };
   }, [
     closeTutorial,
@@ -6417,15 +6474,15 @@ const GerarBPMNCreate = () => {
   ]);
 
   React.useEffect(() => {
-    if (typeof document === 'undefined') return undefined;
+    if (typeof document === "undefined") return undefined;
 
     const body = document.body;
     if (!body) return undefined;
 
     if (isTutorialOpen) {
-      body.dataset.bpmnTutorialOpen = 'true';
+      body.dataset.bpmnTutorialOpen = "true";
       body.dataset.bpmnTutorialStep = String(
-        activeTutorialSteps[tutorialStepIndex]?.id || '',
+        activeTutorialSteps[tutorialStepIndex]?.id || "",
       );
     } else {
       delete body.dataset.bpmnTutorialOpen;
@@ -6517,7 +6574,7 @@ const GerarBPMNCreate = () => {
               role="status"
               aria-live="polite"
             >
-              {editorNameSaveFeedback || 'Mensagem de confirmacao'}
+              {editorNameSaveFeedback || "Mensagem de confirmacao"}
             </span>
           </div>
           {!isTouchDevice ? (
@@ -6535,16 +6592,16 @@ const GerarBPMNCreate = () => {
               </button>
               <button
                 type="button"
-                className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
+                className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ""}`}
                 data-tutorial-id="fullscreen-toggle"
                 onClick={handleToggleCanvasFullscreen}
                 aria-pressed={isCanvasFullscreen}
                 aria-label={
-                  isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
+                  isCanvasFullscreen ? "Sair da tela cheia" : "Tela cheia"
                 }
-                title={isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                title={isCanvasFullscreen ? "Sair da tela cheia" : "Tela cheia"}
               >
-                {isCanvasFullscreen ? '⤡' : '⤢'}
+                {isCanvasFullscreen ? "⤡" : "⤢"}
               </button>
             </div>
           ) : null}
@@ -6567,18 +6624,18 @@ const GerarBPMNCreate = () => {
                 </button>
                 <button
                   type="button"
-                  className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ''}`}
+                  className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.fullscreenToggleButton} ${isCanvasFullscreen ? styles.iconActionButtonActive : ""}`}
                   data-tutorial-id="fullscreen-toggle"
                   onClick={handleToggleCanvasFullscreen}
                   aria-pressed={isCanvasFullscreen}
                   aria-label={
-                    isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
+                    isCanvasFullscreen ? "Sair da tela cheia" : "Tela cheia"
                   }
                   title={
-                    isCanvasFullscreen ? 'Sair da tela cheia' : 'Tela cheia'
+                    isCanvasFullscreen ? "Sair da tela cheia" : "Tela cheia"
                   }
                 >
-                  {isCanvasFullscreen ? '⤡' : '⤢'}
+                  {isCanvasFullscreen ? "⤡" : "⤢"}
                 </button>
               </>
             ) : null}
@@ -6591,7 +6648,7 @@ const GerarBPMNCreate = () => {
               aria-label="Salvar BPMN"
               title="Salvar BPMN"
             >
-              {isSavingBpmn ? 'SALVANDO...' : 'SALVAR'}
+              {isSavingBpmn ? "SALVANDO..." : "SALVAR"}
             </button>
             <button
               type="button"
@@ -6623,32 +6680,32 @@ const GerarBPMNCreate = () => {
           </button>
           <button
             type="button"
-            className={`${styles.secondaryButton} ${styles.iconActionButton} ${isZoomBetweenLimits ? styles.iconActionButtonActive : ''}`}
+            className={`${styles.secondaryButton} ${styles.iconActionButton} ${isZoomBetweenLimits ? styles.iconActionButtonActive : ""}`}
             data-tutorial-id="zoom-toggle"
             onClick={() => applyZoomStep(zoomButtonDirection)}
             aria-label={
-              zoomButtonDirection < 0 ? 'Diminuir zoom' : 'Aumentar zoom'
+              zoomButtonDirection < 0 ? "Diminuir zoom" : "Aumentar zoom"
             }
-            title={zoomButtonDirection < 0 ? 'Diminuir zoom' : 'Aumentar zoom'}
+            title={zoomButtonDirection < 0 ? "Diminuir zoom" : "Aumentar zoom"}
           >
-            {zoomButtonDirection < 0 ? '−' : '+'}
+            {zoomButtonDirection < 0 ? "−" : "+"}
           </button>
           <button
             type="button"
-            className={`${styles.secondaryButton} ${styles.iconActionButton} ${isPropertiesPinned ? styles.iconActionButtonActive : ''}`}
+            className={`${styles.secondaryButton} ${styles.iconActionButton} ${isPropertiesPinned ? styles.iconActionButtonActive : ""}`}
             data-tutorial-id="properties-toggle"
             onClick={handleTogglePropertiesPinned}
             aria-pressed={isPropertiesPinned}
             disabled={!hasSelection}
             aria-label={
               isPropertiesPinned
-                ? 'Desligar propriedades fixas'
-                : 'Ligar propriedades fixas'
+                ? "Desligar propriedades fixas"
+                : "Ligar propriedades fixas"
             }
             title={
               isPropertiesPinned
-                ? 'Desligar propriedades fixas'
-                : 'Ligar propriedades fixas'
+                ? "Desligar propriedades fixas"
+                : "Ligar propriedades fixas"
             }
           >
             ▤
@@ -6658,9 +6715,9 @@ const GerarBPMNCreate = () => {
 
       <div
         className={`${styles.workspace} ${
-          isCanvasFullscreen ? styles.workspaceFullscreen : ''
-        } ${shouldHideProperties ? styles.sidebarHidden : ''} ${
-          isTouchDevice ? styles.workspaceTouch : ''
+          isCanvasFullscreen ? styles.workspaceFullscreen : ""
+        } ${shouldHideProperties ? styles.sidebarHidden : ""} ${
+          isTouchDevice ? styles.workspaceTouch : ""
         }`}
         ref={workspaceFullscreenRef}
       >
@@ -6690,16 +6747,16 @@ const GerarBPMNCreate = () => {
             </div>
           </div>
           <div
-            className={`${styles.canvasViewport} ${isPanning ? styles.panning : ''}`}
+            className={`${styles.canvasViewport} ${isPanning ? styles.panning : ""}`}
             data-tutorial-id="canvas-viewport"
             ref={viewportRef}
             onPointerDown={handleViewportPointerDown}
             style={{
               touchAction: isTouchDevice
                 ? isPanning
-                  ? 'none'
-                  : 'pan-x pan-y'
-                : 'auto',
+                  ? "none"
+                  : "pan-x pan-y"
+                : "auto",
             }}
             onMouseEnter={() => setIsViewportHovered(true)}
             onMouseLeave={() => setIsViewportHovered(false)}
@@ -6714,8 +6771,8 @@ const GerarBPMNCreate = () => {
                 '[data-bpmn-node="true"]',
               );
               if (!clickedNode) {
-                setSelectedNodeId('');
-                setSelectedConnectionId('');
+                setSelectedNodeId("");
+                setSelectedConnectionId("");
                 if (!isPropertiesPinned) {
                   setIsSidebarHidden(true);
                 }
@@ -6732,7 +6789,7 @@ const GerarBPMNCreate = () => {
                 width: `${canvasWidth}px`,
                 height: `${canvasHeight}px`,
                 transform: `scale(${zoom})`,
-                transformOrigin: 'top left',
+                transformOrigin: "top left",
               }}
             >
               <BpmnFlow
@@ -6786,7 +6843,7 @@ const GerarBPMNCreate = () => {
                     className={`${styles.miniMapNode} ${
                       selectedNodeId === node.id
                         ? styles.miniMapNodeSelected
-                        : ''
+                        : ""
                     }`}
                     style={{
                       left: `${((node.x || 0) / canvasWidth) * minimapState.width}px`,
@@ -6810,9 +6867,9 @@ const GerarBPMNCreate = () => {
                   className={`${styles.secondaryButton} ${styles.iconActionButton} ${styles.miniMapCenterButton} ${
                     isTutorialOpen &&
                     activeTutorialSteps[tutorialStepIndex]?.id !==
-                      'canvas-minimap'
+                      "canvas-minimap"
                       ? styles.miniMapCenterButtonMuted
-                      : ''
+                      : ""
                   }`}
                   onPointerDown={(event) => {
                     event.stopPropagation();
@@ -6833,7 +6890,7 @@ const GerarBPMNCreate = () => {
         </div>
 
         <GerarBPMNContextSidebar
-          className={isTouchDevice ? styles.contextSidebarTopMenu : ''}
+          className={isTouchDevice ? styles.contextSidebarTopMenu : ""}
           isMobileMenu={isTouchDevice}
           tutorialTargetId="context-sidebar"
           shouldHideProperties={shouldHideProperties}
@@ -6927,7 +6984,7 @@ const GerarBPMNCreate = () => {
             style={{
               ...tutorialPopoverStyle,
               opacity: isTutorialLayoutReady ? 1 : 0,
-              pointerEvents: isTutorialLayoutReady ? 'auto' : 'none',
+              pointerEvents: isTutorialLayoutReady ? "auto" : "none",
             }}
             onClick={(event) => event.stopPropagation()}
           >
@@ -6951,16 +7008,16 @@ const GerarBPMNCreate = () => {
 
             <div className={styles.tutorialPopoverBody}>
               <h3 className={styles.tutorialPopoverStepTitle}>
-                {activeTutorialSteps[tutorialStepIndex]?.title || 'Tutorial'}
+                {activeTutorialSteps[tutorialStepIndex]?.title || "Tutorial"}
               </h3>
               <p className={styles.tutorialPopoverStepDescription}>
                 {activeTutorialSteps[tutorialStepIndex]?.description ||
-                  'Siga os passos para conhecer o editor.'}
+                  "Siga os passos para conhecer o editor."}
               </p>
 
               <p className={styles.tutorialPopoverHint}>
                 {activeTutorialSteps[tutorialStepIndex]?.hint ||
-                  'Dica: use as setas ← e → para navegar entre as etapas do tutorial.'}
+                  "Dica: use as setas ← e → para navegar entre as etapas do tutorial."}
               </p>
 
               <div className={styles.tutorialPopoverActions}>
@@ -7000,8 +7057,8 @@ const GerarBPMNCreate = () => {
           className={styles.decisionPromptOverlay}
           onClick={() => {
             setIsDecisionPromptOpen(false);
-            setPendingDecisionConnectionId('');
-            setDecisionPromptCustomValue('');
+            setPendingDecisionConnectionId("");
+            setDecisionPromptCustomValue("");
             setDecisionPromptPosition({ x: null, y: null });
           }}
         >
@@ -7019,7 +7076,7 @@ const GerarBPMNCreate = () => {
                 setDecisionPromptCustomValue(event.target.value)
               }
               onKeyDown={(event) => {
-                if (event.key === 'Enter') {
+                if (event.key === "Enter") {
                   event.preventDefault();
                   handleDecisionPromptChoice(decisionPromptCustomValue);
                 }
@@ -7031,21 +7088,21 @@ const GerarBPMNCreate = () => {
               <button
                 type="button"
                 className={`${styles.secondaryButton} ${styles.decisionNoButton}`}
-                onClick={() => handleDecisionPromptChoice('nao')}
+                onClick={() => handleDecisionPromptChoice("nao")}
               >
                 Não (✕)
               </button>
               <button
                 type="button"
                 className={`${styles.secondaryButton} ${styles.decisionYesButton}`}
-                onClick={() => handleDecisionPromptChoice('sim')}
+                onClick={() => handleDecisionPromptChoice("sim")}
               >
                 Sim (✓)
               </button>
               <button
                 type="button"
                 className={styles.secondaryButton}
-                disabled={!String(decisionPromptCustomValue || '').trim()}
+                disabled={!String(decisionPromptCustomValue || "").trim()}
                 onClick={() =>
                   handleDecisionPromptChoice(decisionPromptCustomValue)
                 }
@@ -7082,7 +7139,7 @@ const GerarBPMNCreate = () => {
       {deleteSuggestedEntityDraft ? (
         <Close
           title="Deletar entidade"
-          message={`Deseja realmente deletar a entidade "${getEntidadeNome(deleteSuggestedEntityDraft) || 'selecionada'}"?`}
+          message={`Deseja realmente deletar a entidade "${getEntidadeNome(deleteSuggestedEntityDraft) || "selecionada"}"?`}
           onConfirm={handleConfirmDeleteSuggestedEntity}
           onCancel={handleCancelDeleteSuggestedEntity}
           confirmLabel="Deletar"

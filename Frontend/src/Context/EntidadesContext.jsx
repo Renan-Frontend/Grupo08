@@ -1,40 +1,40 @@
-import React from 'react';
+import React from "react";
 import {
   ENTIDADES_GET,
   ENTIDADES_POST,
   ENTIDADES_PUT,
   ENTIDADES_DELETE,
-} from '../Api';
+} from "../Api";
 
 const EntidadesContext = React.createContext();
-const ENTIDADES_CONFIG_STORAGE_KEY = 'entidades_config_v1';
+const ENTIDADES_CONFIG_STORAGE_KEY = "entidades_config_v1";
 export const ENTIDADE_FIELD_TYPES = [
-  'Texto',
-  'Número',
-  'Data',
-  'Email',
-  'Telefone',
-  'Booleano',
+  "Texto",
+  "Número",
+  "Data",
+  "Email",
+  "Telefone",
+  "Booleano",
 ];
 
 const resolveToken = (token) =>
   token ||
-  window.sessionStorage.getItem('token') ||
-  window.localStorage.getItem('token');
+  window.sessionStorage.getItem("token") ||
+  window.localStorage.getItem("token");
 
-const normalizeName = (value = '') =>
+const normalizeName = (value = "") =>
   String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
 
-const generateUniqueId = (prefix = 'id') =>
+const generateUniqueId = (prefix = "id") =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 const getEntidadeId = (entidade) => entidade?.id ?? entidade?._id ?? null;
 const getEntidadeName = (entidade) =>
-  String(entidade?.nome || entidade?.name || entidade?.titulo || '').trim();
+  String(entidade?.nome || entidade?.name || entidade?.titulo || "").trim();
 
 const getEntityKeyByValues = (id, nome) => {
   if (id !== null && id !== undefined && String(id).trim()) {
@@ -49,7 +49,7 @@ const getEntityKeyByValues = (id, nome) => {
 const getEntityKeys = (entidadeOrRef) => {
   if (!entidadeOrRef) return [];
 
-  if (typeof entidadeOrRef === 'object') {
+  if (typeof entidadeOrRef === "object") {
     const idKey = getEntityKeyByValues(getEntidadeId(entidadeOrRef), null);
     if (idKey) {
       // When an entity has an ID, avoid name-based key matching to prevent
@@ -74,24 +74,24 @@ const getEntityKeys = (entidadeOrRef) => {
 };
 
 const normalizeCampo = (campo, index = 0) => {
-  const nome = String(campo?.nome || '').trim();
+  const nome = String(campo?.nome || "").trim();
   const tipo = ENTIDADE_FIELD_TYPES.includes(campo?.tipo)
     ? campo.tipo
-    : 'Texto';
+    : "Texto";
   const obrigatorio =
-    campo?.obrigatorio === true || String(campo?.obrigatorio) === 'Sim';
-  const keyTypeRaw = String(campo?.keyType || campo?.chave || 'NORMAL')
+    campo?.obrigatorio === true || String(campo?.obrigatorio) === "Sim";
+  const keyTypeRaw = String(campo?.keyType || campo?.chave || "NORMAL")
     .trim()
     .toUpperCase();
-  const keyType = ['PK', 'FK', 'NORMAL'].includes(keyTypeRaw)
+  const keyType = ["PK", "FK", "NORMAL"].includes(keyTypeRaw)
     ? keyTypeRaw
-    : 'NORMAL';
+    : "NORMAL";
   const isUnique =
     campo?.isUnique === true || campo?.unico === true || campo?.unique === true;
   const relacionamento = campo?.relacionamento || null;
 
   return {
-    id: campo?.id || generateUniqueId('campo'),
+    id: campo?.id || generateUniqueId("campo"),
     nome,
     tipo,
     obrigatorio,
@@ -116,7 +116,7 @@ const throwIfDuplicateFieldNames = (campos = [], ignoreId = null) => {
 
     const normalized = normalizeName(campo.nome);
     if (!normalized) {
-      throw new Error('Nome do campo é obrigatório');
+      throw new Error("Nome do campo é obrigatório");
     }
 
     if (seen.has(normalized)) {
@@ -134,40 +134,66 @@ const normalizeEntidadesPayload = (payload) => {
   return [];
 };
 
+const inferPapelNegocioFromTipoEntidade = (
+  tipoEntidade,
+  fallback = "processo",
+) => {
+  const normalized = String(tipoEntidade || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    normalized === "contato" ||
+    normalized.includes("cliente") ||
+    normalized.includes("fornecedor") ||
+    normalized.includes("parceiro") ||
+    normalized.includes("pessoa") ||
+    normalized.includes("empresa")
+  ) {
+    return "contato";
+  }
+
+  if (normalized === "processo" || normalized.includes("process")) {
+    return "processo";
+  }
+
+  return fallback;
+};
+
 const buildEntidadePayload = (entidade = {}, previous = null) => {
-  const nome = String(entidade.nome || previous?.nome || '').trim();
+  const nome = String(entidade.nome || previous?.nome || "").trim();
   const categoria = String(
-    entidade.categoria || previous?.categoria || 'BPMN',
+    entidade.categoria || previous?.categoria || "BPMN",
   ).trim();
-  const explicitTipoEntidade = String(entidade?.tipoEntidade || '').trim();
-  const previousTipoEntidade = String(previous?.tipoEntidade || '').trim();
+  const explicitTipoEntidade = String(entidade?.tipoEntidade || "").trim();
+  const previousTipoEntidade = String(previous?.tipoEntidade || "").trim();
   const normalizedTipoEntidade = explicitTipoEntidade
     ? explicitTipoEntidade.toLowerCase()
     : previousTipoEntidade
       ? previousTipoEntidade.toLowerCase()
       : entidade?.isPrimaryEntity === true || previous?.isPrimaryEntity === true
-        ? 'principal'
-        : 'apoio';
+        ? "contato"
+        : "processo";
+  const inferredPapelNegocio = inferPapelNegocioFromTipoEntidade(
+    normalizedTipoEntidade,
+    entidade?.isPrimaryEntity === true || previous?.isPrimaryEntity === true
+      ? "contato"
+      : "processo",
+  );
   const tipoEntidade =
-    normalizedTipoEntidade === 'principal'
-      ? 'Principal'
-      : normalizedTipoEntidade === 'associativa'
-        ? 'Associativa'
-        : normalizedTipoEntidade === 'externa'
-          ? 'Externa'
-          : 'Apoio';
+    inferredPapelNegocio === "contato" ? "Contato" : "Processo";
   const isPrimaryEntity =
-    typeof entidade?.isPrimaryEntity === 'boolean'
+    typeof entidade?.isPrimaryEntity === "boolean"
       ? entidade.isPrimaryEntity
-      : normalizedTipoEntidade === 'principal';
+      : inferredPapelNegocio === "contato";
   const descricao = String(
-    entidade.descricao || previous?.descricao || 'Entidade gerada pelo BPMN',
+    entidade.descricao || previous?.descricao || "Entidade gerada pelo BPMN",
   ).trim();
   const atributoChave =
     entidade.atributoChave ?? previous?.atributoChave ?? null;
   const ativo = entidade.ativo ?? previous?.ativo ?? true;
   const criadoPor =
-    entidade.criadoPor || previous?.criadoPor || 'Usuário do sistema';
+    entidade.criadoPor || previous?.criadoPor || "Usuário do sistema";
   const updated_at =
     entidade.updated_at || previous?.updated_at || new Date().toISOString();
   const numeroRelacionamentos =
@@ -180,6 +206,10 @@ const buildEntidadePayload = (entidade = {}, previous = null) => {
   const bpmnUsageCount =
     Number(entidade.bpmnUsageCount ?? previous?.bpmnUsageCount) || 0;
   const campos = normalizeCampos(entidade.campos || previous?.campos || []);
+  const papelNegocio =
+    entidade.papelNegocio !== undefined
+      ? entidade.papelNegocio || inferredPapelNegocio
+      : previous?.papelNegocio || inferredPapelNegocio;
 
   return {
     nome,
@@ -194,6 +224,7 @@ const buildEntidadePayload = (entidade = {}, previous = null) => {
     numeroRelacionamentos,
     bpmnUsageCount,
     campos,
+    papelNegocio,
   };
 };
 
@@ -202,7 +233,7 @@ const readEntityConfigStorage = () => {
     const raw = window.localStorage.getItem(ENTIDADES_CONFIG_STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object') return {};
+    if (!parsed || typeof parsed !== "object") return {};
     return parsed;
   } catch {
     return {};
@@ -231,7 +262,7 @@ const EntidadesProvider = ({ children }) => {
   const saveEntityConfigMap = React.useCallback((updater) => {
     setEntityConfigMap((previous) => {
       const nextValue =
-        typeof updater === 'function' ? updater(previous || {}) : updater || {};
+        typeof updater === "function" ? updater(previous || {}) : updater || {};
       writeEntityConfigStorage(nextValue);
       return nextValue;
     });
@@ -258,41 +289,56 @@ const EntidadesProvider = ({ children }) => {
 
       return {
         ...entidade,
-        descricao: entidade.descricao || config.descricao || '',
+        descricao: entidade.descricao || config.descricao || "",
         atributoChave: entidade.atributoChave ?? config.atributoChave ?? null,
-        categoria: entidade.categoria || config.categoria || 'BPMN',
+        categoria: entidade.categoria || config.categoria || "BPMN",
         tipoEntidade: (() => {
           const rawTipo =
             entidade.tipoEntidade ||
             config.tipoEntidade ||
-            (entidade?.isPrimaryEntity === true ? 'Principal' : 'Apoio');
-          const normalizedTipo = String(rawTipo || '')
+            (entidade?.isPrimaryEntity === true ? "Contato" : "Processo");
+          const normalizedTipo = String(rawTipo || "")
             .trim()
             .toLowerCase();
 
-          if (normalizedTipo === 'principal') return 'Principal';
-          if (normalizedTipo === 'associativa') return 'Associativa';
-          if (normalizedTipo === 'externa') return 'Externa';
-          return 'Apoio';
+          if (normalizedTipo === "contato") return "Contato";
+          return "Processo";
+        })(),
+        papelNegocio: (() => {
+          const explicit = String(
+            entidade?.papelNegocio || config?.papelNegocio || "",
+          )
+            .trim()
+            .toLowerCase();
+          if (explicit === "contato" || explicit === "processo") {
+            return explicit;
+          }
+          return inferPapelNegocioFromTipoEntidade(
+            entidade?.tipoEntidade || config?.tipoEntidade || "",
+            entidade?.isPrimaryEntity === true ||
+              config?.isPrimaryEntity === true
+              ? "contato"
+              : "processo",
+          );
         })(),
         isPrimaryEntity: (() => {
-          if (typeof entidade?.isPrimaryEntity === 'boolean') {
+          if (typeof entidade?.isPrimaryEntity === "boolean") {
             return entidade.isPrimaryEntity;
           }
 
-          if (typeof config?.isPrimaryEntity === 'boolean') {
+          if (typeof config?.isPrimaryEntity === "boolean") {
             return config.isPrimaryEntity;
           }
 
-          const rawTipo = entidade.tipoEntidade || config.tipoEntidade || '';
+          const rawTipo = entidade.tipoEntidade || config.tipoEntidade || "";
           return (
-            String(rawTipo || '')
+            String(rawTipo || "")
               .trim()
-              .toLowerCase() === 'principal'
+              .toLowerCase() === "contato"
           );
         })(),
         updated_at:
-          entidade.updated_at || config.updated_at || entidade.created_at || '',
+          entidade.updated_at || config.updated_at || entidade.created_at || "",
         numeroRelacionamentos:
           Number(
             entidade.numeroRelacionamentos ?? config.numeroRelacionamentos,
@@ -324,10 +370,10 @@ const EntidadesProvider = ({ children }) => {
     (nome, ignoreId = null, categoria = null) => {
       const normalizedNewName = normalizeName(nome);
       if (!normalizedNewName) {
-        throw new Error('Nome da entidade é obrigatório');
+        throw new Error("Nome da entidade é obrigatório");
       }
 
-      const normalizedCategoria = normalizeName(categoria || '');
+      const normalizedCategoria = normalizeName(categoria || "");
 
       const duplicated = entidades.some((entidade) => {
         const entidadeName = normalizeName(getEntidadeName(entidade));
@@ -335,7 +381,7 @@ const EntidadesProvider = ({ children }) => {
         if (entidadeName !== normalizedNewName) return false;
 
         if (normalizedCategoria) {
-          const entidadeCategoria = normalizeName(entidade?.categoria || '');
+          const entidadeCategoria = normalizeName(entidade?.categoria || "");
           if (entidadeCategoria !== normalizedCategoria) return false;
         }
 
@@ -406,7 +452,7 @@ const EntidadesProvider = ({ children }) => {
     const currentToken = resolveToken(token);
     const { url, options } = ENTIDADES_GET(currentToken);
     const response = await fetch(url, options);
-    if (!response.ok) throw new Error('Erro ao buscar entidades');
+    if (!response.ok) throw new Error("Erro ao buscar entidades");
     const json = await response.json();
     return normalizeEntidadesPayload(json);
   };
@@ -414,7 +460,7 @@ const EntidadesProvider = ({ children }) => {
   const adicionarEntidade = async (novaEntidade, token) => {
     const currentToken = resolveToken(token);
     if (!currentToken) {
-      throw new Error('Token não encontrado para criar entidade');
+      throw new Error("Token não encontrado para criar entidade");
     }
 
     const payload = buildEntidadePayload(novaEntidade);
@@ -423,7 +469,7 @@ const EntidadesProvider = ({ children }) => {
 
     const { url, options } = ENTIDADES_POST(payload, currentToken);
     const response = await fetch(url, options);
-    if (!response.ok) throw new Error('Erro ao criar entidade');
+    if (!response.ok) throw new Error("Erro ao criar entidade");
     const entidadeCriada = await response.json();
 
     setEntidadesRaw((previous) => {
@@ -460,7 +506,7 @@ const EntidadesProvider = ({ children }) => {
 
       const { url, options } = ENTIDADES_PUT(id, payload, currentToken);
       const response = await fetch(url, options);
-      if (!response.ok) throw new Error('Erro ao editar entidade');
+      if (!response.ok) throw new Error("Erro ao editar entidade");
       const entidadeEditada = await response.json();
       setEntidadesRaw((prev) =>
         Array.isArray(prev)
@@ -483,7 +529,7 @@ const EntidadesProvider = ({ children }) => {
     const { url, options } = ENTIDADES_DELETE(id, currentToken);
     const response = await fetch(url, options);
     if (!response.ok && response.status !== 204 && response.status !== 404)
-      throw new Error('Erro ao deletar entidade');
+      throw new Error("Erro ao deletar entidade");
 
     const entidadeRemovida = entidades.find(
       (entidade) => String(getEntidadeId(entidade)) === String(id),
@@ -512,10 +558,10 @@ const EntidadesProvider = ({ children }) => {
   const adicionarCampoEntidade = React.useCallback(
     async (entidadeRef, novoCampo) => {
       const entidade = findEntidade(entidadeRef);
-      if (!entidade) throw new Error('Entidade não encontrada');
+      if (!entidade) throw new Error("Entidade não encontrada");
       const entidadeId = getEntidadeId(entidade);
       if (entidadeId === null || entidadeId === undefined) {
-        throw new Error('ID da entidade não encontrado para salvar campo.');
+        throw new Error("ID da entidade não encontrado para salvar campo.");
       }
 
       const camposAtualizados = [
@@ -538,10 +584,10 @@ const EntidadesProvider = ({ children }) => {
   const editarCampoEntidade = React.useCallback(
     async (entidadeRef, campoId, campoPatch) => {
       const entidade = findEntidade(entidadeRef);
-      if (!entidade) throw new Error('Entidade não encontrada');
+      if (!entidade) throw new Error("Entidade não encontrada");
       const entidadeId = getEntidadeId(entidade);
       if (entidadeId === null || entidadeId === undefined) {
-        throw new Error('ID da entidade não encontrado para salvar campo.');
+        throw new Error("ID da entidade não encontrado para salvar campo.");
       }
 
       const camposAtualizados = normalizeCampos(entidade.campos || []).map(
@@ -566,10 +612,10 @@ const EntidadesProvider = ({ children }) => {
   const removerCampoEntidade = React.useCallback(
     async (entidadeRef, campoId) => {
       const entidade = findEntidade(entidadeRef);
-      if (!entidade) throw new Error('Entidade não encontrada');
+      if (!entidade) throw new Error("Entidade não encontrada");
       const entidadeId = getEntidadeId(entidade);
       if (entidadeId === null || entidadeId === undefined) {
-        throw new Error('ID da entidade não encontrado para salvar campo.');
+        throw new Error("ID da entidade não encontrado para salvar campo.");
       }
 
       const camposAtualizados = normalizeCampos(entidade.campos || []).filter(
@@ -618,12 +664,12 @@ const EntidadesProvider = ({ children }) => {
     setError(null);
     try {
       const token =
-        window.sessionStorage.getItem('token') ||
-        window.localStorage.getItem('token');
+        window.sessionStorage.getItem("token") ||
+        window.localStorage.getItem("token");
       const entidadesData = await getEntidades(token || undefined);
       setEntidadesRaw(entidadesData);
     } catch (err) {
-      console.error('[EntidadesContext] refetch error:', err);
+      console.error("[EntidadesContext] refetch error:", err);
       setError(err.message);
     } finally {
       setLoading(false);
