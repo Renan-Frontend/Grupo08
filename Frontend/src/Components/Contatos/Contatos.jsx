@@ -459,11 +459,8 @@ const CreateContactModal = ({
   };
 
   return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <div
-        className={styles.modal}
-        onClick={(event) => event.stopPropagation()}
-      >
+    <div className={styles.modalBackdrop}>
+      <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <span className={styles.modalTitle}>
             <EditableLabel
@@ -857,8 +854,8 @@ const EditContactModal = ({
   };
 
   return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalBackdrop}>
+      <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <span className={styles.modalTitle}>
             <EditableLabel

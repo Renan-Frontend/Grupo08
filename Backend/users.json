@@ -35,7 +35,7 @@
     "id": 4,
     "nome": "Renan Naves",
     "email": "renan1395@gmail.com",
-    "senha": "ae6ee2d9efe52f7d0398a1668f38ef29f003f7501adbdc3bedc1691ff960706c",
+    "senha": "$2b$12$D0GE78KbqLEdQVYB1QpXJebATnHgnvAqRjT7jZopt0PDA1Zhipx86",
     "ativo": true,
     "created_at": "2026-03-04T10:53:42.979853",
     "admin": false,
@@ -51,6 +51,18 @@
     "admin": true,
     "role": "user",
     "nivel": 3,
+    "cargo": ""
+  },
+  {
+    "id": 6,
+    "nome": "Teste Cadastro",
+    "email": "teste.cadastro.fix@example.com",
+    "senha": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
+    "ativo": true,
+    "created_at": "2026-04-29T12:04:44.425600",
+    "admin": false,
+    "role": "user",
+    "nivel": "1",
     "cargo": ""
   }
 ]

@@ -56,8 +56,8 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
   if (!show) return null;
 
   return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalBackdrop}>
+      <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h3>Novo Prospecto</h3>
           <button onClick={onClose} className={styles.closeBtn}>

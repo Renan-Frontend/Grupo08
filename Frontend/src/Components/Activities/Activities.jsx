@@ -180,6 +180,7 @@ const ACTIVITY_LABEL_DEFAULTS = {
   tipo: "Tipo",
   status: "Status",
   titulo: "Título",
+  referencia: "Referência",
   descricao: "Descrição",
   data_atividade: "Data/Hora",
   responsavel: "Responsável",
@@ -195,6 +196,7 @@ const ACTIVITY_REQUIRED_DEFAULTS = {
   tipo: true,
   status: false,
   titulo: true,
+  referencia: false,
   descricao: false,
   data_atividade: true,
   responsavel: false,
@@ -243,6 +245,7 @@ const CreateActivityModal = ({
 }) => {
   const initialFormData = {
     titulo: "",
+    referencia: "",
     descricao: "",
     tipo: "Nota",
     data_atividade: new Date().toISOString().slice(0, 16),
@@ -279,6 +282,7 @@ const CreateActivityModal = ({
     if (isEditMode) {
       setFormData({
         titulo: editingActivity?.titulo || "",
+        referencia: editingActivity?.referencia || "",
         descricao: editingActivity?.descricao || "",
         tipo: editingActivity?.tipo || "",
         data_atividade: String(editingActivity?.data_atividade || "").slice(
@@ -328,6 +332,7 @@ const CreateActivityModal = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          referencia: formData.referencia || null,
           entidade_tipo: entityType || null,
           entidade_id: entityId || null,
           usuario_criador: localStorage.getItem("user_id") || "sistema",
@@ -362,8 +367,8 @@ const CreateActivityModal = ({
   if (!show) return null;
 
   return (
-    <div className={styles.modalBackdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalBackdrop}>
+      <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h3>
             {isEditMode ? (
@@ -436,6 +441,25 @@ const CreateActivityModal = ({
               required={req.titulo}
               placeholder="Assunto da atividade"
               autoFocus
+            />
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>
+              <FieldLabel
+                value={labels.referencia}
+                onChange={(v) => setLabel("referencia", v)}
+                required={req.referencia}
+                onToggleRequired={() => toggleRequired("referencia")}
+              />
+            </label>
+            <input
+              type="text"
+              name="referencia"
+              value={formData.referencia}
+              onChange={handleChange}
+              placeholder="Ex: documento ID, link, referência externa"
+              required={req.referencia}
             />
           </div>
 

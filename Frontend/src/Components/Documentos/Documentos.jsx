@@ -1,9 +1,9 @@
-import React from 'react';
-import { useLocation } from 'react-router-dom';
-import styles from './Documentos.module.css';
-import { DOCUMENTOS_LIST, DOCUMENTO_DELETE, DOCUMENTO_UPDATE } from '../../Api';
-import { getAuthToken } from '../Opportunities/opportunityApi';
-import { UserContext } from '../../Context/UserContext';
+import React from "react";
+import { useLocation } from "react-router-dom";
+import styles from "./Documentos.module.css";
+import { DOCUMENTOS_LIST, DOCUMENTO_DELETE, DOCUMENTO_UPDATE } from "../../Api";
+import { getAuthToken } from "../Opportunities/opportunityApi";
+import { UserContext } from "../../Context/UserContext";
 
 const Documentos = () => {
   const { user } = React.useContext(UserContext);
@@ -16,7 +16,7 @@ const Documentos = () => {
   const [editData, setEditData] = React.useState(null);
   const [saving, setSaving] = React.useState(false);
 
-  const ownerName = user?.nome || user?.username || '';
+  const ownerName = user?.nome || user?.username || "";
 
   const fetchDocs = React.useCallback(async () => {
     const token = getAuthToken();
@@ -29,12 +29,16 @@ const Documentos = () => {
         const json = await res.json();
         setDocs(json.data || []);
       }
-    } catch { /* silent */ } finally {
+    } catch {
+      /* silent */
+    } finally {
       setLoading(false);
     }
   }, [ownerName]);
 
-  React.useEffect(() => { fetchDocs(); }, [fetchDocs]);
+  React.useEffect(() => {
+    fetchDocs();
+  }, [fetchDocs]);
 
   // Auto-open document from navigation state (only once)
   const openDocHandled = React.useRef(false);
@@ -50,7 +54,8 @@ const Documentos = () => {
   }, [docs, location.state]);
 
   const handleDelete = async (docId) => {
-    if (!window.confirm('Tem certeza que deseja excluir este documento?')) return;
+    if (!window.confirm("Tem certeza que deseja excluir este documento?"))
+      return;
     const token = getAuthToken();
     if (!token) return;
     setDeletingId(docId);
@@ -61,7 +66,9 @@ const Documentos = () => {
         setDocs((prev) => prev.filter((d) => d.id !== docId));
         if (selectedDoc?.id === docId) setSelectedDoc(null);
       }
-    } catch { /* silent */ } finally {
+    } catch {
+      /* silent */
+    } finally {
       setDeletingId(null);
     }
   };
@@ -69,11 +76,11 @@ const Documentos = () => {
   const handleStartEdit = () => {
     if (!selectedDoc) return;
     setEditData({
-      documentTitle: selectedDoc.documentTitle || '',
-      documentType: selectedDoc.documentType || '',
+      documentTitle: selectedDoc.documentTitle || "",
+      documentType: selectedDoc.documentType || "",
       header: JSON.parse(JSON.stringify(selectedDoc.header || { fields: [] })),
       sections: JSON.parse(JSON.stringify(selectedDoc.sections || [])),
-      footer: selectedDoc.footer || '',
+      footer: selectedDoc.footer || "",
       signatureFields: [...(selectedDoc.signatureFields || [])],
     });
     setEditing(true);
@@ -99,10 +106,10 @@ const Documentos = () => {
         setEditing(false);
         setEditData(null);
       } else {
-        alert('Erro ao salvar alterações.');
+        alert("Erro ao salvar alterações.");
       }
     } catch {
-      alert('Erro ao salvar alterações.');
+      alert("Erro ao salvar alterações.");
     } finally {
       setSaving(false);
     }
@@ -131,7 +138,7 @@ const Documentos = () => {
   const addSection = () => {
     setEditData((prev) => ({
       ...prev,
-      sections: [...prev.sections, { heading: '', body: '' }],
+      sections: [...prev.sections, { heading: "", body: "" }],
     }));
   };
 
@@ -145,30 +152,48 @@ const Documentos = () => {
   const addHeaderField = () => {
     setEditData((prev) => ({
       ...prev,
-      header: { ...prev.header, fields: [...(prev.header?.fields || []), { label: '', value: '' }] },
+      header: {
+        ...prev.header,
+        fields: [...(prev.header?.fields || []), { label: "", value: "" }],
+      },
     }));
   };
 
   const removeHeaderField = (index) => {
     setEditData((prev) => ({
       ...prev,
-      header: { ...prev.header, fields: (prev.header?.fields || []).filter((_, i) => i !== index) },
+      header: {
+        ...prev.header,
+        fields: (prev.header?.fields || []).filter((_, i) => i !== index),
+      },
     }));
   };
 
   const handlePrint = (doc) => {
     const esc = (s) =>
-      String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const now = new Date().toLocaleString('pt-BR');
+      String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    const now = new Date().toLocaleString("pt-BR");
     const headerFieldsHtml = (doc.header?.fields || [])
-      .map((f) => `<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:#374151;white-space:nowrap">${esc(f.label)}</td><td style="padding:4px 0;color:#1a1a1a">${esc(f.value)}</td></tr>`)
-      .join('');
+      .map(
+        (f) =>
+          `<tr><td style="font-weight:600;padding:4px 12px 4px 0;color:#374151;white-space:nowrap">${esc(f.label)}</td><td style="padding:4px 0;color:#1a1a1a">${esc(f.value)}</td></tr>`,
+      )
+      .join("");
     const sectionsHtml = (doc.sections || [])
-      .map((s) => `<div class="section"><h2>${esc(s.heading)}</h2><p>${esc(s.body)}</p></div>`)
-      .join('');
+      .map(
+        (s) =>
+          `<div class="section"><h2>${esc(s.heading)}</h2><p>${esc(s.body)}</p></div>`,
+      )
+      .join("");
     const signaturesHtml = (doc.signatureFields || [])
-      .map((s) => `<div class="signature-block"><div class="signature-line"></div><span>${esc(s)}</span></div>`)
-      .join('');
+      .map(
+        (s) =>
+          `<div class="signature-block"><div class="signature-line"></div><span>${esc(s)}</span></div>`,
+      )
+      .join("");
     const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(doc.documentTitle)}</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -192,30 +217,39 @@ h1{font-family:Arial,sans-serif;font-size:1.45rem;color:#111;margin-bottom:.15re
 @media print{body{margin:24px 32px}}
 </style></head><body>
 <div class="letterhead"><div><div class="letterhead-brand">BP-Company</div><div class="letterhead-sub">Sistema de Gestão de Processos</div></div></div>
-${doc.documentType ? `<div class="doc-type">${esc(doc.documentType)}</div>` : ''}
+${doc.documentType ? `<div class="doc-type">${esc(doc.documentType)}</div>` : ""}
 <h1>${esc(doc.documentTitle)}</h1>
 <div class="doc-meta">Emitido em: ${now}</div>
-${headerFieldsHtml ? `<table class="header-table">${headerFieldsHtml}</table>` : ''}
+${headerFieldsHtml ? `<table class="header-table">${headerFieldsHtml}</table>` : ""}
 ${sectionsHtml}
-${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
-<div class="footer-text">${esc(doc.footer || 'Documento gerado automaticamente · BP-Company')} &middot; ${now}</div>
+${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ""}
+<div class="footer-text">${esc(doc.footer || "Documento gerado automaticamente · BP-Company")} &middot; ${now}</div>
 </body></html>`;
-    const blob = new Blob([html], { type: 'text/html' });
+    const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const win = window.open(url, '_blank');
+    const win = window.open(url, "_blank");
     if (win) {
-      win.addEventListener('load', () => { win.print(); URL.revokeObjectURL(url); });
+      win.addEventListener("load", () => {
+        win.print();
+        URL.revokeObjectURL(url);
+      });
     } else {
       URL.revokeObjectURL(url);
     }
   };
 
   const formatDate = (iso) => {
-    if (!iso) return '';
+    if (!iso) return "";
     try {
       const d = new Date(iso);
-      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    } catch { return iso; }
+      return (
+        d.toLocaleDateString("pt-BR") +
+        " " +
+        d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      );
+    } catch {
+      return iso;
+    }
   };
 
   return (
@@ -223,10 +257,14 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>Documentos</h1>
-          <p className={styles.subtitle}>Documentos gerados a partir dos seus processos BPMN.</p>
+          <p className={styles.subtitle}>
+            Documentos gerados a partir dos seus processos BPMN.
+          </p>
         </div>
         <div className={styles.headerInfo}>
-          <span className={styles.countBadge}>{docs.length} documento{docs.length !== 1 ? 's' : ''}</span>
+          <span className={styles.countBadge}>
+            {docs.length} documento{docs.length !== 1 ? "s" : ""}
+          </span>
         </div>
       </div>
 
@@ -236,7 +274,9 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
         <div className={styles.emptyState}>
           <div className={styles.emptyIcon}>📄</div>
           <p className={styles.emptyText}>Nenhum documento salvo.</p>
-          <p className={styles.emptyHint}>Gere documentos a partir dos seus workflows na página de Workflows.</p>
+          <p className={styles.emptyHint}>
+            Gere documentos a partir dos seus workflows na página de Workflows.
+          </p>
         </div>
       )}
 
@@ -245,16 +285,20 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
           {docs.map((doc) => (
             <div
               key={doc.id}
-              className={`${styles.docCard} ${selectedDoc?.id === doc.id ? styles.docCardActive : ''}`}
+              className={`${styles.docCard} ${selectedDoc?.id === doc.id ? styles.docCardActive : ""}`}
               onClick={() => setSelectedDoc(doc)}
             >
               <div className={styles.docCardHeader}>
-                <span className={styles.docCardType}>{doc.documentType || 'Documento'}</span>
+                <span className={styles.docCardType}>
+                  {doc.documentType || "Documento"}
+                </span>
                 {doc.aiGenerated && <span className={styles.aiBadge}>IA</span>}
               </div>
-              <h3 className={styles.docCardTitle}>{doc.documentTitle || 'Sem título'}</h3>
+              <h3 className={styles.docCardTitle}>
+                {doc.documentTitle || "Sem título"}
+              </h3>
               <div className={styles.docCardMeta}>
-                <span>{doc.processName || '—'}</span>
+                <span>{doc.processName || "—"}</span>
                 <span>{formatDate(doc.createdAt)}</span>
               </div>
               <div className={styles.docCardActions}>
@@ -262,7 +306,10 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                   type="button"
                   className={`${styles.docCardBtn} ${styles.docCardBtnView}`}
                   title="Visualizar"
-                  onClick={(e) => { e.stopPropagation(); setSelectedDoc(doc); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedDoc(doc);
+                  }}
                 >
                   👁️
                 </button>
@@ -270,7 +317,10 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                   type="button"
                   className={`${styles.docCardBtn} ${styles.docCardBtnPrint}`}
                   title="Imprimir / PDF"
-                  onClick={(e) => { e.stopPropagation(); handlePrint(doc); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrint(doc);
+                  }}
                 >
                   🖨️
                 </button>
@@ -279,9 +329,12 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                   className={`${styles.docCardBtn} ${styles.docCardBtnDanger}`}
                   title="Excluir"
                   disabled={deletingId === doc.id}
-                  onClick={(e) => { e.stopPropagation(); handleDelete(doc.id); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(doc.id);
+                  }}
                 >
-                  {deletingId === doc.id ? '...' : '🗑️'}
+                  {deletingId === doc.id ? "..." : "🗑️"}
                 </button>
               </div>
             </div>
@@ -291,21 +344,34 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
 
       {/* ═══ Document preview / edit modal ═══ */}
       {selectedDoc && (
-        <div className={styles.modalOverlay} onClick={() => { if (!editing) { setSelectedDoc(null); } }}>
-          <div className={`${styles.modalContent} ${editing ? styles.modalContentWide : ''}`} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay}>
+          <div
+            className={`${styles.modalContent} ${editing ? styles.modalContentWide : ""}`}
+          >
             <div className={styles.modalHeader}>
               {editing ? (
                 <input
                   type="text"
                   className={styles.editTitleInput}
-                  value={editData?.documentTitle || ''}
-                  onChange={(e) => updateEditField('documentTitle', e.target.value)}
+                  value={editData?.documentTitle || ""}
+                  onChange={(e) =>
+                    updateEditField("documentTitle", e.target.value)
+                  }
                   placeholder="Título do documento"
                 />
               ) : (
-                <h3>📄 {selectedDoc.documentTitle || 'Documento'}</h3>
+                <h3>📄 {selectedDoc.documentTitle || "Documento"}</h3>
               )}
-              <button className={styles.modalClose} onClick={() => { setEditing(false); setEditData(null); setSelectedDoc(null); }}>✕</button>
+              <button
+                className={styles.modalClose}
+                onClick={() => {
+                  setEditing(false);
+                  setEditData(null);
+                  setSelectedDoc(null);
+                }}
+              >
+                ✕
+              </button>
             </div>
             <div className={styles.docPreview}>
               {/* Document Type */}
@@ -313,13 +379,17 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                 <input
                   type="text"
                   className={styles.editTypeInput}
-                  value={editData?.documentType || ''}
-                  onChange={(e) => updateEditField('documentType', e.target.value)}
+                  value={editData?.documentType || ""}
+                  onChange={(e) =>
+                    updateEditField("documentType", e.target.value)
+                  }
                   placeholder="Tipo do documento"
                 />
               ) : (
                 selectedDoc.documentType && (
-                  <div className={styles.docType}>{selectedDoc.documentType}</div>
+                  <div className={styles.docType}>
+                    {selectedDoc.documentType}
+                  </div>
                 )
               )}
 
@@ -335,7 +405,9 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                               type="text"
                               className={styles.editInlineInput}
                               value={f.label}
-                              onChange={(e) => updateHeaderField(i, 'label', e.target.value)}
+                              onChange={(e) =>
+                                updateHeaderField(i, "label", e.target.value)
+                              }
                               placeholder="Rótulo"
                             />
                           </td>
@@ -344,11 +416,13 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                               type="text"
                               className={styles.editInlineInput}
                               value={f.value}
-                              onChange={(e) => updateHeaderField(i, 'value', e.target.value)}
+                              onChange={(e) =>
+                                updateHeaderField(i, "value", e.target.value)
+                              }
                               placeholder="Valor"
                             />
                           </td>
-                          <td style={{ width: '28px', padding: '2px' }}>
+                          <td style={{ width: "28px", padding: "2px" }}>
                             <button
                               type="button"
                               className={styles.editRemoveBtn}
@@ -366,7 +440,7 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                     type="button"
                     className={styles.editAddSectionBtn}
                     onClick={addHeaderField}
-                    style={{ marginTop: '0.4rem', marginBottom: '0.6rem' }}
+                    style={{ marginTop: "0.4rem", marginBottom: "0.6rem" }}
                   >
                     + Adicionar campo
                   </button>
@@ -396,7 +470,9 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                           type="text"
                           className={styles.editSectionTitleInput}
                           value={s.heading}
-                          onChange={(e) => updateSection(i, 'heading', e.target.value)}
+                          onChange={(e) =>
+                            updateSection(i, "heading", e.target.value)
+                          }
                           placeholder="Título da seção"
                         />
                         <button
@@ -411,7 +487,9 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                       <textarea
                         className={styles.editSectionBodyInput}
                         value={s.body}
-                        onChange={(e) => updateSection(i, 'body', e.target.value)}
+                        onChange={(e) =>
+                          updateSection(i, "body", e.target.value)
+                        }
                         placeholder="Conteúdo da seção..."
                         rows={4}
                       />
@@ -451,8 +529,8 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                 <input
                   type="text"
                   className={styles.editFooterInput}
-                  value={editData?.footer || ''}
-                  onChange={(e) => updateEditField('footer', e.target.value)}
+                  value={editData?.footer || ""}
+                  onChange={(e) => updateEditField("footer", e.target.value)}
                   placeholder="Rodapé"
                 />
               ) : (
@@ -471,7 +549,7 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ''}
                     disabled={saving}
                     title="Salvar alterações"
                   >
-                    {saving ? '...' : 'Salvar'}
+                    {saving ? "..." : "Salvar"}
                   </button>
                   <button
                     type="button"

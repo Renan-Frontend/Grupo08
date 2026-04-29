@@ -281,7 +281,10 @@ export const CreateProcessoModal = ({
   };
 
   const addExtraCampo = () => {
-    setExtraCampos((prev) => [...prev, { id: Date.now(), texto: "" }]);
+    setExtraCampos((prev) => [
+      ...prev,
+      { id: Date.now(), nome: "", valor: "" },
+    ]);
   };
 
   const updateExtraCampo = (id, key, value) => {
@@ -309,7 +312,10 @@ export const CreateProcessoModal = ({
       const isRequired =
         dynRequired[nomeCampo] ?? campo.obrigatorio ?? campo.required ?? false;
       if (!isRequired) continue;
-      const valor = dados[nomeCampo];
+      // Fields mapped to dedicated state vars — validated separately above
+      if (nomeCampo === "nome" || nomeCampo === "descricao") continue;
+      // id_* fields are stored in idCampoValor, not in dados
+      const valor = nomeCampo === idCampoKey ? idCampoValor : dados[nomeCampo];
       if (campo.tipo?.toLowerCase() === "booleano") {
         if (!valor) {
           setError(
@@ -376,8 +382,8 @@ export const CreateProcessoModal = ({
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal}>
         {/* Header */}
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>
@@ -627,16 +633,30 @@ export const CreateProcessoModal = ({
                 className={styles.formGroup}
                 style={{ gridColumn: "span 2" }}
               >
+                <label className={styles.formLabel}>
+                  <span className={styles.fieldLabelRow}>
+                    <EditableLabel
+                      value={ec.nome || "Novo campo"}
+                      onChange={(v) => updateExtraCampo(ec.id, "nome", v)}
+                    />
+                    <span
+                      className={styles.requiredBadgeOff}
+                      style={{ pointerEvents: "none" }}
+                    >
+                      ○ opcional
+                    </span>
+                  </span>
+                </label>
                 <input
-                  id={`extra-campo-${ec.id}`}
-                  name={`extra-campo-${ec.id}`}
+                  id={`extra-valor-${ec.id}`}
+                  name={`extra-valor-${ec.id}`}
                   className={styles.formInput}
                   type="text"
-                  value={ec.texto}
+                  value={ec.valor}
                   onChange={(e) =>
-                    updateExtraCampo(ec.id, "texto", e.target.value)
+                    updateExtraCampo(ec.id, "valor", e.target.value)
                   }
-                  placeholder="Ex: número do contrato: 12345"
+                  placeholder="Valor..."
                 />
               </div>
               <button
@@ -785,7 +805,7 @@ export const EditProcessoModal = ({
     const extras = [];
     for (const [k, v] of Object.entries(registro?.dados || {})) {
       if (!knownKeys.includes(k) && !entityFieldKeys.includes(k)) {
-        extras.push({ id: k, texto: `${k}: ${String(v ?? "")}` });
+        extras.push({ id: k, nome: k, valor: String(v ?? "") });
       }
     }
     return extras;
@@ -817,23 +837,15 @@ export const EditProcessoModal = ({
   };
 
   const addExtraCampo = () => {
-    setExtraCampos((prev) => [...prev, { id: Date.now(), texto: "" }]);
+    setExtraCampos((prev) => [
+      ...prev,
+      { id: Date.now(), nome: "", valor: "" },
+    ]);
   };
 
-  const updateExtraCampo = (id, texto) => {
-    // If the key part matches an existing entity campo, route value there
-    const colonIdx = texto.indexOf(":");
-    if (colonIdx > 0) {
-      const k = texto.slice(0, colonIdx).trim();
-      if (entityFieldKeys.includes(k)) {
-        const v = texto.slice(colonIdx + 1).trim();
-        handleFieldChange(k, v);
-        setExtraCampos((prev) => prev.filter((c) => c.id !== id));
-        return;
-      }
-    }
+  const updateExtraCampo = (id, key, value) => {
     setExtraCampos((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, texto } : c)),
+      prev.map((c) => (c.id === id ? { ...c, [key]: value } : c)),
     );
   };
 
@@ -851,15 +863,10 @@ export const EditProcessoModal = ({
     try {
       const extraDados = {};
       for (const ec of extraCampos) {
-        const txt = String(ec.texto || "").trim();
-        if (!txt) continue;
-        const colonIdx = txt.indexOf(":");
-        const k =
-          colonIdx > 0
-            ? txt.slice(0, colonIdx).trim()
-            : `campo_${Object.keys(extraDados).length + 1}`;
-        const v = colonIdx > 0 ? txt.slice(colonIdx + 1).trim() : txt;
-        if (k) extraDados[k] = v;
+        const k = String(ec.nome || "").trim();
+        const v = String(ec.valor || "").trim();
+        if (!k) continue;
+        extraDados[k] = v;
       }
       // Preserve only system-level fields from the original registro (never user-editable)
       const systemKeys = ["oportunidadeId", "etapa", "tipoDocumento"];
@@ -902,8 +909,8 @@ export const EditProcessoModal = ({
   };
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <div className={styles.modalOverlay}>
+      <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Editar processo</h2>
           <button
@@ -1132,14 +1139,30 @@ export const EditProcessoModal = ({
                 className={styles.formGroup}
                 style={{ gridColumn: "span 2" }}
               >
+                <label className={styles.formLabel}>
+                  <span className={styles.fieldLabelRow}>
+                    <EditableLabel
+                      value={ec.nome || "Novo campo"}
+                      onChange={(v) => updateExtraCampo(ec.id, "nome", v)}
+                    />
+                    <span
+                      className={styles.requiredBadgeOff}
+                      style={{ pointerEvents: "none" }}
+                    >
+                      ○ opcional
+                    </span>
+                  </span>
+                </label>
                 <input
-                  id={`edit-extra-campo-${ec.id}`}
-                  name={`edit-extra-campo-${ec.id}`}
+                  id={`edit-extra-valor-${ec.id}`}
+                  name={`edit-extra-valor-${ec.id}`}
                   className={styles.formInput}
                   type="text"
-                  value={ec.texto}
-                  onChange={(e) => updateExtraCampo(ec.id, e.target.value)}
-                  placeholder="Ex: número do contrato: 12345"
+                  value={ec.valor ?? ""}
+                  onChange={(e) =>
+                    updateExtraCampo(ec.id, "valor", e.target.value)
+                  }
+                  placeholder="Valor..."
                 />
               </div>
               <button

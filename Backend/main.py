@@ -7538,6 +7538,7 @@ async def create_activity(activity: Activity):
     new_activity = {
         "id": str(uuid.uuid4()),
         "titulo": activity.titulo,
+        "referencia": activity.referencia,
         "descricao": activity.descricao,
         "tipo": activity.tipo or "nota",
         "data_atividade": activity.data_atividade or datetime.now(timezone.utc).isoformat(),
@@ -7586,6 +7587,7 @@ async def update_activity(activity_id: str, activity: Activity):
     
     activity_obj.update({
         "titulo": activity.titulo or activity_obj.get("titulo"),
+        "referencia": activity.referencia if activity.referencia is not None else activity_obj.get("referencia"),
         "descricao": activity.descricao or activity_obj.get("descricao"),
         "tipo": activity.tipo or activity_obj.get("tipo"),
         "data_atividade": activity.data_atividade or activity_obj.get("data_atividade"),

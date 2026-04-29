@@ -146,6 +146,7 @@ class Lead(BaseModel):
 
 class Activity(BaseModel):
     titulo: str
+    referencia: str | None = None
     descricao: str | None = None
     tipo: str = "nota"  # call, email, meeting, task, note
     data_atividade: str | None = None  # data/hora do evento
