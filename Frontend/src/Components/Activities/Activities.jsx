@@ -768,7 +768,7 @@ const Activities = ({ entityType = "", entityId = "" }) => {
             setShowModal(true);
           }}
         >
-          + Nova Atividade
+          Nova Atividade
         </button>
       </div>
 

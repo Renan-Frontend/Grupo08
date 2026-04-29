@@ -4,6 +4,7 @@ import { BPMN_EDITOR_STATE_GET, BPMN_EDITOR_STATE_PUT } from "../../Api";
 import {
   batchSyncEntidades,
   createOpportunity,
+  fetchWithTimeout,
   fetchOpportunitiesPage,
   getAuthToken,
   updateOpportunityById,
@@ -4907,7 +4908,7 @@ const GerarBPMNCreate = () => {
           token,
           search: searchName,
         }),
-        fetch(bpmnStatePutPayload.url, bpmnStatePutPayload.options),
+        fetchWithTimeout(bpmnStatePutPayload.url, bpmnStatePutPayload.options),
       ]);
 
       if (!bpmnStateResponse.ok) {

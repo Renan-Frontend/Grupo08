@@ -9,6 +9,31 @@ const authHeaders = (token) => ({
   ...(token ? { Authorization: `Bearer ${token}` } : {}),
 });
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
+
+export const fetchWithTimeout = async (
+  url,
+  options = {},
+  timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+) => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Tempo limite excedido ao comunicar com a API.");
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+};
+
 export const getAuthToken = () =>
   window.sessionStorage.getItem("token") ||
   window.localStorage.getItem("token");
@@ -23,7 +48,7 @@ export const fetchOpportunitiesPage = async ({
   if (search) {
     url += `&search=${encodeURIComponent(search)}`;
   }
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     headers: authHeaders(token),
   });
 
@@ -57,11 +82,14 @@ export const updateOpportunityById = async ({
   payload,
   token,
 }) => {
-  const response = await fetch(`${API_URL}/oportunidades/${opportunityId}`, {
-    method: "PUT",
-    headers: jsonHeaders(token),
-    body: JSON.stringify(payload),
-  });
+  const response = await fetchWithTimeout(
+    `${API_URL}/oportunidades/${opportunityId}`,
+    {
+      method: "PUT",
+      headers: jsonHeaders(token),
+      body: JSON.stringify(payload),
+    },
+  );
 
   if (!response.ok) {
     throw new Error("Erro ao atualizar oportunidade");
@@ -71,7 +99,7 @@ export const updateOpportunityById = async ({
 };
 
 export const createOpportunity = async ({ payload, token }) => {
-  const response = await fetch(`${API_URL}/oportunidades`, {
+  const response = await fetchWithTimeout(`${API_URL}/oportunidades`, {
     method: "POST",
     headers: jsonHeaders(token),
     body: JSON.stringify(payload),
@@ -107,7 +135,7 @@ export const deleteOpportunityById = async ({ opportunityId, token }) => {
 };
 
 export const batchSyncEntidades = async ({ items, token }) => {
-  const response = await fetch(`${API_URL}/entidades/batch/sync`, {
+  const response = await fetchWithTimeout(`${API_URL}/entidades/batch/sync`, {
     method: "PUT",
     headers: jsonHeaders(token),
     body: JSON.stringify({ items }),

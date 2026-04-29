@@ -293,6 +293,7 @@ const useExtraFields = (storageKey) => {
 
 const CONTATO_LABEL_DEFAULTS = {
   titulo: "Novo Contato",
+  titulo_edicao: "Editar Contato",
   nome: "Nome",
   cargo: "Cargo",
   email: "Email",
@@ -690,6 +691,17 @@ const EditContactModal = ({
   });
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState("");
+  const [labels, setLabel] = useCustomLabels(
+    "bp_labels_contatos",
+    CONTATO_LABEL_DEFAULTS,
+  );
+  const [req, toggleRequired] = useCustomRequired(
+    "bp_required_contatos",
+    CONTATO_REQUIRED_DEFAULTS,
+  );
+  const [extraFields, addExtraField, removeExtraField, updateExtraField] =
+    useExtraFields("bp_extra_fields_contatos");
+  const [extraValues, setExtraValues] = React.useState({});
 
   const entidadeOptions = React.useMemo(
     () =>
@@ -711,6 +723,18 @@ const EditContactModal = ({
 
   const set = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
+
+  React.useEffect(() => {
+    const rawExtra =
+      contact && typeof contact.extra === "object" && contact.extra
+        ? contact.extra
+        : {};
+    const mapped = {};
+    extraFields.forEach((field) => {
+      mapped[field.id] = String(rawExtra[field.label] || "");
+    });
+    setExtraValues(mapped);
+  }, [contact, extraFields]);
 
   const handleOpportunityInputChange = (value) => {
     const match = opportunityOptions.find(
@@ -735,8 +759,20 @@ const EditContactModal = ({
   };
 
   const handleSave = async () => {
-    if (!String(form.nome || "").trim()) {
-      setError("Nome é obrigatório.");
+    if (req.nome && !String(form.nome || "").trim()) {
+      setError(`${labels.nome} é obrigatório.`);
+      return;
+    }
+    if (req.email && !String(form.email || "").trim()) {
+      setError(`${labels.email} é obrigatório.`);
+      return;
+    }
+    if (req.cargo && !String(form.cargo || "").trim()) {
+      setError(`${labels.cargo} é obrigatório.`);
+      return;
+    }
+    if (req.telefone && !String(form.telefone || "").trim()) {
+      setError(`${labels.telefone} é obrigatório.`);
       return;
     }
     const targetOpp = opportunities.find(
@@ -766,6 +802,10 @@ const EditContactModal = ({
         ...(selectedEntity
           ? { entidadeId: selectedEntity.id, entidadeNome: selectedEntity.nome }
           : {}),
+        extra: extraFields.reduce((acc, field) => {
+          acc[field.label] = extraValues[field.id] || "";
+          return acc;
+        }, {}),
       };
       let contacts;
       const isSameOpp = String(opportunity?.id) === String(targetOpp.id);
@@ -820,7 +860,12 @@ const EditContactModal = ({
     <div className={styles.modalBackdrop} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <span className={styles.modalTitle}>Editar Contato</span>
+          <span className={styles.modalTitle}>
+            <EditableLabel
+              value={labels.titulo_edicao}
+              onChange={(v) => setLabel("titulo_edicao", v)}
+            />
+          </span>
           <button type="button" className={styles.modalClose} onClick={onClose}>
             ✕
           </button>
@@ -828,45 +873,75 @@ const EditContactModal = ({
         <div className={styles.modalBody}>
           <div className={styles.formGrid}>
             <label className={styles.formLabel}>
-              <span>Nome *</span>
+              <FieldLabel
+                value={labels.nome}
+                onChange={(v) => setLabel("nome", v)}
+                required={req.nome}
+                onToggleRequired={() => toggleRequired("nome")}
+              />
               <input
                 className={styles.formInput}
                 value={form.nome}
                 onChange={(e) => set("nome", e.target.value)}
+                required={req.nome}
               />
             </label>
             <label className={styles.formLabel}>
-              <span>Cargo</span>
+              <FieldLabel
+                value={labels.cargo}
+                onChange={(v) => setLabel("cargo", v)}
+                required={req.cargo}
+                onToggleRequired={() => toggleRequired("cargo")}
+              />
               <input
                 className={styles.formInput}
                 value={form.cargo}
                 onChange={(e) => set("cargo", e.target.value)}
+                required={req.cargo}
               />
             </label>
             <label className={styles.formLabel}>
-              <span>Email</span>
+              <FieldLabel
+                value={labels.email}
+                onChange={(v) => setLabel("email", v)}
+                required={req.email}
+                onToggleRequired={() => toggleRequired("email")}
+              />
               <input
                 className={styles.formInput}
                 type="email"
                 value={form.email}
                 onChange={(e) => set("email", e.target.value)}
+                required={req.email}
               />
             </label>
             <label className={styles.formLabel}>
-              <span>Telefone</span>
+              <FieldLabel
+                value={labels.telefone}
+                onChange={(v) => setLabel("telefone", v)}
+                required={req.telefone}
+                onToggleRequired={() => toggleRequired("telefone")}
+              />
               <input
                 className={styles.formInput}
                 value={form.telefone}
                 onChange={(e) => set("telefone", e.target.value)}
+                required={req.telefone}
               />
             </label>
             <label className={`${styles.formLabel} ${styles.formLabelFull}`}>
-              <span>Oportunidade</span>
+              <FieldLabel
+                value={labels.oportunidade}
+                onChange={(v) => setLabel("oportunidade", v)}
+                required={req.oportunidade}
+                onToggleRequired={() => toggleRequired("oportunidade")}
+              />
               <input
                 className={styles.formInput}
                 list="edit-contato-opportunities-list"
                 value={form._opportunityNome}
                 onChange={(e) => handleOpportunityInputChange(e.target.value)}
+                required={req.oportunidade}
                 placeholder="Digite ou escolha uma oportunidade"
               />
               <datalist id="edit-contato-opportunities-list">
@@ -876,12 +951,18 @@ const EditContactModal = ({
               </datalist>
             </label>
             <label className={`${styles.formLabel} ${styles.formLabelFull}`}>
-              <span>Entidade de contato (opcional)</span>
+              <FieldLabel
+                value={labels.entidade}
+                onChange={(v) => setLabel("entidade", v)}
+                required={req.entidade}
+                onToggleRequired={() => toggleRequired("entidade")}
+              />
               <input
                 className={styles.formInput}
                 list="edit-contato-entidades-list"
                 value={form._entidadeNome}
                 onChange={(e) => handleEntidadeInputChange(e.target.value)}
+                required={req.entidade}
                 placeholder="Digite ou escolha uma entidade"
               />
               <datalist id="edit-contato-entidades-list">
@@ -896,9 +977,57 @@ const EditContactModal = ({
                 checked={form.isPrimary}
                 onChange={(e) => set("isPrimary", e.target.checked)}
               />
-              <span>Marcar como contato principal</span>
+              <EditableLabel
+                value={labels.principal}
+                onChange={(v) => setLabel("principal", v)}
+              />
             </label>
           </div>
+
+          {extraFields.map((field) => (
+            <div key={field.id} className={styles.extraFieldGroup}>
+              <div className={styles.extraFieldHeader}>
+                <FieldLabel
+                  value={field.label}
+                  onChange={(v) => updateExtraField(field.id, { label: v })}
+                  required={field.required}
+                  onToggleRequired={() =>
+                    updateExtraField(field.id, { required: !field.required })
+                  }
+                />
+                <button
+                  type="button"
+                  className={styles.removeFieldBtn}
+                  onClick={() => removeExtraField(field.id)}
+                  title="Remover campo"
+                >
+                  ✕
+                </button>
+              </div>
+              <input
+                className={styles.formInput}
+                type="text"
+                value={extraValues[field.id] || ""}
+                onChange={(e) =>
+                  setExtraValues((prev) => ({
+                    ...prev,
+                    [field.id]: e.target.value,
+                  }))
+                }
+                required={field.required}
+                placeholder="Valor..."
+              />
+            </div>
+          ))}
+
+          <button
+            type="button"
+            className={styles.addFieldBtn}
+            onClick={addExtraField}
+          >
+            + Adicionar campo
+          </button>
+
           {error ? <div className={styles.formError}>{error}</div> : null}
         </div>
         <div className={styles.modalFooter}>
@@ -1186,7 +1315,7 @@ const Contatos = () => {
           onClick={() => setShowCreate(true)}
           disabled={loading}
         >
-          + Novo contato
+          Novo contato
         </button>
       </div>
 
@@ -1225,7 +1354,7 @@ const Contatos = () => {
                 <th>Telefone</th>
                 <th>Entidade</th>
                 <th>Oportunidade</th>
-                <th className={styles.thActions}></th>
+                <th className={styles.thActions}>AÇÕES</th>
               </tr>
             </thead>
             <tbody>
@@ -1347,21 +1476,14 @@ const Contatos = () => {
                         aria-hidden="true"
                       >
                         <path
-                          d="M4 20h4l10-10-4-4L4 16v4z"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                          d="M3 17.25V21h3.75L18.81 8.94l-3.75-3.75L3 17.25z"
+                          fill="#f59e0b"
                         />
                         <path
-                          d="M13 7l4 4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                          d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42L18.37 3.29a1.003 1.003 0 0 0-1.42 0l-1.13 1.13 3.75 3.75 1.14-1.13z"
+                          fill="#ef4444"
                         />
+                        <path d="M3 21l3.3-.9-2.4-2.4L3 21z" fill="#334155" />
                       </svg>
                     </button>
                     <button
@@ -1374,37 +1496,30 @@ const Contatos = () => {
                       <svg
                         viewBox="0 0 24 24"
                         className={styles.actionIcon}
+                        style={{ color: "#9ca3af" }}
                         aria-hidden="true"
                       >
                         <path
-                          d="M8 7h8"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
+                          d="M9 3h6l1 2h4v2H4V5h4l1-2z"
+                          style={{ fill: "#9ca3af", stroke: "none" }}
                         />
                         <path
-                          d="M6 7h12"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
+                          d="M7 8h10l-1 11H8L7 8z"
+                          style={{ fill: "#9ca3af", stroke: "none" }}
                         />
-                        <path
-                          d="M9 7V5h6v2"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        <rect
+                          x="10"
+                          y="10"
+                          width="1.5"
+                          height="7"
+                          style={{ fill: "#e5e7eb", stroke: "none" }}
                         />
-                        <path
-                          d="M8 7l1 12h6l1-12"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
+                        <rect
+                          x="12.5"
+                          y="10"
+                          width="1.5"
+                          height="7"
+                          style={{ fill: "#e5e7eb", stroke: "none" }}
                         />
                       </svg>
                     </button>

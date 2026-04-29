@@ -1,17 +1,17 @@
-import React from 'react';
-import Input from '../Forms/Input';
-import Button from '../Forms/Button';
-import Error from '../Helper/Error';
-import useForm from '../../Hooks/useForm';
-import useFormSubmit from '../../Hooks/useFormSubmit';
+import React from "react";
+import Input from "../Forms/Input";
+import Button from "../Forms/Button";
+import Error from "../Helper/Error";
+import useForm from "../../Hooks/useForm";
+import useFormSubmit from "../../Hooks/useFormSubmit";
 
-import { useNavigate } from 'react-router-dom';
-import { UserContext } from '../../Context/UserContext';
+import { useNavigate } from "react-router-dom";
+import { UserContext } from "../../Context/UserContext";
 
 const LoginCreate = () => {
   const username = useForm();
-  const email = useForm('email');
-  const password = useForm('password');
+  const email = useForm("email");
+  const password = useForm("password");
 
   const { createUser, userLogin } = React.useContext(UserContext);
   const navigate = useNavigate();
@@ -23,15 +23,22 @@ const LoginCreate = () => {
       senha: password,
     },
     onSubmit: async () => {
+      const signupEmail = email.value;
+      const signupPassword = password.value;
+
       await createUser({
         nome: username.value,
-        email: email.value,
-        senha: password.value,
+        email: signupEmail,
+        senha: signupPassword,
         ativo: true,
       });
 
-      await userLogin(email.value, password.value);
-      setTimeout(() => navigate('/'), 1200);
+      username.reset();
+      email.reset();
+      password.reset();
+
+      await userLogin(signupEmail, signupPassword);
+      setTimeout(() => navigate("/"), 1200);
     },
   });
 
@@ -47,7 +54,7 @@ const LoginCreate = () => {
           type="text"
           name="username"
           {...username}
-          error={touched && !username.value ? 'Preencha o nome' : undefined}
+          error={touched && !username.value ? "Preencha o nome" : undefined}
         />
 
         <Input
@@ -55,7 +62,7 @@ const LoginCreate = () => {
           type="email"
           name="email"
           {...email}
-          error={touched && !email.value ? 'Preencha o email' : email.error}
+          error={touched && !email.value ? "Preencha o email" : email.error}
         />
 
         <Input
@@ -64,7 +71,7 @@ const LoginCreate = () => {
           name="password"
           {...password}
           error={
-            touched && !password.value ? 'Preencha a senha' : password.error
+            touched && !password.value ? "Preencha a senha" : password.error
           }
         />
 
@@ -75,7 +82,7 @@ const LoginCreate = () => {
         )}
 
         {success && !error && (
-          <p style={{ color: 'green', marginTop: '1rem' }}>
+          <p style={{ color: "green", marginTop: "1rem" }}>
             Conta criada com sucesso!
           </p>
         )}

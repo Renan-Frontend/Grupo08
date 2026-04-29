@@ -93,16 +93,23 @@ const LoginHome = () => {
       senha: passwordCreate,
     },
     onSubmit: async () => {
+      const signupEmail = emailCreate.value;
+      const signupPassword = passwordCreate.value;
+
       const { url, options } = USER_POST({
         nome: usernameCreate.value,
-        email: emailCreate.value,
-        senha: passwordCreate.value,
+        email: signupEmail,
+        senha: signupPassword,
         ativo: true,
       });
 
       const { response } = await request(url, options);
       if (response && response.ok) {
-        await userLogin(emailCreate.value, passwordCreate.value);
+        usernameCreate.reset();
+        emailCreate.reset();
+        passwordCreate.reset();
+
+        await userLogin(signupEmail, signupPassword);
         setTimeout(() => navigate("/"), 1200);
       }
     },

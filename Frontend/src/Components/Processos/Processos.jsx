@@ -27,15 +27,16 @@ const useCustomLabels = (storageKey, defaults) => {
       return { ...defaults };
     }
   });
-};
-const setLabel = (key, value) => {
-  setLabels((previous) => {
-    const next = { ...previous, [key]: value };
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(next));
-    } catch {}
-    return next;
-  });
+
+  const setLabel = (key, value) => {
+    setLabels((previous) => {
+      const next = { ...previous, [key]: value };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  };
 
   return [labels, setLabel];
 };
@@ -1216,7 +1217,7 @@ export const ProcessosPage = () => (
       icone="🔄"
       CreateModal={CreateProcessoModal}
       EditModal={EditProcessoModal}
-      createButtonLabel="+ Criar processo"
+      createButtonLabel="Criar Processo"
     />
   </RegistrosProvider>
 );

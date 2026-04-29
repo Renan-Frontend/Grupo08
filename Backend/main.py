@@ -62,8 +62,8 @@ AI_ENTITY_NAME_MAX_LENGTH = 48
 AI_ACTIVITY_NAME_MAX_LENGTH = 56
 AI_CONDITIONAL_NAME_MAX_LENGTH = 56
 
-# Lock to serialise read-modify-write cycles on JSON files.
-_data_lock = threading.Lock()
+# Reentrant lock avoids self-deadlocks when a code path re-enters persistence helpers.
+_data_lock = threading.RLock()
 BPMN_EDITOR_STATE_TABLE = "bpmn_editor_state_store"
 _ai_action_timestamps: dict[int, deque[float]] = defaultdict(deque)
 
@@ -121,30 +121,41 @@ def save_collection(file_path, table_name, rows):
 
     _, json_adapter = _require_db_dependencies()
 
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(f"DELETE FROM {table_name}")
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(f"DELETE FROM {table_name}")
 
-            for item in safe_rows:
-                if not isinstance(item, dict):
-                    continue
+                for item in safe_rows:
+                    if not isinstance(item, dict):
+                        continue
 
-                raw_id = item.get("id")
-                if raw_id is None:
-                    continue
+                    raw_id = item.get("id")
+                    if raw_id is None:
+                        continue
 
-                try:
-                    item_id = int(raw_id)
-                except Exception:
-                    continue
+                    try:
+                        item_id = int(raw_id)
+                    except Exception:
+                        continue
 
-                payload = {**item, "id": item_id}
-                cursor.execute(
-                    f"INSERT INTO {table_name} (id, payload) VALUES (%s, %s)",
-                    (item_id, json_adapter(payload)),
-                )
+                    payload = {**item, "id": item_id}
+                    cursor.execute(
+                        f"INSERT INTO {table_name} (id, payload) VALUES (%s, %s)",
+                        (item_id, json_adapter(payload)),
+                    )
 
-        conn.commit()
+            conn.commit()
+    except Exception as exc:
+        _supabase_save_failed(exc)
+        save_json(file_path, safe_rows)
+
+
+def _supabase_save_failed(exc):
+    """Mark Supabase as unavailable and log the failure."""
+    global USE_SUPABASE_DB
+    print(f"[WARN] Falha ao salvar no Supabase ({exc}). Usando JSON local.")
+    USE_SUPABASE_DB = False
 
 
 def load_bpmn_editor_state(file_path, fallback):
@@ -173,18 +184,22 @@ def save_bpmn_editor_state(file_path, state):
         return
 
     _, json_adapter = _require_db_dependencies()
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                f"""
-                INSERT INTO {BPMN_EDITOR_STATE_TABLE} (state_key, payload)
-                VALUES (%s, %s)
-                ON CONFLICT (state_key)
-                DO UPDATE SET payload = EXCLUDED.payload
-                """,
-                ("default", json_adapter(safe_state)),
-            )
-        conn.commit()
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    f"""
+                    INSERT INTO {BPMN_EDITOR_STATE_TABLE} (state_key, payload)
+                    VALUES (%s, %s)
+                    ON CONFLICT (state_key)
+                    DO UPDATE SET payload = EXCLUDED.payload
+                    """,
+                    ("default", json_adapter(safe_state)),
+                )
+            conn.commit()
+    except Exception as exc:
+        _supabase_save_failed(exc)
+        save_json(file_path, safe_state)
 
 
 def load_ai_audit_data(file_path):
@@ -10926,7 +10941,14 @@ def batch_sync_entidades(payload: dict = Body(...)):
 
     results = []
     _batch_timeline_notes = []  # collect timeline notes for after lock release
-    with _data_lock:
+    acquired = _data_lock.acquire(timeout=5)
+    if not acquired:
+        raise HTTPException(
+            status_code=503,
+            detail="Sistema ocupado no momento. Tente sincronizar novamente.",
+        )
+
+    try:
         fake_entidades = load_entidades_data()
         changed = False
 
@@ -10998,6 +11020,8 @@ def batch_sync_entidades(payload: dict = Body(...)):
 
         if changed:
             save_entidades_data(fake_entidades)
+    finally:
+        _data_lock.release()
 
     # Log batch entity changes to related opportunity timelines
     for _b_action, _b_ent in _batch_timeline_notes:
@@ -11167,9 +11191,18 @@ def update_bpmn_editor_state(payload: dict = Body(...)):
         "updated_at": now_iso(),
     }
 
-    with _data_lock:
+    acquired = _data_lock.acquire(timeout=5)
+    if not acquired:
+        raise HTTPException(
+            status_code=503,
+            detail="Sistema ocupado no momento. Tente salvar novamente.",
+        )
+
+    try:
         bpmn_editor_state = next_state
         save_bpmn_editor_state(BPMN_EDITOR_STATE_FILE, bpmn_editor_state)
+    finally:
+        _data_lock.release()
     return bpmn_editor_state
 
 
@@ -11906,14 +11939,20 @@ def get_users(page: int = 1, limit: int = 8):
     if not isinstance(users, list):
         return paginated_users_response([], 0, page, limit)
 
-    principal_admin_id = get_principal_admin_id(users)
+    # Filtra apenas usuários ativos (consistente com /users/by-role/{role})
+    active_users = [u for u in users if u.get("ativo", True)]
+    
+    principal_admin_id = get_principal_admin_id(active_users)
 
-    total = len(users)
+    total = len(active_users)
     start = (page - 1) * limit
     end = start + limit
-    paginated = [
-        {
-            "id": user.get("id", index + 1),
+    paginated = []
+    
+    for user in active_users[start:end]:
+        user_id = user.get("id")
+        paginated.append({
+            "id": user_id,
             "nome": user.get("nome", user.get("username", "")),
             "email": user.get("email", ""),
             "nivel": str(user.get("nivel", "1")),
@@ -11921,11 +11960,30 @@ def get_users(page: int = 1, limit: int = 8):
             "data": user.get("created_at", user.get("data", "")),
             "admin": user.get("admin", False),
             "role": "admin" if user.get("admin", False) else "user",
-            "is_principal_admin": int(user.get("id", index + 1)) == principal_admin_id,
-        }
-        for index, user in enumerate(users[start:end], start)
-    ]
+            "is_principal_admin": user_id == principal_admin_id if user_id else False,
+        })
+    
     return paginated_users_response(paginated, total, page, limit)
+
+@app.get("/users/debug/inactive")
+def get_inactive_users(current_user: dict = Depends(require_permission("users:list"))):
+    """Debug endpoint: mostra todos os usuários inativos (para diagnose)."""
+    users = load_users_data()
+    if not isinstance(users, list):
+        return {"inactive_users": [], "total": 0}
+    
+    inactive = [
+        {
+            "id": u.get("id"),
+            "nome": u.get("nome", ""),
+            "email": u.get("email", ""),
+            "ativo": u.get("ativo", True),
+            "created_at": u.get("created_at", ""),
+        }
+        for u in users
+        if not u.get("ativo", True)
+    ]
+    return {"inactive_users": inactive, "total": len(inactive)}
 
 @app.post("/users", response_model=UserOut, status_code=201)
 def create_user(user: User):
