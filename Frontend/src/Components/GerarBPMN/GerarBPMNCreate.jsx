@@ -598,7 +598,7 @@ const GerarBPMNCreate = () => {
         id: "process-name",
         title: "Nome do processo",
         description:
-          "Comece por aqui: defina um nome claro e objetivo para identificar este BPMN na listagem e durante as edições futuras.",
+          "Comece por aqui: defina um nome claro e objetivo para identificar este Fluxograma na listagem e durante as edições futuras.",
         hint: "Dica: use nomes curtos e específicos, por exemplo: Aprovação de orçamento.",
         selector: '[data-tutorial-id="process-name"]',
       },
@@ -622,7 +622,7 @@ const GerarBPMNCreate = () => {
         id: "desktop-sidebar-toggle",
         title: "Seta do menu lateral",
         description:
-          "Essa seta lateral recolhe/expande o menu principal do sistema. Ao recolher, aumenta o espaço útil da tela para trabalhar no BPMN.",
+          "Essa seta lateral recolhe/expande o menu principal do sistema. Ao recolher, aumenta o espaço útil da tela para trabalhar no Fluxograma.",
         hint: "Dica: clique na seta quando quiser mais área horizontal para visualizar e editar o fluxo.",
         selector: '[data-tutorial-id="desktop-sidebar-toggle"]',
       },
@@ -630,7 +630,7 @@ const GerarBPMNCreate = () => {
         id: "save-bpmn",
         title: "SALVAR",
         description:
-          "Salva etapas, conexões e configurações do processo e depois retorna para a lista de BPMNs.",
+          "Salva etapas, conexões e configurações do processo e depois retorna para a lista de Fluxogramas.",
         hint: "Dica: como salvar retorna para a listagem, use quando concluir um bloco importante de alterações.",
         selector: '[data-tutorial-id="save-bpmn"]',
       },
@@ -638,8 +638,8 @@ const GerarBPMNCreate = () => {
         id: "add-node",
         title: "▭+ Adicionar retângulo",
         description:
-          "Cria uma nova etapa no fluxo. Depois, escolha a categoria da etapa: Entidade, Atividade ou Decisão.",
-        hint: "Dica: adicione as etapas principais primeiro e depois refine detalhes e conexões.",
+          "Cria uma nova etapa no fluxo. Depois, escolha a categoria da etapa: Entidade (Contato ou Processo), Atividade ou Decisão — sendo que Decisão exige o texto da condição que vai separar os caminhos ✓/✕.",
+        hint: "Dica: adicione as etapas principais primeiro (Processos e Atividades) e depois refine as Decisões com suas condições e conexões.",
         selector: '[data-tutorial-id="add-node"]',
       },
       {
@@ -678,8 +678,8 @@ const GerarBPMNCreate = () => {
         id: "canvas-bands",
         title: "Faixas coloridas dos cards",
         description:
-          "A faixa no topo do retângulo indica o tipo da etapa: Entidade (verde), Decisão (azul), Atividade (amarelo); cinza quando sem ligação.",
-        hint: "Dica: use as faixas para bater o olho e validar rapidamente se os tipos do fluxo estão corretos.",
+          "A faixa no topo do retângulo indica o tipo da etapa: Entidade (verde) — que pode ser Processo ou Contato, Decisão (azul) — que carrega a condição (sim/não), Atividade (amarelo); cinza quando sem ligação.",
+        hint: "Dica: use as faixas para bater o olho e validar rapidamente se Processos, Atividades e Condições estão classificados corretamente no fluxo.",
         selector: '[data-tutorial-id="canvas-color-band"]',
       },
       {
@@ -704,8 +704,8 @@ const GerarBPMNCreate = () => {
         id: "sidebar-category",
         title: "Categoria da etapa",
         description:
-          "Aqui você define o tipo da etapa: Entidade, Atividade ou Decisão. Ao trocar a categoria, os campos de configuração do painel são ajustados automaticamente.",
-        hint: "Dica: escolha a categoria primeiro; isso evita preencher campos que não serão usados.",
+          "Aqui você define o tipo da etapa: Entidade (Contato ou Processo), Atividade ou Decisão (condicional). Ao trocar a categoria, os campos de configuração do painel são ajustados automaticamente — incluindo o tipo da entidade (Processo/Contato) quando for Entidade, e o texto da condição quando for Decisão.",
+        hint: "Dica: escolha a categoria primeiro e, no caso de Entidade, defina logo se é Processo ou Contato; em Decisão, escreva a condição que separa os caminhos ✓ (sim) e ✕ (não).",
         selector: '[data-tutorial-id="sidebar-stage-category"]',
         popoverPlacement: "left",
       },
@@ -713,8 +713,8 @@ const GerarBPMNCreate = () => {
         id: "sidebar-config",
         title: "Área de configuração",
         description:
-          "Nesta área você preenche os detalhes da etapa selecionada: dados da entidade, campos, informações da atividade ou definição da decisão.",
-        hint: "Dica: edite um bloco por vez (categoria → entidade → salvar) para reduzir erros de validação.",
+          "Nesta área você preenche os detalhes da etapa selecionada: dados da entidade (Processo ou Contato e seus campos), informações da atividade ou a definição da decisão (texto da condição e seus caminhos). Para conexões, é aqui que você edita a condição da ligação entre etapas.",
+        hint: "Dica: edite um bloco por vez (categoria → entidade/processo/condição → salvar) para reduzir erros de validação.",
         selector: '[data-tutorial-id="sidebar-config-area"]',
         popoverPlacement: "left",
       },
@@ -2618,7 +2618,7 @@ const GerarBPMNCreate = () => {
       });
 
       appendPendingSidebarTimelineItem({
-        title: "Entidade atualizada no BPMN",
+        title: "Entidade atualizada no Fluxograma",
         description: `Antes: ${previousName} → Agora: ${nextName}`,
         actionType: "update",
         elementType: "entidade",
@@ -2885,7 +2885,7 @@ const GerarBPMNCreate = () => {
                 atributoChave: atributoChaveFinal,
                 tipoEntidade,
                 isPrimaryEntity,
-                categoria: updateTarget?.categoria || "BPMN",
+                categoria: updateTarget?.categoria || "Fluxograma",
                 campos: camposFinais,
                 updated_at: new Date().toISOString(),
               },
@@ -3011,7 +3011,7 @@ const GerarBPMNCreate = () => {
     });
 
     appendPendingSidebarTimelineItem({
-      title: "Condição atualizada no BPMN",
+      title: "Condição atualizada no Fluxograma",
       description: `Antes: ${previousNome} → Agora: ${nome}`,
       actionType: "update",
       elementType: "elemento-bpmn",
@@ -3070,7 +3070,7 @@ const GerarBPMNCreate = () => {
     });
 
     appendPendingSidebarTimelineItem({
-      title: "Atividade atualizada no BPMN",
+      title: "Atividade atualizada no Fluxograma",
       description: `Antes: ${previousNome} → Agora: ${nome}`,
       actionType: "update",
       elementType: "elemento-bpmn",
@@ -3147,7 +3147,7 @@ const GerarBPMNCreate = () => {
     });
 
     appendPendingSidebarTimelineItem({
-      title: "Entidade atualizada no BPMN",
+      title: "Entidade atualizada no Fluxograma",
       description: `Antes: ${previousNome} → Agora: ${nome}`,
       actionType: "update",
       elementType: "entidade",
@@ -3157,7 +3157,7 @@ const GerarBPMNCreate = () => {
     });
 
     setEntityError("");
-    setEntitySavedNotice("Entidade salva no BPMN.");
+    setEntitySavedNotice("Entidade salva no Fluxograma.");
     setEntitySavedNoticeNodeId(selectedNode.id);
   }, [
     appendPendingSidebarTimelineItem,
@@ -3671,7 +3671,7 @@ const GerarBPMNCreate = () => {
               atributoChave,
               tipoEntidade,
               isPrimaryEntity,
-              categoria: entityActionTarget.categoria || "BPMN",
+              categoria: entityActionTarget.categoria || "Fluxograma",
               campos: camposParaSalvar,
             },
             token,
@@ -4049,7 +4049,8 @@ const GerarBPMNCreate = () => {
   const selectedNodeIsPrimaryEntity = Boolean(
     selectedNode?.nodeType !== "task" &&
     selectedNode?.nodeType !== "condicional" &&
-    selectedNode?.isPrimaryEntity === true,
+    (selectedNode?.isPrimaryEntity === true ||
+      resolveLinkedEntityFromNode(selectedNode)?.isPrimaryEntity === true),
   );
 
   const selectedNodeEntityType = React.useMemo(() => {
@@ -4061,9 +4062,14 @@ const GerarBPMNCreate = () => {
       return "processo";
     }
 
-    const normalized = String(selectedNode?.tipoEntidade || "")
-      .trim()
-      .toLowerCase();
+    // Combina o tipo definido no próprio node com o tipo da entidade
+    // vinculada do catálogo — assim o painel reflete o mesmo rótulo
+    // exibido no cartão do canvas (que também consulta o catálogo).
+    const linkedEntity = resolveLinkedEntityFromNode(selectedNode);
+    const rawType =
+      String(selectedNode?.tipoEntidade || "").trim() ||
+      String(linkedEntity?.tipoEntidade || "").trim();
+    const normalized = rawType.toLowerCase();
 
     if (normalized === "contato" || normalized === "processo") {
       return normalized;
@@ -4072,8 +4078,10 @@ const GerarBPMNCreate = () => {
     // Legacy mapping: old "principal" values map to "contato"
     if (normalized === "principal") return "contato";
 
-    return selectedNode?.isPrimaryEntity === true ? "contato" : "processo";
-  }, [selectedNode]);
+    if (selectedNode?.isPrimaryEntity === true) return "contato";
+    if (linkedEntity?.isPrimaryEntity === true) return "contato";
+    return "processo";
+  }, [selectedNode, resolveLinkedEntityFromNode]);
 
   const filteredEntityOptions = React.useMemo(() => {
     const categoriaAtual = selectedNodeTypeSelectorValue;
@@ -4653,7 +4661,7 @@ const GerarBPMNCreate = () => {
         open: true,
         title: "Sem permissão",
         message:
-          "Seu nível de acesso permite apenas visualização. Edição de BPMN está bloqueada.",
+          "Seu nível de acesso permite apenas visualização. Edição de Fluxograma está bloqueada.",
       });
       return;
     }
@@ -4920,7 +4928,7 @@ const GerarBPMNCreate = () => {
           // no-op
         }
 
-        throw new Error(detail || "Falha ao salvar BPMN");
+        throw new Error(detail || "Falha ao salvar Fluxograma");
       }
 
       const allOpportunities = Array.isArray(opportunitiesPage?.data)
@@ -5173,7 +5181,9 @@ const GerarBPMNCreate = () => {
 
       timelineGeneratedItems.push({
         id: noteIdBase + noteIdOffset,
-        title: resolvedOpportunityId ? "BPMN atualizado" : "BPMN criado",
+        title: resolvedOpportunityId
+          ? "Fluxograma atualizado"
+          : "Fluxograma criado",
         description: `Nós ${previousNodes.length}→${persistedNodes.length} | Conexões ${previousConnections.length}→${persistedConnections.length}`,
         time: nowTime,
         timestamp: nowTimestamp,
@@ -5214,7 +5224,7 @@ const GerarBPMNCreate = () => {
           elementType: "elemento-bpmn",
           itemName:
             String(afterEntry?.label || beforeEntry?.label || "").trim() ||
-            "Elemento BPMN",
+            "Elemento do Fluxograma",
           before: formatEntrySummary(beforeEntry),
           after: formatEntrySummary(afterEntry),
         });
@@ -5280,7 +5290,7 @@ const GerarBPMNCreate = () => {
           setNoticeModal({
             open: true,
             title: "Nome duplicado",
-            message: "Já existe um BPMN com esse nome na tabela.",
+            message: "Já existe um Fluxograma com esse nome na tabela.",
           });
           return;
         }
@@ -5439,7 +5449,7 @@ const GerarBPMNCreate = () => {
         title: "Falha ao salvar",
         message:
           String(error?.message || "").trim() ||
-          "Não foi possível salvar o BPMN agora.",
+          "Não foi possível salvar o Fluxograma agora.",
       });
     } finally {
       setIsSavingBpmn(false);
@@ -5679,7 +5689,7 @@ const GerarBPMNCreate = () => {
         const response = await fetch(url, options);
 
         if (!response.ok) {
-          throw new Error("Falha ao carregar BPMN");
+          throw new Error("Falha ao carregar Fluxograma");
         }
 
         const data = await response.json();
@@ -6502,8 +6512,9 @@ const GerarBPMNCreate = () => {
         <div className={styles.orientationLock}>
           <h2 className={styles.orientationLockTitle}>Use no modo deitado</h2>
           <p className={styles.orientationLockText}>
-            O editor BPMN em celular foi otimizado para tela horizontal. Gire o
-            aparelho para continuar editando e mover as entidades.
+            O editor de Fluxograma em celular foi otimizado para tela
+            horizontal. Gire o aparelho para continuar editando e mover as
+            entidades.
           </p>
         </div>
       </section>
@@ -6514,7 +6525,7 @@ const GerarBPMNCreate = () => {
     <section className={styles.container}>
       <header className={styles.topbar}>
         <div className={styles.topbarLeft}>
-          <h1 className={styles.title}>Editor BPMN</h1>
+          <h1 className={styles.title}>Editor de Fluxograma</h1>
           <div className={styles.editorNameGroup}>
             <div className={styles.editorNameRow}>
               <input
@@ -6646,8 +6657,8 @@ const GerarBPMNCreate = () => {
               data-tutorial-id="save-bpmn"
               onClick={handleSaveBpmn}
               disabled={isReadOnlyMode || isSavingBpmn || isLoadingBpmn}
-              aria-label="Salvar BPMN"
-              title="Salvar BPMN"
+              aria-label="Salvar Fluxograma"
+              title="Salvar Fluxograma"
             >
               {isSavingBpmn ? "SALVANDO..." : "SALVAR"}
             </button>

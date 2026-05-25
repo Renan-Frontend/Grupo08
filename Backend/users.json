@@ -29,7 +29,9 @@
     "ativo": true,
     "created_at": "2026-02-13T17:33:27.136517",
     "admin": false,
-    "role": "user"
+    "role": "user",
+    "nivel": "1",
+    "cargo": ""
   },
   {
     "id": 4,
@@ -60,6 +62,18 @@
     "senha": "8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92",
     "ativo": true,
     "created_at": "2026-04-29T12:04:44.425600",
+    "admin": false,
+    "role": "user",
+    "nivel": "1",
+    "cargo": ""
+  },
+  {
+    "id": 7,
+    "nome": "Teste IA Local",
+    "email": "teste.ia.local@example.com",
+    "senha": "$2b$12$m8HxghVo4kJiFiF2NODxtuFrzJYJfDRTo0M.MOBKHPf0KvVp0Ajsy",
+    "ativo": true,
+    "created_at": "2026-05-07T09:27:28.285942",
     "admin": false,
     "role": "user",
     "nivel": "1",

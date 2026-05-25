@@ -11,7 +11,63 @@
     "y": 80,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n3",
@@ -25,7 +81,63 @@
     "y": 460,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n7",
@@ -39,7 +151,63 @@
     "y": 1220,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n9",
@@ -53,7 +221,63 @@
     "y": 1220,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n10",
@@ -67,7 +291,63 @@
     "y": 1030,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n12",
@@ -81,7 +361,63 @@
     "y": 650,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n13",
@@ -95,7 +431,63 @@
     "y": 650,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n15",
@@ -109,7 +501,63 @@
     "y": 270,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n16",
@@ -123,6 +571,2954 @@
     "y": 80,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_finalizar_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_finalizar_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_finalizar_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_finalizar_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "ai-node-1",
+    "label": "Nome do processo",
+    "nodeType": "task",
+    "x": 120,
+    "y": 460,
+    "info": "Raia: Nome do processo | Raia: Cliente",
+    "taskNome": "Nome do processo",
+    "taskDescricao": "Decisao: Nome do processo.",
+    "descricao": "Decisao: Nome do processo.",
+    "_oppName": "Aprovação de Pedido de Compra (5)",
+    "_oppId": 7,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_nome_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_nome_do_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_nome_do_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_nome_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "ai-node-end-3",
+    "label": "Fim do processo",
+    "nodeType": "task",
+    "x": 360,
+    "y": 460,
+    "taskNome": "Fim do processo",
+    "taskDescricao": "Encerramento do fluxo",
+    "descricao": "Encerramento do fluxo",
+    "_oppName": "Aprovação de Pedido de Compra (5)",
+    "_oppId": 7,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fim_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fim_do_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fim_do_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fim_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "ai-node-1",
+    "label": "Nome do processo",
+    "nodeType": "task",
+    "x": 120,
+    "y": 460,
+    "info": "Raia: Nome do processo | Raia: Cliente",
+    "taskNome": "Nome do processo",
+    "taskDescricao": "Decisao: Nome do processo.",
+    "descricao": "Decisao: Nome do processo.",
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_nome_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_nome_do_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_nome_do_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_nome_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "ai-node-end-3",
+    "label": "Fim do processo",
+    "nodeType": "task",
+    "x": 360,
+    "y": 460,
+    "taskNome": "Fim do processo",
+    "taskDescricao": "Encerramento do fluxo",
+    "descricao": "Encerramento do fluxo",
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fim_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fim_do_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fim_do_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fim_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n1",
+    "label": "Solicitar compra",
+    "nodeType": "task",
+    "taskNome": "Solicitar compra",
+    "taskDescricao": "O cliente solicita a compra de um produto, iniciando o processo de aprovação de pedido de compra.",
+    "descricao": "O cliente solicita a compra de um produto, iniciando o processo de aprovação de pedido de compra.",
+    "info": "",
+    "x": 60,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n4",
+    "label": "Analisar Pedido",
+    "nodeType": "task",
+    "taskNome": "Analisar Pedido",
+    "taskDescricao": "A equipe de análise verifica as informações do pedido e avalia se o pedido está correto e completo.",
+    "descricao": "A equipe de análise verifica as informações do pedido e avalia se o pedido está correto e completo.",
+    "info": "",
+    "x": 60,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n6",
+    "label": "Registrar Aprovacao",
+    "nodeType": "task",
+    "taskNome": "Registrar Aprovacao",
+    "taskDescricao": "A equipe de análise registra a aprovação do pedido e cria o registro de aprovação.",
+    "descricao": "A equipe de análise registra a aprovação do pedido e cria o registro de aprovação.",
+    "info": "",
+    "x": 360,
+    "y": 840,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n8",
+    "label": "Validar orcamento",
+    "nodeType": "task",
+    "taskNome": "Validar orcamento",
+    "taskDescricao": "A equipe de análise verifica se o orçamento está disponível para a compra do produto.",
+    "descricao": "A equipe de análise verifica se o orçamento está disponível para a compra do produto.",
+    "info": "",
+    "x": 60,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n10",
+    "label": "Atualizar Pedido",
+    "nodeType": "task",
+    "taskNome": "Atualizar Pedido",
+    "taskDescricao": "A equipe de análise atualiza as informações do pedido com base nas necessidades do cliente.",
+    "descricao": "A equipe de análise atualiza as informações do pedido com base nas necessidades do cliente.",
+    "info": "",
+    "x": 1000,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n11",
+    "label": "Gerar OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Gerar OrdemDeCompra",
+    "taskDescricao": "A equipe de análise gera a ordem de compra com base nas informações do pedido aprovado.",
+    "descricao": "A equipe de análise gera a ordem de compra com base nas informações do pedido aprovado.",
+    "info": "",
+    "x": 700,
+    "y": 1030,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n13",
+    "label": "Enviar OrdemDeCompra ao Fornecedor",
+    "nodeType": "task",
+    "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+    "taskDescricao": "A equipe de análise envia a ordem de compra ao fornecedor para que ele possa fornecer o produto.",
+    "descricao": "A equipe de análise envia a ordem de compra ao fornecedor para que ele possa fornecer o produto.",
+    "info": "",
+    "x": 700,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n15",
+    "label": "Fornecedor recebe OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Fornecedor recebe OrdemDeCompra",
+    "taskDescricao": "O fornecedor recebe a ordem de compra e verifica as informações para fornecer o produto.",
+    "descricao": "O fornecedor recebe a ordem de compra e verifica as informações para fornecer o produto.",
+    "info": "",
+    "x": 700,
+    "y": 270,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n16",
+    "label": "Finalizar Processo",
+    "nodeType": "task",
+    "taskNome": "Finalizar Processo",
+    "taskDescricao": "O processo de aprovação de pedido de compra é finalizado após a ordem de compra ser enviada ao fornecedor.",
+    "descricao": "O processo de aprovação de pedido de compra é finalizado após a ordem de compra ser enviada ao fornecedor.",
+    "info": "",
+    "x": 700,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_finalizar_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_finalizar_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_finalizar_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_finalizar_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n1",
+    "label": "Solicitar compra",
+    "nodeType": "task",
+    "taskNome": "Solicitar compra",
+    "taskDescricao": "O cliente solicita a compra de um produto, iniciando o processo de aprovação de pedido de compra.",
+    "descricao": "O cliente solicita a compra de um produto, iniciando o processo de aprovação de pedido de compra.",
+    "info": "",
+    "x": 60,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n4",
+    "label": "Analisar Pedido",
+    "nodeType": "task",
+    "taskNome": "Analisar Pedido",
+    "taskDescricao": "A equipe de análise verifica as informações do pedido e avalia se ele está correto e completo.",
+    "descricao": "A equipe de análise verifica as informações do pedido e avalia se ele está correto e completo.",
+    "info": "",
+    "x": 60,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n6",
+    "label": "Registrar Aprovacao",
+    "nodeType": "task",
+    "taskNome": "Registrar Aprovacao",
+    "taskDescricao": "A equipe de análise registra a aprovação do pedido e cria o registro de aprovação.",
+    "descricao": "A equipe de análise registra a aprovação do pedido e cria o registro de aprovação.",
+    "info": "",
+    "x": 360,
+    "y": 840,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n8",
+    "label": "Validar orcamento",
+    "nodeType": "task",
+    "taskNome": "Validar orcamento",
+    "taskDescricao": "A equipe de análise verifica se o orçamento está disponível para a compra.",
+    "descricao": "A equipe de análise verifica se o orçamento está disponível para a compra.",
+    "info": "",
+    "x": 60,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n10",
+    "label": "Atualizar Pedido",
+    "nodeType": "task",
+    "taskNome": "Atualizar Pedido",
+    "taskDescricao": "A equipe de análise atualiza as informações do pedido para refletir as alterações necessárias.",
+    "descricao": "A equipe de análise atualiza as informações do pedido para refletir as alterações necessárias.",
+    "info": "",
+    "x": 1000,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n11",
+    "label": "Gerar OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Gerar OrdemDeCompra",
+    "taskDescricao": "A equipe de análise gera a ordem de compra com base nas informações do pedido aprovado.",
+    "descricao": "A equipe de análise gera a ordem de compra com base nas informações do pedido aprovado.",
+    "info": "",
+    "x": 700,
+    "y": 1030,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n13",
+    "label": "Enviar OrdemDeCompra ao Fornecedor",
+    "nodeType": "task",
+    "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+    "taskDescricao": "A equipe de análise envia a ordem de compra ao fornecedor para que ele possa processar a compra.",
+    "descricao": "A equipe de análise envia a ordem de compra ao fornecedor para que ele possa processar a compra.",
+    "info": "",
+    "x": 700,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n15",
+    "label": "Fornecedor recebe OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Fornecedor recebe OrdemDeCompra",
+    "taskDescricao": "O fornecedor recebe a ordem de compra e processa a compra de acordo com as informações fornecidas.",
+    "descricao": "O fornecedor recebe a ordem de compra e processa a compra de acordo com as informações fornecidas.",
+    "info": "",
+    "x": 700,
+    "y": 270,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n16",
+    "label": "Finalizar Processo",
+    "nodeType": "task",
+    "taskNome": "Finalizar Processo",
+    "taskDescricao": "O processo de aprovação de pedido de compra é finalizado após a ordem de compra ser enviada ao fornecedor e processada.",
+    "descricao": "O processo de aprovação de pedido de compra é finalizado após a ordem de compra ser enviada ao fornecedor e processada.",
+    "info": "",
+    "x": 700,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_finalizar_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_finalizar_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_finalizar_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_finalizar_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "ai-node-1",
+    "label": "Nome do processo",
+    "nodeType": "task",
+    "x": 120,
+    "y": 460,
+    "info": "Raia: Nome do processo | Raia: Cliente",
+    "taskNome": "Nome do processo",
+    "taskDescricao": "Decisao: Nome do processo.",
+    "descricao": "Decisao: Nome do processo.",
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 3,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_nome_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_nome_do_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_nome_do_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_nome_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "ai-node-end-3",
+    "label": "Fim do processo",
+    "nodeType": "task",
+    "x": 360,
+    "y": 460,
+    "taskNome": "Fim do processo",
+    "taskDescricao": "Encerramento do fluxo",
+    "descricao": "Encerramento do fluxo",
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 3,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fim_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fim_do_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fim_do_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fim_do_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n1",
+    "label": "Solicitar compra",
+    "nodeType": "task",
+    "taskNome": "Solicitar compra",
+    "taskDescricao": "O cliente inicia o processo solicitando uma compra, gerando um pedido.",
+    "descricao": "O cliente inicia o processo solicitando uma compra, gerando um pedido.",
+    "info": "",
+    "x": 60,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_solicitar_compra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_solicitar_compra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n3",
+    "label": "Analisar Pedido",
+    "nodeType": "task",
+    "taskNome": "Analisar Pedido",
+    "taskDescricao": "A equipe de análise verifica o pedido para decidir se está aprovado ou não.",
+    "descricao": "A equipe de análise verifica o pedido para decidir se está aprovado ou não.",
+    "info": "",
+    "x": 60,
+    "y": 460,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_analisar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_analisar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n5",
+    "label": "Registrar Aprovacao",
+    "nodeType": "task",
+    "taskNome": "Registrar Aprovacao",
+    "taskDescricao": "O registro de aprovação é criado para pedidos não aprovados, documentando a decisão.",
+    "descricao": "O registro de aprovação é criado para pedidos não aprovados, documentando a decisão.",
+    "info": "",
+    "x": 360,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_registrar_aprovacao"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_registrar_aprovacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n7",
+    "label": "Validar orcamento",
+    "nodeType": "task",
+    "taskNome": "Validar orcamento",
+    "taskDescricao": "A equipe de análise verifica se o orçamento está aprovado para o pedido.",
+    "descricao": "A equipe de análise verifica se o orçamento está aprovado para o pedido.",
+    "info": "",
+    "x": 60,
+    "y": 1030,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_validar_orcamento"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_validar_orcamento",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n10",
+    "label": "Atualizar Pedido",
+    "nodeType": "task",
+    "taskNome": "Atualizar Pedido",
+    "taskDescricao": "O pedido é atualizado para refletir as alterações necessárias devido à não aprovação do orçamento.",
+    "descricao": "O pedido é atualizado para refletir as alterações necessárias devido à não aprovação do orçamento.",
+    "info": "",
+    "x": 360,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_atualizar_pedido"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_atualizar_pedido",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n11",
+    "label": "Gerar OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Gerar OrdemDeCompra",
+    "taskDescricao": "A ordem de compra é gerada com base no pedido aprovado e no orçamento aprovado.",
+    "descricao": "A ordem de compra é gerada com base no pedido aprovado e no orçamento aprovado.",
+    "info": "",
+    "x": 700,
+    "y": 1030,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_gerar_ordemdecompra"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_gerar_ordemdecompra",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n13",
+    "label": "Enviar OrdemDeCompra ao Fornecedor",
+    "nodeType": "task",
+    "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+    "taskDescricao": "A ordem de compra é enviada ao fornecedor para processamento.",
+    "descricao": "A ordem de compra é enviada ao fornecedor para processamento.",
+    "info": "",
+    "x": 700,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_enviar_ordemdecompra_a"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_enviar_ordemdecompra_a",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n15",
+    "label": "Fornecedor recebe OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Fornecedor recebe OrdemDeCompra",
+    "taskDescricao": "O fornecedor recebe a ordem de compra e inicia o processo de atendimento.",
+    "descricao": "O fornecedor recebe a ordem de compra e inicia o processo de atendimento.",
+    "info": "",
+    "x": 700,
+    "y": 270,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_fornecedor_recebe_orde"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_fornecedor_recebe_orde",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n16",
+    "label": "Concluir Processo",
+    "nodeType": "task",
+    "taskNome": "Concluir Processo",
+    "taskDescricao": "O processo de aprovação de pedido de compra é concluído após a ordem de compra ser enviada e processada pelo fornecedor.",
+    "descricao": "O processo de aprovação de pedido de compra é concluído após a ordem de compra ser enviada e processada pelo fornecedor.",
+    "info": "",
+    "x": 700,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_concluir_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "responsavel",
+      "prazo",
+      "resultado_concluir_processo"
+    ],
+    "selectedEntityFieldIds": [
+      "responsavel",
+      "prazo",
+      "resultado_concluir_processo"
+    ],
+    "campos": [
+      {
+        "nome": "responsavel",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "prazo",
+        "tipo": "data",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado_concluir_processo",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n1",
+    "label": "Acessar Site",
+    "nodeType": "task",
+    "taskNome": "Acessar Site",
+    "taskDescricao": "O cliente acessa o site para obter informações sobre os produtos e serviços oferecidos pela empresa.",
+    "descricao": "O cliente acessa o site para obter informações sobre os produtos e serviços oferecidos pela empresa.",
+    "info": "",
+    "x": 60,
+    "y": 80,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n3",
+    "label": "Solicitar Orçamento",
+    "nodeType": "task",
+    "taskNome": "Solicitar Orçamento",
+    "taskDescricao": "O cliente solicita um orçamento para o produto ou serviço desejado.",
+    "descricao": "O cliente solicita um orçamento para o produto ou serviço desejado.",
+    "info": "",
+    "x": 60,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n5",
+    "label": "Validar Dados",
+    "nodeType": "task",
+    "taskNome": "Validar Dados",
+    "taskDescricao": "O sistema verifica se os dados do pedido estão corretos e completos.",
+    "descricao": "O sistema verifica se os dados do pedido estão corretos e completos.",
+    "info": "",
+    "x": 60,
+    "y": 840,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n7",
+    "label": "Notificar Cliente",
+    "nodeType": "task",
+    "taskNome": "Notificar Cliente",
+    "taskDescricao": "O cliente é notificado sobre os erros nos dados do pedido.",
+    "descricao": "O cliente é notificado sobre os erros nos dados do pedido.",
+    "info": "",
+    "x": 60,
+    "y": 1220,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n8",
+    "label": "Confirmar Detalhes",
+    "nodeType": "task",
+    "taskNome": "Confirmar Detalhes",
+    "taskDescricao": "A equipe de atendimento confirma os detalhes do pedido com o cliente.",
+    "descricao": "A equipe de atendimento confirma os detalhes do pedido com o cliente.",
+    "info": "",
+    "x": 700,
+    "y": 1220,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n10",
+    "label": "Verificar Estoque",
+    "nodeType": "task",
+    "taskNome": "Verificar Estoque",
+    "taskDescricao": "O sistema verifica a disponibilidade do produto no estoque.",
+    "descricao": "O sistema verifica a disponibilidade do produto no estoque.",
+    "info": "",
+    "x": 700,
+    "y": 840,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n13",
+    "label": "Aprovar Pagamento",
+    "nodeType": "task",
+    "taskNome": "Aprovar Pagamento",
+    "taskDescricao": "O sistema verifica a aprovação do pagamento do cliente.",
+    "descricao": "O sistema verifica a aprovação do pagamento do cliente.",
+    "info": "",
+    "x": 1000,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n15",
+    "label": "Liberar Pedido",
+    "nodeType": "task",
+    "taskNome": "Liberar Pedido",
+    "taskDescricao": "O pedido é liberado para a separação no estoque.",
+    "descricao": "O pedido é liberado para a separação no estoque.",
+    "info": "",
+    "x": 1000,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n16",
+    "label": "Separar Produtos",
+    "nodeType": "task",
+    "taskNome": "Separar Produtos",
+    "taskDescricao": "A equipe de logística separa os produtos do pedido.",
+    "descricao": "A equipe de logística separa os produtos do pedido.",
+    "info": "",
+    "x": 700,
+    "y": 270,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n18",
+    "label": "Verificar Condições",
+    "nodeType": "task",
+    "taskNome": "Verificar Condições",
+    "taskDescricao": "A equipe de logística verifica as condições dos produtos.",
+    "descricao": "A equipe de logística verifica as condições dos produtos.",
+    "info": "",
+    "x": 1340,
+    "y": 80,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n19",
+    "label": "Embalhar Produtos",
+    "nodeType": "task",
+    "taskNome": "Embalhar Produtos",
+    "taskDescricao": "A equipe de logística embala os produtos.",
+    "descricao": "A equipe de logística embala os produtos.",
+    "info": "",
+    "x": 1340,
+    "y": 270,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n20",
+    "label": "Emitir Nota Fiscal",
+    "nodeType": "task",
+    "taskNome": "Emitir Nota Fiscal",
+    "taskDescricao": "O sistema emite a nota fiscal do pedido.",
+    "descricao": "O sistema emite a nota fiscal do pedido.",
+    "info": "",
+    "x": 1340,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n22",
+    "label": "Agendar Coleta",
+    "nodeType": "task",
+    "taskNome": "Agendar Coleta",
+    "taskDescricao": "A equipe de logística agenda a coleta do pedido.",
+    "descricao": "A equipe de logística agenda a coleta do pedido.",
+    "info": "",
+    "x": 1340,
+    "y": 840,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n23",
+    "label": "Realizar Entrega",
+    "nodeType": "task",
+    "taskNome": "Realizar Entrega",
+    "taskDescricao": "A transportadora realiza a entrega do pedido.",
+    "descricao": "A transportadora realiza a entrega do pedido.",
+    "info": "",
+    "x": 1340,
+    "y": 1030,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n25",
+    "label": "Atualizar Status",
+    "nodeType": "task",
+    "taskNome": "Atualizar Status",
+    "taskDescricao": "O sistema atualiza o status da entrega.",
+    "descricao": "O sistema atualiza o status da entrega.",
+    "info": "",
+    "x": 1980,
+    "y": 1220,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n27",
+    "label": "Agendar Nova Tentativa",
+    "nodeType": "task",
+    "taskNome": "Agendar Nova Tentativa",
+    "taskDescricao": "A transportadora agenda uma nova tentativa de entrega.",
+    "descricao": "A transportadora agenda uma nova tentativa de entrega.",
+    "info": "",
+    "x": 1980,
+    "y": 840,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n28",
+    "label": "Entregar Pedido",
+    "nodeType": "task",
+    "taskNome": "Entregar Pedido",
+    "taskDescricao": "A transportadora entrega o pedido ao cliente.",
+    "descricao": "A transportadora entrega o pedido ao cliente.",
+    "info": "",
+    "x": 2280,
+    "y": 1030,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n29",
+    "label": "Enviar Pesquisa",
+    "nodeType": "task",
+    "taskNome": "Enviar Pesquisa",
+    "taskDescricao": "O sistema envia uma pesquisa de satisfação ao cliente.",
+    "descricao": "O sistema envia uma pesquisa de satisfação ao cliente.",
+    "info": "",
+    "x": 1980,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n30",
+    "label": "Arquivar Dados",
+    "nodeType": "task",
+    "taskNome": "Arquivar Dados",
+    "taskDescricao": "O sistema arquiva os dados do pedido.",
+    "descricao": "O sistema arquiva os dados do pedido.",
+    "info": "",
+    "x": 1980,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n31",
+    "label": "Encerrar Processo",
+    "nodeType": "task",
+    "taskNome": "Encerrar Processo",
+    "taskDescricao": "O processo é encerrado oficialmente.",
+    "descricao": "O processo é encerrado oficialmente.",
+    "info": "",
+    "x": 1980,
+    "y": 270,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n35",
+    "label": "Realizar Pedido",
+    "nodeType": "task",
+    "taskNome": "Realizar Pedido",
+    "taskDescricao": "Realizar Pedido",
+    "descricao": "Realizar Pedido",
+    "info": "",
+    "x": 2620,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n37",
+    "label": "Rejeitar Endereço",
+    "nodeType": "task",
+    "taskNome": "Rejeitar Endereço",
+    "taskDescricao": "Caminho alternativo quando a condição 'Endereço Correto?' não é atendida.",
+    "descricao": "Caminho alternativo quando a condição 'Endereço Correto?' não é atendida.",
+    "info": "",
+    "x": 2920,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n38",
+    "label": "Concluir Endereço Correto",
+    "nodeType": "task",
+    "taskNome": "Concluir Endereço Correto",
+    "taskDescricao": "Conclusão do fluxo após 'Endereço Correto?'.",
+    "descricao": "Conclusão do fluxo após 'Endereço Correto?'.",
+    "info": "",
+    "x": 2620,
+    "y": 840,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n1",
+    "label": "Solicitar compra",
+    "nodeType": "task",
+    "taskNome": "Solicitar compra",
+    "taskDescricao": "O cliente solicita a compra de um produto, gerando um pedido.",
+    "descricao": "O cliente solicita a compra de um produto, gerando um pedido.",
+    "info": "",
+    "x": 60,
+    "y": 80,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n3",
+    "label": "Analisar Pedido",
+    "nodeType": "task",
+    "taskNome": "Analisar Pedido",
+    "taskDescricao": "A equipe de compras analisa o pedido para verificar se está correto e completo.",
+    "descricao": "A equipe de compras analisa o pedido para verificar se está correto e completo.",
+    "info": "",
+    "x": 60,
+    "y": 460,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n5",
+    "label": "Registrar Aprovacao",
+    "nodeType": "task",
+    "taskNome": "Registrar Aprovacao",
+    "taskDescricao": "A equipe de compras registra a aprovação do pedido.",
+    "descricao": "A equipe de compras registra a aprovação do pedido.",
+    "info": "",
+    "x": 360,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n7",
+    "label": "Validar orcamento",
+    "nodeType": "task",
+    "taskNome": "Validar orcamento",
+    "taskDescricao": "A equipe de compras valida o orçamento do pedido.",
+    "descricao": "A equipe de compras valida o orçamento do pedido.",
+    "info": "",
+    "x": 60,
+    "y": 1030,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n9",
+    "label": "Atualizar Pedido",
+    "nodeType": "task",
+    "taskNome": "Atualizar Pedido",
+    "taskDescricao": "A equipe de compras atualiza o pedido com as informações corrigidas.",
+    "descricao": "A equipe de compras atualiza o pedido com as informações corrigidas.",
+    "info": "",
+    "x": 360,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n10",
+    "label": "Gerar OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Gerar OrdemDeCompra",
+    "taskDescricao": "A equipe de compras gera a ordem de compra com base no pedido aprovado.",
+    "descricao": "A equipe de compras gera a ordem de compra com base no pedido aprovado.",
+    "info": "",
+    "x": 700,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n12",
+    "label": "Enviar OrdemDeCompra ao Fornecedor",
+    "nodeType": "task",
+    "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+    "taskDescricao": "A equipe de compras envia a ordem de compra ao fornecedor.",
+    "descricao": "A equipe de compras envia a ordem de compra ao fornecedor.",
+    "info": "",
+    "x": 700,
+    "y": 840,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n14",
+    "label": "Fornecedor recebe OrdemDeCompra",
+    "nodeType": "task",
+    "taskNome": "Fornecedor recebe OrdemDeCompra",
+    "taskDescricao": "O fornecedor recebe a ordem de compra e a processa.",
+    "descricao": "O fornecedor recebe a ordem de compra e a processa.",
+    "info": "",
+    "x": 700,
+    "y": 460,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n15",
+    "label": "Finalizar Processo",
+    "nodeType": "task",
+    "taskNome": "Finalizar Processo",
+    "taskDescricao": "O processo de aprovação de pedido de compra é finalizado.",
+    "descricao": "O processo de aprovação de pedido de compra é finalizado.",
+    "info": "",
+    "x": 700,
+    "y": 270,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n11",
+    "label": "Consultar Estoque",
+    "nodeType": "task",
+    "taskNome": "Consultar Estoque",
+    "taskDescricao": "O sistema verifica a disponibilidade dos produtos no estoque.",
+    "descricao": "O sistema verifica a disponibilidade dos produtos no estoque.",
+    "info": "",
+    "x": 700,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n18",
+    "label": "Verificar Produtos",
+    "nodeType": "task",
+    "taskNome": "Verificar Produtos",
+    "taskDescricao": "Os funcionários verificam códigos, quantidades e condições físicas dos produtos.",
+    "descricao": "Os funcionários verificam códigos, quantidades e condições físicas dos produtos.",
+    "info": "",
+    "x": 1340,
+    "y": 80,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n6",
+    "label": "Verificar Dados",
+    "nodeType": "task",
+    "taskNome": "Verificar Dados",
+    "taskDescricao": "O sistema verifica se todas as informações obrigatórias foram preenchidas corretamente.",
+    "descricao": "O sistema verifica se todas as informações obrigatórias foram preenchidas corretamente.",
+    "info": "",
+    "x": 60,
+    "y": 1030,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "n21",
+    "label": "Embalagar Produtos",
+    "nodeType": "task",
+    "taskNome": "Embalagar Produtos",
+    "taskDescricao": "Os produtos são embalados de acordo com suas características, utilizando materiais de proteção específicos para evitar danos durante o transporte.",
+    "descricao": "Os produtos são embalados de acordo com suas características, utilizando materiais de proteção específicos para evitar danos durante o transporte.",
+    "info": "",
+    "x": 1340,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "n30",
+    "label": "Entregar Produto",
+    "nodeType": "task",
+    "taskNome": "Entregar Produto",
+    "taskDescricao": "O entregador tenta realizar a entrega ao cliente.",
+    "descricao": "O entregador tenta realizar a entrega ao cliente.",
+    "info": "",
+    "x": 2280,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "n8",
+    "label": "Corrigir Dados",
+    "nodeType": "task",
+    "taskNome": "Corrigir Dados",
+    "taskDescricao": "Caminho alternativo quando a condição 'Dados Corretos?' não é atendida.",
+    "descricao": "Caminho alternativo quando a condição 'Dados Corretos?' não é atendida.",
+    "info": "",
+    "x": 360,
+    "y": 1030,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "n16",
+    "label": "Tentar Novo Pagamento",
+    "nodeType": "task",
+    "taskNome": "Tentar Novo Pagamento",
+    "taskDescricao": "Caminho alternativo quando a condição 'Pagamento Aprovado?' não é atendida.",
+    "descricao": "Caminho alternativo quando a condição 'Pagamento Aprovado?' não é atendida.",
+    "info": "",
+    "x": 1000,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "n19",
+    "label": "Verificar Códigos",
+    "nodeType": "task",
+    "taskNome": "Verificar Códigos",
+    "taskDescricao": "A equipe de logística verifica os códigos e quantidades dos produtos.",
+    "descricao": "A equipe de logística verifica os códigos e quantidades dos produtos.",
+    "info": "",
+    "x": 1340,
+    "y": 270,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 1,
+    "_preserved": true
+  },
+  {
+    "id": "node-2",
+    "active": true,
+    "isPrimaryEntity": false,
+    "tipoEntidade": "apoio",
+    "nodeType": "task",
+    "gatewayType": "xor",
+    "entidadeId": null,
+    "entidadeNome": "Entidade",
+    "condicionalNome": "Condicional",
+    "condicionalDescricao": "",
+    "taskNome": "Atividade",
+    "taskDescricao": "",
+    "selectedEntityFieldIds": [],
+    "selectedEntityFieldNames": [],
+    "selectedEntityFields": [],
+    "label": "Atividade",
+    "descricao": "",
+    "info": "",
+    "x": 368,
+    "y": 29,
+    "_oppName": "NOVO BPMN",
+    "_oppId": 2,
     "_preserved": true
   }
 ]

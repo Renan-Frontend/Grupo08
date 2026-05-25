@@ -68,25 +68,101 @@ const StatusBadge = ({ value }) => {
   );
 };
 
+const DEFAULT_QUOTE_LABELS = {
+  title: "Cotações",
+  addButton: "+ Nova cotação",
+  emptyMessage: "Nenhuma cotação criada.",
+  itemsTitle: "Itens da cotação",
+  printButton: "\uD83D\uDDA8 Imprimir cotação",
+  importButton: "\u2191 Importar produtos",
+  importHint: "Substitui os itens desta cotação pelos produtos da aba Produtos",
+  removeButton: "Remover cotação",
+  removeConfirm: "Remover esta cotação?",
+};
+
+const mergeQuoteLabels = (labels) => {
+  if (!labels) return DEFAULT_QUOTE_LABELS;
+  return { ...DEFAULT_QUOTE_LABELS, ...labels };
+};
+
 const QuotesCard = ({
   quotes = [],
   products = [],
   onChange = null,
   isReadOnlyMode = false,
   opportunityTitle = "",
+  activeStageLabel = "",
+  labels: labelsProp = null,
 }) => {
+  const labels = mergeQuoteLabels(labelsProp);
   const [openId, setOpenId] = React.useState(null);
+
+  // Mantemos TODOS os registros visíveis em todos os passos. Cada item
+  // sabe a qual etapa pertence (campo `etapa`) — quando o passo ativo é
+  // outro, marcamos o registro com um badge claro com o nome da etapa para
+  // o usuário não confundir com algo desta etapa.
+  const normalizedStage = String(activeStageLabel || "")
+    .trim()
+    .toLowerCase();
+  const annotatedQuotes = React.useMemo(() => {
+    return (Array.isArray(quotes) ? quotes : []).map((q) => {
+      const etapaRaw = String(q?.etapa || "").trim();
+      const etapaNorm = etapaRaw.toLowerCase();
+      let origin = "current"; // pertence ao passo ativo (ou sem filtro)
+      if (!etapaRaw) {
+        origin = "unscoped";
+      } else if (normalizedStage && etapaNorm !== normalizedStage) {
+        origin = "foreign";
+      }
+      return { ...q, __origin: origin, __etapaLabel: etapaRaw };
+    });
+  }, [quotes, normalizedStage]);
+  const visibleQuotes = React.useMemo(() => {
+    const importedSourceIdsInCurrentStage = new Set(
+      (Array.isArray(quotes) ? quotes : [])
+        .filter(
+          (q) =>
+            String(q?.etapa || "")
+              .trim()
+              .toLowerCase() === normalizedStage &&
+            q?.importedFromId !== undefined &&
+            q?.importedFromId !== null &&
+            String(q.importedFromId).trim() !== "",
+        )
+        .map((q) => String(q.importedFromId)),
+    );
+
+    return annotatedQuotes.filter((q) => {
+      if (q.__origin === "current") return true;
+      return !importedSourceIdsInCurrentStage.has(String(q.id));
+    });
+  }, [annotatedQuotes, quotes, normalizedStage]);
 
   const handleAdd = () => {
     if (isReadOnlyMode) return;
-    const q = EMPTY_QUOTE(products);
-    onChange?.([...quotes, q]);
+    const base = EMPTY_QUOTE(products);
+    const q = activeStageLabel
+      ? { ...base, etapa: String(activeStageLabel).trim() }
+      : base;
+    onChange?.([...(Array.isArray(quotes) ? quotes : []), q]);
     setOpenId(q.id);
+  };
+
+  const bindQuoteToActiveStage = (quote) => {
+    if (!activeStageLabel) return quote;
+    return {
+      ...quote,
+      etapa: String(activeStageLabel).trim(),
+    };
   };
 
   const handleChange = (id, field, value) => {
     if (isReadOnlyMode) return;
-    onChange?.(quotes.map((q) => (q.id === id ? { ...q, [field]: value } : q)));
+    onChange?.(
+      quotes.map((q) =>
+        q.id === id ? bindQuoteToActiveStage({ ...q, [field]: value }) : q,
+      ),
+    );
   };
 
   const handleItemChange = (quoteId, itemIdx, field, value) => {
@@ -97,7 +173,7 @@ const QuotesCard = ({
         const items = q.items.map((it, i) =>
           i === itemIdx ? { ...it, [field]: value } : it,
         );
-        return { ...q, items };
+        return bindQuoteToActiveStage({ ...q, items });
       }),
     );
   };
@@ -107,7 +183,10 @@ const QuotesCard = ({
     onChange?.(
       quotes.map((q) => {
         if (q.id !== quoteId) return q;
-        return { ...q, items: q.items.filter((_, i) => i !== itemIdx) };
+        return bindQuoteToActiveStage({
+          ...q,
+          items: q.items.filter((_, i) => i !== itemIdx),
+        });
       }),
     );
   };
@@ -117,7 +196,7 @@ const QuotesCard = ({
     onChange?.(
       quotes.map((q) => {
         if (q.id !== quoteId) return q;
-        return {
+        return bindQuoteToActiveStage({
           ...q,
           items: [
             ...q.items,
@@ -129,106 +208,98 @@ const QuotesCard = ({
               unidade: "",
             },
           ],
-        };
+        });
       }),
     );
   };
 
   const handleRemoveQuote = (id) => {
     if (isReadOnlyMode) return;
-    if (!window.confirm("Remover esta cotação?")) return;
+    if (!window.confirm(labels.removeConfirm)) return;
     onChange?.(quotes.filter((q) => q.id !== id));
     if (openId === id) setOpenId(null);
   };
 
-  const handleImportProducts = (quoteId) => {
-    if (isReadOnlyMode || products.length === 0) return;
-    onChange?.(
-      quotes.map((q) => {
-        if (q.id !== quoteId) return q;
-        return {
-          ...q,
-          items: products.map((p) => ({
-            produtoId: p.id,
-            nome: p.nome,
-            quantidade: p.quantidade,
-            precoUnitario: p.precoUnitario,
-            desconto: p.desconto,
-            unidade: p.unidade,
-          })),
-        };
-      }),
+  const isUsedInCurrentStep = (quote) => {
+    if (quote.__origin === "current") return true;
+    if (!activeStageLabel) return false;
+    return (Array.isArray(quotes) ? quotes : []).some(
+      (q) =>
+        String(q?.etapa || "")
+          .trim()
+          .toLowerCase() === normalizedStage &&
+        String(q?.importedFromId || "") === String(quote.id),
     );
   };
 
-  const handlePrintQuote = (q) => {
-    const statusLabel =
-      STATUSES.find((s) => s.value === q.status)?.label || q.status;
-    const rows = (q.items || [])
-      .map(
-        (it) =>
-          `<tr>
-            <td>${it.nome || ""}</td>
-            <td style="text-align:center">${it.quantidade}</td>
-            <td style="text-align:center">${it.unidade || ""}</td>
-            <td style="text-align:right">${formatCurrency(it.precoUnitario)}</td>
-            <td style="text-align:center">${it.desconto || 0}%</td>
-            <td style="text-align:right">${formatCurrency(calcItemTotal(it))}</td>
-          </tr>`,
-      )
-      .join("");
-    const subtotal = (q.items || []).reduce(
-      (a, it) => a + calcItemTotal(it),
-      0,
+  const handleUsageToggle = (quote, shouldUse) => {
+    if (isReadOnlyMode || !activeStageLabel) return;
+    const currentList = Array.isArray(quotes) ? quotes : [];
+
+    if (shouldUse) {
+      if (quote.__origin === "current") return;
+      const alreadyImported = currentList.some(
+        (q) =>
+          String(q?.etapa || "")
+            .trim()
+            .toLowerCase() === normalizedStage &&
+          String(q?.importedFromId || "") === String(quote.id),
+      );
+      if (alreadyImported) return;
+
+      const sourceIndex = currentList.findIndex(
+        (q) => String(q?.id) === String(quote.id),
+      );
+      const next = [...currentList];
+      const { __origin, __etapaLabel, ...baseQuote } = quote;
+      const clonedQuote = {
+        ...baseQuote,
+        id: Date.now() + Math.random(),
+        etapa: String(activeStageLabel).trim(),
+        importedFromId: quote.id,
+        items: (Array.isArray(quote.items) ? quote.items : []).map((it) => ({
+          ...it,
+        })),
+      };
+      const insertAt = sourceIndex >= 0 ? sourceIndex + 1 : next.length;
+      next.splice(insertAt, 0, clonedQuote);
+      onChange?.(next);
+      return;
+    }
+
+    if (quote.__origin === "current") {
+      const isImportedClone =
+        String(quote?.importedFromId || "").trim().length > 0;
+
+      if (isImportedClone) {
+        onChange?.(currentList.filter((q) => q.id !== quote.id));
+        return;
+      }
+
+      onChange?.(
+        currentList.map((q) =>
+          q.id === quote.id
+            ? {
+                ...q,
+                etapa: "",
+              }
+            : q,
+        ),
+      );
+      return;
+    }
+
+    onChange?.(
+      currentList.filter(
+        (q) =>
+          !(
+            String(q?.etapa || "")
+              .trim()
+              .toLowerCase() === normalizedStage &&
+            String(q?.importedFromId || "") === String(quote.id)
+          ),
+      ),
     );
-    const total = calcQuoteTotal(q);
-    const discountRow =
-      parseFloat(q.desconto) > 0
-        ? `<tr><td colspan="5" style="text-align:right">Desconto geral (${q.desconto}%)</td><td style="text-align:right">-${formatCurrency(subtotal * (parseFloat(q.desconto) / 100))}</td></tr>`
-        : "";
-    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"/>
-      <title>Cotação – ${q.titulo || "Sem título"}</title>
-      <style>
-        body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a2e; margin: 40px; }
-        h1 { font-size: 1.3rem; margin: 0 0 4px; }
-        .sub { color: #64748b; font-size: 0.85rem; margin-bottom: 20px; }
-        .meta { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px 16px; background: #f8fafc; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; }
-        .meta div { display: flex; flex-direction: column; }
-        .meta label { font-size: 0.73rem; color: #64748b; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
-        .meta strong { font-size: 0.88rem; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
-        th { background: #1e9158; color: #fff; padding: 6px 8px; font-size: 0.77rem; text-align: left; }
-        td { padding: 5px 8px; border-bottom: 1px solid #e5e9ee; font-size: 0.82rem; }
-        .totals td { border: none; padding: 3px 8px; }
-        .grand { font-weight: bold; font-size: 1rem; color: #1e9158; }
-        .obs { margin-top: 16px; background: #f8fafc; padding: 10px 14px; border-radius: 6px; font-size: 0.82rem; }
-        .obs label { font-size: 0.73rem; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 4px; }
-        .footer { margin-top: 32px; font-size: 0.75rem; color: #94a3b8; text-align: center; }
-      </style></head><body>
-      <h1>${opportunityTitle || "Proposta Comercial"}</h1>
-      <div class="sub">${q.titulo || "Sem título"} &nbsp;·&nbsp; Status: <strong>${statusLabel}</strong></div>
-      <div class="meta">
-        ${q.condicaoPagamento ? `<div><label>Cond. pagamento</label><strong>${q.condicaoPagamento}</strong></div>` : ""}
-        ${q.prazoEntrega ? `<div><label>Prazo entrega</label><strong>${q.prazoEntrega}</strong></div>` : ""}
-        ${q.validade ? `<div><label>Validade</label><strong>${q.validade}</strong></div>` : ""}
-      </div>
-      <table><thead><tr><th>Produto / Serviço</th><th style="text-align:center">Qtd</th><th style="text-align:center">Unid.</th><th style="text-align:right">Preço unit.</th><th style="text-align:center">Desc %</th><th style="text-align:right">Total</th></tr></thead>
-      <tbody>${rows}</tbody>
-      <tfoot class="totals">
-        <tr><td colspan="5" style="text-align:right">Subtotal</td><td style="text-align:right">${formatCurrency(subtotal)}</td></tr>
-        ${discountRow}
-        <tr class="grand"><td colspan="5" style="text-align:right">Total final</td><td style="text-align:right">${formatCurrency(total)}</td></tr>
-      </tfoot></table>
-      ${q.observacoes ? `<div class="obs"><label>Observações</label>${q.observacoes}</div>` : ""}
-      <div class="footer">Documento gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
-    </body></html>`;
-    const w = window.open("", "_blank", "width=800,height=700");
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(() => {
-      w.print();
-    }, 400);
   };
 
   return (
@@ -252,35 +323,43 @@ const QuotesCard = ({
             <line x1="16" y1="17" x2="8" y2="17" />
             <polyline points="10 9 9 9 8 9" />
           </svg>
-          Cotações
-          {quotes.length > 0 && (
-            <span className={styles.countBadge}>{quotes.length}</span>
+          {labels.title}
+          {visibleQuotes.length > 0 && (
+            <span className={styles.countBadge}>{visibleQuotes.length}</span>
           )}
         </span>
         {!isReadOnlyMode && (
           <button type="button" className={styles.addBtn} onClick={handleAdd}>
-            + Nova cotação
+            {labels.addButton}
           </button>
         )}
       </div>
 
-      {quotes.length === 0 ? (
+      {!isReadOnlyMode && visibleQuotes.length > 0 && (
+        <div className={styles.selectionBar}>
+          <span className={styles.selectionHint}>
+            Marque os indicadores que serão utilizados neste passo.
+          </span>
+        </div>
+      )}
+
+      {visibleQuotes.length === 0 ? (
         <div className={styles.empty}>
           <span className={styles.emptyIcon}>📋</span>
-          <p>Nenhuma cotação criada.</p>
+          <p>{labels.emptyMessage}</p>
           {!isReadOnlyMode && (
             <button
               type="button"
               className={styles.emptyAddBtn}
               onClick={handleAdd}
             >
-              + Nova cotação
+              {labels.addButton}
             </button>
           )}
         </div>
       ) : (
         <div className={styles.quoteList}>
-          {quotes.map((q, idx) => {
+          {visibleQuotes.map((q, idx) => {
             const isOpen = openId === q.id;
             return (
               <div
@@ -298,6 +377,17 @@ const QuotesCard = ({
                       setOpenId(isOpen ? null : q.id);
                   }}
                 >
+                  {!isReadOnlyMode && (
+                    <input
+                      type="checkbox"
+                      className={styles.quoteSelector}
+                      checked={isUsedInCurrentStep(q)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => handleUsageToggle(q, e.target.checked)}
+                      title="Selecionar indicador"
+                      aria-label="Selecionar indicador"
+                    />
+                  )}
                   <span className={styles.quoteIndex}>#{idx + 1}</span>
                   <span className={styles.quoteTitle}>
                     {q.titulo || <em className={styles.noTitle}>Sem título</em>}
@@ -401,7 +491,7 @@ const QuotesCard = ({
                     <div className={styles.itemsSection}>
                       <div className={styles.itemsHeader}>
                         <span className={styles.itemsLabel}>
-                          Itens da cotação
+                          {labels.itemsTitle}
                         </span>
                         {!isReadOnlyMode && (
                           <button
@@ -602,30 +692,13 @@ const QuotesCard = ({
                     </div>
 
                     <div className={styles.quoteActions}>
-                      {!isReadOnlyMode && products.length > 0 && (
-                        <button
-                          type="button"
-                          className={styles.importBtn}
-                          onClick={() => handleImportProducts(q.id)}
-                          title="Substitui os itens desta cotação pelos produtos da aba Produtos"
-                        >
-                          ↑ Importar produtos
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        className={styles.printBtn}
-                        onClick={() => handlePrintQuote(q)}
-                      >
-                        🖨 Imprimir cotação
-                      </button>
                       {!isReadOnlyMode && (
                         <button
                           type="button"
                           className={styles.removeQuoteBtn}
                           onClick={() => handleRemoveQuote(q.id)}
                         >
-                          Remover cotação
+                          {labels.removeButton}
                         </button>
                       )}
                     </div>

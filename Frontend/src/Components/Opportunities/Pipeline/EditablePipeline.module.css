@@ -488,8 +488,8 @@
   border: none;
   background: transparent;
   text-align: left;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #374151;
   outline: none;
   padding: 0;
@@ -508,7 +508,7 @@
 }
 
 .stepCardLabelCompact {
-  font-size: 0.72rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #1e293b;
   text-align: left;
@@ -526,6 +526,57 @@
 
 .stepCardLabelCompact:hover {
   color: #2fb36d;
+}
+
+.inlineDecisionArea {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.08rem;
+}
+
+.inlineDecisionButtons {
+  display: flex;
+  gap: 0.28rem;
+}
+
+.inlineDecisionBtn {
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+  height: 1.2rem;
+  line-height: 1;
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0 0.4rem;
+  cursor: pointer;
+  color: #fff;
+}
+
+.inlineDecisionBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.inlineDecisionBtnYes {
+  background: #059669;
+  border-color: #047857;
+}
+
+.inlineDecisionBtnNo {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+
+.inlineDecisionTargets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.inlineDecisionTargetText {
+  font-size: 0.58rem;
+  color: #475569;
+  line-height: 1.2;
 }
 
 .stepCardDetailsBtn {
@@ -976,6 +1027,39 @@
   font-weight: 600;
 }
 
+.modalDecisionActions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 0.2rem;
+}
+
+.modalDecisionBtn {
+  min-width: 7rem;
+  height: 2rem;
+  border-radius: 0.35rem;
+  border: 1px solid transparent;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.modalDecisionBtn:hover {
+  filter: brightness(1.05);
+}
+
+.modalDecisionBtnYes {
+  background: #059669;
+  border-color: #047857;
+}
+
+.modalDecisionBtnNo {
+  background: #dc2626;
+  border-color: #b91c1c;
+}
+
 /* Responsivo */
 @media (max-width: 768px) {
   .pipelineFrame {
@@ -1131,4 +1215,21 @@
   font-size: 0.88rem;
   color: #111827;
   line-height: 1.55;
+}
+
+/* Rótulo do tipo (Tarefa/Processo/Contato/Condição) exibido ao lado
+   do número da etapa no cartão do pipeline. */
+.stepCardTypeLabel {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.55rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.4rem;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: #fff;
+  white-space: nowrap;
 }

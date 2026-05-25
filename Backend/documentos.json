@@ -943,5 +943,128 @@
     "processName": "",
     "aiGenerated": false,
     "createdAt": "2026-04-29T12:52:37.290310+00:00"
+  },
+  {
+    "id": 22,
+    "opportunityId": 1,
+    "documentType": "",
+    "documentTitle": "Solicitar compra",
+    "header": {
+      "fields": []
+    },
+    "sections": [
+      {
+        "heading": "Referência",
+        "body": "-"
+      },
+      {
+        "heading": "Descrição",
+        "body": "O cliente solicita a compra de um produto, iniciando o processo de aprovação de pedido de compra."
+      }
+    ],
+    "footer": "",
+    "signatureFields": [],
+    "owner": "Renan",
+    "processName": "",
+    "aiGenerated": false,
+    "createdAt": "2026-05-11T14:30:21.140046+00:00"
+  },
+  {
+    "id": 23,
+    "opportunityId": "1",
+    "documentType": "Documento Completo do Processo",
+    "documentTitle": "Documento Completo do Processo - Oportunidade",
+    "header": {
+      "fields": [
+        {
+          "label": "Oportunidade",
+          "value": "Sem título"
+        },
+        {
+          "label": "Pipeline",
+          "value": "Venda feita por site"
+        },
+        {
+          "label": "Status",
+          "value": "Finalizar Processo"
+        },
+        {
+          "label": "Proprietário",
+          "value": "Renan"
+        },
+        {
+          "label": "Etapas concluídas",
+          "value": "14/14"
+        },
+        {
+          "label": "Taxa de conclusão",
+          "value": "100%"
+        }
+      ]
+    },
+    "sections": [
+      {
+        "heading": "Passo 1 - Solicitar compra",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: O cliente solicita a compra de um produto, iniciando o processo de aprovação de pedido de compra.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Solicitar compra"
+      },
+      {
+        "heading": "Passo 2 - Cliente",
+        "body": "Tipo do passo: Entidade\nStatus: Concluído\nDescrição: Pessoa ou empresa que solicita o serviço no processo de Aprovação de Pedido de Compra.\nAtributo-chave: id_cliente\nTipo da entidade: Contato\nFluxo principal na pipeline: sim Campo: id_cliente (Texto) Campo: nome (Texto) Campo: descricao (Texto) Campo: id_pedido (Texto)\nReferência: Cliente"
+      },
+      {
+        "heading": "Passo 3 - Pedido",
+        "body": "Tipo do passo: Entidade\nStatus: Concluído\nDescrição: O pedido é criado e utilizado como base para a análise.\nAtributo-chave: id_pedido\nTipo da entidade: Processo\nFluxo principal na pipeline: sim Campo: id_pedido (Texto) Campo: nome (Texto) Campo: descricao (Texto)\nReferência: Pedido"
+      },
+      {
+        "heading": "Passo 4 - Analisar Pedido",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: A equipe de análise verifica as informações do pedido e avalia se o pedido está correto e completo.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Analisar Pedido"
+      },
+      {
+        "heading": "Passo 5 - Pedido aprovado?",
+        "body": "Tipo do passo: Condição\nStatus: Concluído\nDecisão: Sim\nDescrição: A equipe de análise avalia se o pedido está aprovado com base nas informações fornecidas.\nTipo da entidade: Decisão Fluxograma\nFluxo principal na pipeline: sim\nReferência: Pedido aprovado?"
+      },
+      {
+        "heading": "Passo 6 - Aprovacao",
+        "body": "Tipo do passo: Entidade\nStatus: Concluído\nDescrição: O registro de aprovação é criado e armazenado para futuras referências.\nAtributo-chave: id_aprovacao\nTipo da entidade: Processo\nFluxo principal na pipeline: sim Campo: id_aprovacao (Texto) Campo: nome (Texto) Campo: descricao (Texto) Campo: id_pedido (Texto)\nReferência: Aprovacao"
+      },
+      {
+        "heading": "Passo 7 - Validar orcamento",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: A equipe de análise verifica se o orçamento está disponível para a compra do produto.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Validar orcamento"
+      },
+      {
+        "heading": "Passo 8 - Orcamento aprovado?",
+        "body": "Tipo do passo: Condição\nStatus: Concluído\nDecisão: Sim\nDescrição: A equipe de análise avalia se o orçamento está aprovado com base nas informações fornecidas.\nTipo da entidade: Decisão Fluxograma\nFluxo principal na pipeline: sim\nReferência: Orcamento aprovado?"
+      },
+      {
+        "heading": "Passo 9 - Gerar OrdemDeCompra",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: A equipe de análise gera a ordem de compra com base nas informações do pedido.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Gerar OrdemDeCompra"
+      },
+      {
+        "heading": "Passo 10 - OrdemDeCompra",
+        "body": "Tipo do passo: Entidade\nStatus: Concluído\nDescrição: A ordem de compra é criada e utilizada para solicitar o produto ao fornecedor.\nAtributo-chave: id_ordemdecompra\nTipo da entidade: Processo\nFluxo principal na pipeline: sim Campo: id_ordemdecompra (Texto) Campo: nome (Texto) Campo: descricao (Texto) Campo: id_pedido (Texto)\nReferência: OrdemDeCompra"
+      },
+      {
+        "heading": "Passo 11 - Enviar OrdemDeCompra ao Fornecedor",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: A equipe de análise envia a ordem de compra ao fornecedor.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Enviar OrdemDeCompra ao Fornecedor"
+      },
+      {
+        "heading": "Passo 12 - Fornecedor",
+        "body": "Tipo do passo: Entidade\nStatus: Concluído\nDescrição: O fornecedor recebe a ordem de compra e fornece o produto.\nAtributo-chave: id_fornecedor\nTipo da entidade: Contato\nFluxo principal na pipeline: sim Campo: id_fornecedor (Texto) Campo: nome (Texto) Campo: descricao (Texto) Campo: id_pedido (Texto)\nReferência: Fornecedor"
+      },
+      {
+        "heading": "Passo 13 - Fornecedor recebe OrdemDeCompra",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: O fornecedor recebe a ordem de compra e inicia o processo de entrega do produto.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Fornecedor recebe OrdemDeCompra"
+      },
+      {
+        "heading": "Passo 14 - Finalizar Processo",
+        "body": "Tipo do passo: Tarefa\nStatus: Concluído\nDescrição: O processo de aprovação de pedido de compra é finalizado após a entrega do produto.\nTipo da entidade: Atividade Fluxograma\nFluxo principal na pipeline: sim\nReferência: Finalizar Processo"
+      }
+    ],
+    "footer": "Documento gerado automaticamente a partir da configuração da oportunidade.",
+    "signatureFields": [],
+    "owner": "",
+    "processName": "Venda feita por site",
+    "aiGenerated": false,
+    "createdAt": "2026-05-21T14:57:31.884106+00:00"
   }
 ]

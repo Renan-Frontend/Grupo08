@@ -199,7 +199,10 @@ const Dashboard = () => {
 
   const entry = dashboardSlug ? loadEntry(dashboardSlug) : null;
   const name = entry?.name || dashboardSlug || "Dashboard";
-  const widgets = entry?.widgets || ["metrics", "revenue", "sales"];
+  const widgets = useMemo(
+    () => entry?.widgets || ["metrics", "revenue", "sales"],
+    [entry?.widgets],
+  );
 
   const [chartData, setChartData] = useState({
     revenue: entry?.chartData?.revenue || DEFAULT_REVENUE,
@@ -252,7 +255,6 @@ const Dashboard = () => {
 
   const originalKpiTable = entry?.originalKpiTable || null;
 
-  // Auto-save originalKpiTable for older dashboards that don't have it
   useEffect(() => {
     if (
       !originalKpiTable &&
@@ -263,7 +265,6 @@ const Dashboard = () => {
       persistEntry(dashboardSlug, { originalKpiTable: snapshot });
     }
   }, [dashboardSlug]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const [editingWidget, setEditingWidget] = useState(null);
   const [editingKpiIndex, setEditingKpiIndex] = useState(null);
   const [kpiEditForm, setKpiEditForm] = useState({

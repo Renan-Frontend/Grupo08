@@ -68,6 +68,21 @@
   margin-top: 0.2rem;
 }
 
+.selectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fbfdff;
+}
+
+.selectionHint {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
 .tableWrap {
   overflow-x: auto;
 }
@@ -114,10 +129,29 @@
   text-align: center;
 }
 
+.selCol {
+  width: 28px;
+  text-align: center;
+}
+
+.rowSelector {
+  width: 14px;
+  height: 14px;
+  accent-color: #1e9158;
+  cursor: pointer;
+}
+
 .totalCell {
   font-weight: 600;
   color: #1e293b;
   white-space: nowrap;
+}
+
+.totalContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.18rem;
 }
 
 .table tfoot tr {
@@ -162,6 +196,30 @@
   background: transparent;
   color: #374151;
   cursor: default;
+}
+
+.stepBadgeForeign,
+.stepBadgeUnscoped {
+  display: inline-flex;
+  margin-top: 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  width: fit-content;
+  letter-spacing: 0.04em;
+}
+
+.stepBadgeForeign {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+}
+
+.stepBadgeUnscoped {
+  color: #475569;
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
 }
 
 .narrow {

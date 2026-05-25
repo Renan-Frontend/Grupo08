@@ -1,0 +1,267 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #555;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.selectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 0.1rem;
+}
+
+.selectionHint {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sectionHeader h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.counter {
+  font-size: 12px;
+  color: #888;
+  background: #f3f3f3;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.uploadZone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  border: 2px dashed #c7d2fe;
+  border-radius: 8px;
+  background: #f8faff;
+  cursor: pointer;
+  transition: background 0.15s;
+  color: #4f46e5;
+  font-size: 14px;
+}
+
+.uploadZone:hover {
+  background: #eef2ff;
+}
+
+.uploadIcon {
+  font-size: 28px;
+}
+
+.empty {
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+  margin: 0;
+}
+
+.error {
+  color: #b91c1c;
+  font-size: 13px;
+  margin: 0;
+  padding: 8px 12px;
+  background: #fee2e2;
+  border-radius: 6px;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  gap: 8px;
+}
+
+.itemMain {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowSelector {
+  width: 14px;
+  height: 14px;
+  margin-right: 0.1rem;
+  accent-color: #4f46e5;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.itemIcon {
+  font-size: 20px;
+}
+
+.itemInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.itemLink {
+  font-size: 14px;
+  color: #1f2937;
+  font-weight: 500;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+a.itemLink:hover {
+  text-decoration: underline;
+  color: #4f46e5;
+}
+
+.itemMeta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.stepBadgeForeign,
+.stepBadgeUnscoped {
+  display: inline-flex;
+  margin-top: 0.2rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  width: fit-content;
+  letter-spacing: 0.04em;
+}
+
+.stepBadgeForeign {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+}
+
+.stepBadgeUnscoped {
+  color: #475569;
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
+}
+
+.removeBtn {
+  background: transparent;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.removeBtn:hover {
+  background: #fee2e2;
+}
+
+.chartPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.pickerRow {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.pickerLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #4b5563;
+  font-weight: 500;
+  flex: 1;
+  min-width: 180px;
+}
+
+.pickerSelect,
+.pickerInput {
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.pickerSelect:focus,
+.pickerInput:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.addBtn {
+  padding: 8px 16px;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  height: fit-content;
+}
+
+.addBtn:hover:not(:disabled) {
+  background: #4338ca;
+}
+
+.addBtn:disabled {
+  background: #c7d2fe;
+  cursor: not-allowed;
+}

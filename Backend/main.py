@@ -1,4 +1,5 @@
 import os
+import traceback
 try:
     dotenv_module = __import__("dotenv", fromlist=["load_dotenv"])
     load_dotenv = getattr(dotenv_module, "load_dotenv", None)
@@ -257,16 +258,97 @@ def _execute_ai_action(action: dict[str, Any], current_user: dict[str, Any]) -> 
             detail="Seu nivel de acesso permite apenas visualizacao. Execucao da IA bloqueada.",
         )
 
+    def _merge_entity_fields(existing_fields: Any, incoming_fields: Any) -> list[dict[str, Any]]:
+        existing_list = existing_fields if isinstance(existing_fields, list) else []
+        incoming_list = incoming_fields if isinstance(incoming_fields, list) else []
+
+        merged: list[dict[str, Any]] = []
+        index_by_name: dict[str, int] = {}
+
+        def _normalized_field(field: dict[str, Any]) -> dict[str, Any]:
+            return {
+                "nome": str(field.get("nome") or "").strip(),
+                "tipo": str(field.get("tipo") or "TEXT").strip() or "TEXT",
+                "obrigatorio": field.get("obrigatorio") is True,
+                "keyType": str(field.get("keyType") or field.get("chave") or "NORMAL").strip().upper() or "NORMAL",
+                "referencia": str(field.get("referencia") or field.get("relacionamento") or "").strip(),
+            }
+
+        for raw in existing_list:
+            if not isinstance(raw, dict):
+                continue
+            item = _normalized_field(raw)
+            if not item["nome"]:
+                continue
+            key = _normalize_ai_text(item["nome"])
+            if not key or key in index_by_name:
+                continue
+            index_by_name[key] = len(merged)
+            merged.append(item)
+
+        for raw in incoming_list:
+            if not isinstance(raw, dict):
+                continue
+            item = _normalized_field(raw)
+            if not item["nome"]:
+                continue
+            key = _normalize_ai_text(item["nome"])
+            if not key:
+                continue
+
+            if key in index_by_name:
+                current = merged[index_by_name[key]]
+                merged[index_by_name[key]] = {
+                    "nome": current.get("nome") or item["nome"],
+                    "tipo": item["tipo"] or current.get("tipo") or "TEXT",
+                    "obrigatorio": item["obrigatorio"] or current.get("obrigatorio") is True,
+                    "keyType": item["keyType"] or current.get("keyType") or "NORMAL",
+                    "referencia": item["referencia"] or current.get("referencia") or "",
+                }
+            else:
+                index_by_name[key] = len(merged)
+                merged.append(item)
+
+        return merged
+
     if action_type == "create_entidade":
+        entity_name = str(payload.get("nome") or "Entidade IA").strip()
+        sanitized_fields = _sanitize_entity_fields(payload.get("campos"), entity_name or "Entidade IA")
         entidade_data = {
             "categoria": str(payload.get("categoria") or "IA"),
-            "nome": str(payload.get("nome") or "Entidade IA").strip(),
+            "nome": entity_name,
             "descricao": str(payload.get("descricao") or "").strip(),
             "tipoEntidade": _normalize_entity_type(str(payload.get("tipoEntidade") or ""), default="processo"),
-            "campos": payload.get("campos") if isinstance(payload.get("campos"), list) else [],
+            "campos": sanitized_fields,
             "criadoPor": current_user.get("nome") or "IA",
         }
         created = create_entidade(Entidade(**entidade_data))
+
+        # create_entidade returns the existing record when nome+categoria already exists.
+        # Ensure AI-generated fields are still persisted in cadastro via merge+update.
+        if isinstance(created, dict) and sanitized_fields:
+            current_fields = created.get("campos") if isinstance(created.get("campos"), list) else []
+            merged_fields = _merge_entity_fields(current_fields, sanitized_fields)
+            if merged_fields != current_fields and created.get("id") is not None:
+                updated_payload = {
+                    "categoria": str(created.get("categoria") or entidade_data["categoria"]),
+                    "nome": str(created.get("nome") or entidade_data["nome"]),
+                    "descricao": str(created.get("descricao") or entidade_data["descricao"]),
+                    "tipoEntidade": _normalize_entity_type(
+                        str(created.get("tipoEntidade") or entidade_data.get("tipoEntidade") or ""),
+                        default="processo",
+                    ),
+                    "papelNegocio": created.get("papelNegocio"),
+                    "isPrimaryEntity": created.get("isPrimaryEntity"),
+                    "atributoChave": created.get("atributoChave"),
+                    "campos": merged_fields,
+                    "numeroRelacionamentos": created.get("numeroRelacionamentos"),
+                    "bpmnUsageCount": created.get("bpmnUsageCount"),
+                    "ativo": created.get("ativo") is not False,
+                    "criadoPor": created.get("criadoPor") or entidade_data["criadoPor"],
+                }
+                created = update_entidade(int(created.get("id")), Entidade(**updated_payload))
+
         return {
             "type": action_type,
             "status": "ok",
@@ -1511,6 +1593,235 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
     raw_nodes: list[Any] = raw_nodes_value if isinstance(raw_nodes_value, list) else []
     nodes: list[dict[str, Any]] = []
     node_ids: set[str] = set()
+    used_stage_field_signatures: dict[str, set[str]] = {
+        "task": set(),
+        "condicional": set(),
+    }
+
+    def _default_stage_fields(node_type: str, node_label: str, item_index: int) -> list[dict[str, Any]]:
+        if node_type == "condicional":
+            return [
+                {
+                    "nome": "nome_condicional",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "pergunta_decisao",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "campo_avaliado",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "operador",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "valor_comparacao",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+            ]
+
+        if node_type == "task":
+            return [
+                {
+                    "nome": "nome_atividade",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "descricao_atividade",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "responsavel",
+                    "tipo": "texto",
+                    "obrigatorio": True,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+                {
+                    "nome": "prazo_sla_horas",
+                    "tipo": "numero",
+                    "obrigatorio": False,
+                    "keyType": "NORMAL",
+                    "relacionamento": None,
+                },
+            ]
+
+        return []
+
+    def _sanitize_stage_fields(
+        raw_fields: Any,
+        node_type: str,
+        node_label: str,
+        node_description: str,
+        item_index: int,
+    ) -> list[dict[str, Any]]:
+        source_fields: list[Any] = raw_fields if isinstance(raw_fields, list) else []
+        safe_fields: list[dict[str, Any]] = []
+        seen_names: set[str] = set()
+
+        def _slug(value: str) -> str:
+            return re.sub(r"[^a-z0-9]+", "_", _normalize_ai_text(value)).strip("_")
+
+        def _new_field(nome: str, tipo: str = "texto", obrigatorio: bool = False) -> dict[str, Any]:
+            return {
+                "nome": nome,
+                "tipo": tipo,
+                "obrigatorio": obrigatorio,
+                "keyType": "NORMAL",
+                "relacionamento": None,
+            }
+
+        def _extract_context_keyword() -> str:
+            text = f"{node_label} {node_description}".strip()
+            tokens = [
+                re.sub(r"[^a-z0-9]", "", part)
+                for part in _normalize_ai_text(text).split()
+            ]
+            stopwords = {
+                "de", "da", "do", "das", "dos", "e", "ou", "em", "para", "com", "sem",
+                "a", "o", "as", "os", "na", "no", "nas", "nos", "um", "uma", "etapa",
+                "atividade", "condicional", "decisao", "task", "processo", "fluxo",
+            }
+            for token in tokens:
+                if len(token) >= 4 and token not in stopwords:
+                    return token
+            return "contexto"
+
+        def _field_signature(fields: list[dict[str, Any]]) -> str:
+            names = sorted(
+                _slug(str(item.get("nome") or ""))
+                for item in fields
+                if str(item.get("nome") or "").strip()
+            )
+            return "|".join([name for name in names if name])
+
+        for field in source_fields:
+            if not isinstance(field, dict):
+                continue
+
+            field_name = str(field.get("nome") or field.get("name") or "").strip()
+            if not field_name:
+                continue
+
+            normalized_name = _normalize_ai_text(field_name)
+            if not normalized_name or normalized_name in seen_names:
+                continue
+            seen_names.add(normalized_name)
+
+            key_type = str(field.get("keyType") or field.get("chave") or "NORMAL").strip().upper()
+            if key_type not in {"PK", "FK", "NORMAL"}:
+                key_type = "NORMAL"
+
+            safe_fields.append(
+                {
+                    "nome": field_name,
+                    "tipo": str(field.get("tipo") or field.get("type") or "texto").strip().lower() or "texto",
+                    "obrigatorio": field.get("obrigatorio") is True
+                    or str(field.get("obrigatorio") or field.get("required") or "").strip().lower()
+                    in {"sim", "true", "1"},
+                    "keyType": key_type,
+                    "relacionamento": str(
+                        field.get("relacionamento")
+                        or field.get("referencia")
+                        or field.get("reference")
+                        or "",
+                    ).strip()
+                    or None,
+                }
+            )
+
+        context_keyword = _extract_context_keyword()
+
+        if safe_fields:
+            existing_names = {
+                _slug(str(field.get("nome") or ""))
+                for field in safe_fields
+                if str(field.get("nome") or "").strip()
+            }
+
+            if node_type == "condicional":
+                if "nome_condicional" not in existing_names:
+                    safe_fields.append(_new_field("nome_condicional", "texto", True))
+                    existing_names.add("nome_condicional")
+                if "pergunta_decisao" not in existing_names:
+                    safe_fields.append(_new_field("pergunta_decisao", "texto", True))
+                    existing_names.add("pergunta_decisao")
+                if "campo_avaliado" not in existing_names:
+                    safe_fields.append(_new_field("campo_avaliado", "texto", True))
+                    existing_names.add("campo_avaliado")
+                if "operador" not in existing_names:
+                    safe_fields.append(_new_field("operador", "texto", True))
+                    existing_names.add("operador")
+                if "valor_comparacao" not in existing_names:
+                    safe_fields.append(_new_field("valor_comparacao", "texto", True))
+                    existing_names.add("valor_comparacao")
+            elif node_type == "task":
+                if "nome_atividade" not in existing_names:
+                    safe_fields.append(_new_field("nome_atividade", "texto", True))
+                    existing_names.add("nome_atividade")
+                if "descricao_atividade" not in existing_names:
+                    safe_fields.append(_new_field("descricao_atividade", "texto", True))
+                    existing_names.add("descricao_atividade")
+                if "responsavel" not in existing_names:
+                    safe_fields.append(_new_field("responsavel", "texto", True))
+                    existing_names.add("responsavel")
+                if "prazo_sla_horas" not in existing_names:
+                    safe_fields.append(_new_field("prazo_sla_horas", "numero", False))
+                    existing_names.add("prazo_sla_horas")
+
+            signature = _field_signature(safe_fields)
+            if node_type in used_stage_field_signatures and signature:
+                if signature in used_stage_field_signatures[node_type]:
+                    unique_name = (
+                        f"contexto_{context_keyword}_{item_index}"
+                        if node_type == "task"
+                        else f"ramo_{context_keyword}_{item_index}"
+                    )
+                    safe_fields.append(_new_field(unique_name, "texto", False))
+                    signature = _field_signature(safe_fields)
+                used_stage_field_signatures[node_type].add(signature)
+
+            return safe_fields
+
+        default_fields = _default_stage_fields(node_type, node_label, item_index)
+        if default_fields:
+            signature = _field_signature(default_fields)
+            if node_type in used_stage_field_signatures and signature:
+                if signature in used_stage_field_signatures[node_type]:
+                    unique_name = (
+                        f"contexto_{context_keyword}_{item_index}"
+                        if node_type == "task"
+                        else f"ramo_{context_keyword}_{item_index}"
+                    )
+                    default_fields.append(_new_field(unique_name, "texto", False))
+                    signature = _field_signature(default_fields)
+                used_stage_field_signatures[node_type].add(signature)
+
+        return default_fields
 
     for index, raw_node in enumerate(raw_nodes, 1):
         if not isinstance(raw_node, dict):
@@ -1583,6 +1894,28 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             node_payload["label"] = task_name
             node_payload["taskNome"] = task_name
             node_payload["taskDescricao"] = task_description
+            task_fields = _sanitize_stage_fields(
+                raw_node.get("selectedEntityFields")
+                or raw_node.get("formSchema")
+                or raw_node.get("campos"),
+                "task",
+                task_name,
+                task_description,
+                index,
+            )
+            if task_fields:
+                node_payload["selectedEntityFields"] = task_fields
+                node_payload["selectedEntityFieldNames"] = [
+                    str(field.get("nome") or "").strip()
+                    for field in task_fields
+                    if str(field.get("nome") or "").strip()
+                ]
+                node_payload["selectedEntityFieldIds"] = [
+                    _normalize_ai_text(str(field.get("nome") or "").strip()).replace(" ", "_")
+                    for field in task_fields
+                    if str(field.get("nome") or "").strip()
+                ]
+                node_payload["campos"] = task_fields
         elif node_type == "condicional":
             raw_cond_name = str(raw_node.get("condicionalNome") or raw_label or label).strip()
             cond_name = _sanitize_node_name_by_type(raw_cond_name, "condicional", index)
@@ -1612,6 +1945,28 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             node_payload["condicionalNome"] = cond_name
             node_payload["condicionalDescricao"] = cond_descricao
             node_payload["gatewayType"] = gateway_type
+            cond_fields = _sanitize_stage_fields(
+                raw_node.get("selectedEntityFields")
+                or raw_node.get("formSchema")
+                or raw_node.get("campos"),
+                "condicional",
+                cond_name,
+                cond_descricao,
+                index,
+            )
+            if cond_fields:
+                node_payload["selectedEntityFields"] = cond_fields
+                node_payload["selectedEntityFieldNames"] = [
+                    str(field.get("nome") or "").strip()
+                    for field in cond_fields
+                    if str(field.get("nome") or "").strip()
+                ]
+                node_payload["selectedEntityFieldIds"] = [
+                    _normalize_ai_text(str(field.get("nome") or "").strip()).replace(" ", "_")
+                    for field in cond_fields
+                    if str(field.get("nome") or "").strip()
+                ]
+                node_payload["campos"] = cond_fields
         else:
             node_payload["entidadeNome"] = label
             inferred_type = _infer_data_entity_type(label, stage_participant)
@@ -1642,6 +1997,32 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                     })
                 if sanitized_campos:
                     node_payload["campos"] = sanitized_campos
+                    node_payload["selectedEntityFields"] = sanitized_campos
+                    node_payload["selectedEntityFieldNames"] = [
+                        str(field.get("nome") or "").strip()
+                        for field in sanitized_campos
+                        if str(field.get("nome") or "").strip()
+                    ]
+                    node_payload["selectedEntityFieldIds"] = [
+                        _normalize_ai_text(str(field.get("nome") or "").strip()).replace(" ", "_")
+                        for field in sanitized_campos
+                        if str(field.get("nome") or "").strip()
+                    ]
+            else:
+                default_campos = _default_entity_campos(label)
+                if default_campos:
+                    node_payload["campos"] = default_campos
+                    node_payload["selectedEntityFields"] = default_campos
+                    node_payload["selectedEntityFieldNames"] = [
+                        str(field.get("nome") or "").strip()
+                        for field in default_campos
+                        if str(field.get("nome") or "").strip()
+                    ]
+                    node_payload["selectedEntityFieldIds"] = [
+                        _normalize_ai_text(str(field.get("nome") or "").strip()).replace(" ", "_")
+                        for field in default_campos
+                        if str(field.get("nome") or "").strip()
+                    ]
 
         nodes.append(node_payload)
         node_ids.add(node_id)
@@ -1691,6 +2072,20 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                     desc,
                     outgoing_count=2,
                 )
+                cond_fields = _default_stage_fields("condicional", cond_name, index)
+                if cond_fields:
+                    node_payload["selectedEntityFields"] = cond_fields
+                    node_payload["selectedEntityFieldNames"] = [
+                        str(field.get("nome") or "").strip()
+                        for field in cond_fields
+                        if str(field.get("nome") or "").strip()
+                    ]
+                    node_payload["selectedEntityFieldIds"] = [
+                        _normalize_ai_text(str(field.get("nome") or "").strip()).replace(" ", "_")
+                        for field in cond_fields
+                        if str(field.get("nome") or "").strip()
+                    ]
+                    node_payload["campos"] = cond_fields
             else:
                 if stage_participant:
                     node_payload["info"] = f"Raia: {stage_participant}"
@@ -1699,6 +2094,20 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
                 node_payload["descricao"] = desc
                 node_payload["taskNome"] = task_name
                 node_payload["taskDescricao"] = desc
+                task_fields = _default_stage_fields("task", task_name, index)
+                if task_fields:
+                    node_payload["selectedEntityFields"] = task_fields
+                    node_payload["selectedEntityFieldNames"] = [
+                        str(field.get("nome") or "").strip()
+                        for field in task_fields
+                        if str(field.get("nome") or "").strip()
+                    ]
+                    node_payload["selectedEntityFieldIds"] = [
+                        _normalize_ai_text(str(field.get("nome") or "").strip()).replace(" ", "_")
+                        for field in task_fields
+                        if str(field.get("nome") or "").strip()
+                    ]
+                    node_payload["campos"] = task_fields
 
             nodes.append(node_payload)
             node_ids.add(str(node_payload["id"]))
@@ -1779,6 +2188,11 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             return default
 
     collapsed_conditional_ids: set[str] = set()
+    existing_connection_ids: set[str] = {
+        str(connection.get("id") or "").strip()
+        for connection in connections
+        if str(connection.get("id") or "").strip()
+    }
 
     for conditional_node_id, conditional_outgoing in outgoing_by_conditional.items():
         if not conditional_outgoing:
@@ -1801,6 +2215,97 @@ def _sanitize_bpmn_payload(payload: dict[str, Any], fallback_id: int) -> dict[st
             conditional_node["gatewayType"] = gateway_type
 
         if len(unique_targets) <= 1:
+            if gateway_type == "xor":
+                base_connection = conditional_outgoing[0]
+                base_target_id = str(base_connection.get("to") or "").strip()
+                conditional_node = node_lookup.get(conditional_node_id)
+                fallback_index = len(nodes) + 1
+
+                fallback_task_name = "Tratar excecao"
+                if conditional_node is not None:
+                    cond_label = str(
+                        conditional_node.get("condicionalNome")
+                        or conditional_node.get("label")
+                        or ""
+                    ).strip()
+                    if cond_label:
+                        fallback_task_name = _sanitize_node_name_by_type(
+                            f"Revisar {cond_label}",
+                            "task",
+                            fallback_index,
+                        )
+
+                fallback_node_id = f"ai-xor-nao-{fallback_id}-{conditional_node_id}"
+                suffix = 1
+                while fallback_node_id in node_lookup:
+                    fallback_node_id = f"ai-xor-nao-{fallback_id}-{conditional_node_id}-{suffix}"
+                    suffix += 1
+
+                base_connection["decision"] = "sim"
+                base_connection["fromHandle"] = "right"
+                base_connection["toHandle"] = str(base_connection.get("toHandle") or "left").strip() or "left"
+
+                source_x = safe_float((conditional_node or {}).get("x"), 0.0)
+                source_y = safe_float((conditional_node or {}).get("y"), 0.0)
+                fallback_node = {
+                    "id": fallback_node_id,
+                    "label": fallback_task_name,
+                    "nodeType": "task",
+                    "taskNome": fallback_task_name,
+                    "taskDescricao": "Tratamento do caminho NAO quando a condicional reprova o criterio.",
+                    "x": source_x + 320,
+                    "y": source_y + 220,
+                }
+                nodes.append(fallback_node)
+                node_lookup[fallback_node_id] = fallback_node
+
+                if stages:
+                    stage_id = fallback_node_id
+                    if stage_id not in stages_by_id:
+                        stages.append(
+                            {
+                                "id": stage_id,
+                                "nome": fallback_task_name,
+                                "tipo": "task",
+                                "participante": str((conditional_node or {}).get("participante") or "").strip(),
+                            }
+                        )
+                        stages_by_id[stage_id.lower()] = stages[-1]
+
+                conn_nao_id = f"ai-conn-xor-nao-{fallback_id}-{len(connections) + 1}"
+                while conn_nao_id in existing_connection_ids:
+                    conn_nao_id = f"{conn_nao_id}-x"
+                existing_connection_ids.add(conn_nao_id)
+
+                connection_nao = {
+                    "id": conn_nao_id,
+                    "from": conditional_node_id,
+                    "to": fallback_node_id,
+                    "fromHandle": "bottom",
+                    "toHandle": "top",
+                    "decision": "nao",
+                }
+                connections.append(connection_nao)
+                conditional_outgoing.append(connection_nao)
+
+                if base_target_id:
+                    conn_merge_id = f"ai-conn-xor-merge-{fallback_id}-{len(connections) + 1}"
+                    while conn_merge_id in existing_connection_ids:
+                        conn_merge_id = f"{conn_merge_id}-x"
+                    existing_connection_ids.add(conn_merge_id)
+
+                    connections.append(
+                        {
+                            "id": conn_merge_id,
+                            "from": fallback_node_id,
+                            "to": base_target_id,
+                            "fromHandle": "right",
+                            "toHandle": "left",
+                            "decision": "",
+                        }
+                    )
+                continue
+
             collapsed_conditional_ids.add(conditional_node_id)
             for connection in conditional_outgoing:
                 connection["decision"] = ""
@@ -1997,7 +2502,7 @@ def _ensure_terminal_end_node(
     if not node_lookup:
         return safe_nodes, safe_connections
 
-    outgoing_counts: dict[str, int] = {node_id: 0 for node_id in node_lookup.keys()}
+    outgoing_counts: dict[str, int] = dict.fromkeys(node_lookup.keys(), 0)
     for connection in safe_connections:
         from_id = str(connection.get("from") or "").strip()
         if from_id in outgoing_counts:
@@ -2289,7 +2794,7 @@ def _normalize_entity_type(value: Any, default: str = "processo") -> str:
     if not normalized:
         return default
 
-    tokens = set(part for part in re.split(r"[^a-z0-9]+", normalized) if part)
+    tokens = {part for part in re.split(r"[^a-z0-9]+", normalized) if part}
 
     # Pessoas / organizacoes -> contato
     contato_exact = {
@@ -2567,13 +3072,6 @@ def _ensure_entity_actions(
             bpmn_entities.extend(_extract_entity_names_from_bpmn_payload(payload))
 
     existing_create_entities = _dedupe_preserve_order(existing_create_entities)
-    candidate_entities = _dedupe_preserve_order(
-        [
-            str(name or "").strip()
-            for name in [*suggested_entities, *bpmn_entities, process_name]
-            if str(name or "").strip()
-        ]
-    )
 
     entity_actions_to_add: list[dict[str, Any]] = []
     max_entities = len(suggested_entities)
@@ -3193,6 +3691,7 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
         "Entidades de dados nao entram na sequencia principal do fluxo; elas devem ser associadas as atividades que usam ou produzem os dados. "
         "Nao crie entidades soltas sem associacao. "
         "Cada gateway XOR deve ter exatamente dois ramos principais com semantica Sim/Nao e destinos coerentes. "
+        "REGRA INEGOCIAVEL: se existir condicional XOR sem os dois caminhos (sim e nao), a resposta esta INVALIDA e deve ser corrigida antes de finalizar. "
         "Retorne SOMENTE JSON valido com este formato: "
         "{\"actions\":[{\"id\":\"a1\",\"type\":\"create_entidade|create_oportunidade|update_bpmn_state\","
         "\"label\":\"...\",\"risk\":\"low|medium|high\",\"payload\":{...}}]}. "
@@ -3401,10 +3900,57 @@ def _build_ai_plan_via_openai(goal: str, current_user: dict[str, Any], context: 
 
 def _default_entity_campos(entity_label: str) -> list[dict[str, Any]]:
     norm = re.sub(r"[^a-z0-9]", "_", _normalize_ai_text(entity_label)).strip("_")
+    if not norm:
+        norm = "entidade"
+
+    normalized_label = _normalize_ai_text(entity_label)
+    contextual_field = {
+        "nome": "descricao",
+        "tipo": "texto",
+        "obrigatorio": False,
+        "keyType": "NORMAL",
+        "relacionamento": None,
+    }
+
+    contextual_rules = [
+        (
+            {"pagamento", "cobranca", "fatura", "financeiro", "valor", "orcamento"},
+            {"nome": "valor_total", "tipo": "numero", "obrigatorio": False},
+        ),
+        (
+            {"cliente", "contato", "lead", "prospecto", "pessoa"},
+            {"nome": "email", "tipo": "texto", "obrigatorio": False},
+        ),
+        (
+            {"entrega", "logistica", "envio", "remessa", "transporte"},
+            {"nome": "prazo_entrega", "tipo": "data", "obrigatorio": False},
+        ),
+        (
+            {"contrato", "proposta", "acordo", "negociacao"},
+            {"nome": "numero_documento", "tipo": "texto", "obrigatorio": False},
+        ),
+        (
+            {"aprovacao", "analise", "compliance", "auditoria"},
+            {"nome": "parecer", "tipo": "texto", "obrigatorio": False},
+        ),
+    ]
+
+    for keywords, template in contextual_rules:
+        if any(keyword in normalized_label for keyword in keywords):
+            contextual_field = {
+                "nome": template["nome"],
+                "tipo": template["tipo"],
+                "obrigatorio": template["obrigatorio"],
+                "keyType": "NORMAL",
+                "relacionamento": None,
+            }
+            break
+
     return [
         {"nome": f"id_{norm}", "tipo": "numero", "obrigatorio": True, "keyType": "PK", "relacionamento": None},
         {"nome": "nome", "tipo": "texto", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
-        {"nome": "descricao", "tipo": "texto", "obrigatorio": False, "keyType": "NORMAL", "relacionamento": None},
+        {"nome": "status", "tipo": "texto", "obrigatorio": False, "keyType": "NORMAL", "relacionamento": None},
+        contextual_field,
         {"nome": "data_criacao", "tipo": "data", "obrigatorio": True, "keyType": "NORMAL", "relacionamento": None},
     ]
 
@@ -3602,7 +4148,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
     entity_name = str((suggested_entities[0] if suggested_entities else process_name) or "Entidade IA").strip()
     general_analysis = _build_general_process_analysis(goal, process_name, entity_name)
     existing_entities = _extract_existing_entities_context(context)
-    fallback_bpmn_payload, fallback_entities = _build_local_bpmn_payload(
+    fallback_bpmn_payload, _ = _build_local_bpmn_payload(
         goal,
         process_name,
         entity_name,
@@ -3723,7 +4269,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         # Preserva tipoEntidade para itens do tipo entidade
         if fo_type == "entidade" and isinstance(raw_item, dict):
             raw_tipo = raw_item.get("tipoEntidade") or ""
-            entry["tipoEntidade"] = _normalize_entity_type(raw_tipo, default="apoio")
+            entry["tipoEntidade"] = _normalize_entity_type(raw_tipo, default="processo")
         # Preserva branches (sim/nao) se a IA/plan forneceu
         if isinstance(raw_item, dict) and isinstance(raw_item.get("branches"), dict):
             entry["branches"] = {
@@ -3855,6 +4401,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
         "4. Quando nodeType='condicional', crie DUAS conexoes de saida:\n"
         "   - Caminho aprovado: decision='sim', label='\u2714', fromHandle='right', toHandle='left'\n"
         "   - Caminho reprovado: decision='nao', label='\u2718', fromHandle='bottom', toHandle='left'\n"
+        "   - REGRA OBRIGATORIA: condicional sem caminho NAO (ou sem caminho SIM) e INVALIDA. Corrija antes de responder.\n"
         "5. O proximo node na sequencia recebe o caminho SIM (\u2714). O node alternativo recebe o caminho NAO (\u2718).\n"
         "6. IMPORTANTE: O caminho NAO NUNCA deve ser um beco sem saida. Apos o(s) node(s) do caminho NAO, crie uma conexao de volta ao proximo node do caminho SIM (merge/convergencia). Assim ambos os caminhos continuam o processo.\n\n"
 
@@ -4025,10 +4572,8 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
                     print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → NAO[{target}] '{fo_list[target].get('name')}' (branches.nao)")
                     continue
 
-            # Fallback por posição: o PRIMEIRO nó task logo após a condicional
-            # é o caminho NAO (conforme instrução do prompt IA).
-            # O prompt diz: "A atividade do caminho NÃO deve vir IMEDIATAMENTE
-            # após o condicional no flowOrder"
+            # Fallback por posição: usa o primeiro task disponível após a condicional
+            # como candidato ao ramo NAO quando branches.nao não vier válido.
             nao_candidate = None
             for j in range(i + 1, n):
                 jtype = fo_list[j].get("type", "")
@@ -4039,18 +4584,9 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
                     break  # Primeiro task = NAO
 
             if nao_candidate is not None:
-                # Verifica se há pelo menos mais um nó após o NAO para ser o SIM
-                has_more_after = False
-                for j2 in range(nao_candidate + 1, n):
-                    if j2 not in claimed_nao and fo_list[j2].get("type") != "condicional":
-                        has_more_after = True
-                        break
-                if has_more_after:
-                    cond_nao_map[i] = nao_candidate
-                    claimed_nao.add(nao_candidate)
-                    print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → NAO[{nao_candidate}] '{fo_list[nao_candidate].get('name')}' (position fallback)")
-                else:
-                    print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → no NAO (no SIM path after candidate)")
+                cond_nao_map[i] = nao_candidate
+                claimed_nao.add(nao_candidate)
+                print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → NAO[{nao_candidate}] '{fo_list[nao_candidate].get('name')}' (position fallback)")
             else:
                 print(f"  [NAO-MAP] cond[{i}] '{fo.get('name')}' → no NAO candidate found")
 
@@ -4267,6 +4803,68 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             _target_cond.setdefault("branches", {})
             _target_cond["branches"]["sim"] = _conc_name
             print(f"  [FO-FIX] Adicionado '{_conc_name}' após última condicional")
+
+        # 1) Garantia final: toda condicional precisa ter branches.sim e branches.nao válidos.
+        # Se o ramo NAO faltar (ou apontar para nome inválido/condicional), injeta task de fallback.
+        _name_to_idx_norm = {
+            _normalize_ai_text(str(item.get("name") or "")): idx
+            for idx, item in enumerate(typed_flow_order)
+            if str(item.get("name") or "").strip()
+        }
+
+        _ci = 0
+        while _ci < len(typed_flow_order):
+            _item = typed_flow_order[_ci]
+            if _item.get("type") != "condicional":
+                _ci += 1
+                continue
+
+            _branches = _item.setdefault("branches", {})
+            _sim_name = str(_branches.get("sim") or "").strip()
+            _nao_name = str(_branches.get("nao") or "").strip()
+
+            # Se SIM não veio, aponta para próximo item não-condicional.
+            if not _sim_name:
+                for _sj in range(_ci + 1, len(typed_flow_order)):
+                    if typed_flow_order[_sj].get("type") != "condicional":
+                        _branches["sim"] = str(typed_flow_order[_sj].get("name") or "").strip()
+                        break
+
+            _nao_idx = _name_to_idx_norm.get(_normalize_ai_text(_nao_name)) if _nao_name else None
+            _nao_is_valid = (
+                _nao_idx is not None
+                and 0 <= _nao_idx < len(typed_flow_order)
+                and typed_flow_order[_nao_idx].get("type") != "condicional"
+            )
+
+            if not _nao_is_valid:
+                _cond_base = str(_item.get("name") or "").rstrip("?").strip() or f"Condicao {_ci + 1}"
+                _fallback_name = f"Tratar nao {_cond_base}"
+                _suffix = 1
+                while _normalize_ai_text(_fallback_name) in _name_to_idx_norm:
+                    _suffix += 1
+                    _fallback_name = f"Tratar nao {_cond_base} {_suffix}"
+
+                _insert_pos = min(_ci + 2, len(typed_flow_order))
+                typed_flow_order.insert(
+                    _insert_pos,
+                    {
+                        "name": _fallback_name,
+                        "type": "task",
+                        "desc": f"Tratamento do caminho NAO da condicional '{_item.get('name')}'.",
+                    },
+                )
+                _branches["nao"] = _fallback_name
+
+                # Recria índice normalizado após inserção
+                _name_to_idx_norm = {
+                    _normalize_ai_text(str(_fo.get("name") or "")): _idx
+                    for _idx, _fo in enumerate(typed_flow_order)
+                    if str(_fo.get("name") or "").strip()
+                }
+                print(f"  [FO-FIX] Injetado ramo NAO '{_fallback_name}' para '{_item.get('name')}'")
+
+            _ci += 1
 
     if typed_flow_order:
         # Nodes sempre corretos — construídos diretamente do flowOrder do frontend
@@ -4626,7 +5224,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
             _fo_n = str(_fo_item.get("name") or "").strip()
             _fo_t = str(_fo_item.get("tipoEntidade") or "").strip()
             if _fo_n and _fo_t:
-                fo_entity_tipo[_fo_n.lower()] = _normalize_entity_type(_fo_t, default="apoio")
+                fo_entity_tipo[_fo_n.lower()] = _normalize_entity_type(_fo_t, default="processo")
 
     # Candidatos a criar: suggested_entities filtrados pelas já existentes
     candidate_entities_groq = _dedupe_preserve_order([
@@ -4638,7 +5236,7 @@ def _build_ai_plan_via_groq(goal: str, current_user: dict[str, Any], context: di
     for _ei, _cname in enumerate(candidate_entities_groq, start=1):
         _tipo_raw = fo_entity_tipo.get(_cname.lower()) or goal_entity_type_by_name.get(_normalize_ai_text(_cname), "")
         _desc_fo = next((str(i.get("desc") or "").strip() for i in typed_flow_order if i.get("name") == _cname and i.get("desc")), "")
-        _tipo = _normalize_entity_type(_tipo_raw, default="apoio") if _tipo_raw else "apoio"
+        _tipo = _normalize_entity_type(_tipo_raw, default="processo") if _tipo_raw else "processo"
         entity_actions_groq.append({
             "id": f"a{len(entity_actions_groq) + 1}",
             "type": "create_entidade",
@@ -5102,7 +5700,7 @@ def _build_local_bpmn_payload(
             node["tipoEntidade"] = _infer_data_entity_type(
                 stage_name,
                 participant,
-                default="principal" if data_stage_counter == 1 else "apoio",
+                default="principal" if data_stage_counter == 1 else "processo",
             )
 
         nodes.append(node)
@@ -6494,6 +7092,48 @@ app = get_app()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Uploads (anexos): static folder + endpoint to receive files
+# ─────────────────────────────────────────────────────────────────────────────
+from fastapi import UploadFile, File  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
+from fastapi.staticfiles import StaticFiles  # noqa: E402
+import shutil  # noqa: E402
+
+UPLOADS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "uploads")
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
+
+
+@app.post("/api/uploads")
+async def upload_attachment(file: UploadFile = File(...)):
+    """Recebe um arquivo binário e salva em Backend/uploads/.
+    Retorna metadados (url pública, nome original, tamanho, tipo MIME)
+    para serem persistidos em documento.anexos.
+    """
+    try:
+        safe_name = os.path.basename(file.filename or "anexo")
+        uid = uuid.uuid4().hex
+        stored_name = f"{uid}_{safe_name}"
+        dest_path = os.path.join(UPLOADS_DIR, stored_name)
+        with open(dest_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        size = os.path.getsize(dest_path)
+        return JSONResponse({
+            "success": True,
+            "anexo": {
+                "id": uid,
+                "nome": safe_name,
+                "url": f"/uploads/{stored_name}",
+                "tipo": file.content_type or "application/octet-stream",
+                "tamanho": size,
+            },
+        })
+    except Exception as e:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Falha ao salvar anexo: {e}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Proactive SLA background checker + auto-reassignment
 # ─────────────────────────────────────────────────────────────────────────────
 _sla_checker_started = False
@@ -6615,6 +7255,26 @@ async def _start_sla_checker():
         asyncio.ensure_future(_sla_background_loop())
 
 
+@app.on_event("startup")
+async def _backfill_workflow_activities():
+    """No startup, garante que cada oportunidade existente tenha uma atividade
+    por stage da pipeline materializada em /tarefas. Idempotente."""
+    try:
+        opps = load_oportunidades_data()
+        total = 0
+        for opp in opps:
+            if not isinstance(opp, dict):
+                continue
+            try:
+                total += sync_workflow_activities_for_opportunity(opp)
+            except Exception as exc:
+                print(f"[WARN] backfill workflow opp={opp.get('id')}: {exc}")
+        if total:
+            print(f"[OK] backfill workflow-activities: {total} stages materializadas em {len(opps)} oportunidades")
+    except Exception as exc:
+        print(f"[WARN] backfill workflow falhou: {exc}")
+
+
 def _unique_opportunity_name(base_name: str) -> str:
     """Returns base_name, or base_name (1), base_name (2) ... if already taken."""
     existing = load_oportunidades_data()
@@ -6628,6 +7288,325 @@ def _unique_opportunity_name(base_name: str) -> str:
         if candidate.lower() not in existing_names:
             return candidate
         counter += 1
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Workflow: materializa cada passo (stage) da pipeline como uma "atividade"
+# independente em activities.json — assim /tarefas mostra cada etapa como uma
+# linha separada e o usuário pode armazenar dados por passo (descrição,
+# responsável, status, checklist, documento configurado pelo wizard, etc.).
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _workflow_step_activity_id(opp_id, stage):
+    """Gera id estável para a atividade derivada de uma stage da pipeline."""
+    raw_key = (
+        stage.get("sourceNodeId")
+        or stage.get("id")
+        or stage.get("label")
+        or stage.get("nome")
+        or ""
+    )
+    key = str(raw_key).strip().lower().replace(" ", "-") or "stage"
+    return f"wf-{opp_id}-{key}"
+
+
+def _find_step_info_row(opp, stage):
+    """Tenta achar o infoRow correspondente a esta stage (por sourceNodeId/label)."""
+    info_rows = opp.get("infoRows") if isinstance(opp.get("infoRows"), list) else []
+    src_node_id = str(stage.get("sourceNodeId") or "").strip()
+    label = str(stage.get("label") or stage.get("nome") or "").strip().lower()
+    for row in info_rows:
+        if not isinstance(row, dict):
+            continue
+        row_src = str(row.get("sourceNodeId") or "").strip()
+        row_label = str(row.get("label") or "").strip().lower()
+        if src_node_id and row_src == src_node_id:
+            return row
+        if label and row_label == label:
+            return row
+    return None
+
+
+def _is_stage_configured(stage, info_row):
+    """Retorna True se a stage tem dados configurados pelo usuário.
+
+    Critério: a stage só vira atividade em /tarefas se tiver pelo menos UM dos
+    seguintes preenchido — caso contrário é só uma "casca" da pipeline e não
+    deve aparecer como tarefa.
+      - stepConfig.description (não vazio)
+      - stepConfig.responsible (não vazio)
+      - stepConfig.dueDate (não vazio)
+      - stepConfig.checklist (lista não vazia)
+      - stepConfig.usedFields (lista não vazia)
+      - stage.done == True (usuário marcou como concluída)
+      - infoRow.manualStatus em valor não default
+    """
+    if isinstance(stage, dict) and bool(stage.get("done")):
+        return True
+    if not isinstance(info_row, dict):
+        return False
+    step_config = info_row.get("stepConfig") if isinstance(info_row.get("stepConfig"), dict) else {}
+    if str(step_config.get("description") or "").strip():
+        return True
+    if str(step_config.get("responsible") or "").strip():
+        return True
+    if str(step_config.get("dueDate") or "").strip():
+        return True
+    checklist = step_config.get("checklist")
+    if isinstance(checklist, list) and len(checklist) > 0:
+        return True
+    used_fields = step_config.get("usedFields")
+    if isinstance(used_fields, list) and len(used_fields) > 0:
+        return True
+    manual_status = str(info_row.get("manualStatus") or "").strip().lower()
+    if manual_status and manual_status not in {"", "pendente"}:
+        return True
+    return False
+
+
+def sync_workflow_activities_for_opportunity(opp):
+    """
+    Materializa uma activity por stage da pipeline da oportunidade — APENAS
+    para stages que já foram configuradas pelo usuário (ver
+    `_is_stage_configured`). Stages "vazias" da pipeline NÃO geram atividade.
+
+    Regras:
+    - Atividades sincronizadas recebem `extra.workflow_step_origin = True` e
+      id estável (`wf-{opp_id}-{stage_key}`); ao re-sincronizar elas são
+      atualizadas in-place, preservando dados editados pelo usuário
+      (`extra.documento`, `descricao` customizada, `status` manual, `tags`
+      adicionais, `responsavel`).
+    - Atividades criadas manualmente pelo usuário (sem o marker) NUNCA são
+      removidas nem alteradas.
+    - Stages removidas da pipeline (ou que voltaram a ficar vazias) removem
+      suas atividades órfãs derivadas.
+    """
+    if not isinstance(opp, dict):
+        return 0
+    opp_id = opp.get("id")
+    if opp_id is None:
+        return 0
+    stages = opp.get("stages") if isinstance(opp.get("stages"), list) else []
+    if not stages:
+        # Sem stages → remove órfãs derivadas dessa opp (limpeza)
+        activities = load_activities_data()
+        kept = [
+            a for a in activities
+            if not (
+                isinstance(a, dict)
+                and isinstance(a.get("extra"), dict)
+                and a["extra"].get("workflow_step_origin") is True
+                and str(a.get("entidade_id")) == str(opp_id)
+            )
+        ]
+        if len(kept) != len(activities):
+            save_activities_data(kept)
+        return 0
+
+    activities = load_activities_data()
+    by_id = {a.get("id"): a for a in activities if isinstance(a, dict) and a.get("id")}
+    expected_ids = set()
+    now = datetime.now(timezone.utc).isoformat()
+    opp_responsavel = opp.get("responsavel") or opp.get("owner")
+
+    for index, stage in enumerate(stages):
+        if not isinstance(stage, dict):
+            continue
+        info_row = _find_step_info_row(opp, stage) or {}
+        # Pula stages que ainda NÃO foram configuradas pelo usuário
+        if not _is_stage_configured(stage, info_row):
+            continue
+        stage_label = str(
+            stage.get("label") or stage.get("nome") or f"Passo {index + 1}"
+        ).strip() or f"Passo {index + 1}"
+        stage_kind = str(
+            stage.get("stageType") or stage.get("tipo") or stage.get("type") or "task"
+        ).strip().lower() or "task"
+        # papelNegocio do passo: distingue entidades de negócio entre
+        # "contato" (vai para /contatos) e "processo" (vai para /processos).
+        # Espelha o comportamento do
+        # OpportunityDocumentsCard.upsertActivityByStage no frontend.
+        stage_papel_negocio = str(stage.get("papelNegocio") or "").strip().lower()
+        # Resolve o tipo final da atividade espelhada:
+        #   - condicional → /condicoes
+        #   - entidade + papelNegocio=contato → /contatos
+        #   - entidade + papelNegocio=processo (ou outro) → /processos
+        #   - demais (task/tarefa) → /tarefas
+        if stage_kind == "condicional":
+            activity_tipo = "condicional"
+        elif stage_kind == "entidade":
+            if stage_papel_negocio == "contato":
+                activity_tipo = "contato"
+            else:
+                activity_tipo = "processo"
+        else:
+            activity_tipo = "task"
+        stage_done = bool(stage.get("done"))
+        step_config = info_row.get("stepConfig") if isinstance(info_row.get("stepConfig"), dict) else {}
+        stage_descricao = (
+            str(step_config.get("description") or "").strip()
+            or str(info_row.get("value") or "").strip()
+        )
+        stage_responsavel = (
+            str(step_config.get("responsible") or "").strip()
+            or str(stage.get("participante") or "").strip()
+            or opp_responsavel
+        )
+        stage_status = "concluido" if stage_done else "planejado"
+        manual_status = str(info_row.get("manualStatus") or "").strip().lower()
+        if manual_status in {"pendente", "planejado", "em_andamento", "concluido", "bloqueado"}:
+            stage_status = manual_status if manual_status != "pendente" else "planejado"
+
+        activity_id = _workflow_step_activity_id(opp_id, stage)
+        expected_ids.add(activity_id)
+
+        extra_payload = {
+            "workflow_step_origin": True,
+            "stage_index": index,
+            "stage_kind": stage_kind,
+            "stage_label": stage_label,
+            "stage_id": stage.get("id"),
+            "source_node_id": stage.get("sourceNodeId"),
+            "step_config": step_config or None,
+            "info_row_value": info_row.get("value") if info_row else None,
+        }
+
+        tags = ["pipeline", stage_kind, stage_label]
+
+        existing = by_id.get(activity_id)
+
+        # Anti-duplicação: se já existe uma atividade MANUAL (sem
+        # workflow_step_origin) para esta mesma etapa, ela é a canônica e o
+        # sync NÃO deve criar/manter uma duplicata wf-*. Isso resolve o caso
+        # em que o wizard salva com UUID próprio antes do sync rodar.
+        def _is_manual_match_for_stage(a):
+            if not isinstance(a, dict):
+                return False
+            if a.get("id") == activity_id:
+                return False  # é o próprio wf-* candidato
+            if str(a.get("entidade_id") or "") != str(opp_id):
+                return False
+            a_extra = a.get("extra") if isinstance(a.get("extra"), dict) else {}
+            if a_extra.get("workflow_step_origin") is True:
+                return False  # outro wf-*, ignora
+            label_norm = stage_label.strip().lower()
+            candidates = [
+                str(a.get("referencia") or "").strip().lower(),
+                str(a_extra.get("stage_label") or "").strip().lower(),
+            ]
+            if label_norm and label_norm in candidates:
+                return True
+            tags_list = a.get("tags") if isinstance(a.get("tags"), list) else []
+            return any(
+                isinstance(t, str) and t.strip().lower() == label_norm
+                for t in tags_list
+            )
+
+        manual_match = next(
+            (a for a in activities if _is_manual_match_for_stage(a)),
+            None,
+        )
+        if manual_match is not None:
+            # Remove órfã wf-* se sobrou de sync anterior e segue para próxima stage
+            if existing is not None:
+                activities = [a for a in activities if a.get("id") != activity_id]
+                by_id.pop(activity_id, None)
+            expected_ids.discard(activity_id)
+            continue
+
+        if existing:
+            # Preserva dados editados pelo usuário (documento, descrição custom, etc.)
+            existing_extra = existing.get("extra") if isinstance(existing.get("extra"), dict) else {}
+            merged_extra = {**extra_payload}
+            # Mantém o "documento" salvo pelo wizard
+            if "documento" in existing_extra:
+                merged_extra["documento"] = existing_extra["documento"]
+            # Não sobrescreve descricao se o usuário editou (preserva quando há documento)
+            new_descricao = existing.get("descricao") if existing_extra.get("documento") else (
+                stage_descricao or existing.get("descricao") or ""
+            )
+            # Não sobrescreve status manual (se usuário marcou concluido manualmente)
+            new_status = existing.get("status") if existing.get("status") in {"concluido", "cancelado"} else stage_status
+            # Une tags preservando customizadas
+            existing_tags = existing.get("tags") if isinstance(existing.get("tags"), list) else []
+            merged_tags = list(dict.fromkeys([*tags, *existing_tags]))
+
+            existing.update({
+                "titulo": stage_label,
+                "referencia": stage_label,
+                "descricao": new_descricao,
+                "tipo": activity_tipo,
+                "entidade_tipo": "oportunidade",
+                "entidade_id": str(opp_id),
+                "responsavel": existing.get("responsavel") or stage_responsavel,
+                "status": new_status,
+                "tags": merged_tags,
+                "extra": merged_extra,
+                "data_atualizacao": now,
+            })
+        else:
+            activities.append({
+                "id": activity_id,
+                "titulo": stage_label,
+                "referencia": stage_label,
+                "descricao": stage_descricao,
+                "tipo": activity_tipo,
+                "data_atividade": now,
+                "responsavel": stage_responsavel,
+                "usuario_criador": "workflow",
+                "entidade_tipo": "oportunidade",
+                "entidade_id": str(opp_id),
+                "status": stage_status,
+                "resultado": None,
+                "proximos_passos": None,
+                "duracao_minutos": None,
+                "local": None,
+                "participantes": [],
+                "data_criacao": now,
+                "data_atualizacao": now,
+                "anexos": [],
+                "tags": tags,
+                "extra": extra_payload,
+            })
+
+    # Remove atividades workflow_step_origin órfãs desta opp (stages removidas)
+    pruned = []
+    for a in activities:
+        if not isinstance(a, dict):
+            pruned.append(a)
+            continue
+        extra = a.get("extra") if isinstance(a.get("extra"), dict) else {}
+        if (
+            extra.get("workflow_step_origin") is True
+            and str(a.get("entidade_id")) == str(opp_id)
+            and a.get("id") not in expected_ids
+        ):
+            continue  # drop órfã
+        pruned.append(a)
+
+    save_activities_data(pruned)
+    return len(expected_ids)
+
+
+def _safe_sync_workflow_activities(opp, source="unknown"):
+    """Wrapper que loga falhas mas nunca propaga (não pode quebrar o endpoint principal)."""
+    try:
+        count = sync_workflow_activities_for_opportunity(opp)
+        if count:
+            print(f"[OK] workflow-activities sync ({source}): opp={opp.get('id')} stages={count}")
+    except Exception as exc:
+        print(f"[WARN] workflow-activities sync falhou ({source}, opp={opp.get('id') if isinstance(opp, dict) else None}): {exc}")
+
+
+@app.post("/api/oportunidades/{opp_id}/sync-workflow-activities")
+async def sync_workflow_activities_endpoint(opp_id: int):
+    """Re-materializa as atividades derivadas dos passos da pipeline desta opp."""
+    opps = load_oportunidades_data()
+    opp = next((o for o in opps if isinstance(o, dict) and o.get("id") == opp_id), None)
+    if not opp:
+        raise HTTPException(status_code=404, detail="Oportunidade não encontrada")
+    count = sync_workflow_activities_for_opportunity(opp)
+    return {"success": True, "opportunity_id": opp_id, "stages_synced": count}
 
 
 # Endpoint para criar oportunidade
@@ -6665,7 +7644,10 @@ def create_oportunidade(oportunidade: Oportunidade):
         _sync_opportunity_contacts_to_independent_table(oportunidade_dict)
     except Exception as e:
         print(f"[WARN] Falha ao sincronizar contatos: {e}")
-    
+
+    # Materializa cada stage da pipeline como uma atividade independente em /tarefas
+    _safe_sync_workflow_activities(oportunidade_dict, source="create_oportunidade")
+
     return oportunidade_dict
 
 # Armazenamento temporário de tokens de recuperação (em memória)
@@ -6681,7 +7663,7 @@ async def password_lost(request: Request):
 
     # Gerar token único e expiração (exemplo: 1 hora)
     token = str(uuid.uuid4())
-    expires_at = datetime.utcnow() + timedelta(hours=1)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=1)
     password_reset_tokens[token] = {"email": email, "expires_at": expires_at.isoformat()}
 
     # Montar link de recuperação
@@ -6705,7 +7687,7 @@ async def password_reset(
     if token_data["email"].strip().lower() != login.strip().lower():
         raise HTTPException(status_code=400, detail="Token não corresponde ao usuário.")
     expires_at = datetime.fromisoformat(token_data["expires_at"])
-    if datetime.utcnow() > expires_at:
+    if datetime.now(timezone.utc).replace(tzinfo=None) > expires_at.replace(tzinfo=None):
         del password_reset_tokens[key]
         raise HTTPException(status_code=400, detail="Token expirado. Solicite nova recuperação.")
 
@@ -6917,6 +7899,9 @@ def _update_oportunidade_locked(oportunidade_id: int, oportunidade: Oportunidade
                     "itemName": "BPMN",
                 }])
 
+            # Re-sincroniza atividades por stage (preserva edições do usuário)
+            _safe_sync_workflow_activities(merged, source="update_oportunidade")
+
             print(f"[OK] Oportunidade atualizada: id={oportunidade_id}, nome={merged.get('nome')}")
             return merged
 
@@ -6937,7 +7922,10 @@ def _update_oportunidade_locked(oportunidade_id: int, oportunidade: Oportunidade
         _sync_opportunity_contacts_to_independent_table(oportunidade_dict)
     except Exception as e:
         print(f"[WARN] Falha ao sincronizar contatos: {e}")
-    
+
+    # Materializa stages como atividades em /tarefas (caso upsert via PUT)
+    _safe_sync_workflow_activities(oportunidade_dict, source="update_oportunidade(upsert)")
+
     return oportunidade_dict
 
 @app.delete("/oportunidades/{oportunidade_id}", status_code=204)
@@ -6996,7 +7984,6 @@ def delete_oportunidade(oportunidade_id: int):
 
         fake_oportunidades.pop(idx)
         save_oportunidades_data(fake_oportunidades)
-    return
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -7160,7 +8147,10 @@ async def convert_lead_to_opportunity(lead_id: str):
     lead["stage"] = "convertido"
     lead["opp_id"] = str(new_opp["id"])
     save_leads_data(leads)
-    
+
+    # Materializa stages do BPMN do lead (se houver) como atividades de /tarefas
+    _safe_sync_workflow_activities(new_opp, source="convert_lead_to_opportunity")
+
     return {"success": True, "lead": lead, "opportunity": new_opp}
 
 
@@ -7209,9 +8199,11 @@ async def generate_lead_bpmn(lead_id: str):
 
     system_prompt = (
         "Você é especialista em BPMN comercial para pré-vendas. "
-        "A partir do contexto de um prospecto, gere um fluxo BPMN textual objetivo. "
+        "A partir do contexto de um prospecto, gere um fluxo BPMN textual completo e realista. "
         "Retorne JSON válido com as chaves: processo, etapas (array de strings em ordem), "
-        "riscos (array de strings), proximo_passo (string curta)."
+        "riscos (array de strings), proximo_passo (string curta). "
+        "Regras obrigatórias: no mínimo 8 etapas, incluir pelo menos 1 decisão (texto com '?'), "
+        "incluir caminho de ajuste/retrabalho quando a decisão for negativa e finalizar com etapa de encerramento."
     )
 
     user_prompt = (
@@ -7258,7 +8250,7 @@ async def generate_lead_bpmn(lead_id: str):
                 str(item).strip()[:90]
                 for item in (parsed.get("etapas") or [])
                 if isinstance(item, str) and str(item).strip()
-            ][:12],
+            ][:16],
             "riscos": [
                 str(item).strip()[:90]
                 for item in (parsed.get("riscos") or [])
@@ -7268,13 +8260,17 @@ async def generate_lead_bpmn(lead_id: str):
             "fonte": "groq",
         }
 
-        if not bpmn_payload["etapas"]:
+        if len(bpmn_payload["etapas"]) < 6:
             bpmn_payload["etapas"] = [
                 "Receber lead",
                 "Qualificar lead",
                 "Realizar contato inicial",
-                "Definir próximos passos",
+                "Diagnosticar necessidade",
+                "Proposta aderente?",
+                "Ajustar proposta",
+                "Validar proposta final",
                 "Converter para oportunidade",
+                "Encerrar processo",
             ]
 
         lead["bpmn_generated"] = True
@@ -7482,7 +8478,6 @@ def delete_bpmn_task_catalog_entry(node_id: str):
     catalog = load_bpmn_tasks_catalog()
     catalog = [n for n in catalog if str(n.get("id") or "") != node_id]
     save_bpmn_tasks_catalog(catalog)
-    return
 
 
 @app.get("/api/bpmn-catalog/condicionais")
@@ -7497,7 +8492,6 @@ def delete_bpmn_condicional_catalog_entry(node_id: str):
     catalog = load_bpmn_condicionais_catalog()
     catalog = [n for n in catalog if str(n.get("id") or "") != node_id]
     save_bpmn_condicionais_catalog(catalog)
-    return
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -7555,7 +8549,8 @@ async def create_activity(activity: Activity):
         "data_criacao": datetime.now(timezone.utc).isoformat(),
         "data_atualizacao": datetime.now(timezone.utc).isoformat(),
         "anexos": activity.anexos or [],
-        "tags": activity.tags or []
+        "tags": activity.tags or [],
+        "extra": activity.extra or {}
     }
     
     activities.append(new_activity)
@@ -7599,6 +8594,7 @@ async def update_activity(activity_id: str, activity: Activity):
         "local": activity.local or activity_obj.get("local"),
         "participantes": activity.participantes or activity_obj.get("participantes"),
         "tags": activity.tags or activity_obj.get("tags"),
+        "extra": activity.extra if activity.extra is not None else activity_obj.get("extra"),
         "data_atualizacao": datetime.now(timezone.utc).isoformat()
     })
     
@@ -9372,7 +10368,6 @@ def delete_webhook(webhook_id: int):
             raise HTTPException(status_code=404, detail="Webhook não encontrado")
         hooks.pop(idx)
         save_webhooks(hooks)
-    return
 
 
 @app.post("/webhooks/{webhook_id}/test")
@@ -10140,7 +11135,7 @@ async def workflow_generate_document(op_id: int, request: Request):
                             import time as _time
                             wait = min(2 ** attempt * 2, 15)
                             _time.sleep(wait)
-                            ai_error = f"LLM HTTP 429 (rate limit)"
+                            ai_error = "LLM HTTP 429 (rate limit)"
                             continue
                         else:
                             ai_error = f"LLM HTTP {response.status_code}"
@@ -10713,7 +11708,6 @@ async def delete_task(task_id: int, current_user: dict = Depends(get_current_use
         "opportunityId": removed.get("opportunityId"),
         "label": removed.get("label"),
     })
-    return
 
 
 @app.post("/workflow/tasks/{task_id}/comment")
@@ -10930,7 +11924,6 @@ def delete_entidade(entidade_id: int):
                 "elementType": "entidade",
                 "itemName": _ent_name,
             }])
-    return
 
 
 @app.put("/entidades/batch/sync")
@@ -11150,8 +12143,6 @@ def delete_registro(registro_id: int):
             _delete_registro_contato_from_independent_table(deleted_registro)
     except Exception as e:
         print(f"[WARN] Falha ao sincronizar delete de registro contato: {e}")
-    
-    return
 
 
 @app.get("/")
@@ -11334,6 +12325,149 @@ def ai_detect_spreadsheet_tables(
     return {"tables": sanitized}
 
 
+def _build_parse_description_fallback(process_name: str, description: str) -> dict[str, Any]:
+    process_label = str(process_name or "").strip() or "Processo sugerido"
+    description_text = str(description or "").strip()
+
+    goal_text = "\n".join(
+        [
+            f"Nome do processo: {process_label}",
+            f"Fluxo do processo: {description_text}" if description_text else "",
+        ]
+    ).strip()
+
+    steps = _extract_goal_steps(goal_text)
+    if len(steps) <= 1 and description_text:
+        segmented: list[str] = []
+        normalized_desc = re.sub(r"\s+", " ", description_text).strip()
+        split_chunks = re.split(
+            r"(?i)\b(?:em seguida|depois|entao|então|na sequencia|na sequência|logo apos|logo após|por fim|finalmente|se aprovado|se reprovado|se nao|se não|caso contrario|caso contrário)\b",
+            normalized_desc,
+        )
+        for chunk in split_chunks:
+            parts = [
+                piece.strip()
+                for piece in re.split(r"[.;]|\s+->\s+", chunk)
+                if str(piece).strip()
+            ]
+            segmented.extend(parts)
+        segmented = [s for s in segmented if len(s) >= 4]
+        if len(segmented) >= 2:
+            steps = segmented
+
+    if not steps and description_text:
+        steps = [
+            " ".join(chunk.strip().split())
+            for chunk in re.split(r"\s*(?:->|=>|;|\.|,|\n)\s*", description_text)
+            if str(chunk).strip()
+        ]
+
+    if not steps:
+        steps = [
+            "Mapear processo",
+            "Analisar solicitacao",
+            "Concluir processo",
+        ]
+
+    flow_order: list[dict[str, Any]] = []
+    entities_out: list[dict[str, str]] = []
+    activities: list[str] = []
+    conditionals: list[str] = []
+    seen_entities: set[str] = set()
+
+    for index, raw_step in enumerate(steps, start=1):
+        step = " ".join(str(raw_step or "").strip().split())
+        if not step:
+            continue
+
+        if _looks_like_decision_stage(step):
+            decision_name = step if "?" in step else f"{step}?"
+            conditionals.append(decision_name)
+            flow_order.append(
+                {
+                    "name": decision_name,
+                    "type": "condicional",
+                    "desc": _conditional_description_from_name(decision_name),
+                }
+            )
+            continue
+
+        if _looks_like_data_stage(step):
+            entity_name = _sanitize_node_name_by_type(step, "entidade", index)
+            entity_key = _normalize_ai_text(entity_name)
+            if entity_key and entity_key not in seen_entities:
+                seen_entities.add(entity_key)
+                entities_out.append({"name": entity_name, "tipoEntidade": "processo"})
+            flow_order.append(
+                {
+                    "name": entity_name,
+                    "type": "entidade",
+                    "tipoEntidade": "processo",
+                    "desc": _default_entity_description(entity_name, "processo", process_label),
+                }
+            )
+            continue
+
+        activity_name = _sanitize_node_name_by_type(
+            _activity_name_from_description(step, index),
+            "task",
+            index,
+        )
+        activities.append(activity_name)
+        flow_order.append(
+            {
+                "name": activity_name,
+                "type": "task",
+                "desc": _activity_description_from_text(step, index),
+            }
+        )
+
+    if not entities_out:
+        base_entity = _sanitize_node_name_by_type(f"Registro {process_label}", "entidade", 1)
+        entities_out.append({"name": base_entity, "tipoEntidade": "processo"})
+        insert_pos = 1 if len(flow_order) > 0 else 0
+        flow_order.insert(
+            insert_pos,
+            {
+                "name": base_entity,
+                "type": "entidade",
+                "tipoEntidade": "processo",
+                "desc": _default_entity_description(base_entity, "processo", process_label),
+            },
+        )
+
+    if not activities:
+        fallback_activity = _sanitize_node_name_by_type("Concluir processo", "task", 1)
+        activities.append(fallback_activity)
+        flow_order.append(
+            {
+                "name": fallback_activity,
+                "type": "task",
+                "desc": _activity_description_from_text("Concluir processo", 1),
+            }
+        )
+
+    # Add a minimal branch hint to each conditional based on the next task in sequence.
+    for idx, item in enumerate(flow_order):
+        if item.get("type") != "condicional":
+            continue
+        next_task = ""
+        for candidate in flow_order[idx + 1 :]:
+            if candidate.get("type") == "task":
+                next_task = str(candidate.get("name") or "").strip()
+                break
+        if next_task:
+            item["branches"] = {"sim": next_task, "nao": ""}
+
+    return {
+        "processName": process_label,
+        "entities": entities_out,
+        "activities": _dedupe_preserve_order(activities),
+        "conditionals": _dedupe_preserve_order(conditionals),
+        "flowOrder": flow_order,
+    }
+
+
 @app.post("/ai/parse-description")
 def ai_parse_description(
     payload: dict = Body(...),
@@ -11349,8 +12483,7 @@ def ai_parse_description(
         raise HTTPException(status_code=422, detail="Informe ao menos o nome do processo ou a descrição.")
 
     if AI_PROVIDER != "groq" or not GROQ_API_KEY:
-        # Fallback sem LLM: retorna listas vazias para o frontend deixar o usuário preencher
-        return {"processName": process_name, "entities": [], "activities": [], "conditionals": [], "flowOrder": []}
+        return _build_parse_description_fallback(process_name, description)
 
     system_prompt = (
         "Você é um especialista em modelagem de processos de negócio (BPM). "
@@ -11470,7 +12603,7 @@ def ai_parse_description(
         content  = raw_json.get("choices", [{}])[0].get("message", {}).get("content", "{}")
         print(f"[parse-description] modelo={_used_model} status={resp.status_code} content_len={len(content)}")
         if not content or content.strip() in ("{}", ""):
-            print(f"[parse-description] AVISO: Groq retornou conteúdo vazio!")
+            print("[parse-description] AVISO: Groq retornou conteúdo vazio!")
         parsed   = json.loads(content)
         if not parsed.get("flowOrder") and not parsed.get("activities"):
             print(f"[parse-description] AVISO: parsed sem flowOrder/activities. Keys={list(parsed.keys())}")
@@ -11491,7 +12624,7 @@ def ai_parse_description(
         for ent in raw_entities_list:
             if isinstance(ent, dict):
                 name = str(ent.get("name") or "").strip()
-                tipo = _normalize_entity_type(ent.get("tipoEntidade"), default="apoio")
+                tipo = _normalize_entity_type(ent.get("tipoEntidade"), default="processo")
                 if name:
                     parsed_entities_names.append(name)
                     entity_tipo_map[name.lower()] = tipo
@@ -11515,8 +12648,8 @@ def ai_parse_description(
                 if fo_item["type"] == "entidade":
                     key = fo_item["name"].lower()
                     # Prefere tipoEntidade do flowOrder, cai no mapa de entities
-                    raw_tipo = item.get("tipoEntidade") or entity_tipo_map.get(key, "apoio")
-                    fo_item["tipoEntidade"] = _normalize_entity_type(raw_tipo, default="apoio")
+                    raw_tipo = item.get("tipoEntidade") or entity_tipo_map.get(key, "processo")
+                    fo_item["tipoEntidade"] = _normalize_entity_type(raw_tipo, default="processo")
                 if isinstance(item.get("branches"), dict):
                     fo_item["branches"] = {
                         "sim": str(item["branches"].get("sim") or "").strip(),
@@ -11631,20 +12764,30 @@ def ai_parse_description(
 
     # entities como lista de objetos {name, tipoEntidade}
     entities_out = [
-        {"name": name, "tipoEntidade": entity_tipo_map.get(name.lower(), "apoio")}
+        {"name": name, "tipoEntidade": entity_tipo_map.get(name.lower(), "processo")}
         for name in parsed_entities_names
         if name.lower().strip() not in _PARSE_FORBIDDEN
     ]
 
     activities_clean = [a for a in _to_str_list(parsed.get("activities")) if a.lower().strip() not in _PARSE_FORBIDDEN]
 
-    return {
+    response_payload = {
         "processName":  str(parsed.get("processName") or process_name).strip(),
         "entities":     entities_out,
         "activities":   activities_clean,
         "conditionals": _to_str_list(parsed.get("conditionals")),
         "flowOrder":    flow_order,
     }
+
+    has_content = bool(
+        response_payload.get("flowOrder")
+        or response_payload.get("activities")
+        or response_payload.get("entities")
+    )
+    if not has_content:
+        return _build_parse_description_fallback(process_name, description)
+
+    return response_payload
 
 
 @app.post("/ai/plan")
@@ -11764,7 +12907,7 @@ def ai_execute(
             "user_nome": current_user.get("nome"),
             "event": "ai_actions_executed",
             "goal": plan.get("goal"),
-            "approved_action_ids": sorted(list(selected_ids)),
+            "approved_action_ids": sorted(selected_ids),
             "results": results,
         }
     )
@@ -12170,4 +13313,3 @@ def delete_user(user_id: int, current_user: dict = Depends(require_permission("u
 
     users.pop(idx)
     save_users_data(users)
-    return

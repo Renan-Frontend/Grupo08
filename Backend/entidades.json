@@ -2,8 +2,231 @@
   {
     "categoria": "Aprovação de Pedido de Compra",
     "id": 1,
+    "nome": "Cliente",
+    "descricao": "O cliente é o solicitante do pedido de compra e é responsável por fornecer as informações necessárias para a análise do pedido.",
+    "tipoEntidade": "contato",
+    "papelNegocio": "contato",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-11T09:49:04.169848",
+    "updated_at": "2026-05-11T09:49:04.169848",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 2,
     "nome": "Pedido",
-    "descricao": "O pedido é criado a partir da solicitação do cliente e é utilizado para analisar a compra.",
+    "descricao": "O pedido é o documento que contém as informações do produto solicitado e é criado durante a atividade de solicitar compra.",
+    "tipoEntidade": "processo",
+    "papelNegocio": "processo",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Cliente.id_cliente"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-11T09:49:04.170531",
+    "updated_at": "2026-05-11T09:49:04.170531",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 3,
+    "nome": "Aprovacao",
+    "descricao": "A aprovação é o registro que contém as informações da aprovação do pedido e é criado durante a atividade de registrar aprovação.",
+    "tipoEntidade": "processo",
+    "papelNegocio": "processo",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_aprovacao",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Cliente.id_cliente"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-11T09:49:04.171205",
+    "updated_at": "2026-05-11T09:49:04.171205",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 4,
+    "nome": "OrdemDeCompra",
+    "descricao": "A ordem de compra é o documento que contém as informações da compra e é criado durante a atividade de gerar ordem de compra.",
+    "tipoEntidade": "processo",
+    "papelNegocio": "processo",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Cliente.id_cliente"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-11T09:49:04.171918",
+    "updated_at": "2026-05-11T09:49:04.171918",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra",
+    "id": 5,
+    "nome": "Fornecedor",
+    "descricao": "O fornecedor é a empresa que fornece o produto e é responsável por receber a ordem de compra.",
+    "tipoEntidade": "contato",
+    "papelNegocio": "contato",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_fornecedor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_cliente",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Cliente.id_cliente"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-11T09:49:04.172690",
+    "updated_at": "2026-05-11T09:49:04.172690",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 6,
+    "nome": "Pedido",
+    "descricao": "O pedido é criado e utilizado como base para a análise.",
     "tipoEntidade": "processo",
     "papelNegocio": "processo",
     "isPrimaryEntity": null,
@@ -34,15 +257,15 @@
     "numeroRelacionamentos": null,
     "bpmnUsageCount": null,
     "ativo": true,
-    "created_at": "2026-04-28T19:18:16.773552",
-    "updated_at": "2026-04-28T19:18:16.773552",
+    "created_at": "2026-05-19T08:57:14.504971",
+    "updated_at": "2026-05-19T08:57:14.504971",
     "criadoPor": "Renan"
   },
   {
-    "categoria": "Aprovação de Pedido de Compra",
-    "id": 2,
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 7,
     "nome": "Aprovacao",
-    "descricao": "O registro de aprovação é criado para documentar a decisão de aprovar o pedido.",
+    "descricao": "O registro de aprovação é criado e armazenado para futuras referências.",
     "tipoEntidade": "processo",
     "papelNegocio": "processo",
     "isPrimaryEntity": null,
@@ -80,13 +303,105 @@
     "numeroRelacionamentos": null,
     "bpmnUsageCount": null,
     "ativo": true,
-    "created_at": "2026-04-28T19:18:16.774425",
-    "updated_at": "2026-04-28T19:18:16.774425",
+    "created_at": "2026-05-19T08:57:14.562195",
+    "updated_at": "2026-05-19T08:57:14.562195",
     "criadoPor": "Renan"
   },
   {
-    "categoria": "Aprovação de Pedido de Compra",
-    "id": 3,
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 8,
+    "nome": "OrdemDeCompra",
+    "descricao": "A ordem de compra é criada e utilizada para solicitar o produto ao fornecedor.",
+    "tipoEntidade": "processo",
+    "papelNegocio": "processo",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_ordemdecompra",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-19T08:57:14.580012",
+    "updated_at": "2026-05-19T08:57:14.580012",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 9,
+    "nome": "Fornecedor",
+    "descricao": "O fornecedor recebe a ordem de compra e fornece o produto.",
+    "tipoEntidade": "contato",
+    "papelNegocio": "contato",
+    "isPrimaryEntity": null,
+    "atributoChave": null,
+    "campos": [
+      {
+        "nome": "id_fornecedor",
+        "tipo": "INT",
+        "obrigatorio": true,
+        "keyType": "PK",
+        "referencia": ""
+      },
+      {
+        "nome": "nome",
+        "tipo": "VARCHAR(100)",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "descricao",
+        "tipo": "TEXT",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "referencia": ""
+      },
+      {
+        "nome": "id_pedido",
+        "tipo": "INT",
+        "obrigatorio": false,
+        "keyType": "FK",
+        "referencia": "Pedido.id_pedido"
+      }
+    ],
+    "numeroRelacionamentos": null,
+    "bpmnUsageCount": null,
+    "ativo": true,
+    "created_at": "2026-05-19T08:57:14.596787",
+    "updated_at": "2026-05-19T08:57:14.596787",
+    "criadoPor": "Renan"
+  },
+  {
+    "categoria": "Aprovação de Pedido de Compra (1)",
+    "id": 10,
     "nome": "Cliente",
     "descricao": "Pessoa ou empresa que solicita o serviço no processo de Aprovação de Pedido de Compra.",
     "tipoEntidade": "contato",
@@ -126,205 +441,8 @@
     "numeroRelacionamentos": null,
     "bpmnUsageCount": null,
     "ativo": true,
-    "created_at": "2026-04-28T19:18:16.775436",
-    "updated_at": "2026-04-28T19:18:16.775436",
+    "created_at": "2026-05-19T08:57:14.615515",
+    "updated_at": "2026-05-19T08:57:14.615515",
     "criadoPor": "Renan"
-  },
-  {
-    "categoria": "Aprovação de Pedido de Compra",
-    "id": 4,
-    "nome": "OrdemDeCompra",
-    "descricao": "A ordem de compra é criada para formalizar a compra e é enviada ao fornecedor.",
-    "tipoEntidade": "processo",
-    "papelNegocio": "processo",
-    "isPrimaryEntity": null,
-    "atributoChave": null,
-    "campos": [
-      {
-        "nome": "id_ordemdecompra",
-        "tipo": "INT",
-        "obrigatorio": true,
-        "keyType": "PK",
-        "referencia": ""
-      },
-      {
-        "nome": "nome",
-        "tipo": "VARCHAR(100)",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "descricao",
-        "tipo": "TEXT",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "id_pedido",
-        "tipo": "INT",
-        "obrigatorio": false,
-        "keyType": "FK",
-        "referencia": "Pedido.id_pedido"
-      }
-    ],
-    "numeroRelacionamentos": null,
-    "bpmnUsageCount": null,
-    "ativo": true,
-    "created_at": "2026-04-28T19:18:16.776342",
-    "updated_at": "2026-04-28T19:18:16.776342",
-    "criadoPor": "Renan"
-  },
-  {
-    "categoria": "Aprovação de Pedido de Compra",
-    "id": 5,
-    "nome": "Fornecedor",
-    "descricao": "O fornecedor recebe a ordem de compra e a processa de acordo com as especificações.",
-    "tipoEntidade": "contato",
-    "papelNegocio": "contato",
-    "isPrimaryEntity": null,
-    "atributoChave": null,
-    "campos": [
-      {
-        "nome": "id_fornecedor",
-        "tipo": "INT",
-        "obrigatorio": true,
-        "keyType": "PK",
-        "referencia": ""
-      },
-      {
-        "nome": "nome",
-        "tipo": "VARCHAR(100)",
-        "obrigatorio": true,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "descricao",
-        "tipo": "TEXT",
-        "obrigatorio": false,
-        "keyType": "NORMAL",
-        "referencia": ""
-      },
-      {
-        "nome": "id_pedido",
-        "tipo": "INT",
-        "obrigatorio": false,
-        "keyType": "FK",
-        "referencia": "Pedido.id_pedido"
-      }
-    ],
-    "numeroRelacionamentos": null,
-    "bpmnUsageCount": null,
-    "ativo": true,
-    "created_at": "2026-04-28T19:18:16.777382",
-    "updated_at": "2026-04-28T19:18:16.777382",
-    "criadoPor": "Renan"
-  },
-  {
-    "nome": "teste",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "taeaewawe",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 6,
-    "created_at": "2026-04-29T11:16:47.612184",
-    "updated_at": "2026-04-29T11:16:47.612184"
-  },
-  {
-    "nome": "aweaweawe",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "tasweae",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 7,
-    "created_at": "2026-04-29T11:16:47.612296",
-    "updated_at": "2026-04-29T11:16:47.612296"
-  },
-  {
-    "nome": "waewaeawe",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 8,
-    "created_at": "2026-04-29T11:16:47.612313",
-    "updated_at": "2026-04-29T11:16:47.612313"
-  },
-  {
-    "nome": "awewae",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "aweaweaw",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 9,
-    "created_at": "2026-04-29T11:16:47.612323",
-    "updated_at": "2026-04-29T11:16:47.612323"
-  },
-  {
-    "nome": "aweqe",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "eqweqwe",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 10,
-    "created_at": "2026-04-29T12:01:24.343521",
-    "updated_at": "2026-04-29T12:01:24.343521"
-  },
-  {
-    "nome": "weqwewq",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "eqweqweqwe",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 11,
-    "created_at": "2026-04-29T12:01:24.343641",
-    "updated_at": "2026-04-29T12:01:24.343641"
-  },
-  {
-    "nome": "wqeqweq",
-    "categoria": "NOVO BPMN",
-    "tipoEntidade": "apoio",
-    "isPrimaryEntity": false,
-    "descricao": "weqweqweqweqw",
-    "atributoChave": "",
-    "ativo": true,
-    "criadoPor": "Renan",
-    "campos": [],
-    "papelNegocio": "contato",
-    "id": 12,
-    "created_at": "2026-04-29T12:01:24.343657",
-    "updated_at": "2026-04-29T12:01:24.343657"
   }
 ]

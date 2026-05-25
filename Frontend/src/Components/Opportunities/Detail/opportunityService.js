@@ -5,6 +5,30 @@ import {
   updateOpportunityById,
 } from "../opportunityApi";
 
+const resolvePipelineCurrentStatus = (stages) => {
+  const list = Array.isArray(stages) ? stages : [];
+  if (list.length === 0) return "";
+
+  let lastDoneLabel = "";
+  let firstPendingLabel = "";
+
+  for (const stage of list) {
+    const label = typeof stage?.label === "string" ? stage.label.trim() : "";
+    if (!label) continue;
+    if (stage?.done === true) {
+      lastDoneLabel = label;
+    } else if (!firstPendingLabel) {
+      firstPendingLabel = label;
+    }
+  }
+
+  if (firstPendingLabel) return firstPendingLabel;
+  if (lastDoneLabel) return lastDoneLabel;
+  const firstLabel =
+    typeof list[0]?.label === "string" ? list[0].label.trim() : "";
+  return firstLabel;
+};
+
 export const buildOpportunityPayload = ({
   title,
   selectedOwner,
@@ -34,6 +58,13 @@ export const buildOpportunityPayload = ({
     safeTrim(localStorage.getItem("pipelineSubtitle"));
   const normalizedInfoRows = normalizeInfoRowsForSave(infoRows);
   const normalizedStages = Array.isArray(stages) ? stages : [];
+  const isBpmnDrivenPipeline = normalizedStages.some(
+    (stage) => stage?.fromBpmn === true,
+  );
+  const pipelineCurrentStatus = resolvePipelineCurrentStatus(normalizedStages);
+  const persistedStatus = isBpmnDrivenPipeline
+    ? pipelineCurrentStatus || safeTrim(effectiveStatus)
+    : safeTrim(effectiveStatus) || pipelineCurrentStatus;
 
   let activeStageIndex = -1;
   for (let index = normalizedStages.length - 1; index >= 0; index -= 1) {
@@ -54,7 +85,7 @@ export const buildOpportunityPayload = ({
     created_at: createdDate || "",
     createdDate: createdDate || "",
     endDate: endDate || "",
-    status: effectiveStatus,
+    status: persistedStatus,
     stages: normalizedStages,
     stageIndex: activeStageIndex,
     currentNodeId: activeNodeId || null,
@@ -282,9 +313,8 @@ export const buildBpmnEntitiesForCatalog = ({
   });
 
   (Array.isArray(stages) ? stages : []).forEach((stage) => {
-    if (stage?.fromBpmn !== true) return;
-
     const nome = safeTrim(stage?.label || "");
+    if (!nome) return;
     const normalized = normalizeName(nome);
     const alreadyTrackedByName = [...dedupedEntities.values()].some(
       (entityPayload) => normalizeName(entityPayload?.nome) === normalized,
@@ -298,8 +328,9 @@ export const buildBpmnEntitiesForCatalog = ({
       stageType,
       baseDescription: "",
       atributoChave: "",
-      isPrimaryEntity: false,
-      tipoEntidade: "",
+      isPrimaryEntity: stage?.isPrimaryEntity === true,
+      tipoEntidade: safeTrim(stage?.tipoEntidade || ""),
+      entidadeId: stage?.entidadeId,
     });
   });
 
@@ -955,4 +986,159 @@ export const saveOpportunity = async ({
 
 export const deleteOpportunity = async ({ token, opportunityId }) => {
   return deleteOpportunityById({ token, opportunityId });
+};
+
+// ─── Pipeline → atividades/condicionais (catálogo) ───────────────────────────
+
+const STAGE_TYPE_TO_ACTIVITY_TIPO = {
+  task: "task",
+  condicional: "condicional",
+};
+
+// Conjuntos de tipos equivalentes — "task"/"tarefa" são considerados
+// o mesmo tipo para evitar duplicação entre o sync da pipeline e o
+// fluxo de "Confirmar e salvar passo" do OpportunityDocumentsCard.
+const ACTIVITY_TIPO_ALIASES = {
+  task: new Set(["task", "tarefa"]),
+  tarefa: new Set(["task", "tarefa"]),
+  condicional: new Set(["condicional"]),
+};
+
+const tipoAliases = (tipo) =>
+  ACTIVITY_TIPO_ALIASES[normalizeName(tipo)] || new Set([normalizeName(tipo)]);
+
+const resolveActivityStatus = (stage) => {
+  if (stage?.done === true) return "concluido";
+  if (
+    safeTrim(stage?.manualStatus).toLowerCase() === "concluido" ||
+    safeTrim(stage?.status).toLowerCase() === "concluido"
+  ) {
+    return "concluido";
+  }
+  return "planejado";
+};
+
+const buildActivityDescriptionFromInfoRow = (row) => {
+  if (!row) return "";
+  const parsed = parseTopicFieldsFromValue(row?.value);
+  return safeTrim(parsed.descricao) || safeTrim(row?.value);
+};
+
+export const buildStageActivitiesForCatalog = ({
+  opportunityId,
+  opportunityName,
+  stages,
+  infoRows,
+  actorName,
+}) => {
+  const oppId = opportunityId ? String(opportunityId).trim() : "";
+  if (!oppId) return [];
+
+  const infoRowsByLabel = new Map(
+    (Array.isArray(infoRows) ? infoRows : [])
+      .slice(1)
+      .map((row) => [normalizeName(row?.label), row])
+      .filter(([normalized]) => Boolean(normalized)),
+  );
+
+  const syncTimestamp = new Date().toISOString();
+  const categoryName = safeTrim(opportunityName) || "Oportunidade";
+
+  return (Array.isArray(stages) ? stages : [])
+    .map((stage) => {
+      const stageTypeRaw = String(stage?.stageType || "")
+        .trim()
+        .toLowerCase();
+      const tipo = STAGE_TYPE_TO_ACTIVITY_TIPO[stageTypeRaw];
+      if (!tipo) return null;
+
+      const titulo = safeTrim(stage?.label || "");
+      if (!titulo) return null;
+
+      const matchedRow = infoRowsByLabel.get(normalizeName(titulo));
+      const rowDescricao = buildActivityDescriptionFromInfoRow(matchedRow);
+
+      // Só persiste em /tarefas (e /condicoes) os passos que o usuário
+      // efetivamente concluiu via "Confirmar e salvar passo" ou marcando
+      // o círculo da pipeline. Descrições vindas do BPMN não contam como
+      // "configurado pelo usuário".
+      if (stage?.done !== true) return null;
+
+      const descricao =
+        rowDescricao ||
+        safeTrim(stage?.descricao) ||
+        `${tipo === "task" ? "Tarefa" : "Condicional"} configurada na pipeline`;
+
+      return {
+        titulo,
+        referencia: titulo,
+        descricao,
+        tipo,
+        status: resolveActivityStatus(stage),
+        entidade_tipo: "oportunidade",
+        entidade_id: oppId,
+        responsavel: safeTrim(actorName) || "Usuário do sistema",
+        usuario_criador: safeTrim(actorName) || "Usuário do sistema",
+        data_atualizacao: syncTimestamp,
+        // Inclui o label do passo nas tags para casar com o matching usado
+        // pelo OpportunityDocumentsCard ao salvar o registro do passo.
+        tags: ["pipeline", tipo, categoryName, titulo].filter(Boolean),
+      };
+    })
+    .filter(Boolean);
+};
+
+const matchActivityForStage = (currentActivities, stageActivity) => {
+  const normalizedRef = normalizeName(stageActivity?.referencia);
+  const aliases = tipoAliases(stageActivity?.tipo);
+  return (currentActivities || []).find((activity) => {
+    if (!aliases.has(normalizeName(activity?.tipo))) return false;
+    const sameRef =
+      normalizeName(activity?.referencia) === normalizedRef ||
+      normalizeName(activity?.titulo) === normalizedRef;
+    if (sameRef) return true;
+    const tags = Array.isArray(activity?.tags) ? activity.tags : [];
+    return tags.some((tag) => normalizeName(tag) === normalizedRef);
+  });
+};
+
+export const buildActivitiesSyncOperations = ({
+  currentActivities,
+  stageActivities,
+}) => {
+  const toCreate = [];
+  const toUpdate = [];
+
+  (Array.isArray(stageActivities) ? stageActivities : []).forEach(
+    (stageActivity) => {
+      const match = matchActivityForStage(currentActivities, stageActivity);
+      if (!match) {
+        toCreate.push(stageActivity);
+        return;
+      }
+
+      const needsUpdate =
+        safeTrim(match?.titulo) !== safeTrim(stageActivity?.titulo) ||
+        safeTrim(match?.descricao) !== safeTrim(stageActivity?.descricao) ||
+        safeTrim(match?.status) !== safeTrim(stageActivity?.status) ||
+        safeTrim(match?.referencia) !== safeTrim(stageActivity?.referencia);
+
+      if (!needsUpdate) return;
+
+      toUpdate.push({
+        id: match.id,
+        payload: {
+          ...stageActivity,
+          tags: Array.from(
+            new Set([
+              ...(Array.isArray(match?.tags) ? match.tags : []),
+              ...(Array.isArray(stageActivity?.tags) ? stageActivity.tags : []),
+            ]),
+          ),
+        },
+      });
+    },
+  );
+
+  return { toCreate, toUpdate };
 };

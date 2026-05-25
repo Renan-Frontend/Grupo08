@@ -9,7 +9,7 @@ import { UserContext } from "./Context/UserContext";
 import { UserStorage } from "./Context/UserContext";
 import { EntidadesProvider } from "./Context/EntidadesContext";
 import ProtectedRoute from "./Components/Helper/ProtectedRoute";
-import { ContatosPage as Contatos } from "./Components/Contatos/Contatos";
+import { ContatosPage as Contatos } from "./Components/Contatos/ContatosPage";
 import { ProcessosPage as Processos } from "./Components/Processos/Processos";
 
 const DashboardRoutes = React.lazy(
@@ -32,12 +32,17 @@ const Leads = React.lazy(() => import("./Components/Leads/Leads"));
 const Activities = React.lazy(
   () => import("./Components/Activities/Activities"),
 );
+const Condicoes = React.lazy(() => import("./Components/Condicoes/Condicoes"));
+const DocumentosProcessoPage = React.lazy(
+  () => import("./Components/Documentos/DocumentosProcessoPage"),
+);
 const ActivityDashboard = React.lazy(
   () => import("./Components/Activities/ActivityDashboard"),
 );
 const Configuracoes = React.lazy(
   () => import("./Components/Configuracoes/Configuracoes"),
 );
+const Tutorial = React.lazy(() => import("./Components/Tutorial/Tutorial"));
 
 const LazyFallback = () => (
   <div
@@ -54,6 +59,16 @@ const LazyFallback = () => (
 
 function AppContent() {
   const { user, authLoading } = React.useContext(UserContext);
+  const hasSessionToken = React.useMemo(() => {
+    try {
+      return Boolean(
+        window.sessionStorage.getItem("token") ||
+        window.localStorage.getItem("token"),
+      );
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Pre-warm the Render backend on app load to reduce cold-start delay on login.
   React.useEffect(() => {
@@ -77,8 +92,10 @@ function AppContent() {
       window.removeEventListener("offline", onOffline);
     };
   }, []);
-  const loginElement = authLoading ? null : isLogged ? (
-    <Navigate to="/gerar-bpmn" replace />
+  const shouldBlockPublicLogin = authLoading && hasSessionToken;
+
+  const loginElement = shouldBlockPublicLogin ? null : isLogged ? (
+    <Navigate to="/tutorial" replace />
   ) : (
     <Login isLogged={isLogged} />
   );
@@ -96,7 +113,7 @@ function AppContent() {
     }
   }, [isLogged]);
 
-  if (authLoading) {
+  if (authLoading && hasSessionToken) {
     return (
       <div className="authLoadingScreen" role="status" aria-live="polite">
         <div className="authLoadingCard">
@@ -153,10 +170,32 @@ function AppContent() {
             <Route path="/contatos" element={<Contatos />} />
             <Route path="/processos" element={<Processos />} />
             <Route path="/leads" element={<Leads />} />
-            <Route path="/atividades" element={<Activities />} />
+            <Route path="/tarefas" element={<Activities />} />
+            <Route
+              path="/atividades"
+              element={<Navigate to="/tarefas" replace />}
+            />
+            <Route path="/condicoes" element={<Condicoes />} />
+            <Route
+              path="/documentos-processo"
+              element={<DocumentosProcessoPage />}
+            />
+            <Route
+              path="/documento-processo"
+              element={<Navigate to="/documentos-processo" replace />}
+            />
+            <Route
+              path="/condiçoes"
+              element={<Navigate to="/condicoes" replace />}
+            />
+            <Route
+              path="/condicoes/*"
+              element={<Navigate to="/condicoes" replace />}
+            />
+            <Route path="/tarefas/dashboard" element={<ActivityDashboard />} />
             <Route
               path="/atividades/dashboard"
-              element={<ActivityDashboard />}
+              element={<Navigate to="/tarefas/dashboard" replace />}
             />
             <Route path="/configuracoes" element={<Configuracoes />} />
             <Route path="/gerar-bpmn/*" element={<GerarBPMN />} />
@@ -169,7 +208,8 @@ function AppContent() {
               path="/recomendacoes"
               element={<Navigate to="/ia" replace />}
             />
-            <Route path="*" element={<Navigate to="/gerar-bpmn" replace />} />
+            <Route path="/tutorial" element={<Tutorial />} />
+            <Route path="*" element={<Navigate to="/tutorial" replace />} />
           </Route>
         </Routes>
       </React.Suspense>

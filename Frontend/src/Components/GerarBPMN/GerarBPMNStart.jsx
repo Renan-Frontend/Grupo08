@@ -189,7 +189,7 @@ const GerarBPMNStart = () => {
   const handleDeleteBpmnFromTable = (item) => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        "Seu nível de acesso permite apenas visualização de BPMNs.",
+        "Seu nível de acesso permite apenas visualização de Fluxogramas.",
       );
       return;
     }
@@ -250,7 +250,7 @@ const GerarBPMNStart = () => {
         }
       }
     } catch (error) {
-      setNoticeMessage("Não foi possível deletar o BPMN.");
+      setNoticeMessage("Não foi possível deletar o Fluxograma.");
     } finally {
       setDeleteConfirmItem(null);
     }
@@ -259,7 +259,7 @@ const GerarBPMNStart = () => {
   const handleCreateBpmn = () => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        "Seu nível de acesso permite apenas visualização de BPMNs.",
+        "Seu nível de acesso permite apenas visualização de Fluxogramas.",
       );
       return;
     }
@@ -273,7 +273,7 @@ const GerarBPMNStart = () => {
   const handleCreateBpmnWithIA = () => {
     if (isReadOnlyMode) {
       setNoticeMessage(
-        "Seu nível de acesso permite apenas visualização de BPMNs.",
+        "Seu nível de acesso permite apenas visualização de Fluxogramas.",
       );
       return;
     }
@@ -284,7 +284,7 @@ const GerarBPMNStart = () => {
     <section className={styles.container}>
       <div className={styles.header}>
         <div>
-          <h1 className={styles.title}>Gerar BPMN</h1>
+          <h1 className={styles.title}>Gerar Fluxograma</h1>
           <p className={styles.description}>
             Escolha como deseja iniciar o processo.
           </p>
@@ -314,15 +314,15 @@ const GerarBPMNStart = () => {
       </div>
 
       <div className={styles.card}>
-        <h2 className={styles.createdTitle}>BPMNs criados</h2>
+        <h2 className={styles.createdTitle}>Fluxogramas criados</h2>
 
         {loading ? (
-          <p className={styles.createdEmpty}>Carregando BPMNs...</p>
+          <p className={styles.createdEmpty}>Carregando Fluxogramas...</p>
         ) : createdBpmns.length === 0 ? (
           <p className={styles.createdEmpty}>
             {isReadOnlyMode
-              ? "Nenhum BPMN disponível para visualização no momento."
-              : "Nenhum BPMN criado ainda. Clique em “Criar BPMN”."}
+              ? "Nenhum Fluxograma disponível para visualização no momento."
+              : "Nenhum Fluxograma criado ainda. Clique em “Criar Fluxograma”."}
           </p>
         ) : (
           <div className={styles.tableWrapper}>
@@ -333,7 +333,7 @@ const GerarBPMNStart = () => {
                   <th>Atribuído à</th>
                   <th>Status</th>
                   <th>Etapas do Fluxo</th>
-                  <th>Estrutura BPMN</th>
+                  <th>Estrutura do Fluxograma</th>
                   <th>Data de Criação</th>
                   <th>Ações</th>
                 </tr>
@@ -384,10 +384,10 @@ const GerarBPMNStart = () => {
                         className={`${styles.actionButton} ${styles.iconActionButton} ${styles.editActionButton}`}
                         onClick={() => handleOpenBpmnFromTable(item)}
                         title={
-                          isReadOnlyMode ? "Visualizar BPMN" : "Editar BPMN"
+                          isReadOnlyMode ? "Visualizar Fluxograma" : "Editar Fluxograma"
                         }
                         aria-label={
-                          isReadOnlyMode ? "Visualizar BPMN" : "Editar BPMN"
+                          isReadOnlyMode ? "Visualizar Fluxograma" : "Editar Fluxograma"
                         }
                       >
                         {isReadOnlyMode ? "👁️" : "✏️"}
@@ -397,8 +397,8 @@ const GerarBPMNStart = () => {
                           type="button"
                           className={`${styles.actionButton} ${styles.iconActionButton} ${styles.deleteActionButton}`}
                           onClick={() => handleDeleteBpmnFromTable(item)}
-                          title="Deletar BPMN"
-                          aria-label="Deletar BPMN"
+                          title="Deletar Fluxograma"
+                          aria-label="Deletar Fluxograma"
                         >
                           🗑️
                         </button>
@@ -423,8 +423,8 @@ const GerarBPMNStart = () => {
 
       {deleteConfirmItem && (
         <Close
-          title="Deletar BPMN"
-          message={`Deseja deletar o BPMN "${getOpportunityName(deleteConfirmItem)}"? A oportunidade vinculada também será deletada.`}
+          title="Deletar Fluxograma"
+          message={`Deseja deletar o Fluxograma "${getOpportunityName(deleteConfirmItem)}"? A oportunidade vinculada também será deletada.`}
           onConfirm={confirmDeleteBpmnFromTable}
           onCancel={() => setDeleteConfirmItem(null)}
         />

@@ -20,7 +20,6 @@ import {
   toOpportunitySlug,
 } from "./opportunityFormatters";
 import { isReadOnlyAccessLevelOne } from "../../Utils/accessControl";
-import { normalizeOpportunityForView } from "./opportunityViewModel";
 
 const Opportunities = () => {
   const navigate = useNavigate();
@@ -33,11 +32,6 @@ const Opportunities = () => {
   const [error, setError] = React.useState(null);
   const [userOptions, setUserOptions] = React.useState([]);
   const [noticeMessage, setNoticeMessage] = React.useState("");
-
-  const opportunityItems = React.useMemo(
-    () => opportunities.map(normalizeOpportunityForView),
-    [opportunities],
-  );
 
   const updateAssignedTo = async (opportunityId, assignedValue) => {
     const targetOpportunity = opportunities.find(
@@ -122,6 +116,8 @@ const Opportunities = () => {
     fetchUsers();
   }, []);
 
+  const paginatedItems = opportunities;
+
   const handleNovaOportunidade = () => {
     if (isReadOnlyMode) {
       setNoticeMessage(
@@ -129,6 +125,7 @@ const Opportunities = () => {
       );
       return;
     }
+    // Navega para OpportunityDetail sem dados, indicando criação
     navigate("/oportunidades/criar", { state: { creating: true } });
   };
 
@@ -162,7 +159,7 @@ const Opportunities = () => {
               className={styles.createBtn}
               onClick={handleNovaOportunidade}
             >
-              + Criar Oportunidade
+              Criar Oportunidade
             </button>
           ) : null}
         </div>
@@ -182,7 +179,7 @@ const Opportunities = () => {
             </tr>
           </thead>
           <tbody>
-            {opportunityItems.map((opportunity) => (
+            {paginatedItems.map((opportunity) => (
               <tr key={opportunity.id}>
                 <td className={`${styles.nameCell} ${styles.colName}`}>
                   <button
@@ -197,7 +194,7 @@ const Opportunities = () => {
                       )
                     }
                   >
-                    {opportunity.name || opportunity.nome || "Sem nome"}
+                    {opportunity.name}
                   </button>
                 </td>
                 <td className={styles.colOwner}>
@@ -227,7 +224,9 @@ const Opportunities = () => {
                       ))}
                   </select>
                 </td>
-                <td className={styles.colStatus}>{opportunity.statusLabel}</td>
+                <td className={styles.colStatus}>
+                  {opportunity.status || opportunity.etapa || "-"}
+                </td>
                 <td className={styles.colCreated}>{opportunity.createdDate}</td>
                 <td className={styles.colEnd}>
                   {formatOpportunityDate(
@@ -257,7 +256,7 @@ const Opportunities = () => {
                       aria-label="Editar oportunidade"
                       onClick={() =>
                         navigate(
-                          `/oportunidades/${toOpportunitySlug(opportunity.name || opportunity.nome)}`,
+                          `/oportunidades/${toOpportunitySlug(opportunity.name)}`,
                           {
                             state: { opportunity },
                           },
@@ -272,18 +271,18 @@ const Opportunities = () => {
             ))}
           </tbody>
         </table>
-      </div>
 
-      {noticeMessage ? (
-        <Close
-          title="Aviso"
-          message={noticeMessage}
-          onConfirm={() => setNoticeMessage("")}
-          onCancel={() => setNoticeMessage("")}
-          confirmLabel="OK"
-          hideCancel
-        />
-      ) : null}
+        {noticeMessage ? (
+          <Close
+            title="Aviso"
+            message={noticeMessage}
+            onConfirm={() => setNoticeMessage("")}
+            onCancel={() => setNoticeMessage("")}
+            confirmLabel="OK"
+            hideCancel
+          />
+        ) : null}
+      </div>
     </div>
   );
 };

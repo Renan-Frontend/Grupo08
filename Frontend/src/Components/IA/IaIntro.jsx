@@ -1,8 +1,20 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./IaIntro.module.css";
-import { AI_PARSE_POST } from "../../Api";
+import { AI_PARSE_POST, AI_PLAN_POST, AI_EXECUTE_POST } from "../../Api";
 import { resolveToken, getErrorText } from "./iaHelpers";
+import { EntidadesContext } from "../../Context/EntidadesContext";
+
+const BPMN_SAVED_OPPORTUNITY_MAP_KEY =
+  "bpmn_editor_saved_opportunity_by_slug_v1";
+
+const slugifyBpmnName = (value = "") =>
+  String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "novo-bpmn";
 
 const EXAMPLE_NAME = "Aprovação de Pedido de Compra";
 const EXAMPLE_DESC =
@@ -16,10 +28,29 @@ const EXAMPLE_DESC =
 
 const IaIntro = () => {
   const navigate = useNavigate();
+  const { entidades } = React.useContext(EntidadesContext);
   const [introProcessName, setIntroProcessName] = React.useState("");
   const [introDescription, setIntroDescription] = React.useState("");
   const [isParsing, setIsParsing] = React.useState(false);
   const [introFeedback, setIntroFeedback] = React.useState("");
+
+  const entityCatalog = React.useMemo(
+    () =>
+      (Array.isArray(entidades) ? entidades : []).map((entidade) => ({
+        id: entidade?.id ?? null,
+        nome: String(entidade?.nome || entidade?.name || "").trim(),
+        descricao: String(entidade?.descricao || "").trim(),
+        tipoEntidade: String(entidade?.tipoEntidade || "").trim(),
+        campos: Array.isArray(entidade?.campos)
+          ? entidade.campos.map((campo) => ({
+              nome: String(campo?.nome || "").trim(),
+              tipo: String(campo?.tipo || "").trim(),
+              keyType: String(campo?.keyType || "").trim(),
+            }))
+          : [],
+      })),
+    [entidades],
+  );
 
   const canParse =
     introProcessName.trim().length >= 3 || introDescription.trim().length >= 10;
@@ -55,13 +86,196 @@ const IaIntro = () => {
         return;
       }
 
-      navigate("/ia/configurar", {
-        state: {
-          parseData: await response.json(),
-          introName: trimmedName,
-          processDescription: trimmedDesc,
+      const parseData = await response.json();
+
+      // Build flowOrder from parseData (same logic as IaConfigurar)
+      const fo = Array.isArray(parseData.flowOrder) ? parseData.flowOrder : [];
+      const mappedFo = fo.map((item) => ({
+        name: String(item.name || "").trim(),
+        type: String(item.type || "task").trim(),
+        desc: String(item.desc || "").trim(),
+        ...(item.tipoEntidade ? { tipoEntidade: item.tipoEntidade } : {}),
+        ...(item.branches ? { branches: item.branches } : {}),
+      }));
+      const foNames = new Set(mappedFo.map((i) => i.name.toLowerCase()));
+      (Array.isArray(parseData.entities) ? parseData.entities : []).forEach(
+        (ent) => {
+          const n =
+            typeof ent === "object"
+              ? String(ent?.name || "").trim()
+              : String(ent || "").trim();
+          const tipo =
+            typeof ent === "object" ? ent?.tipoEntidade || "apoio" : "apoio";
+          if (n && !foNames.has(n.toLowerCase())) {
+            mappedFo.push({
+              name: n,
+              type: "entidade",
+              desc: "",
+              tipoEntidade: tipo,
+            });
+            foNames.add(n.toLowerCase());
+          }
         },
+      );
+      (Array.isArray(parseData.activities) ? parseData.activities : []).forEach(
+        (name) => {
+          const n = String(name || "").trim();
+          if (n && !foNames.has(n.toLowerCase())) {
+            mappedFo.push({ name: n, type: "task", desc: "" });
+            foNames.add(n.toLowerCase());
+          }
+        },
+      );
+      (Array.isArray(parseData.conditionals)
+        ? parseData.conditionals
+        : []
+      ).forEach((name) => {
+        let n = String(name || "").trim();
+        if (!n) return;
+        if (!n.endsWith("?")) n += "?";
+        if (!foNames.has(n.toLowerCase())) {
+          mappedFo.push({ name: n, type: "condicional", desc: "" });
+          foNames.add(n.toLowerCase());
+        }
       });
+
+      const processName = String(
+        parseData.processName || trimmedName || "",
+      ).trim();
+      const flowLines = mappedFo
+        .map((item) => (item.desc ? `${item.name} (${item.desc})` : item.name))
+        .join(" -> ");
+      const enrichedGoal = [
+        processName ? `Nome do processo: ${processName}` : "",
+        trimmedDesc ? `Descrição do processo: ${trimmedDesc}` : "",
+        flowLines,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      const suggestedEntityNames = mappedFo
+        .filter((i) => i.type === "entidade")
+        .map((i) => i.name);
+      const suggestedActivities = mappedFo
+        .filter((i) => i.type === "task")
+        .map((i) => i.name);
+      const suggestedConditionals = mappedFo
+        .filter((i) => i.type === "condicional")
+        .map((i) => i.name);
+
+      setIntroFeedback("Criando processo...");
+
+      const planBody = {
+        goal: enrichedGoal,
+        context: {
+          processName,
+          flowOrder: mappedFo.length > 0 ? mappedFo : undefined,
+          suggestedEntityNames:
+            suggestedEntityNames.length > 0 ? suggestedEntityNames : undefined,
+          suggestedActivities:
+            suggestedActivities.length > 0 ? suggestedActivities : undefined,
+          suggestedConditionals:
+            suggestedConditionals.length > 0
+              ? suggestedConditionals
+              : undefined,
+          existingEntities: entityCatalog,
+        },
+      };
+
+      const { url: planUrl, options: planOptions } = AI_PLAN_POST(
+        planBody,
+        token,
+      );
+      const planResponse = await fetch(planUrl, planOptions);
+      if (!planResponse.ok) {
+        const errorText = await getErrorText(
+          planResponse,
+          "Falha ao gerar plano da IA.",
+        );
+        setIntroFeedback(errorText);
+        setIsParsing(false);
+        return;
+      }
+
+      const planPayload = await planResponse.json();
+      const plan =
+        planPayload?.plan && typeof planPayload.plan === "object"
+          ? planPayload.plan
+          : null;
+      const actions = Array.isArray(plan?.actions) ? plan.actions : [];
+      const approvedActions = actions
+        .map((a) => String(a?.id || "").trim())
+        .filter(Boolean);
+
+      if (!plan || approvedActions.length === 0) {
+        setIntroFeedback("Plano gerado, mas nenhuma ação identificada.");
+        setIsParsing(false);
+        return;
+      }
+
+      const execBody = { plan, approvedActions };
+      const { url: execUrl, options: execOptions } = AI_EXECUTE_POST(
+        execBody,
+        token,
+      );
+      const execResponse = await fetch(execUrl, execOptions);
+      if (!execResponse.ok) {
+        const errorText = await getErrorText(
+          execResponse,
+          "Falha ao criar o processo.",
+        );
+        setIntroFeedback(errorText);
+        setIsParsing(false);
+        return;
+      }
+
+      const execPayload = await execResponse.json();
+      window.dispatchEvent(
+        new CustomEvent("ia:actions-executed", {
+          detail: {
+            executed: Number(execPayload?.executed || 0),
+            approvedActions,
+            plan,
+          },
+        }),
+      );
+
+      const results = Array.isArray(execPayload?.results)
+        ? execPayload.results
+        : [];
+      const bpmnResult = results.find((r) => r?.type === "update_bpmn_state");
+      const opportunityResult = results.find(
+        (r) => r?.type === "create_oportunidade",
+      );
+      const opportunityId =
+        bpmnResult?.syncedOpportunity?.id ??
+        bpmnResult?.syncedOpportunity?._id ??
+        opportunityResult?.result?.id ??
+        opportunityResult?.result?._id ??
+        null;
+      const opportunityName =
+        bpmnResult?.syncedOpportunity?.nome ??
+        bpmnResult?.syncedOpportunity?.name ??
+        opportunityResult?.result?.nome ??
+        opportunityResult?.result?.name ??
+        processName;
+      const bpmnSlug = slugifyBpmnName(opportunityName);
+
+      if (opportunityId !== null && opportunityId !== undefined && bpmnSlug) {
+        try {
+          const rawMap = window.localStorage.getItem(
+            BPMN_SAVED_OPPORTUNITY_MAP_KEY,
+          );
+          const existingMap = rawMap ? JSON.parse(rawMap) : {};
+          window.localStorage.setItem(
+            BPMN_SAVED_OPPORTUNITY_MAP_KEY,
+            JSON.stringify({ ...existingMap, [bpmnSlug]: opportunityId }),
+          );
+        } catch (_) {}
+        navigate(`/gerar-bpmn/${bpmnSlug}`);
+      } else {
+        navigate("/gerar-bpmn/criar");
+      }
     } catch {
       setIntroFeedback("Erro ao conectar. Tente novamente.");
     } finally {
@@ -89,9 +303,9 @@ const IaIntro = () => {
         <button
           type="button"
           className={styles.generateButton}
-          onClick={() => navigate("/ia/configurar")}
+          onClick={() => navigate(-1)}
         >
-          Criar manualmente
+          ← Voltar
         </button>
       </header>
       <form className={styles.formCard} onSubmit={handleParseDescription}>
@@ -145,7 +359,7 @@ const IaIntro = () => {
           className={styles.generateButton}
           disabled={!canParse || isParsing}
         >
-          {isParsing ? "Analisando..." : "Criar processo"}
+          {isParsing ? "Criando processo..." : "Criar processo"}
         </button>
       </form>
     </section>

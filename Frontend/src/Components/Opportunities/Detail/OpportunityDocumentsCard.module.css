@@ -364,6 +364,21 @@
   background: #fff;
 }
 
+.sectionSingleInput {
+  width: 100%;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.84rem;
+  outline: none;
+  background: #fafafa;
+  box-sizing: border-box;
+}
+.sectionSingleInput:focus {
+  border-color: #1e9158;
+  background: #fff;
+}
+
 .closeBtn {
   background: none;
   border: none;

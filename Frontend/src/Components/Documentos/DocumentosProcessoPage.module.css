@@ -1,0 +1,130 @@
+.container {
+  padding: 1.5rem;
+  width: 100%;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.header {
+  margin-bottom: 1rem;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #0f172a;
+}
+
+.subtitle {
+  margin: 0.25rem 0 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.notice {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 0.5rem;
+  background: #ecfeff;
+  border: 1px solid #a5f3fc;
+  color: #155e75;
+  font-size: 0.86rem;
+}
+
+.panel {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.7rem;
+  padding: 0.95rem;
+  margin-bottom: 1rem;
+}
+
+.panelTitle {
+  margin: 0 0 0.75rem;
+  color: #0f172a;
+  font-size: 1rem;
+}
+
+.muted {
+  margin: 0;
+  color: #64748b;
+}
+
+.opportunityList,
+.docList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.opportunityRow,
+.docCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.65rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.oppTitle,
+.docTitle {
+  margin: 0;
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.oppMeta,
+.docMeta {
+  margin: 0.2rem 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.generateBtn,
+.secondaryBtn,
+.dangerBtn {
+  border: 1px solid transparent;
+  border-radius: 0.45rem;
+  padding: 0.52rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.generateBtn {
+  background: #16a34a;
+  color: #fff;
+}
+
+.generateBtn:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+.docActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.secondaryBtn {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.dangerBtn {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+@media (max-width: 760px) {
+  .opportunityRow,
+  .docCard {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

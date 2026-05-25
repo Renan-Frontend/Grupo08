@@ -229,6 +229,8 @@ const RegistroCard = ({ registro, onEdit, onDelete, canEdit, canDelete }) => {
   const dataInicio = d.data_inicio;
   const dataConclusao = d.data_conclusao;
   const observacoes = d.observacoes || d.descricao;
+  const oportunidadeId = String(d.oportunidadeId || "").trim();
+  const etapa = String(d.etapa || "").trim();
 
   const extraEntries = Object.entries(d).filter(([k]) => !SYSTEM_KEYS.has(k));
 
@@ -279,6 +281,17 @@ const RegistroCard = ({ registro, onEdit, onDelete, canEdit, canDelete }) => {
           {responsavel && (
             <span className={styles.infoBadge}>👤 {responsavel}</span>
           )}
+        </div>
+      )}
+
+      {(oportunidadeId || etapa) && (
+        <div className={styles.cardLinks}>
+          {oportunidadeId && (
+            <span className={styles.linkBadge}>
+              🧩 Oportunidade #{oportunidadeId}
+            </span>
+          )}
+          {etapa && <span className={styles.linkBadge}>🎯 Etapa {etapa}</span>}
         </div>
       )}
 
@@ -337,6 +350,9 @@ const RegistrosPage = ({
   CreateModal,
   EditModal,
   createButtonLabel,
+  // Quando true, a edição substitui o card por um editor inline
+  // (sem modal overlay) — mesmo padrão de /tarefas.
+  inlineEdit = false,
 }) => {
   const navigate = useNavigate();
   const { entidades: entidadesRaw } = React.useContext(EntidadesContext);
@@ -484,21 +500,42 @@ const RegistrosPage = ({
         </div>
       ) : (
         <div className={styles.grid}>
-          {registrosFiltrados.map((r) => (
-            <RegistroCard
-              key={r.id}
-              registro={r}
-              onEdit={() => openEdit(r)}
-              onDelete={() => setConfirmDelete(r.id)}
-              canEdit
-              canDelete={canDelete}
-            />
-          ))}
+          {registrosFiltrados.map((r) => {
+            const isInlineEditing =
+              inlineEdit &&
+              showModal &&
+              registroEmEdicao &&
+              String(registroEmEdicao.id) === String(r.id) &&
+              EditModal;
+            if (isInlineEditing) {
+              return (
+                <EditModal
+                  key={r.id}
+                  entidades={entidades}
+                  registro={registroEmEdicao}
+                  onClose={() => setShowModal(false)}
+                  onSaved={handleModalSaved}
+                  inline
+                />
+              );
+            }
+            return (
+              <RegistroCard
+                key={r.id}
+                registro={r}
+                onEdit={() => openEdit(r)}
+                onDelete={() => setConfirmDelete(r.id)}
+                canEdit
+                canDelete={canDelete}
+              />
+            );
+          })}
         </div>
       )}
 
       {/* Modals */}
       {showModal &&
+        !(inlineEdit && registroEmEdicao) &&
         (registroEmEdicao ? (
           EditModal ? (
             <EditModal

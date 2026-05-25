@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import PropTypes from "prop-types";
 import { API_URL } from "../../Api";
 import styles from "./Leads.module.css";
 import LeadDetailModal from "./LeadDetailModal";
@@ -66,8 +67,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
         </div>
         <form onSubmit={handleSubmit} className={styles.modalForm}>
           <div className={styles.formGroup}>
-            <label>Nome *</label>
+            <label htmlFor="lead-nome">Nome *</label>
             <input
+              id="lead-nome"
               type="text"
               name="nome"
               value={formData.nome}
@@ -77,8 +79,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label>Email *</label>
+            <label htmlFor="lead-email">Email *</label>
             <input
+              id="lead-email"
               type="email"
               name="email"
               value={formData.email}
@@ -88,8 +91,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label>Telefone</label>
+            <label htmlFor="lead-telefone">Telefone</label>
             <input
+              id="lead-telefone"
               type="tel"
               name="telefone"
               value={formData.telefone}
@@ -98,8 +102,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label>Empresa</label>
+            <label htmlFor="lead-empresa">Empresa</label>
             <input
+              id="lead-empresa"
               type="text"
               name="empresa"
               value={formData.empresa}
@@ -108,8 +113,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label>Cargo</label>
+            <label htmlFor="lead-cargo">Cargo</label>
             <input
+              id="lead-cargo"
               type="text"
               name="cargo"
               value={formData.cargo}
@@ -118,8 +124,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label>Origem</label>
+            <label htmlFor="lead-origem">Origem</label>
             <select
+              id="lead-origem"
               name="origem"
               value={formData.origem}
               onChange={handleChange}
@@ -134,8 +141,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             </select>
           </div>
           <div className={styles.formGroup}>
-            <label>Valor Estimado</label>
+            <label htmlFor="lead-valor">Valor Estimado</label>
             <input
+              id="lead-valor"
               type="number"
               name="valor_estimado"
               value={formData.valor_estimado}
@@ -146,8 +154,9 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
             />
           </div>
           <div className={styles.formGroup}>
-            <label>Descrição</label>
+            <label htmlFor="lead-descricao">Descrição</label>
             <textarea
+              id="lead-descricao"
               name="descricao"
               value={formData.descricao}
               onChange={handleChange}
@@ -173,6 +182,12 @@ const CreateLeadModal = ({ show, onClose, onSuccess }) => {
   );
 };
 
+CreateLeadModal.propTypes = {
+  show: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSuccess: PropTypes.func.isRequired,
+};
+
 const Leads = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -185,18 +200,7 @@ const Leads = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    fetchLeads();
-  }, [page, searchTerm]);
-
-  useEffect(() => {
-    if (location.state?.openCreate) {
-      setShowModal(true);
-      navigate(location.pathname, { replace: true, state: {} });
-    }
-  }, [location.pathname, location.state, navigate]);
-
-  const fetchLeads = async () => {
+  const fetchLeads = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -212,10 +216,22 @@ const Leads = () => {
       console.error("Erro ao buscar leads:", error);
     }
     setLoading(false);
-  };
+  }, [page, searchTerm]);
+
+  useEffect(() => {
+    fetchLeads();
+  }, [fetchLeads]);
+
+  useEffect(() => {
+    if (location.state?.openCreate) {
+      setShowModal(true);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const handleConvertToOpp = async (leadId) => {
-    if (!window.confirm("Converter este prospecto em oportunidade?")) return;
+    if (!globalThis.confirm("Converter este prospecto em oportunidade?"))
+      return;
 
     try {
       const response = await fetch(
@@ -245,23 +261,23 @@ const Leads = () => {
       );
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.detail || "Erro ao gerar BPMN com IA");
+        throw new Error(data?.detail || "Erro ao gerar Fluxograma com IA");
       }
 
       if (data.success) {
         alert(
-          "BPMN gerado com sucesso! Agora você pode converter em oportunidade.",
+          "Fluxograma gerado com sucesso! Agora você pode converter em oportunidade.",
         );
         fetchLeads();
       }
     } catch (error) {
       console.error("Erro ao gerar BPMN:", error);
-      alert(error?.message || "Erro ao gerar BPMN com IA");
+      alert(error?.message || "Erro ao gerar Fluxograma com IA");
     }
   };
 
   const handleDeleteLead = async (leadId) => {
-    if (!window.confirm("Deletar este prospecto?")) return;
+    if (!globalThis.confirm("Deletar este prospecto?")) return;
 
     try {
       const response = await fetch(`${API_URL}/api/leads/${leadId}`, {
@@ -291,6 +307,153 @@ const Leads = () => {
     };
     return colors[stage] || "#6b7280";
   };
+
+  let leadsContent;
+  if (loading) {
+    leadsContent = (
+      <div className={styles.state}>
+        <div className={styles.spinner}></div>
+        <p>Carregando prospectos...</p>
+      </div>
+    );
+  } else if (leads.length === 0) {
+    leadsContent = (
+      <div className={styles.state}>
+        <span className={styles.emptyIcon}>📭</span>
+        <p>Nenhum prospecto encontrado</p>
+      </div>
+    );
+  } else {
+    leadsContent = (
+      <>
+        <div className={styles.tableWrapper}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>Email</th>
+                <th>Empresa</th>
+                <th>Origem</th>
+                <th>Stage</th>
+                <th>Valor Est.</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((lead) => (
+                <tr
+                  key={lead.id}
+                  onClick={() => handleOpenDetail(lead)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <td className={styles.nameCell}>
+                    <div>
+                      <div className={styles.leadName}>{lead.nome}</div>
+                      <div className={styles.leadCargo}>{lead.cargo}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <a
+                      href={`mailto:${lead.email}`}
+                      className={styles.emailLink}
+                    >
+                      {lead.email}
+                    </a>
+                  </td>
+                  <td>{lead.empresa || "-"}</td>
+                  <td>
+                    <span className={styles.badge} title={lead.origem}>
+                      {lead.origem || "-"}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      className={styles.stageBadge}
+                      style={{ backgroundColor: getStageColor(lead.stage) }}
+                      title={lead.stage}
+                    >
+                      {lead.stage}
+                    </span>
+                  </td>
+                  <td>
+                    {lead.valor_estimado
+                      ? `R$ ${lead.valor_estimado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
+                      : "-"}
+                  </td>
+                  <td className={styles.actionsCell}>
+                    {lead.stage !== "convertido" && (
+                      <>
+                        {!lead.bpmn_generated && (
+                          <button
+                            className={styles.btnBpmn}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleGenerateBpmn(lead.id);
+                            }}
+                            title="Gerar Fluxograma com IA"
+                          >
+                            AI
+                          </button>
+                        )}
+
+                        <button
+                          className={styles.btnConvert}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleConvertToOpp(lead.id);
+                          }}
+                          title={
+                            lead.bpmn_generated
+                              ? "Converter para oportunidade"
+                              : "Gere o Fluxograma com IA antes de converter"
+                          }
+                          disabled={!lead.bpmn_generated}
+                        >
+                          ➜
+                        </button>
+                      </>
+                    )}
+                    <button
+                      className={styles.btnDelete}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteLead(lead.id);
+                      }}
+                      title="Deletar prospecto"
+                    >
+                      🗑️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className={styles.pagination}>
+            <button
+              className={styles.paginationBtn}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              ← Anterior
+            </button>
+            <span className={styles.pageInfo}>
+              Página {page} de {totalPages}
+            </span>
+            <button
+              className={styles.paginationBtn}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Próxima →
+            </button>
+          </div>
+        )}
+      </>
+    );
+  }
 
   return (
     <div className={styles.container}>
@@ -322,145 +485,7 @@ const Leads = () => {
         </div>
       </div>
 
-      {loading ? (
-        <div className={styles.state}>
-          <div className={styles.spinner}></div>
-          <p>Carregando prospectos...</p>
-        </div>
-      ) : leads.length === 0 ? (
-        <div className={styles.state}>
-          <span className={styles.emptyIcon}>📭</span>
-          <p>Nenhum prospecto encontrado</p>
-        </div>
-      ) : (
-        <>
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  <th>Email</th>
-                  <th>Empresa</th>
-                  <th>Origem</th>
-                  <th>Stage</th>
-                  <th>Valor Est.</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leads.map((lead) => (
-                  <tr
-                    key={lead.id}
-                    onClick={() => handleOpenDetail(lead)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <td className={styles.nameCell}>
-                      <div>
-                        <div className={styles.leadName}>{lead.nome}</div>
-                        <div className={styles.leadCargo}>{lead.cargo}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <a
-                        href={`mailto:${lead.email}`}
-                        className={styles.emailLink}
-                      >
-                        {lead.email}
-                      </a>
-                    </td>
-                    <td>{lead.empresa || "-"}</td>
-                    <td>
-                      <span className={styles.badge} title={lead.origem}>
-                        {lead.origem || "-"}
-                      </span>
-                    </td>
-                    <td>
-                      <span
-                        className={styles.stageBadge}
-                        style={{ backgroundColor: getStageColor(lead.stage) }}
-                        title={lead.stage}
-                      >
-                        {lead.stage}
-                      </span>
-                    </td>
-                    <td>
-                      {lead.valor_estimado
-                        ? `R$ ${lead.valor_estimado.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`
-                        : "-"}
-                    </td>
-                    <td className={styles.actionsCell}>
-                      {lead.stage !== "convertido" && (
-                        <>
-                          {!lead.bpmn_generated && (
-                            <button
-                              className={styles.btnBpmn}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleGenerateBpmn(lead.id);
-                              }}
-                              title="Gerar BPMN com IA"
-                            >
-                              AI
-                            </button>
-                          )}
-
-                          <button
-                            className={styles.btnConvert}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleConvertToOpp(lead.id);
-                            }}
-                            title={
-                              lead.bpmn_generated
-                                ? "Converter para oportunidade"
-                                : "Gere o BPMN com IA antes de converter"
-                            }
-                            disabled={!lead.bpmn_generated}
-                          >
-                            ➜
-                          </button>
-                        </>
-                      )}
-                      <button
-                        className={styles.btnDelete}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteLead(lead.id);
-                        }}
-                        title="Deletar prospecto"
-                      >
-                        🗑️
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {totalPages > 1 && (
-            <div className={styles.pagination}>
-              <button
-                className={styles.paginationBtn}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                ← Anterior
-              </button>
-              <span className={styles.pageInfo}>
-                Página {page} de {totalPages}
-              </span>
-              <button
-                className={styles.paginationBtn}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                Próxima →
-              </button>
-            </div>
-          )}
-        </>
-      )}
+      {leadsContent}
 
       <CreateLeadModal
         show={showModal}

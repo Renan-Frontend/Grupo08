@@ -9,8 +9,8 @@ const Sidebar = ({ onNavigateItem }) => {
   const location = useLocation();
   const { userLogout, user } = React.useContext(UserContext);
 
-  const handleNavigation = (path) => {
-    navigate(path);
+  const handleNavigation = (path, state) => {
+    navigate(path, state ? { state } : undefined);
     onNavigateItem?.();
   };
 
@@ -36,6 +36,20 @@ const Sidebar = ({ onNavigateItem }) => {
   return (
     <aside className={styles.sidebar}>
       <div className={styles.sidebarSection}>
+        <ul className={styles.menuList}>
+          <li className={`${styles.menuItem} ${isExactActive("/tutorial")}`}>
+            <div
+              className={styles.menuItemContent}
+              onClick={() => handleNavigation("/tutorial")}
+            >
+              <span className={styles.icon}>🗺️</span>
+              Tutorial
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div className={styles.sidebarSection}>
         <h3 className={styles.sidebarTitle}>OPERAÇÃO</h3>
         <ul className={styles.menuList}>
           <li className={`${styles.menuItem} ${isPrefixActive("/gerar-bpmn")}`}>
@@ -44,7 +58,7 @@ const Sidebar = ({ onNavigateItem }) => {
               onClick={() => handleNavigation("/gerar-bpmn")}
             >
               <span className={styles.icon}>🤖</span>
-              Gerar BPMN
+              Gerar Fluxograma
             </div>
           </li>
           <li className={`${styles.menuItem} ${isPrefixActive("/cadastros")}`}>
@@ -65,6 +79,17 @@ const Sidebar = ({ onNavigateItem }) => {
             >
               <span className={styles.icon}>💼</span>
               Oportunidades
+            </div>
+          </li>
+          <li
+            className={`${styles.menuItem} ${isPrefixActive("/documentos-processo")}`}
+          >
+            <div
+              className={styles.menuItemContent}
+              onClick={() => handleNavigation("/documentos-processo")}
+            >
+              <span className={styles.icon}>📄</span>
+              Documentos de Processo
             </div>
           </li>
         </ul>
@@ -115,13 +140,22 @@ const Sidebar = ({ onNavigateItem }) => {
               Processos
             </div>
           </li>
-          <li className={`${styles.menuItem} ${isExactActive("/atividades")}`}>
+          <li className={`${styles.menuItem} ${isExactActive("/tarefas")}`}>
             <div
               className={styles.menuItemContent}
-              onClick={() => handleNavigation("/atividades")}
+              onClick={() => handleNavigation("/tarefas")}
             >
               <span className={styles.icon}>⏱️</span>
-              Atividades
+              Tarefas
+            </div>
+          </li>
+          <li className={`${styles.menuItem} ${isExactActive("/condicoes")}`}>
+            <div
+              className={styles.menuItemContent}
+              onClick={() => handleNavigation("/condicoes")}
+            >
+              <span className={styles.icon}>🔀</span>
+              Condições
             </div>
           </li>
         </ul>

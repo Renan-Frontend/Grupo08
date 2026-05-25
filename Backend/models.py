@@ -29,6 +29,11 @@ class Oportunidade(BaseModel):
     pipelineSubtitle: str | None = None
     bpmn: dict[str, Any] | None = None
     contacts: list[dict[str, Any]] | None = None
+    products: list[dict[str, Any]] | None = None
+    quotes: list[dict[str, Any]] | None = None
+    probabilidade: Any | None = None
+    origemLead: str | None = None
+    motivoFechamento: str | None = None
     stageIndex: int | None = None
     currentNodeId: str | None = None
     activeNodeId: str | None = None
@@ -117,8 +122,6 @@ class Contato(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     criadoPor: str | None = None
-    updated_at: str | None = None
-    criadoPor: str | None = None
 
 
 class AuthRequest(BaseModel):
@@ -164,3 +167,4 @@ class Activity(BaseModel):
     data_atualizacao: str | None = None
     anexos: list[str] | None = None
     tags: list[str] | None = None
+    extra: dict | None = None

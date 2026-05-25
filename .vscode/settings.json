@@ -1,5 +1,4 @@
 {
-  "python-envs.pythonProjects": [],
   "python.defaultInterpreterPath": "D:/Program Files/Programacao/BP-Company/.venv/Scripts/python.exe",
   "python.envFile": "${workspaceFolder}/Backend/.env",
   "python.terminal.useEnvFile": true

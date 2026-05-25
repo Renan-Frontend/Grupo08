@@ -1,1 +1,126 @@
-[]
+[
+  {
+    "id": "d0419f3a-521c-4d91-a39d-9304b797f04c",
+    "nome": "Lead Teste BPMN",
+    "email": "lead.teste.bpmn@example.com",
+    "telefone": "11999999999",
+    "empresa": "Empresa Teste",
+    "cargo": "Comprador",
+    "origem": "website",
+    "stage": "novo",
+    "valor_estimado": 15000.0,
+    "descricao": "Cliente solicita proposta de compra. Em seguida o time comercial qualifica o contato e valida escopo. Se aprovado internamente, financeiro valida orçamento e prepara proposta final. Caso não aprovado, ajustar proposta e reenviar para validação. Ao final, converter em oportunidade.",
+    "responsavel": null,
+    "data_criacao": "2026-05-07T15:48:40.670056+00:00",
+    "data_contato": null,
+    "notas": [],
+    "ativo": true,
+    "opp_id": null,
+    "bpmn_generated": true,
+    "bpmn_generated_at": "2026-05-07T15:48:42.200683+00:00",
+    "bpmn_analysis": {
+      "processo": "Qualificação e Conversão de Lead",
+      "etapas": [
+        "Recebimento do Lead",
+        "Qualificação do Contato",
+        "Validação do Escopo",
+        "Aprovação Interna?",
+        "Ajuste da Proposta",
+        "Validação do Orçamento",
+        "Preparação da Proposta Final",
+        "Aprovação da Proposta?",
+        "Conversão para Oportunidade",
+        "Encerramento do Processo"
+      ],
+      "riscos": [
+        "Lead não qualificado",
+        "Escopo não válido",
+        "Aprovação interna negada",
+        "Orçamento não aprovado",
+        "Proposta não aprovada"
+      ],
+      "proximo_passo": "Qualificação do Contato",
+      "fonte": "groq"
+    }
+  },
+  {
+    "id": "e6525155-65b4-4528-83c0-fd2e9b4752fd",
+    "nome": "Lead Teste BPMN 2",
+    "email": "lead.teste2.bpmn@example.com",
+    "telefone": "11999999998",
+    "empresa": "Empresa Teste",
+    "cargo": "Comprador",
+    "origem": "website",
+    "stage": "novo",
+    "valor_estimado": 20000.0,
+    "descricao": "Cliente solicita proposta. Em seguida comercial qualifica e valida escopo. Se aprovado internamente, financeiro valida orçamento e prepara proposta final. Caso reprovado, ajustar proposta e reenviar. Ao final converter em oportunidade.",
+    "responsavel": null,
+    "data_criacao": "2026-05-07T15:54:17.307748+00:00",
+    "data_contato": null,
+    "notas": [],
+    "ativo": true,
+    "opp_id": null,
+    "bpmn_generated": true,
+    "bpmn_generated_at": "2026-05-07T15:54:17.654916+00:00",
+    "bpmn_analysis": {
+      "processo": "Conversão de Prospecto - Lead Teste BPMN 2",
+      "etapas": [
+        "Receber lead",
+        "Qualificar lead",
+        "Realizar contato inicial",
+        "Validar interesse",
+        "Converter para oportunidade"
+      ],
+      "riscos": [
+        "Contato sem retorno",
+        "Baixa aderência de perfil"
+      ],
+      "proximo_passo": "Agendar reunião de qualificação",
+      "fonte": "fallback"
+    }
+  },
+  {
+    "id": "dfe7ffe0-b3fc-4363-9edf-47d4614e3954",
+    "nome": "Lead BPMN Final",
+    "email": "lead.bpmn.final@example.com",
+    "telefone": "11999990000",
+    "empresa": "Empresa Final",
+    "cargo": "Comprador",
+    "origem": "website",
+    "stage": "novo",
+    "valor_estimado": 25000.0,
+    "descricao": "Cliente solicita proposta. Em seguida comercial qualifica e valida escopo. Se aprovado internamente, financeiro valida orcamento e prepara proposta final. Caso reprovado, ajustar proposta e reenviar. Ao final converter em oportunidade.",
+    "responsavel": null,
+    "data_criacao": "2026-05-07T15:55:20.847817+00:00",
+    "data_contato": null,
+    "notas": [],
+    "ativo": true,
+    "opp_id": null,
+    "bpmn_generated": true,
+    "bpmn_generated_at": "2026-05-07T15:55:22.693802+00:00",
+    "bpmn_analysis": {
+      "processo": "Qualificação e Conversão de Lead",
+      "etapas": [
+        "Receber Solicitação de Proposta",
+        "Qualificar Lead",
+        "Validar Escopo do Projeto",
+        "Aprovação Interna do Escopo?",
+        "Ajustar Proposta",
+        "Validar Orçamento",
+        "Preparar Proposta Final",
+        "Enviar Proposta ao Cliente",
+        "Aguardar Decisão do Cliente",
+        "Converter Lead em Oportunidade",
+        "Encerramento do Processo"
+      ],
+      "riscos": [
+        "Demora na Aprovação Interna",
+        "Rejeição da Proposta pelo Cliente",
+        "Divergência no Orçamento",
+        "Falta de Informações para Qualificação"
+      ],
+      "proximo_passo": "Qualificar Lead",
+      "fonte": "groq"
+    }
+  }
+]

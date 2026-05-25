@@ -11,7 +11,63 @@
     "y": 650,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
-    "_preserved": true
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
   },
   {
     "id": "n8",
@@ -25,6 +81,580 @@
     "y": 1220,
     "_oppName": "Aprovação de Pedido de Compra",
     "_oppId": 1,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n5",
+    "label": "Pedido aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Pedido aprovado?",
+    "condicionalDescricao": "A equipe de análise avalia se o pedido está aprovado com base nas informações fornecidas.",
+    "descricao": "A equipe de análise avalia se o pedido está aprovado com base nas informações fornecidas.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 840,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n9",
+    "label": "Orcamento aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Orcamento aprovado?",
+    "condicionalDescricao": "A equipe de análise avalia se o orçamento está aprovado com base nas informações fornecidas.",
+    "descricao": "A equipe de análise avalia se o orçamento está aprovado com base nas informações fornecidas.",
+    "gatewayType": "exclusivo",
+    "x": 700,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (3)",
+    "_oppId": 5,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n5",
+    "label": "Pedido aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Pedido aprovado?",
+    "condicionalDescricao": "A equipe de análise avalia se o pedido está aprovado com base nas informações fornecidas.",
+    "descricao": "A equipe de análise avalia se o pedido está aprovado com base nas informações fornecidas.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 840,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n9",
+    "label": "Orcamento aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Orcamento aprovado?",
+    "condicionalDescricao": "A equipe de análise avalia se o orçamento está aprovado com base nas informações fornecidas.",
+    "descricao": "A equipe de análise avalia se o orçamento está aprovado com base nas informações fornecidas.",
+    "gatewayType": "exclusivo",
+    "x": 700,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (4)",
+    "_oppId": 6,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n4",
+    "label": "Pedido aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Pedido aprovado?",
+    "condicionalDescricao": "A equipe de análise decide se o pedido está aprovado com base nos critérios estabelecidos.",
+    "descricao": "A equipe de análise decide se o pedido está aprovado com base nos critérios estabelecidos.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n8",
+    "label": "Orcamento aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Orcamento aprovado?",
+    "condicionalDescricao": "A equipe de análise decide se o orçamento está aprovado com base nos critérios estabelecidos.",
+    "descricao": "A equipe de análise decide se o orçamento está aprovado com base nos critérios estabelecidos.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (2)",
+    "_oppId": 4,
+    "_preserved": true,
+    "selectedEntityFields": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ],
+    "selectedEntityFieldNames": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "selectedEntityFieldIds": [
+      "criterio",
+      "resultado",
+      "observacao"
+    ],
+    "campos": [
+      {
+        "nome": "criterio",
+        "tipo": "texto",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "resultado",
+        "tipo": "booleano",
+        "obrigatorio": true,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      },
+      {
+        "nome": "observacao",
+        "tipo": "texto",
+        "obrigatorio": false,
+        "keyType": "NORMAL",
+        "relacionamento": null
+      }
+    ]
+  },
+  {
+    "id": "n6",
+    "label": "Dados Corretos?",
+    "nodeType": "condicional",
+    "condicionalNome": "Dados Corretos?",
+    "condicionalDescricao": "O sistema verifica se os dados do pedido estão corretos e completos.",
+    "descricao": "O sistema verifica se os dados do pedido estão corretos e completos.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 1030,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n11",
+    "label": "Produto Disponível?",
+    "nodeType": "condicional",
+    "condicionalNome": "Produto Disponível?",
+    "condicionalDescricao": "O sistema verifica se o produto está disponível no estoque.",
+    "descricao": "O sistema verifica se o produto está disponível no estoque.",
+    "gatewayType": "exclusivo",
+    "x": 700,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n14",
+    "label": "Pagamento Aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Pagamento Aprovado?",
+    "condicionalDescricao": "O sistema verifica se o pagamento foi aprovado.",
+    "descricao": "O sistema verifica se o pagamento foi aprovado.",
+    "gatewayType": "exclusivo",
+    "x": 700,
+    "y": 460,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n26",
+    "label": "Cliente Ausente?",
+    "nodeType": "condicional",
+    "condicionalNome": "Cliente Ausente?",
+    "condicionalDescricao": "O sistema verifica se o cliente está ausente.",
+    "descricao": "O sistema verifica se o cliente está ausente.",
+    "gatewayType": "exclusivo",
+    "x": 1980,
+    "y": 1030,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n36",
+    "label": "Endereço Correto?",
+    "nodeType": "condicional",
+    "condicionalNome": "Endereço Correto?",
+    "condicionalDescricao": "Decisao: Endereço Correto.",
+    "descricao": "Decisao: Endereço Correto.",
+    "gatewayType": "exclusivo",
+    "x": 2620,
+    "y": 650,
+    "_oppName": "Fluxograma do Processo Completo de Atendimento, Venda, Logística e Pós-Venda",
+    "_oppId": 3,
+    "_preserved": true
+  },
+  {
+    "id": "n4",
+    "label": "Pedido aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Pedido aprovado?",
+    "condicionalDescricao": "A equipe de compras avalia se o pedido está aprovado com base na análise.",
+    "descricao": "A equipe de compras avalia se o pedido está aprovado com base na análise.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 650,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
+    "_preserved": true
+  },
+  {
+    "id": "n8",
+    "label": "Orcamento aprovado?",
+    "nodeType": "condicional",
+    "condicionalNome": "Orcamento aprovado?",
+    "condicionalDescricao": "A equipe de compras avalia se o orçamento está aprovado com base na validação.",
+    "descricao": "A equipe de compras avalia se o orçamento está aprovado com base na validação.",
+    "gatewayType": "exclusivo",
+    "x": 60,
+    "y": 1220,
+    "_oppName": "Aprovação de Pedido de Compra (1)",
+    "_oppId": 2,
     "_preserved": true
   }
 ]

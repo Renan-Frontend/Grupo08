@@ -36,7 +36,7 @@ const VIEWS = [
 
 const MINE_SECTIONS = [
   { key: "workflows", label: "Workflows", icon: "🔄" },
-  { key: "bpmns", label: "BPMNs", icon: "📐" },
+  { key: "bpmns", label: "Fluxogramas", icon: "📐" },
   { key: "entidades", label: "Entidades", icon: "🗂️" },
 ];
 
@@ -1073,7 +1073,7 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ""}
         <div className={styles.tableWrapper}>
           <div className={styles.emptyState}>
             <div className={styles.emptyIcon}>📐</div>
-            <p className={styles.emptyText}>Nenhum BPMN criado ainda.</p>
+            <p className={styles.emptyText}>Nenhum Fluxograma criado ainda.</p>
           </div>
         </div>
       );
@@ -1210,7 +1210,7 @@ ${signaturesHtml ? `<div class="signatures">${signaturesHtml}</div>` : ""}
           <h1 className={styles.title}>Workflows</h1>
           <p className={styles.subtitle}>
             {page === "mine"
-              ? "Seus processos BPMN, oportunidades e entidades."
+              ? "Seus Fluxogramas, oportunidades e entidades."
               : "Workflows compartilhados por outros usuários."}
           </p>
         </div>

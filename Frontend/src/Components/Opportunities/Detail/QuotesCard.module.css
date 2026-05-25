@@ -83,6 +83,21 @@
   flex-direction: column;
 }
 
+.selectionBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.45rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fbfdff;
+}
+
+.selectionHint {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
 .quoteRow {
   border-bottom: 1px solid #f1f5f9;
 }
@@ -101,6 +116,14 @@
   cursor: pointer;
   user-select: none;
   transition: background 0.12s;
+}
+
+.quoteSelector {
+  width: 14px;
+  height: 14px;
+  accent-color: #1e9158;
+  cursor: pointer;
+  flex-shrink: 0;
 }
 .quoteHeader:hover {
   background: #f8fafc;
@@ -131,6 +154,30 @@
   font-weight: 700;
   color: #1e9158;
   white-space: nowrap;
+}
+
+.stepBadgeForeign,
+.stepBadgeUnscoped {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.stepBadgeForeign {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+}
+
+.stepBadgeUnscoped {
+  color: #475569;
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
 }
 
 .chevron {

@@ -134,6 +134,70 @@ export const deleteOpportunityById = async ({ opportunityId, token }) => {
   return response;
 };
 
+export const fetchActivitiesForOpportunity = async ({
+  opportunityId,
+  token,
+  limit = 500,
+}) => {
+  if (!opportunityId) return [];
+  const response = await fetchWithTimeout(
+    `${API_URL}/api/activities/entity/oportunidade/${opportunityId}?limit=${limit}`,
+    { headers: authHeaders(token) },
+  );
+
+  if (!response.ok) return [];
+
+  const json = await response.json().catch(() => ({}));
+  return Array.isArray(json?.activities) ? json.activities : [];
+};
+
+export const createActivity = async ({ payload, token }) => {
+  const response = await fetchWithTimeout(`${API_URL}/api/activities`, {
+    method: "POST",
+    headers: jsonHeaders(token),
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Erro ao criar atividade");
+  }
+
+  return response.json();
+};
+
+export const updateActivityById = async ({ activityId, payload, token }) => {
+  const response = await fetchWithTimeout(
+    `${API_URL}/api/activities/${activityId}`,
+    {
+      method: "PUT",
+      headers: jsonHeaders(token),
+      body: JSON.stringify(payload),
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error("Erro ao atualizar atividade");
+  }
+
+  return response.json();
+};
+
+export const deleteActivityById = async ({ activityId, token }) => {
+  const response = await fetchWithTimeout(
+    `${API_URL}/api/activities/${activityId}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(token),
+    },
+  );
+
+  if (!response.ok && response.status !== 404) {
+    throw new Error("Erro ao deletar atividade");
+  }
+
+  return response;
+};
+
 export const batchSyncEntidades = async ({ items, token }) => {
   const response = await fetchWithTimeout(`${API_URL}/entidades/batch/sync`, {
     method: "PUT",

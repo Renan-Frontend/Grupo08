@@ -82,6 +82,19 @@
   background: #f0fdf4;
 }
 
+.selectionBar {
+  margin: 0.55rem 1.1rem 0.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.selectionHint {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
 /* Contact list */
 .contactList {
   display: flex;
@@ -96,6 +109,14 @@
   padding: 0.9rem 1.1rem;
   border-bottom: 1px solid #f1f5f9;
   transition: background 0.1s;
+}
+
+.rowSelector {
+  width: 14px;
+  height: 14px;
+  margin-top: 0.35rem;
+  accent-color: #1e9158;
+  cursor: pointer;
 }
 .contactRow:last-child {
   border-bottom: none;
@@ -180,13 +201,39 @@
   cursor: default;
 }
 
+.stepBadgeForeign,
+.stepBadgeUnscoped {
+  display: inline-flex;
+  margin-top: 0.25rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  width: fit-content;
+  letter-spacing: 0.04em;
+}
+
+.stepBadgeForeign {
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fbbf24;
+}
+
+.stepBadgeUnscoped {
+  color: #475569;
+  background: #e2e8f0;
+  border: 1px solid #94a3b8;
+}
+
 /* Actions */
 .contactActions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: flex-start;
   gap: 6px;
   flex-shrink: 0;
+  padding-top: 1px;
 }
 
 .primaryBadge {

@@ -3,17 +3,23 @@ import styles from "./EntityCard.module.css";
 import { normalizeText } from "../helpers/entidadesSelectors";
 
 const TYPE_CONFIG = {
+  contato: {
+    label: "Contato",
+    color: "#0369a1",
+    bg: "#e0f2fe",
+    borderColor: "#7dd3fc",
+  },
+  processo: {
+    label: "Processo",
+    color: "#854d0e",
+    bg: "#fef9c3",
+    borderColor: "#fde047",
+  },
   principal: {
     label: "Principal",
     color: "#059669",
     bg: "#d1fae5",
     borderColor: "#6ee7b7",
-  },
-  apoio: {
-    label: "Apoio",
-    color: "#2563eb",
-    bg: "#dbeafe",
-    borderColor: "#93c5fd",
   },
   associativa: {
     label: "Associativa",
@@ -31,7 +37,7 @@ const TYPE_CONFIG = {
 
 const getTypeConfig = (tipoEntidade) => {
   const key = normalizeText(tipoEntidade || "");
-  return TYPE_CONFIG[key] || TYPE_CONFIG.apoio;
+  return TYPE_CONFIG[key] || TYPE_CONFIG.processo;
 };
 
 const EntityCard = ({
@@ -53,7 +59,7 @@ const EntityCard = ({
 
   return (
     <article className={styles.card}>
-      <div className={styles.accentBar} style={{ background: tipo.color }} />
+      <div className={styles.accentBar} style={{ background: "#059669" }} />
 
       <div className={styles.cardInner}>
         <div className={styles.topRow}>

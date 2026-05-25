@@ -218,6 +218,26 @@
   color: #111827;
 }
 
+.cardLinks {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.linkBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.14rem 0.55rem;
+  border-radius: 999px;
+  background: #ecfdf3;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .cardObsWrapper {
   display: flex;
   flex-direction: column;
@@ -762,4 +782,47 @@
   .toolbar {
     flex-direction: column;
   }
+}
+
+/* ─── Inline edit (sem modal) ─────────────────────────────────────────── */
+.inlineEditContainer {
+  grid-column: 1 / -1;
+  background: #fffbeb;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+}
+
+.inlineEditCard {
+  background: #ffffff;
+  border-radius: 10px;
+  margin: 0.5rem;
+}
+
+.inlineEditToolbar {
+  background: #fef3c7;
+  border-bottom: 1px solid #fde68a;
+  padding: 0.6rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #92400e;
+  font-weight: 600;
+  border-radius: 12px 12px 0 0;
+}
+
+.inlineEditExitBtn {
+  background: #fff;
+  border: 1px solid #fbbf24;
+  color: #92400e;
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.inlineEditExitBtn:hover {
+  background: #fef3c7;
 }

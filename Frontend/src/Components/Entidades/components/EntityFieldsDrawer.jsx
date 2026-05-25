@@ -27,6 +27,10 @@ const EntityFieldsDrawer = ({
     entity?.nome || entity?.name || entity?.titulo || "",
   ).trim();
   const atributoChave = String(entity?.atributoChave || "").trim();
+  const descricao = String(entity?.descricao || "").trim();
+  const nodeType = entity?.nodeType;
+  const bpmnData = entity?.bpmnData || {};
+  const isTaskOrCondicional = nodeType === "task" || nodeType === "condicional";
 
   return (
     <>
@@ -46,7 +50,13 @@ const EntityFieldsDrawer = ({
               ←
             </button>
             <div>
-              <div className={styles.drawerLabel}>Campos da entidade</div>
+              <div className={styles.drawerLabel}>
+                {nodeType === "task"
+                  ? "⏱ Atividade"
+                  : nodeType === "condicional"
+                    ? "🔀 Decisão"
+                    : "Campos da entidade"}
+              </div>
               <div className={styles.drawerTitle}>{nome || "—"}</div>
             </div>
           </div>
@@ -62,6 +72,80 @@ const EntityFieldsDrawer = ({
 
         {/* Body */}
         <div className={styles.drawerBody}>
+          {/* Info section for BPMN node (atividade/condicional) */}
+          {isTaskOrCondicional && (
+            <div className={styles.infoSection}>
+              {descricao && (
+                <div className={styles.infoItem}>
+                  <span className={styles.infoLabel}>Descrição:</span>
+                  <p className={styles.infoText}>{descricao}</p>
+                </div>
+              )}
+
+              {nodeType === "task" && (
+                <>
+                  {bpmnData?.responsavel && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Responsável:</span>
+                      <span className={styles.infoValue}>
+                        {bpmnData.responsavel?.nome || "—"}
+                      </span>
+                    </div>
+                  )}
+                  {bpmnData?.prazoSlaHoras && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Prazo SLA:</span>
+                      <span className={styles.infoValue}>
+                        {bpmnData.prazoSlaHoras?.nome || "—"}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {nodeType === "condicional" && (
+                <>
+                  {bpmnData?.perguntaDecisao && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>
+                        Pergunta de decisão:
+                      </span>
+                      <span className={styles.infoValue}>
+                        {bpmnData.perguntaDecisao?.nome || "—"}
+                      </span>
+                    </div>
+                  )}
+                  {bpmnData?.campoAvaliado && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Campo avaliado:</span>
+                      <span className={styles.infoValue}>
+                        {bpmnData.campoAvaliado?.nome || "—"}
+                      </span>
+                    </div>
+                  )}
+                  {bpmnData?.operador && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>Operador:</span>
+                      <span className={styles.infoValue}>
+                        {bpmnData.operador?.nome || "—"}
+                      </span>
+                    </div>
+                  )}
+                  {bpmnData?.valorComparacao && (
+                    <div className={styles.infoItem}>
+                      <span className={styles.infoLabel}>
+                        Valor comparação:
+                      </span>
+                      <span className={styles.infoValue}>
+                        {bpmnData.valorComparacao?.nome || "—"}
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {/* Add / edit form */}
           {!isReadOnly && (
             <div className={styles.addSection}>

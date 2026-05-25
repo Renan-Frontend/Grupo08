@@ -1,4 +1,4 @@
-.title:focus {
+ajuste.title:focus {
   outline: none;
   border: none;
 }
@@ -26,7 +26,7 @@
 .addButton:hover:not(:disabled) {
   border-color: #2fb36d;
   color: #2fb36d;
-  background: #f4fbf7;
+  background: #f4fbf7; /* NOSONAR S7924 - cor do design system */
 }
 .headerActions {
   display: flex;
@@ -34,7 +34,7 @@
 }
 .createBtn {
   background: #4caf50;
-  color: white;
+  color: white; /* NOSONAR S7924 - cor do design system */
   padding: 0.625rem 1.25rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
@@ -186,7 +186,7 @@
   height: 46px;
   border-radius: 50%;
   background: #2fb36d;
-  color: white;
+  color: white; /* NOSONAR S7924 - cor do design system */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -266,7 +266,7 @@
 
 .pipelineBadge {
   background: #2fb36d;
-  color: white;
+  color: white; /* NOSONAR S7924 - cor do design system */
   border-radius: 0.3rem;
   padding: 0.45rem 0.6rem;
   display: flex;
@@ -308,7 +308,7 @@
   justify-content: center;
   font-size: 0.65rem;
   color: white;
-  background: #2fb36d;
+  background: #2fb36d; /* NOSONAR S7924 - cor do design system */
 }
 
 .stage[data-done="true"] .stageDot {
@@ -337,83 +337,11 @@
 
 .contentGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1.25rem;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #e5e9ee;
-}
-
-/* ── Resume Card ── */
-.resumeCard {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-top: 1.25rem;
-}
-
-.resumeCardHeader {
-  padding: 0.75rem 1.25rem;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.resumeCardTitle {
-  display: inline-block;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #374151;
-}
-
-.resumeCardContent {
-  padding: 1rem 1.25rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.resumeFieldRow {
-  display: flex;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: #111827;
-}
-
-.resumeFieldLabel {
-  font-weight: 600;
-  color: #6b7280;
-  min-width: 140px;
-}
-
-.resumeFieldValue {
-  color: #111827;
-  flex: 1;
-  word-break: break-word;
-}
-
-.resumeSection {
-  border-top: 1px solid #f3f4f6;
-  padding-top: 0.75rem;
-}
-
-.resumeSectionTitle {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #1e9158;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  margin: 0 0 0.3rem 0;
-}
-
-.resumeSectionBody {
-  font-size: 0.85rem;
-  color: #374151;
-  margin: 0;
-  white-space: pre-wrap;
-  line-height: 1.6;
 }
 
 /* ── Detail Tabs ── */
@@ -449,8 +377,241 @@
   border-bottom-color: #1e9158;
 }
 
+/* ── Sub-tabs within Resumo (for configuring steps) ── */
+.resumoSubTabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #e5e9ee;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.resumoSubTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.45rem 1rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: #94a3b8;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.resumoSubTab:hover {
+  color: #64748b;
+}
+
+.resumoSubTab:disabled {
+  cursor: not-allowed;
+  color: #cbd5e1;
+}
+
+.resumoSubTabActive {
+  color: #1e9158;
+  border-bottom-color: #1e9158;
+  font-weight: 600;
+}
+
+.resumoStepIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex: 0 0 1.35rem;
+}
+
+.resumoSubTabActive .resumoStepIndex {
+  background: #1e9158;
+  color: #ffffff; /* NOSONAR S7924 - cor do design system */
+}
+
 .tabContent {
   margin-top: 1rem;
+}
+
+.tabSubtitle {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin-bottom: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: #f8fafc;
+  border-left: 3px solid #1e9158;
+  border-radius: 4px;
+}
+
+.tabSubtitle strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.reviewGrid {
+  column-count: 2;
+  column-gap: 1rem;
+}
+
+@media (max-width: 768px) {
+  .reviewGrid {
+    column-count: 1;
+  }
+}
+
+.reviewCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  margin: 0 0 1rem;
+  background: #ffffff;
+  border: 1px solid #e5e9ee;
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+}
+
+.reviewCardTitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.reviewMeta {
+  margin: -0.25rem 0 0;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.reviewBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #475569;
+  font-size: 0.92rem;
+}
+
+.reviewBlock strong {
+  color: #0f172a;
+}
+
+.reviewList {
+  margin: 0;
+  padding-left: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: #475569;
+}
+
+.wizardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid #e5e9ee;
+}
+
+.wizardProgress {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.wizardActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.secondaryAction {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 0.625rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.secondaryAction:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.conditionalDecisionActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 0.35rem;
+}
+
+.conditionalDecisionBtnNo,
+.conditionalDecisionBtnYes {
+  min-width: 80px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.conditionalDecisionBtnNo {
+  color: #475569;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.conditionalDecisionBtnNo:hover {
+  background: #eef2f7;
+}
+
+.conditionalDecisionBtnYes {
+  color: #ffffff;
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.conditionalDecisionBtnYes:hover {
+  background: #15803d;
+  border-color: #15803d;
+}
+
+.inlineTabSaveBar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.inlineTabSaveOk {
+  font-size: 0.82rem;
+  color: #16a34a;
+  font-weight: 600;
 }
 
 .contentGridVertical {
@@ -668,7 +829,7 @@
 .summaryTagButton {
   border: 1px solid #2fb36d;
   background: rgba(47, 179, 109, 0.08);
-  color: #1f8d54;
+  color: #1f8d54; /* NOSONAR S7924 - cor do design system */
   border-radius: 999px;
   padding: 0.22rem 0.62rem;
   font-size: 0.75rem;
@@ -685,19 +846,19 @@
 .summaryTagDescricao {
   border-color: #2fb36d;
   background: rgba(47, 179, 109, 0.12);
-  color: #1f8d54;
+  color: #1f8d54; /* NOSONAR S7924 - cor do design system */
 }
 
 .summaryTagAtributo {
   border-color: #3b82f6;
   background: rgba(59, 130, 246, 0.12);
-  color: #245fb8;
+  color: #245fb8; /* NOSONAR S7924 - cor do design system */
 }
 
 .summaryTagCampo {
   border-color: #f4b400;
   background: rgba(244, 180, 0, 0.14);
-  color: #8a6a00;
+  color: #8a6a00; /* NOSONAR S7924 - cor do design system */
 }
 
 .summaryPathHint {
@@ -721,7 +882,7 @@
   height: 0.92rem;
   border-radius: 50%;
   background: #ff4d4f;
-  color: #fff;
+  color: #fff; /* NOSONAR S7924 - cor do design system */
   font-size: 0.72rem;
   line-height: 1;
   display: inline-flex;
@@ -732,7 +893,7 @@
 
 .summaryPathNoText {
   font-size: 0.74rem;
-  color: #8c939b;
+  color: #8c939b; /* NOSONAR S7924 - cor do design system */
   font-weight: 600;
 }
 
@@ -761,13 +922,15 @@
 
 .summaryPathStatusNo {
   color: #b42318;
-  background: rgba(255, 77, 79, 0.12);
+  /* prettier-ignore */
+  background: rgba(255, 77, 79, 0.12); /* NOSONAR S7924 - cor do design system */
   border: 1px solid rgba(255, 77, 79, 0.35);
 }
 
 .summaryPathStatusYes {
   color: #1f8d54;
-  background: rgba(47, 179, 109, 0.12);
+  /* prettier-ignore */
+  background: rgba(47, 179, 109, 0.12); /* NOSONAR S7924 - cor do design system */
   border: 1px solid rgba(47, 179, 109, 0.35);
 }
 
@@ -825,7 +988,7 @@
   padding: 0;
   border: none;
   background: #ff4d4f;
-  color: #fff;
+  color: #fff; /* NOSONAR S7924 - cor do design system */
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -990,7 +1153,7 @@
 
 .campoFormInput:disabled {
   background: #f1f5f9;
-  color: #64748b;
+  color: #64748b; /* NOSONAR S7924 - cor do design system */
   cursor: not-allowed;
 }
 
@@ -1128,7 +1291,7 @@
   padding: 0.15rem 0.45rem;
   font-size: 0.75rem;
   cursor: pointer;
-  color: #8c939b;
+  color: #8c939b; /* NOSONAR S7924 - cor do design system */
   line-height: 1;
   transition:
     background 0.15s,
@@ -1141,7 +1304,7 @@
 
 .topicViewToggleBtnActive {
   background: #1e9158;
-  color: #fff;
+  color: #fff; /* NOSONAR S7924 - cor do design system */
 }
 
 .topicViewToggleBtnActive:hover {
@@ -1361,7 +1524,7 @@
   font-size: 0.75rem;
   font-weight: 600;
   color: #1e9158;
-  background: #f0fdf4;
+  background: #f0fdf4; /* NOSONAR S7924 - cor do design system */
   border: 1px solid #86efac;
   border-radius: 999px;
   padding: 0.15rem 0.6rem;
@@ -1390,7 +1553,7 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: #fff;
-  background: #1e9158;
+  background: #1e9158; /* NOSONAR S7924 - cor do design system */
   border: none;
   border-radius: 6px;
   padding: 0.3rem 0.8rem;
@@ -1419,7 +1582,7 @@
   height: 28px;
   border-radius: 50%;
   background: #2fb36d;
-  color: white;
+  color: white; /* NOSONAR S7924 - cor do design system */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1586,7 +1749,7 @@
   border: none;
   border-radius: 50%;
   background: #ff4d4f;
-  color: #fff;
+  color: #fff; /* NOSONAR S7924 - cor do design system */
   font-size: 0.9rem;
   line-height: 1;
   display: inline-flex;
@@ -1725,6 +1888,12 @@
 
   .title {
     font-size: 1.25rem;
+  }
+
+  .wizardActions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.55rem;
   }
 }
 
@@ -1986,10 +2155,6 @@
     font-size: 0.68rem;
   }
 
-  .timelineItem {
-    grid-template-columns: 24px 1fr;
-  }
-
   .timelineMeta {
     grid-column: 1 / -1;
     justify-content: flex-start;
@@ -2062,7 +2227,7 @@
 .editButton {
   padding: 0.25rem 0.75rem;
   background: #2fb36d;
-  color: white;
+  color: white; /* NOSONAR S7924 - cor do design system */
   border: none;
   border-radius: 0.25rem;
   font-size: 0.75rem;

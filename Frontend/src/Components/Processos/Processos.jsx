@@ -1,5 +1,6 @@
 import React from "react";
 import RegistrosPage from "../Registros/RegistrosPage";
+import Activities from "../Activities/Activities";
 import {
   RegistrosContext,
   RegistrosProvider,
@@ -732,6 +733,9 @@ export const EditProcessoModal = ({
   registro,
   onClose,
   onSaved,
+  // Quando true, renderiza inline (sem overlay/backdrop) para uso
+  // em /processos com edição inline tipo /tarefas.
+  inline = false,
 }) => {
   const { editarRegistro } = React.useContext(RegistrosContext);
   const { user } = React.useContext(UserContext);
@@ -909,14 +913,20 @@ export const EditProcessoModal = ({
   };
 
   return (
-    <div className={styles.modalOverlay}>
-      <div className={styles.modal}>
+    <div
+      className={
+        inline ? styles.inlineEditContainer || "" : styles.modalOverlay
+      }
+    >
+      <div className={inline ? styles.inlineEditCard || "" : styles.modal}>
         <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>Editar processo</h2>
+          <h2 className={styles.modalTitle}>
+            {inline ? "✏️ Editar processo (inline)" : "Editar processo"}
+          </h2>
           <button
             className={styles.modalClose}
             onClick={onClose}
-            title="Fechar"
+            title={inline ? "Sair da edição" : "Fechar"}
           >
             ✕
           </button>
@@ -1231,7 +1241,7 @@ export const EditProcessoModal = ({
 
 // ─── Página ───────────────────────────────────────────────────────────────────
 
-export const ProcessosPage = () => (
+export const ProcessosRegistrosPage = () => (
   <RegistrosProvider>
     <RegistrosPage
       papelNegocio="processo"
@@ -1241,8 +1251,20 @@ export const ProcessosPage = () => (
       CreateModal={CreateProcessoModal}
       EditModal={EditProcessoModal}
       createButtonLabel="Criar Processo"
+      inlineEdit
     />
   </RegistrosProvider>
 );
+
+const ProcessosPage = () => (
+  <Activities
+    typeFilter="processo"
+    pageTitle="🔄 Processos"
+    pageSubtitle="Passos do tipo Processo configurados nas oportunidades comerciais"
+    newButtonLabel="Novo Processo"
+  />
+);
+
+export { ProcessosPage };
 
 export default ProcessosPage;

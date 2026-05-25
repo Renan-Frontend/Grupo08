@@ -52,6 +52,112 @@ const EMPTY_BPMN_FORM = {
   referencia: "",
 };
 
+const buildDefaultBpmnNodeFields = (node) => {
+  const nodeType = String(node?.nodeType || "")
+    .trim()
+    .toLowerCase();
+  const label = String(
+    nodeType === "task"
+      ? node?.taskNome || node?.label || ""
+      : node?.condicionalNome || node?.label || "",
+  )
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  if (nodeType === "condicional") {
+    return [
+      {
+        id: "criterio",
+        nome: "criterio",
+        tipo: "texto",
+        obrigatorio: true,
+        keyType: "NORMAL",
+        referencia: "",
+      },
+      {
+        id: "resultado",
+        nome: "resultado",
+        tipo: "booleano",
+        obrigatorio: true,
+        keyType: "NORMAL",
+        referencia: "",
+      },
+      {
+        id: "observacao",
+        nome: "observacao",
+        tipo: "texto",
+        obrigatorio: false,
+        keyType: "NORMAL",
+        referencia: "",
+      },
+    ];
+  }
+
+  if (nodeType === "task") {
+    return [
+      {
+        id: "responsavel",
+        nome: "responsavel",
+        tipo: "texto",
+        obrigatorio: true,
+        keyType: "NORMAL",
+        referencia: "",
+      },
+      {
+        id: "prazo",
+        nome: "prazo",
+        tipo: "data",
+        obrigatorio: false,
+        keyType: "NORMAL",
+        referencia: "",
+      },
+      {
+        id: `resultado_${label || "atividade"}`,
+        nome: `resultado_${label || "atividade"}`,
+        tipo: "texto",
+        obrigatorio: false,
+        keyType: "NORMAL",
+        referencia: "",
+      },
+    ];
+  }
+
+  return [];
+};
+
+const getBpmnNodeFields = (node) => {
+  const source =
+    (Array.isArray(node?.selectedEntityFields) && node.selectedEntityFields) ||
+    (Array.isArray(node?.campos) && node.campos) ||
+    (Array.isArray(node?.formSchema) && node.formSchema) ||
+    [];
+
+  const cleaned = source
+    .filter((c) => c && typeof c === "object")
+    .map((c) => {
+      const nome = String(c?.nome || c?.name || "").trim();
+      return {
+        ...c,
+        id: String(c?.id || nome || "").trim(),
+        nome,
+        tipo: String(c?.tipo || c?.type || "texto").trim() || "texto",
+        obrigatorio:
+          c?.obrigatorio === true ||
+          String(c?.required || "")
+            .trim()
+            .toLowerCase() === "true",
+        keyType: String(c?.keyType || c?.chave || "NORMAL").trim() || "NORMAL",
+        referencia: String(c?.referencia || c?.relacionamento || "").trim(),
+      };
+    })
+    .filter((c) => c.nome);
+
+  if (cleaned.length > 0) return cleaned;
+  return buildDefaultBpmnNodeFields(node);
+};
+
 const Entidades = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -75,6 +181,13 @@ const Entidades = () => {
     refetchEntidades().catch(() => {});
   }, [refetchEntidades]);
 
+  React.useEffect(() => {
+    const requestedTab = location.state?.activeTab;
+    if (requestedTab && TABS.some((tab) => tab.id === requestedTab)) {
+      setActiveTab(requestedTab);
+    }
+  }, [location.state]);
+
   const isReadOnlyMode = isReadOnlyAccessLevelOne(user);
   const isEditOnlyMode = isEditOnlyAccessLevelTwo(user);
   const canCreate = canCreateByAccessLevel(user);
@@ -86,7 +199,9 @@ const Entidades = () => {
   );
 
   // ── UI state ──────────────────────────────────────────────────────────────
-  const [activeTab, setActiveTab] = React.useState("processos");
+  const [activeTab, setActiveTab] = React.useState(
+    () => location.state?.activeTab || "processos",
+  );
   const [searchQuery, setSearchQuery] = React.useState("");
   const [drawerEntityId, setDrawerEntityId] = React.useState(null);
   const [paginasPorTabela, setPaginasPorTabela] = React.useState({});
@@ -446,6 +561,26 @@ const Entidades = () => {
     return map;
   }, [bpmnOpportunities]);
 
+  const getBpmnNodeUpdatedAt = React.useCallback(
+    (node) => {
+      const opp = bpmnOppById.get(String(node?._oppId ?? ""));
+      return (
+        opp?.updated_at ||
+        opp?.updatedAt ||
+        opp?.created_at ||
+        opp?.createdAt ||
+        opp?.createdDate ||
+        node?.updated_at ||
+        node?.updatedAt ||
+        node?.created_at ||
+        node?.createdAt ||
+        node?.createdDate ||
+        ""
+      );
+    },
+    [bpmnOppById],
+  );
+
   // ── Filtered entities for catalog tab ────────────────────────────────────
   const filteredEntities = React.useMemo(() => {
     const query = normalizeText(searchQuery);
@@ -682,14 +817,48 @@ const Entidades = () => {
       const updatedNodes = (
         Array.isArray(opp?.bpmn?.nodes) ? opp.bpmn.nodes : []
       ).map((n) =>
-        n?.id === node?.id ? { ...n, selectedEntityFields: newFields } : n,
+        n?.id === node?.id
+          ? {
+              ...n,
+              selectedEntityFields: newFields,
+              selectedEntityFieldNames: newFields
+                .map((f) => String(f?.nome || "").trim())
+                .filter(Boolean),
+              selectedEntityFieldIds: newFields
+                .map((f) =>
+                  String(f?.id || f?.nome || "")
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "_"),
+                )
+                .filter(Boolean),
+              campos: newFields,
+            }
+          : n,
       );
       await updateOpportunityData({
         selectedOpportunity: opp,
         patch: { bpmn: { ...opp.bpmn, nodes: updatedNodes } },
       });
       setDrawerBpmnNode((prev) =>
-        prev ? { ...prev, selectedEntityFields: newFields } : prev,
+        prev
+          ? {
+              ...prev,
+              selectedEntityFields: newFields,
+              selectedEntityFieldNames: newFields
+                .map((f) => String(f?.nome || "").trim())
+                .filter(Boolean),
+              selectedEntityFieldIds: newFields
+                .map((f) =>
+                  String(f?.id || f?.nome || "")
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]+/g, "_"),
+                )
+                .filter(Boolean),
+              campos: newFields,
+            }
+          : prev,
       );
     },
     [bpmnOpportunities, updateOpportunityData],
@@ -714,9 +883,7 @@ const Entidades = () => {
       return;
     }
 
-    const currentFields = Array.isArray(drawerBpmnNode?.selectedEntityFields)
-      ? drawerBpmnNode.selectedEntityFields
-      : [];
+    const currentFields = getBpmnNodeFields(drawerBpmnNode);
 
     let newFields;
     if (bpmnCampoEmEdicao) {
@@ -753,9 +920,7 @@ const Entidades = () => {
 
   const handleBpmnDeleteCampo = React.useCallback(
     async (campoId) => {
-      const currentFields = Array.isArray(drawerBpmnNode?.selectedEntityFields)
-        ? drawerBpmnNode.selectedEntityFields
-        : [];
+      const currentFields = getBpmnNodeFields(drawerBpmnNode);
       const newFields = currentFields.filter((c) => c?.id !== campoId);
       await persistBpmnNodeFields(drawerBpmnNode, newFields);
     },
@@ -799,7 +964,7 @@ const Entidades = () => {
                 <th>Nome</th>
                 <th>Descrição</th>
                 <th>Campos</th>
-                <th>Usos BPMN</th>
+                <th>Usos no Fluxograma</th>
                 <th>Tipo</th>
                 <th>Atualizado em</th>
                 <th>Ações</th>
@@ -838,7 +1003,11 @@ const Entidades = () => {
                         <td>{getEntityTypeLabel(item)}</td>
                         <td>
                           {formatDateTimeLabel(
-                            item.updated_at || item.created_at,
+                            item.updated_at ||
+                              item.updatedAt ||
+                              item.created_at ||
+                              item.createdAt ||
+                              item.createdDate,
                           )}
                         </td>
                         <td className={styles.actionsCell}>
@@ -875,11 +1044,7 @@ const Entidades = () => {
                       node?.taskNome || node?.label || "",
                     ).trim();
                     const descricao = String(node?.taskDescricao || "").trim();
-                    const campos = Array.isArray(node?.selectedEntityFields)
-                      ? node.selectedEntityFields.filter((c) =>
-                          String(c?.nome || "").trim(),
-                        )
-                      : [];
+                    const campos = getBpmnNodeFields(node);
                     return (
                       <tr key={`task-${node?.id ?? idx}`}>
                         <td
@@ -897,12 +1062,7 @@ const Entidades = () => {
                         </td>
                         <td>Atividade</td>
                         <td>
-                          {formatDateTimeLabel(
-                            bpmnOppById.get(String(node._oppId ?? ""))
-                              ?.updated_at ||
-                              bpmnOppById.get(String(node._oppId ?? ""))
-                                ?.created_at,
-                          )}
+                          {formatDateTimeLabel(getBpmnNodeUpdatedAt(node))}
                         </td>
                         <td className={styles.actionsCell}>
                           <div className={styles.actions}>
@@ -938,11 +1098,7 @@ const Entidades = () => {
                   const descricao = String(
                     node?.condicionalDescricao || "",
                   ).trim();
-                  const campos = Array.isArray(node?.selectedEntityFields)
-                    ? node.selectedEntityFields.filter((c) =>
-                        String(c?.nome || "").trim(),
-                      )
-                    : [];
+                  const campos = getBpmnNodeFields(node);
                   return (
                     <tr key={`cond-${node?.id ?? idx}`}>
                       <td
@@ -960,14 +1116,7 @@ const Entidades = () => {
                           1}
                       </td>
                       <td>Condicional</td>
-                      <td>
-                        {formatDateTimeLabel(
-                          bpmnOppById.get(String(node._oppId ?? ""))
-                            ?.updated_at ||
-                            bpmnOppById.get(String(node._oppId ?? ""))
-                              ?.created_at,
-                        )}
-                      </td>
+                      <td>{formatDateTimeLabel(getBpmnNodeUpdatedAt(node))}</td>
                       <td className={styles.actionsCell}>
                         <div className={styles.actions}>
                           <button
@@ -1179,11 +1328,7 @@ const Entidades = () => {
               {bpmnTaskCatalog.map((node, idx) => {
                 const nome = String(node?.taskNome || node?.label || "").trim();
                 const descricao = String(node?.taskDescricao || "").trim();
-                const campos = Array.isArray(node?.selectedEntityFields)
-                  ? node.selectedEntityFields.filter((c) =>
-                      String(c?.nome || "").trim(),
-                    )
-                  : [];
+                const campos = getBpmnNodeFields(node);
                 return (
                   <article key={node?.id ?? idx} className={styles.bpmnCard}>
                     <div className={styles.bpmnCardAccent} />
@@ -1275,11 +1420,7 @@ const Entidades = () => {
                 const descricao = String(
                   node?.condicionalDescricao || "",
                 ).trim();
-                const campos = Array.isArray(node?.selectedEntityFields)
-                  ? node.selectedEntityFields.filter((c) =>
-                      String(c?.nome || "").trim(),
-                    )
-                  : [];
+                const campos = getBpmnNodeFields(node);
                 return (
                   <article key={node?.id ?? idx} className={styles.bpmnCard}>
                     <div
@@ -1365,14 +1506,47 @@ const Entidades = () => {
               ? drawerBpmnNode?.taskNome
               : drawerBpmnNode?.condicionalNome || drawerBpmnNode?.label || "",
           ).trim();
-          const nodeFields = Array.isArray(drawerBpmnNode?.selectedEntityFields)
-            ? drawerBpmnNode.selectedEntityFields.filter((c) =>
-                String(c?.nome || "").trim(),
-              )
-            : [];
+          const nodeDescription = String(
+            isTask
+              ? drawerBpmnNode?.taskDescricao
+              : drawerBpmnNode?.condicionalDescricao || "",
+          ).trim();
+          const nodeFields = getBpmnNodeFields(drawerBpmnNode);
           const fakeEntity = {
             nome: nodeName || (isTask ? "Atividade" : "Condicional"),
+            descricao: nodeDescription,
             atributoChave: "",
+            nodeType: isTask ? "task" : "condicional",
+            bpmnData: isTask
+              ? {
+                  responsavel: drawerBpmnNode?.selectedEntityFields?.find(
+                    (f) =>
+                      String(f?.nome || "").toLowerCase() === "responsavel",
+                  ),
+                  prazoSlaHoras: drawerBpmnNode?.selectedEntityFields?.find(
+                    (f) =>
+                      String(f?.nome || "").toLowerCase() === "prazo_sla_horas",
+                  ),
+                }
+              : {
+                  perguntaDecisao: drawerBpmnNode?.selectedEntityFields?.find(
+                    (f) =>
+                      String(f?.nome || "").toLowerCase() ===
+                      "pergunta_decisao",
+                  ),
+                  campoAvaliado: drawerBpmnNode?.selectedEntityFields?.find(
+                    (f) =>
+                      String(f?.nome || "").toLowerCase() === "campo_avaliado",
+                  ),
+                  operador: drawerBpmnNode?.selectedEntityFields?.find(
+                    (f) => String(f?.nome || "").toLowerCase() === "operador",
+                  ),
+                  valorComparacao: drawerBpmnNode?.selectedEntityFields?.find(
+                    (f) =>
+                      String(f?.nome || "").toLowerCase() ===
+                      "valor_comparacao",
+                  ),
+                },
           };
           return (
             <EntityFieldsDrawer

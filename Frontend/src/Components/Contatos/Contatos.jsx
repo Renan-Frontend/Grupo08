@@ -8,6 +8,7 @@ import {
 } from "../Opportunities/opportunityApi";
 import { toOpportunitySlug } from "../Opportunities/opportunityFormatters";
 import { EntidadesContext } from "../../Context/EntidadesContext";
+import { InlineListEditor } from "../Activities/Activities";
 
 const EMPTY_FORM = () => ({
   nome: "",
@@ -106,6 +107,8 @@ const extractContactsFromOpportunities = (
         oportunidadeNome: String(
           opportunity?.name || opportunity?.nome || "",
         ).trim(),
+        etapa: String(contact?.etapa || contact?.referencia || "").trim(),
+        referencia: String(contact?.referencia || "").trim(),
         entidadeId: matchedEntity?.id ?? contact?.entidadeId ?? null,
         entidadeNome: matchedEntity?.nome || contact?.entidadeNome || "",
       });
@@ -1064,6 +1067,12 @@ const Contatos = () => {
     () => location.state?.openCreate === true,
   );
   const [editingContact, setEditingContact] = React.useState(null);
+  // Edição inline (sem modal) — id do contato em edição + draft do array
+  // contacts[] da oportunidade pai. Quando ativo, mostra o passo Atores
+  // inline abaixo do card.
+  const [inlineEditingId, setInlineEditingId] = React.useState(null);
+  const [inlineDraftContacts, setInlineDraftContacts] = React.useState([]);
+  const [savingInline, setSavingInline] = React.useState(false);
 
   const entidadesContato = React.useMemo(
     () =>
@@ -1090,6 +1099,8 @@ const Contatos = () => {
           contact?.email,
           contact?.telefone,
           contact?.oportunidadeNome,
+          contact?.etapa,
+          contact?.referencia,
           contact?.entidadeNome,
         ].join(" "),
       );
@@ -1260,6 +1271,50 @@ const Contatos = () => {
     }
   };
 
+  // ── Inline edit (passo Atores) ────────────────────────────────────────
+  const handleOpenInlineEdit = (contact) => {
+    const opp = opportunities.find(
+      (o) => String(o?.id) === String(contact?.oportunidadeId),
+    );
+    const list = Array.isArray(opp?.contacts) ? opp.contacts : [];
+    setInlineEditingId(contact.id);
+    setInlineDraftContacts(list.map((c) => ({ ...c })));
+  };
+
+  const handleCloseInlineEdit = () => {
+    setInlineEditingId(null);
+    setInlineDraftContacts([]);
+  };
+
+  const handleSaveInline = async (contact) => {
+    const opp = opportunities.find(
+      (o) => String(o?.id) === String(contact?.oportunidadeId),
+    );
+    if (!opp) return;
+    setSavingInline(true);
+    try {
+      const token = getAuthToken();
+      const payload = { ...opp, contacts: inlineDraftContacts };
+      await updateOpportunityById({
+        opportunityId: opp.id,
+        payload,
+        token,
+      });
+      setOpportunities((prev) =>
+        prev.map((o) =>
+          String(o?.id) === String(opp.id)
+            ? { ...o, contacts: inlineDraftContacts }
+            : o,
+        ),
+      );
+      handleCloseInlineEdit();
+    } catch (err) {
+      alert(err?.message || "Erro ao salvar contatos.");
+    } finally {
+      setSavingInline(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       {showCreate && (
@@ -1321,7 +1376,7 @@ const Contatos = () => {
           <span className={styles.searchIcon}>🔎</span>
           <input
             className={styles.searchInput}
-            placeholder="Buscar por nome, cargo, email, telefone, oportunidade ou entidade..."
+            placeholder="Buscar por nome, cargo, email, telefone, etapa, oportunidade ou entidade..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
           />
@@ -1341,147 +1396,55 @@ const Contatos = () => {
           Nenhum contato encontrado.
         </div>
       ) : (
-        <div className={styles.tableWrapper}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th className={styles.thName}>Nome</th>
-                <th>Cargo</th>
-                <th>Email</th>
-                <th>Telefone</th>
-                <th>Entidade</th>
-                <th>Oportunidade</th>
-                <th className={styles.thActions}>AÇÕES</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredContacts.map((contact) => (
-                <tr key={contact.id} className={styles.row}>
-                  <td className={styles.tdName}>
-                    <div className={styles.nameCell}>
-                      <div
-                        className={`${styles.avatar} ${
-                          contact.isPrimary ? styles.avatarPrimary : ""
-                        }`}
-                      >
-                        {String(contact?.nome || "?")
-                          .slice(0, 1)
-                          .toUpperCase()}
-                      </div>
-                      <div>
-                        <span className={styles.contactName}>
-                          {contact?.nome || (
-                            <span className={styles.noValue}>Sem nome</span>
-                          )}
+        <div className={styles.cardsGrid}>
+          {filteredContacts.map((contact) => {
+            const isEditing = inlineEditingId === contact.id;
+            return (
+              <div
+                key={contact.id}
+                className={`${styles.contactCard} ${
+                  isEditing ? styles.contactCardEditing : ""
+                }`}
+              >
+                <div className={styles.cardHeader}>
+                  <div
+                    className={`${styles.avatar} ${
+                      contact.isPrimary ? styles.avatarPrimary : ""
+                    }`}
+                  >
+                    {String(contact?.nome || "?")
+                      .slice(0, 1)
+                      .toUpperCase()}
+                  </div>
+                  <div className={styles.cardHeaderText}>
+                    <span className={styles.cardName}>
+                      {contact?.nome || "Sem nome"}
+                      {contact.isPrimary ? (
+                        <span
+                          className={styles.primaryBadge}
+                          style={{ marginLeft: "0.4rem" }}
+                        >
+                          Principal
                         </span>
-                        {contact.isPrimary ? (
-                          <span className={styles.primaryBadge}>Principal</span>
-                        ) : null}
-                      </div>
-                    </div>
-                  </td>
-
-                  <td>
-                    {contact?.cargo || (
-                      <span className={styles.tdMuted}>-</span>
-                    )}
-                  </td>
-
-                  <td>
-                    {contact?.email ? (
-                      <div className={styles.copyCell}>
-                        <a
-                          className={styles.emailLink}
-                          href={`mailto:${contact.email}`}
-                        >
-                          {contact.email}
-                        </a>
-                        <button
-                          type="button"
-                          className={styles.copyBtn}
-                          onClick={() => handleCopy(contact.email)}
-                          title={
-                            copied === contact.email ? "Copiado" : "Copiar"
-                          }
-                        >
-                          {copied === contact.email ? "✓" : "⧉"}
-                        </button>
-                      </div>
-                    ) : (
-                      <span className={styles.tdMuted}>-</span>
-                    )}
-                  </td>
-
-                  <td>
-                    {contact?.telefone ? (
-                      <div className={styles.copyCell}>
-                        <a
-                          className={styles.phoneLink}
-                          href={`tel:${contact.telefone}`}
-                        >
-                          {contact.telefone}
-                        </a>
-                        <button
-                          type="button"
-                          className={styles.copyBtn}
-                          onClick={() => handleCopy(contact.telefone)}
-                          title={
-                            copied === contact.telefone ? "Copiado" : "Copiar"
-                          }
-                        >
-                          {copied === contact.telefone ? "✓" : "⧉"}
-                        </button>
-                      </div>
-                    ) : (
-                      <span className={styles.tdMuted}>-</span>
-                    )}
-                  </td>
-
-                  <td>
-                    {contact?.entidadeNome || (
-                      <span className={styles.tdMuted}>-</span>
-                    )}
-                  </td>
-
-                  <td>
-                    {contact?.oportunidadeNome ? (
-                      <button
-                        type="button"
-                        className={styles.oppLink}
-                        onClick={() =>
-                          handleOpenOpportunity(contact.oportunidadeNome)
-                        }
-                      >
-                        {contact.oportunidadeNome}
-                      </button>
-                    ) : (
-                      <span className={styles.tdMuted}>-</span>
-                    )}
-                  </td>
-
-                  <td className={styles.tdActions}>
+                      ) : null}
+                    </span>
+                    {contact?.cargo ? (
+                      <span className={styles.cardCargo}>{contact.cargo}</span>
+                    ) : null}
+                  </div>
+                  <div className={styles.cardActions}>
                     <button
                       type="button"
                       className={`${styles.actionBtn} ${styles.actionBtnEdit}`}
-                      onClick={() => setEditingContact(contact)}
-                      title="Editar"
-                      aria-label="Editar contato"
+                      onClick={() =>
+                        isEditing
+                          ? handleCloseInlineEdit()
+                          : handleOpenInlineEdit(contact)
+                      }
+                      title={isEditing ? "Sair da edição" : "Editar atores"}
+                      aria-label={isEditing ? "Sair da edição" : "Editar"}
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={styles.actionIcon}
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M3 17.25V21h3.75L18.81 8.94l-3.75-3.75L3 17.25z"
-                          fill="#f59e0b"
-                        />
-                        <path
-                          d="M20.71 7.04a1.003 1.003 0 0 0 0-1.42L18.37 3.29a1.003 1.003 0 0 0-1.42 0l-1.13 1.13 3.75 3.75 1.14-1.13z"
-                          fill="#ef4444"
-                        />
-                        <path d="M3 21l3.3-.9-2.4-2.4L3 21z" fill="#334155" />
-                      </svg>
+                      {isEditing ? "✖️" : "✏️"}
                     </button>
                     <button
                       type="button"
@@ -1490,41 +1453,111 @@ const Contatos = () => {
                       title="Apagar"
                       aria-label="Apagar contato"
                     >
-                      <svg
-                        viewBox="0 0 24 24"
-                        className={styles.actionIcon}
-                        style={{ color: "#9ca3af" }}
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M9 3h6l1 2h4v2H4V5h4l1-2z"
-                          style={{ fill: "#9ca3af", stroke: "none" }}
-                        />
-                        <path
-                          d="M7 8h10l-1 11H8L7 8z"
-                          style={{ fill: "#9ca3af", stroke: "none" }}
-                        />
-                        <rect
-                          x="10"
-                          y="10"
-                          width="1.5"
-                          height="7"
-                          style={{ fill: "#e5e7eb", stroke: "none" }}
-                        />
-                        <rect
-                          x="12.5"
-                          y="10"
-                          width="1.5"
-                          height="7"
-                          style={{ fill: "#e5e7eb", stroke: "none" }}
-                        />
-                      </svg>
+                      🗑️
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                  </div>
+                </div>
+
+                <div className={styles.cardBody}>
+                  {contact?.email ? (
+                    <div className={styles.cardRow}>
+                      <strong>Email</strong>
+                      <a
+                        className={styles.emailLink}
+                        href={`mailto:${contact.email}`}
+                      >
+                        {contact.email}
+                      </a>
+                    </div>
+                  ) : null}
+                  {contact?.telefone ? (
+                    <div className={styles.cardRow}>
+                      <strong>Telefone</strong>
+                      <a
+                        className={styles.phoneLink}
+                        href={`tel:${contact.telefone}`}
+                      >
+                        {contact.telefone}
+                      </a>
+                    </div>
+                  ) : null}
+                  {contact?.entidadeNome ? (
+                    <div className={styles.cardRow}>
+                      <strong>Entidade</strong>
+                      <span>{contact.entidadeNome}</span>
+                    </div>
+                  ) : null}
+                  {contact?.etapa || contact?.referencia ? (
+                    <div className={styles.cardRow}>
+                      <strong>Etapa</strong>
+                      <span className={styles.stageBadge}>
+                        {contact.etapa || contact.referencia}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+
+                {contact?.oportunidadeNome ? (
+                  <div className={styles.cardOpp}>
+                    <button
+                      type="button"
+                      className={styles.oppLink}
+                      onClick={() =>
+                        handleOpenOpportunity(contact.oportunidadeNome)
+                      }
+                    >
+                      📋 {contact.oportunidadeNome}
+                    </button>
+                  </div>
+                ) : null}
+
+                {isEditing ? (
+                  <div className={styles.inlineEditPanel}>
+                    <div className={styles.inlineEditPanelHeader}>
+                      <span>
+                        ✏️ Editando atores de "
+                        {contact.oportunidadeNome || "oportunidade"}"
+                      </span>
+                      <button
+                        type="button"
+                        className={styles.inlineEditPanelExit}
+                        onClick={handleCloseInlineEdit}
+                      >
+                        ✖ Sair
+                      </button>
+                    </div>
+                    <InlineListEditor
+                      title="Atores"
+                      icon="👥"
+                      items={inlineDraftContacts}
+                      columns={[
+                        { key: "nome", label: "Nome" },
+                        { key: "cargo", label: "Cargo" },
+                        { key: "email", label: "Email", type: "email" },
+                        { key: "telefone", label: "Telefone" },
+                        {
+                          key: "isPrimary",
+                          label: "Principal",
+                          type: "checkbox",
+                        },
+                      ]}
+                      onChange={setInlineDraftContacts}
+                      onSave={() => handleSaveInline(contact)}
+                      onCancel={handleCloseInlineEdit}
+                      saving={savingInline}
+                      blankRow={{
+                        nome: "",
+                        cargo: "",
+                        email: "",
+                        telefone: "",
+                        isPrimary: false,
+                      }}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

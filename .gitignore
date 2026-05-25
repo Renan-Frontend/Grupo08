@@ -30,3 +30,17 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 Backend/nul
+
+# backups locais (não versionar)
+.BACKEND_BACKUP_ANTES_BP_COMPANY/
+backups/
+Backend/nul
+**/nul
+
+# arquivos de backup gerados localmente
+*.bak_*
+*.BACKUP_ANTES_BP_COMPANY/
+**/GerarBPMN.BACKUP_ANTES_BP_COMPANY/
+
+# uploads de usuários (não versionar)
+Backend/uploads/

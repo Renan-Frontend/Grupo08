@@ -589,6 +589,22 @@ const ConfigurarEntidadePanel = ({
               title="Descrição da Condicional"
               rows={5}
             />
+
+            <p className={panelStyles.descriptionTitle}>
+              Campos da condicional
+            </p>
+            <CamposEditorBlock
+              entityFieldDraft={entityFieldDraft}
+              setEntityFieldDraft={setEntityFieldDraft}
+              onSaveEntityFieldDraft={onSaveEntityFieldDraft}
+              onEditEntityFieldDraft={onEditEntityFieldDraft}
+              onRemoveEntityFieldDraft={onRemoveEntityFieldDraft}
+              newEntityFields={newEntityFields}
+              lastCreatedField={lastCreatedField}
+              lastCreatedFieldType={lastCreatedFieldType}
+              isReadOnlyMode={isReadOnlyMode}
+              onFieldClick={() => setIsLastFieldDetailsOpen(true)}
+            />
           </>
         ) : effectiveStageConfigMode === "entidade" ? (
           <>

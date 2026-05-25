@@ -148,7 +148,7 @@ const getStageLabelFromNode = (node, fallbackIndex) => {
   return `Entidade ${fallbackIndex + 1}`;
 };
 
-const buildStagesFromBpmn = (opportunity) => {
+const buildStagesFromBpmn = (opportunity, entidadesCatalog = []) => {
   const rawNodes = Array.isArray(opportunity?.bpmn?.nodes)
     ? opportunity.bpmn.nodes
     : [];
@@ -279,21 +279,124 @@ const buildStagesFromBpmn = (opportunity) => {
     return true;
   });
 
+  // Lookup auxiliar para resolver tipoEntidade/papelNegocio quando o node
+  // do BPMN não tiver esses campos preenchidos (ex.: foi vinculado a uma
+  // entidade existente do catálogo).
+  const entidadesByIdLocal = new Map();
+  const entidadesByNameLocal = new Map();
+  (Array.isArray(entidadesCatalog) ? entidadesCatalog : []).forEach((item) => {
+    const id = String(item?.id || item?.entidadeId || "").trim();
+    if (id) entidadesByIdLocal.set(id, item);
+    const nome = String(item?.nome || "")
+      .trim()
+      .toLowerCase();
+    if (nome) entidadesByNameLocal.set(nome, item);
+  });
+
+  const resolveStageRole = (node) => {
+    if (!node) return { papelNegocio: "", isPrimaryEntity: false };
+    const linkedEntity =
+      entidadesByIdLocal.get(String(node?.entidadeId || "").trim()) ||
+      entidadesByNameLocal.get(
+        String(node?.entidadeNome || node?.label || "")
+          .trim()
+          .toLowerCase(),
+      ) ||
+      null;
+    const rawTipo =
+      String(node?.tipoEntidade || "").trim() ||
+      String(linkedEntity?.tipoEntidade || "").trim();
+    const rawPapel =
+      String(node?.papelNegocio || "").trim() ||
+      String(linkedEntity?.papelNegocio || "").trim();
+    const normalizedTipo = rawTipo.toLowerCase();
+    const normalizedPapel = rawPapel.toLowerCase();
+    let papelNegocio = "";
+    if (normalizedPapel === "contato" || normalizedPapel === "processo") {
+      papelNegocio = normalizedPapel;
+    } else if (normalizedTipo === "contato" || normalizedTipo === "processo") {
+      papelNegocio = normalizedTipo;
+    } else if (normalizedTipo === "principal") {
+      papelNegocio = "contato";
+    } else if (
+      node?.isPrimaryEntity === true ||
+      linkedEntity?.isPrimaryEntity === true
+    ) {
+      papelNegocio = "contato";
+    } else {
+      papelNegocio = "processo";
+    }
+    return {
+      papelNegocio,
+      isPrimaryEntity:
+        node?.isPrimaryEntity === true ||
+        linkedEntity?.isPrimaryEntity === true,
+    };
+  };
+
   const stages = orderedStageIds.map((stageNodeId, index) => {
     const node = nodesById.get(String(stageNodeId));
+    const stageType = getBpmnStageType(node);
+    const { papelNegocio, isPrimaryEntity } =
+      stageType === "entidade"
+        ? resolveStageRole(node)
+        : { papelNegocio: "", isPrimaryEntity: false };
     return {
       id: index + 1,
       label: getStageLabelFromNode(node, index),
       done: false,
       fromBpmn: true,
       sourceNodeId: String(stageNodeId),
-      stageType: getBpmnStageType(node),
+      stageType,
+      papelNegocio,
+      isPrimaryEntity,
     };
   });
 
   // All stages start as done:false — the workflow engine controls progress
   // via handleWorkflowStateChange once the workflow has been started.
   return stages;
+};
+
+const normalizeStageProgressKey = (stage) => {
+  const sourceNodeId = String(stage?.sourceNodeId || "").trim();
+  if (sourceNodeId) return `node:${sourceNodeId}`;
+
+  const label = String(stage?.label || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+  if (label) return `label:${label}`;
+
+  return "";
+};
+
+const mergeStageProgress = (baseStages = [], persistedStages = []) => {
+  const base = Array.isArray(baseStages) ? baseStages : [];
+  const persisted = Array.isArray(persistedStages) ? persistedStages : [];
+
+  if (base.length === 0) return [];
+  if (persisted.length === 0) return base;
+
+  const doneByKey = new Map();
+  persisted.forEach((stage) => {
+    const key = normalizeStageProgressKey(stage);
+    if (!key) return;
+    if (stage?.done === true) {
+      doneByKey.set(key, true);
+      return;
+    }
+    if (!doneByKey.has(key)) {
+      doneByKey.set(key, stage?.done === true);
+    }
+  });
+
+  return base.map((stage) => {
+    const key = normalizeStageProgressKey(stage);
+    if (!key || !doneByKey.has(key)) return stage;
+    return { ...stage, done: doneByKey.get(key) === true };
+  });
 };
 
 const defaultTimelineItems = [];
@@ -1108,8 +1211,10 @@ const useOpportunityDetailState = ({
   );
 
   const [stages, setStages] = useState(() => {
-    const bpmnStages = buildStagesFromBpmn(opportunity);
-    if (bpmnStages.length > 0) return bpmnStages;
+    const bpmnStages = buildStagesFromBpmn(opportunity, entidadesCatalog);
+    if (bpmnStages.length > 0) {
+      return mergeStageProgress(bpmnStages, opportunity?.stages || []);
+    }
 
     return Array.isArray(opportunity?.stages) && opportunity.stages.length
       ? opportunity.stages
@@ -1331,10 +1436,15 @@ const useOpportunityDetailState = ({
     }
 
     if (previousBpmnSignatureRef.current !== bpmnSignature) {
-      const refreshedStages = buildStagesFromBpmn(opportunity);
+      const refreshedStages = buildStagesFromBpmn(
+        opportunity,
+        entidadesCatalog,
+      );
       if (refreshedStages.length > 0) {
         window.setTimeout(() => {
-          setStages(refreshedStages);
+          setStages((previousStages) =>
+            mergeStageProgress(refreshedStages, previousStages),
+          );
         }, 0);
       }
 
@@ -1520,9 +1630,19 @@ const useOpportunityDetailState = ({
         );
 
         if (previousBpmnSignatureRef.current !== remoteBpmnSignature) {
-          const refreshedStages = buildStagesFromBpmn(freshOpportunity);
+          const refreshedStages = buildStagesFromBpmn(
+            freshOpportunity,
+            entidadesCatalog,
+          );
           if (refreshedStages.length > 0) {
-            setStages(refreshedStages);
+            setStages(
+              mergeStageProgress(
+                refreshedStages,
+                Array.isArray(freshOpportunity?.stages)
+                  ? freshOpportunity.stages
+                  : [],
+              ),
+            );
           }
 
           setInfoRows((previousRows) =>
@@ -1788,14 +1908,20 @@ const useOpportunityDetailState = ({
   const currentBpmnStageName = useMemo(() => {
     if (!isBpmnDrivenPipeline) return "";
 
-    const currentStage = [...stages]
+    const nextOpenStage = stages.find(
+      (stage) => stage?.done !== true && String(stage?.label || "").trim(),
+    );
+    if (nextOpenStage?.label) {
+      return String(nextOpenStage.label).trim();
+    }
+
+    const lastCompletedStage = [...stages]
       .reverse()
       .find(
         (stage) => stage?.done === true && String(stage?.label || "").trim(),
       );
-
-    if (currentStage?.label) {
-      return String(currentStage.label).trim();
+    if (lastCompletedStage?.label) {
+      return String(lastCompletedStage.label).trim();
     }
 
     const firstLabeledStage = stages.find((stage) =>

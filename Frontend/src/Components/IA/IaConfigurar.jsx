@@ -1,9 +1,9 @@
-import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import styles from './IaConfigurar.module.css';
-import { AI_AUDIT_GET, AI_EXECUTE_POST, AI_PLAN_POST } from '../../Api';
-import { EntidadesContext } from '../../Context/EntidadesContext';
-import { UserContext } from '../../Context/UserContext';
+import React from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import styles from "./IaConfigurar.module.css";
+import { AI_AUDIT_GET, AI_EXECUTE_POST, AI_PLAN_POST } from "../../Api";
+import { EntidadesContext } from "../../Context/EntidadesContext";
+import { UserContext } from "../../Context/UserContext";
 import {
   resolveToken,
   getErrorText,
@@ -15,17 +15,18 @@ import {
   ACTIVITY_TEMPLATE,
   CONDITIONAL_TEMPLATE,
   FLOW_TEMPLATE,
-} from './iaHelpers';
+} from "./iaHelpers";
 
-const BPMN_SAVED_OPPORTUNITY_MAP_KEY = 'bpmn_editor_saved_opportunity_by_slug_v1';
+const BPMN_SAVED_OPPORTUNITY_MAP_KEY =
+  "bpmn_editor_saved_opportunity_by_slug_v1";
 
-const slugifyBpmnName = (value = '') =>
+const slugifyBpmnName = (value = "") =>
   String(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'novo-bpmn';
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "") || "novo-bpmn";
 
 const IaConfigurar = () => {
   const navigate = useNavigate();
@@ -34,16 +35,16 @@ const IaConfigurar = () => {
   const { entidades } = React.useContext(EntidadesContext);
 
   const locationParseData = location.state?.parseData ?? null;
-  const locationIntroName = location.state?.introName ?? '';
-  const locationProcessDescription = location.state?.processDescription ?? '';
+  const locationIntroName = location.state?.introName ?? "";
+  const locationProcessDescription = location.state?.processDescription ?? "";
 
-  const [processName, setProcessName] = React.useState('');
+  const [processName, setProcessName] = React.useState("");
   const [entities, setEntities] = React.useState([]);
-  const [entityDraft, setEntityDraft] = React.useState('');
+  const [entityDraft, setEntityDraft] = React.useState("");
   const [activities, setActivities] = React.useState([]);
-  const [activityDraft, setActivityDraft] = React.useState('');
+  const [activityDraft, setActivityDraft] = React.useState("");
   const [conditionals, setConditionals] = React.useState([]);
-  const [conditionalDraft, setConditionalDraft] = React.useState('');
+  const [conditionalDraft, setConditionalDraft] = React.useState("");
   const [flowOrder, setFlowOrder] = React.useState([]);
   const [expandedDescIdx, setExpandedDescIdx] = React.useState(null);
   const [isPlanning, setIsPlanning] = React.useState(false);
@@ -51,10 +52,10 @@ const IaConfigurar = () => {
   const [plan, setPlan] = React.useState(null);
   const [auditRows, setAuditRows] = React.useState([]);
   const [selectedActionIds, setSelectedActionIds] = React.useState([]);
-  const [feedback, setFeedback] = React.useState('');
+  const [feedback, setFeedback] = React.useState("");
 
   const generalAnalysis = React.useMemo(() => getGeneralAnalysis(plan), [plan]);
-  const isAdmin = user?.admin === true || user?.role === 'admin';
+  const isAdmin = user?.admin === true || user?.role === "admin";
   const canGenerate =
     String(processName).trim().length >= 4 &&
     (flowOrder.length > 0 || entities.length > 0 || activities.length > 0);
@@ -63,14 +64,14 @@ const IaConfigurar = () => {
     () =>
       (Array.isArray(entidades) ? entidades : []).map((entidade) => ({
         id: entidade?.id ?? null,
-        nome: String(entidade?.nome || entidade?.name || '').trim(),
-        descricao: String(entidade?.descricao || '').trim(),
-        tipoEntidade: String(entidade?.tipoEntidade || '').trim(),
+        nome: String(entidade?.nome || entidade?.name || "").trim(),
+        descricao: String(entidade?.descricao || "").trim(),
+        tipoEntidade: String(entidade?.tipoEntidade || "").trim(),
         campos: Array.isArray(entidade?.campos)
           ? entidade.campos.map((campo) => ({
-              nome: String(campo?.nome || '').trim(),
-              tipo: String(campo?.tipo || '').trim(),
-              keyType: String(campo?.keyType || '').trim(),
+              nome: String(campo?.nome || "").trim(),
+              tipo: String(campo?.tipo || "").trim(),
+              keyType: String(campo?.keyType || "").trim(),
             }))
           : [],
       })),
@@ -89,9 +90,9 @@ const IaConfigurar = () => {
       : [];
 
     const mappedFo = fo.map((item) => ({
-      name: String(item.name || '').trim(),
-      type: String(item.type || 'task').trim(),
-      desc: String(item.desc || '').trim(),
+      name: String(item.name || "").trim(),
+      type: String(item.type || "task").trim(),
+      desc: String(item.desc || "").trim(),
       ...(item.tipoEntidade ? { tipoEntidade: item.tipoEntidade } : {}),
       ...(item.branches ? { branches: item.branches } : {}),
     }));
@@ -106,16 +107,16 @@ const IaConfigurar = () => {
       : []
     ).forEach((ent) => {
       const n =
-        typeof ent === 'object'
-          ? String(ent?.name || '').trim()
-          : String(ent || '').trim();
+        typeof ent === "object"
+          ? String(ent?.name || "").trim()
+          : String(ent || "").trim();
       const tipo =
-        typeof ent === 'object' ? ent?.tipoEntidade || 'apoio' : 'apoio';
+        typeof ent === "object" ? ent?.tipoEntidade || "apoio" : "apoio";
       if (n && !foNames.has(n.toLowerCase())) {
         missingItems.push({
           name: n,
-          type: 'entidade',
-          desc: '',
+          type: "entidade",
+          desc: "",
           tipoEntidade: tipo,
         });
         foNames.add(n.toLowerCase());
@@ -126,9 +127,9 @@ const IaConfigurar = () => {
       ? locationParseData.activities
       : []
     ).forEach((name) => {
-      const n = String(name || '').trim();
+      const n = String(name || "").trim();
       if (n && !foNames.has(n.toLowerCase())) {
-        missingItems.push({ name: n, type: 'task', desc: '' });
+        missingItems.push({ name: n, type: "task", desc: "" });
         foNames.add(n.toLowerCase());
       }
     });
@@ -137,21 +138,27 @@ const IaConfigurar = () => {
       ? locationParseData.conditionals
       : []
     ).forEach((name) => {
-      let n = String(name || '').trim();
+      let n = String(name || "").trim();
       if (!n) return;
-      if (!n.endsWith('?')) n += '?';
+      if (!n.endsWith("?")) n += "?";
       if (!foNames.has(n.toLowerCase())) {
-        missingItems.push({ name: n, type: 'condicional', desc: '' });
+        missingItems.push({ name: n, type: "condicional", desc: "" });
         foNames.add(n.toLowerCase());
       }
     });
 
     // Interleave missing items at regular intervals instead of appending at end
     if (missingItems.length > 0 && mappedFo.length > 0) {
-      const interval = Math.max(2, Math.ceil(mappedFo.length / (missingItems.length + 1)));
+      const interval = Math.max(
+        2,
+        Math.ceil(mappedFo.length / (missingItems.length + 1)),
+      );
       let insertOffset = 0;
       for (let mi = 0; mi < missingItems.length; mi++) {
-        const pos = Math.min((mi + 1) * interval + insertOffset, mappedFo.length);
+        const pos = Math.min(
+          (mi + 1) * interval + insertOffset,
+          mappedFo.length,
+        );
         mappedFo.splice(pos, 0, missingItems[mi]);
         insertOffset++;
       }
@@ -162,27 +169,29 @@ const IaConfigurar = () => {
     setFlowOrder(mappedFo);
 
     const entitiesFromFo = mappedFo
-      .filter((i) => i.type === 'entidade')
+      .filter((i) => i.type === "entidade")
       .map((i) => i.name);
     const entitiesFromParse = (
       Array.isArray(locationParseData.entities)
         ? locationParseData.entities
         : []
-    ).map((ent) =>
-      typeof ent === 'object'
-        ? String(ent?.name || '').trim()
-        : String(ent || '').trim(),
-    ).filter(Boolean);
+    )
+      .map((ent) =>
+        typeof ent === "object"
+          ? String(ent?.name || "").trim()
+          : String(ent || "").trim(),
+      )
+      .filter(Boolean);
     const mergedEntities = [
       ...new Set([...entitiesFromFo, ...entitiesFromParse]),
     ];
     setEntities(mergedEntities);
 
-    setActivities(mappedFo.filter((i) => i.type === 'task').map((i) => i.name));
+    setActivities(mappedFo.filter((i) => i.type === "task").map((i) => i.name));
     setConditionals(
       mappedFo
-        .filter((i) => i.type === 'condicional')
-        .map((i) => (i.name.endsWith('?') ? i.name : i.name + '?')),
+        .filter((i) => i.type === "condicional")
+        .map((i) => (i.name.endsWith("?") ? i.name : i.name + "?")),
     );
   }, [locationParseData, locationIntroName]);
 
@@ -207,16 +216,16 @@ const IaConfigurar = () => {
       setEntities((prev) => [...prev, trimmed]);
       setFlowOrder((prev) => [
         ...prev,
-        { name: trimmed, type: 'entidade', desc: '' },
+        { name: trimmed, type: "entidade", desc: "" },
       ]);
     }
-    setEntityDraft('');
+    setEntityDraft("");
   };
 
   const removeEntity = (name) => {
     setEntities((prev) => prev.filter((e) => e !== name));
     setFlowOrder((prev) =>
-      prev.filter((item) => !(item.name === name && item.type === 'entidade')),
+      prev.filter((item) => !(item.name === name && item.type === "entidade")),
     );
   };
 
@@ -226,38 +235,38 @@ const IaConfigurar = () => {
       setActivities((prev) => [...prev, trimmed]);
       setFlowOrder((prev) => [
         ...prev,
-        { name: trimmed, type: 'task', desc: '' },
+        { name: trimmed, type: "task", desc: "" },
       ]);
     }
-    setActivityDraft('');
+    setActivityDraft("");
   };
 
   const removeActivity = (name) => {
     setActivities((prev) => prev.filter((a) => a !== name));
     setFlowOrder((prev) =>
-      prev.filter((item) => !(item.name === name && item.type === 'task')),
+      prev.filter((item) => !(item.name === name && item.type === "task")),
     );
   };
 
   const addConditional = () => {
     let trimmed = conditionalDraft.trim();
     if (!trimmed) return;
-    if (!trimmed.endsWith('?')) trimmed += '?';
+    if (!trimmed.endsWith("?")) trimmed += "?";
     if (!conditionals.includes(trimmed)) {
       setConditionals((prev) => [...prev, trimmed]);
       setFlowOrder((prev) => [
         ...prev,
-        { name: trimmed, type: 'condicional', desc: '' },
+        { name: trimmed, type: "condicional", desc: "" },
       ]);
     }
-    setConditionalDraft('');
+    setConditionalDraft("");
   };
 
   const removeConditional = (name) => {
     setConditionals((prev) => prev.filter((c) => c !== name));
     setFlowOrder((prev) =>
       prev.filter(
-        (item) => !(item.name === name && item.type === 'condicional'),
+        (item) => !(item.name === name && item.type === "condicional"),
       ),
     );
   };
@@ -292,19 +301,19 @@ const IaConfigurar = () => {
     setFlowOrder((prev) => {
       const item = prev[index];
       if (!item) return prev;
-      if (item.type === 'task')
+      if (item.type === "task")
         setActivities((a) => a.filter((x) => x !== item.name));
-      if (item.type === 'condicional')
+      if (item.type === "condicional")
         setConditionals((c) => c.filter((x) => x !== item.name));
-      if (item.type === 'entidade')
+      if (item.type === "entidade")
         setEntities((e) => e.filter((x) => x !== item.name));
       return prev.filter((_, i) => i !== index);
     });
   };
 
   const handleApplyTemplate = () => {
-    if (!String(processName || '').trim()) {
-      setProcessName('Aprovacao de Pedido de Compra');
+    if (!String(processName || "").trim()) {
+      setProcessName("Aprovacao de Pedido de Compra");
     }
     setEntities(ENTITY_TEMPLATE);
     setActivities(ACTIVITY_TEMPLATE);
@@ -312,12 +321,12 @@ const IaConfigurar = () => {
     setFlowOrder(FLOW_TEMPLATE);
     setExpandedDescIdx(null);
     setFeedback(
-      'Template preenchido com ordem e descrições. Ajuste conforme seu processo real.',
+      "Template preenchido com ordem e descrições. Ajuste conforme seu processo real.",
     );
   };
 
   const toggleAction = (actionId) => {
-    const normalized = String(actionId || '').trim();
+    const normalized = String(actionId || "").trim();
     if (!normalized) return;
     setSelectedActionIds((previous) => {
       if (previous.includes(normalized)) {
@@ -329,32 +338,39 @@ const IaConfigurar = () => {
 
   const handleGeneratePlan = async (event) => {
     event.preventDefault();
-    if (!canGenerate || isPlanning) return;
+    if (isPlanning) return;
+
+    if (!canGenerate) {
+      setFeedback(
+        'Preencha o nome do processo e adicione ao menos uma atividade, entidade ou item na ordem do fluxo. Dica: use "Usar modelo guiado".',
+      );
+      return;
+    }
 
     const token = resolveToken();
     if (!token) {
-      setFeedback('Faça login novamente para usar o operador de IA.');
+      setFeedback("Faça login novamente para usar o operador de IA.");
       return;
     }
 
     setIsPlanning(true);
-    setFeedback('');
+    setFeedback("");
 
-    const normalizedProcessName = String(processName || '').trim();
+    const normalizedProcessName = String(processName || "").trim();
     const flowLines = flowOrder
       .map((item) =>
         item.desc ? `${item.name} (${String(item.desc).trim()})` : item.name,
       )
-      .join(' -> ');
+      .join(" -> ");
     const enrichedGoal = [
-      normalizedProcessName ? `Nome do processo: ${normalizedProcessName}` : '',
+      normalizedProcessName ? `Nome do processo: ${normalizedProcessName}` : "",
       locationProcessDescription
         ? `Descrição do processo: ${locationProcessDescription}`
-        : '',
+        : "",
       flowLines,
     ]
       .filter(Boolean)
-      .join('\n');
+      .join("\n");
 
     const typedFlowOrder = flowOrder.map((item) => ({
       name: item.name,
@@ -384,7 +400,7 @@ const IaConfigurar = () => {
     if (!response.ok) {
       const errorText = await getErrorText(
         response,
-        'Falha ao gerar plano da IA.',
+        "Falha ao gerar plano da IA.",
       );
       setFeedback(errorText);
       setIsPlanning(false);
@@ -393,27 +409,94 @@ const IaConfigurar = () => {
 
     const payload = await response.json();
     const nextPlan =
-      payload?.plan && typeof payload.plan === 'object' ? payload.plan : null;
+      payload?.plan && typeof payload.plan === "object" ? payload.plan : null;
     const nextActions = Array.isArray(nextPlan?.actions)
       ? nextPlan.actions
       : [];
 
     setPlan(nextPlan);
-    
+
     // Auto-select only actions that have valid descriptions
     const autoSelectedIds = nextActions
-      .map((action) => String(action?.id || '').trim())
+      .map((action) => String(action?.id || "").trim())
       .filter(Boolean);
-    
+
     setSelectedActionIds(autoSelectedIds);
-    
-    const reviewPatched = nextPlan?._reviewPatched || 0;
-    const reviewMsg = reviewPatched > 0
-      ? ` Revisão automática corrigiu ${reviewPatched} item(ns) com conteúdo faltante.`
-      : '';
-    setFeedback(`Plano gerado. Revise e aprove as ações para executar.${reviewMsg}`);
+
     setIsPlanning(false);
-    loadAudit();
+
+    if (nextPlan && autoSelectedIds.length > 0) {
+      setIsExecuting(true);
+      setFeedback("Criando processo...");
+      const execBody = { plan: nextPlan, approvedActions: autoSelectedIds };
+      const { url: execUrl, options: execOptions } = AI_EXECUTE_POST(
+        execBody,
+        token,
+      );
+      const execResponse = await fetch(execUrl, execOptions);
+      if (!execResponse.ok) {
+        const errorText = await getErrorText(
+          execResponse,
+          "Falha ao criar o processo.",
+        );
+        setFeedback(errorText);
+        setIsExecuting(false);
+        return;
+      }
+      const execPayload = await execResponse.json();
+      window.dispatchEvent(
+        new CustomEvent("ia:actions-executed", {
+          detail: {
+            executed: Number(execPayload?.executed || 0),
+            approvedActions: autoSelectedIds,
+            plan: nextPlan,
+          },
+        }),
+      );
+      setIsExecuting(false);
+      loadAudit();
+
+      const results = Array.isArray(execPayload?.results)
+        ? execPayload.results
+        : [];
+      const bpmnResult = results.find((r) => r?.type === "update_bpmn_state");
+      const opportunityResult = results.find(
+        (r) => r?.type === "create_oportunidade",
+      );
+      const opportunityId =
+        bpmnResult?.syncedOpportunity?.id ??
+        bpmnResult?.syncedOpportunity?._id ??
+        opportunityResult?.result?.id ??
+        opportunityResult?.result?._id ??
+        null;
+      const opportunityName =
+        bpmnResult?.syncedOpportunity?.nome ??
+        bpmnResult?.syncedOpportunity?.name ??
+        opportunityResult?.result?.nome ??
+        opportunityResult?.result?.name ??
+        String(processName || "").trim();
+      const bpmnSlug = slugifyBpmnName(opportunityName);
+
+      if (opportunityId !== null && opportunityId !== undefined && bpmnSlug) {
+        try {
+          const rawMap = window.localStorage.getItem(
+            BPMN_SAVED_OPPORTUNITY_MAP_KEY,
+          );
+          const existingMap = rawMap ? JSON.parse(rawMap) : {};
+          window.localStorage.setItem(
+            BPMN_SAVED_OPPORTUNITY_MAP_KEY,
+            JSON.stringify({ ...existingMap, [bpmnSlug]: opportunityId }),
+          );
+        } catch (_) {}
+        navigate(`/gerar-bpmn/${bpmnSlug}`);
+      } else {
+        navigate("/gerar-bpmn/criar");
+      }
+    } else {
+      setFeedback(
+        "Plano gerado, mas nenhuma ação foi identificada para executar.",
+      );
+    }
   };
 
   const handleExecuteApproved = async () => {
@@ -421,12 +504,12 @@ const IaConfigurar = () => {
 
     const token = resolveToken();
     if (!token) {
-      setFeedback('Faça login novamente para executar ações com IA.');
+      setFeedback("Faça login novamente para executar ações com IA.");
       return;
     }
 
     setIsExecuting(true);
-    setFeedback('');
+    setFeedback("");
 
     const body = { plan, approvedActions: selectedActionIds };
     const { url, options } = AI_EXECUTE_POST(body, token);
@@ -434,7 +517,7 @@ const IaConfigurar = () => {
     if (!response.ok) {
       const errorText = await getErrorText(
         response,
-        'Falha ao executar ações aprovadas da IA.',
+        "Falha ao executar ações aprovadas da IA.",
       );
       setFeedback(errorText);
       setIsExecuting(false);
@@ -446,7 +529,7 @@ const IaConfigurar = () => {
     setFeedback(`Execução concluída. Ações executadas: ${executed}.`);
 
     window.dispatchEvent(
-      new CustomEvent('ia:actions-executed', {
+      new CustomEvent("ia:actions-executed", {
         detail: { executed, approvedActions: selectedActionIds, plan },
       }),
     );
@@ -455,9 +538,9 @@ const IaConfigurar = () => {
     loadAudit();
 
     const results = Array.isArray(payload?.results) ? payload.results : [];
-    const bpmnResult = results.find((r) => r?.type === 'update_bpmn_state');
+    const bpmnResult = results.find((r) => r?.type === "update_bpmn_state");
     const opportunityResult = results.find(
-      (r) => r?.type === 'create_oportunidade',
+      (r) => r?.type === "create_oportunidade",
     );
     const opportunityId =
       bpmnResult?.syncedOpportunity?.id ??
@@ -471,12 +554,14 @@ const IaConfigurar = () => {
       bpmnResult?.syncedOpportunity?.name ??
       opportunityResult?.result?.nome ??
       opportunityResult?.result?.name ??
-      String(processName || '').trim();
+      String(processName || "").trim();
     const bpmnSlug = slugifyBpmnName(opportunityName);
 
     if (opportunityId !== null && opportunityId !== undefined && bpmnSlug) {
       try {
-        const rawMap = window.localStorage.getItem(BPMN_SAVED_OPPORTUNITY_MAP_KEY);
+        const rawMap = window.localStorage.getItem(
+          BPMN_SAVED_OPPORTUNITY_MAP_KEY,
+        );
         const existingMap = rawMap ? JSON.parse(rawMap) : {};
         window.localStorage.setItem(
           BPMN_SAVED_OPPORTUNITY_MAP_KEY,
@@ -485,20 +570,20 @@ const IaConfigurar = () => {
       } catch (_) {}
       navigate(`/gerar-bpmn/${bpmnSlug}`);
     } else {
-      navigate('/gerar-bpmn/criar');
+      navigate("/gerar-bpmn/criar");
     }
   };
 
   const handleOpenBpmnEditor = () => {
     const contextPanelSuggestion =
-      plan && typeof plan === 'object'
+      plan && typeof plan === "object"
         ? plan.contextPanelSuggestion || null
         : null;
     const aiCanvasDraft = getBpmnDraftFromPlan(plan);
 
-    navigate('/gerar-bpmn/criar', {
+    navigate("/gerar-bpmn/criar", {
       state: {
-        processName: String(processName || '').trim() || undefined,
+        processName: String(processName || "").trim() || undefined,
         aiContextPanel: contextPanelSuggestion,
         aiCanvasDraft,
       },
@@ -544,7 +629,7 @@ const IaConfigurar = () => {
                 value={activityDraft}
                 onChange={(e) => setActivityDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addActivity();
                   }
@@ -585,7 +670,7 @@ const IaConfigurar = () => {
                 value={conditionalDraft}
                 onChange={(e) => setConditionalDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addConditional();
                   }
@@ -629,7 +714,7 @@ const IaConfigurar = () => {
                 value={entityDraft}
                 onChange={(e) => setEntityDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     e.preventDefault();
                     addEntity();
                   }
@@ -678,9 +763,9 @@ const IaConfigurar = () => {
                   <li
                     key={`${item.type}-${item.name}-${idx}`}
                     className={`${styles.flowOrderItem} ${
-                      item.type === 'condicional'
+                      item.type === "condicional"
                         ? styles.flowOrderCondicional
-                        : item.type === 'entidade'
+                        : item.type === "entidade"
                           ? styles.flowOrderEntidade
                           : styles.flowOrderTask
                     }`}
@@ -688,16 +773,16 @@ const IaConfigurar = () => {
                     <span className={styles.flowOrderIndex}>{idx + 1}</span>
                     <span className={styles.flowOrderName}>{item.name}</span>
                     <span className={styles.flowOrderTypeBadge}>
-                      {item.type === 'condicional'
-                        ? 'Decisão'
-                        : item.type === 'entidade'
-                          ? 'Entidade'
-                          : 'Atividade'}
+                      {item.type === "condicional"
+                        ? "Decisão"
+                        : item.type === "entidade"
+                          ? "Entidade"
+                          : "Atividade"}
                     </span>
                     <span className={styles.flowOrderButtons}>
                       <button
                         type="button"
-                        className={`${styles.flowOrderBtn} ${expandedDescIdx === idx || item.desc ? styles.flowOrderBtnDescActive : ''}`}
+                        className={`${styles.flowOrderBtn} ${expandedDescIdx === idx || item.desc ? styles.flowOrderBtnDescActive : ""}`}
                         onClick={() =>
                           setExpandedDescIdx(
                             expandedDescIdx === idx ? null : idx,
@@ -738,7 +823,7 @@ const IaConfigurar = () => {
                       <input
                         className={styles.flowOrderDescInput}
                         name={`flowStepDesc_${idx}`}
-                        value={item.desc || ''}
+                        value={item.desc || ""}
                         onChange={(e) =>
                           updateFlowItemDesc(idx, e.target.value)
                         }
@@ -747,7 +832,7 @@ const IaConfigurar = () => {
                         onClick={(e) => e.stopPropagation()}
                       />
                     )}
-                    {expandedDescIdx === idx && item.type === 'condicional' && (
+                    {expandedDescIdx === idx && item.type === "condicional" && (
                       <div className={styles.flowOrderBranches}>
                         <div className={styles.flowOrderBranchRow}>
                           <span className={styles.flowOrderBranchLabelSim}>
@@ -756,9 +841,9 @@ const IaConfigurar = () => {
                           <select
                             className={styles.flowOrderBranchSelect}
                             name={`branchSim_${idx}`}
-                            value={item.branches?.sim || ''}
+                            value={item.branches?.sim || ""}
                             onChange={(e) =>
-                              updateFlowItemBranch(idx, 'sim', e.target.value)
+                              updateFlowItemBranch(idx, "sim", e.target.value)
                             }
                           >
                             <option value="">— selecionar —</option>
@@ -778,9 +863,9 @@ const IaConfigurar = () => {
                           <select
                             className={styles.flowOrderBranchSelect}
                             name={`branchNao_${idx}`}
-                            value={item.branches?.nao || ''}
+                            value={item.branches?.nao || ""}
                             onChange={(e) =>
-                              updateFlowItemBranch(idx, 'nao', e.target.value)
+                              updateFlowItemBranch(idx, "nao", e.target.value)
                             }
                           >
                             <option value="">— selecionar —</option>
@@ -801,11 +886,11 @@ const IaConfigurar = () => {
                       </span>
                     )}
                     {expandedDescIdx !== idx &&
-                      item.type === 'condicional' &&
+                      item.type === "condicional" &&
                       (item.branches?.sim || item.branches?.nao) && (
                         <span className={styles.flowOrderDescPreview}>
                           {item.branches?.sim && `✔ ${item.branches.sim}`}
-                          {item.branches?.sim && item.branches?.nao && '  '}
+                          {item.branches?.sim && item.branches?.nao && "  "}
                           {item.branches?.nao && `✗ ${item.branches.nao}`}
                         </span>
                       )}
@@ -832,9 +917,11 @@ const IaConfigurar = () => {
           <button
             type="submit"
             className={styles.generateButton}
-            disabled={!canGenerate || isPlanning}
+            disabled={isPlanning || isExecuting}
           >
-            {isPlanning ? 'Gerando plano...' : 'Gerar plano supervisionado'}
+            {isPlanning || isExecuting
+              ? "Criando processo..."
+              : "Criar processo"}
           </button>
 
           <button
@@ -847,142 +934,6 @@ const IaConfigurar = () => {
 
           {feedback ? <p className={styles.feedback}>{feedback}</p> : null}
         </form>
-
-        <aside className={styles.resultCard}>
-          <div className={styles.resultHeader}>
-            <h2>Ações propostas</h2>
-            <button
-              type="button"
-              className={styles.useButton}
-              onClick={handleExecuteApproved}
-              disabled={!plan || !selectedActionIds.length || isExecuting}
-            >
-              {isExecuting ? 'Executando...' : 'Executar aprovadas'}
-            </button>
-          </div>
-
-          {!plan ? (
-            <p className={styles.emptyState}>
-              Gere um plano para revisar as ações propostas pela IA antes de
-              executar alterações no sistema.
-            </p>
-          ) : (
-            <>
-              {generalAnalysis ? (
-                <section className={styles.analysisBox}>
-                  <p className={styles.analysisTitle}>
-                    Análise geral do processo
-                  </p>
-                  <p className={styles.analysisSummary}>
-                    Modelo: {generalAnalysis.modelType} | Atividades:{' '}
-                    {generalAnalysis.activityCount} | Decisões:{' '}
-                    {generalAnalysis.decisionCount}
-                  </p>
-                  {generalAnalysis.participants.length > 0 ? (
-                    <p className={styles.analysisText}>
-                      Participantes: {generalAnalysis.participants.join(', ')}.
-                    </p>
-                  ) : null}
-                  {generalAnalysis.entities.length > 0 ? (
-                    <p className={styles.analysisText}>
-                      Entidades-base: {generalAnalysis.entities.join(', ')}.
-                    </p>
-                  ) : null}
-                  {generalAnalysis.notes.length > 0 ? (
-                    <ul className={styles.analysisNotes}>
-                      {generalAnalysis.notes.map((note) => (
-                        <li key={note}>{note}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                </section>
-              ) : null}
-
-              <ul className={styles.actionList}>
-                {(Array.isArray(plan.actions) ? plan.actions : []).map(
-                  (action) => {
-                    const actionId = String(action?.id || '').trim();
-                    const checked = selectedActionIds.includes(actionId);
-                    const entityPreview = getActionEntityPreview(action);
-                    
-                    // Check if this is an entity creation without description
-                    const actionType = String(action?.type || '').trim();
-                    return (
-                      <li key={actionId} className={styles.actionItem}>
-                        <label className={styles.actionLabel}>
-                          <input
-                            type="checkbox"
-                            name={`actionCheck_${actionId}`}
-                            checked={checked}
-                            onChange={() => toggleAction(actionId)}
-                          />
-                          <span>{action?.label || 'Ação'}</span>
-                        </label>
-                        <span
-                          className={styles.riskTag}
-                        >{`Risco: ${action?.risk || 'n/a'}`}</span>
-                        <p className={styles.actionSummary}>
-                          {getActionSummary(action)}
-                        </p>
-                        {entityPreview.length > 0 ? (
-                          <div className={styles.actionEntityPreview}>
-                            <strong className={styles.actionEntityTitle}>
-                              Entidades e campos previstos
-                            </strong>
-                            <ul className={styles.actionEntityList}>
-                              {entityPreview.map((entity) => (
-                                <li
-                                  key={entity.nome}
-                                  className={styles.actionEntityItem}
-                                >
-                                  <span className={styles.actionEntityName}>
-                                    {entity.nome}
-                                  </span>
-                                  <span className={styles.actionEntityFields}>
-                                    {entity.fields.length > 0
-                                      ? `Campos: ${entity.fields
-                                          .map(
-                                            (field) =>
-                                              `${field.nome} (${field.tipo}${
-                                                field.keyType
-                                                  ? `, ${field.keyType}`
-                                                  : ''
-                                              })`,
-                                          )
-                                          .join(', ')}`
-                                      : 'Campos: não informados'}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ) : null}
-                      </li>
-                    );
-                  },
-                )}
-              </ul>
-            </>
-          )}
-
-          {isAdmin ? (
-            <div className={styles.auditCard}>
-              <h3>Auditoria recente</h3>
-              {auditRows.length === 0 ? (
-                <p className={styles.emptyState}>Sem eventos de auditoria.</p>
-              ) : (
-                <ul className={styles.auditList}>
-                  {auditRows.slice(0, 5).map((row) => (
-                    <li key={row.id}>
-                      <strong>{row.event}</strong>
-                      <span>{row.created_at}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          ) : null}
-        </aside>
       </div>
     </section>
   );

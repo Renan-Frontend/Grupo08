@@ -1,90 +1,517 @@
 {
-  "name": "NOVO BPMN",
+  "name": "Aprovação de Pedido de Compra (1)",
   "nodes": [
     {
-      "id": "node-1",
-      "active": true,
-      "isPrimaryEntity": false,
-      "tipoEntidade": "apoio",
-      "nodeType": "entidade",
-      "gatewayType": "xor",
-      "entidadeId": 10,
-      "entidadeNome": "aweqe",
-      "condicionalNome": "Condicional",
-      "condicionalDescricao": "",
-      "taskNome": "Atividade",
-      "taskDescricao": "",
-      "selectedEntityFieldIds": [],
-      "selectedEntityFieldNames": [],
-      "selectedEntityFields": [],
-      "label": "aweqe",
-      "descricao": "eqweqwe",
+      "id": "n1",
+      "label": "Solicitar compra",
+      "nodeType": "task",
+      "taskNome": "Solicitar compra",
+      "taskDescricao": "O cliente solicita a compra de um produto, gerando um pedido.",
+      "descricao": "O cliente solicita a compra de um produto, gerando um pedido.",
       "info": "",
-      "x": 104,
-      "y": 49
+      "x": 60,
+      "y": 80
     },
     {
-      "id": "node-2",
-      "active": true,
-      "isPrimaryEntity": false,
-      "tipoEntidade": "apoio",
+      "id": "n2",
+      "label": "Pedido",
       "nodeType": "entidade",
-      "gatewayType": "xor",
-      "entidadeId": 11,
-      "entidadeNome": "weqwewq",
-      "condicionalNome": "Condicional",
-      "condicionalDescricao": "",
-      "taskNome": "Atividade",
-      "taskDescricao": "",
-      "selectedEntityFieldIds": [],
-      "selectedEntityFieldNames": [],
-      "selectedEntityFields": [],
-      "label": "weqwewq",
-      "descricao": "eqweqweqwe",
-      "info": "",
-      "x": 418,
-      "y": 87
+      "campos": [
+        {
+          "nome": "id_pedido",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "status",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Pedido",
+      "descricao": "O pedido é criado e utilizado como base para a análise.",
+      "info": "id",
+      "x": 60,
+      "y": 270
     },
     {
-      "id": "node-3",
-      "active": true,
-      "isPrimaryEntity": false,
-      "tipoEntidade": "apoio",
-      "nodeType": "entidade",
-      "gatewayType": "xor",
-      "entidadeId": 12,
-      "entidadeNome": "wqeqweq",
-      "condicionalNome": "Condicional",
-      "condicionalDescricao": "",
-      "taskNome": "Atividade",
-      "taskDescricao": "",
-      "selectedEntityFieldIds": [],
-      "selectedEntityFieldNames": [],
-      "selectedEntityFields": [],
-      "label": "wqeqweq",
-      "descricao": "weqweqweqweqw",
+      "id": "n3",
+      "label": "Analisar Pedido",
+      "nodeType": "task",
+      "taskNome": "Analisar Pedido",
+      "taskDescricao": "A equipe de análise verifica o pedido para garantir que atenda aos requisitos.",
+      "descricao": "A equipe de análise verifica o pedido para garantir que atenda aos requisitos.",
       "info": "",
-      "x": 690,
-      "y": 67
+      "x": 60,
+      "y": 460
+    },
+    {
+      "id": "n4",
+      "label": "Pedido aprovado?",
+      "nodeType": "condicional",
+      "condicionalNome": "Pedido aprovado?",
+      "condicionalDescricao": "A equipe de análise decide se o pedido está aprovado com base nos critérios estabelecidos.",
+      "descricao": "A equipe de análise decide se o pedido está aprovado com base nos critérios estabelecidos.",
+      "gatewayType": "exclusivo",
+      "x": 60,
+      "y": 650
+    },
+    {
+      "id": "n5",
+      "label": "Registrar Aprovacao",
+      "nodeType": "task",
+      "taskNome": "Registrar Aprovacao",
+      "taskDescricao": "O registro de aprovação é criado para documentar a decisão de não aprovar o pedido.",
+      "descricao": "O registro de aprovação é criado para documentar a decisão de não aprovar o pedido.",
+      "info": "",
+      "x": 360,
+      "y": 650
+    },
+    {
+      "id": "n6",
+      "label": "Aprovacao",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_aprovacao",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "status",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "parecer",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Aprovacao",
+      "descricao": "O registro de aprovação é criado e armazenado para futuras referências.",
+      "info": "id",
+      "x": 60,
+      "y": 840
+    },
+    {
+      "id": "n7",
+      "label": "Validar orcamento",
+      "nodeType": "task",
+      "taskNome": "Validar orcamento",
+      "taskDescricao": "A equipe de análise verifica se o orçamento está disponível para o pedido.",
+      "descricao": "A equipe de análise verifica se o orçamento está disponível para o pedido.",
+      "info": "",
+      "x": 60,
+      "y": 1030
+    },
+    {
+      "id": "n8",
+      "label": "Orcamento aprovado?",
+      "nodeType": "condicional",
+      "condicionalNome": "Orcamento aprovado?",
+      "condicionalDescricao": "A equipe de análise decide se o orçamento está aprovado com base nos critérios estabelecidos.",
+      "descricao": "A equipe de análise decide se o orçamento está aprovado com base nos critérios estabelecidos.",
+      "gatewayType": "exclusivo",
+      "x": 60,
+      "y": 1220
+    },
+    {
+      "id": "n9",
+      "label": "Atualizar Pedido",
+      "nodeType": "task",
+      "taskNome": "Atualizar Pedido",
+      "taskDescricao": "O pedido é atualizado para refletir as alterações necessárias.",
+      "descricao": "O pedido é atualizado para refletir as alterações necessárias.",
+      "info": "",
+      "x": 360,
+      "y": 1220
+    },
+    {
+      "id": "n10",
+      "label": "Gerar OrdemDeCompra",
+      "nodeType": "task",
+      "taskNome": "Gerar OrdemDeCompra",
+      "taskDescricao": "A ordem de compra é gerada com base no pedido aprovado.",
+      "descricao": "A ordem de compra é gerada com base no pedido aprovado.",
+      "info": "",
+      "x": 700,
+      "y": 1220
+    },
+    {
+      "id": "n11",
+      "label": "OrdemDeCompra",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_ordemdecompra",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "status",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "OrdemDeCompra",
+      "descricao": "A ordem de compra é criada e utilizada para solicitar o produto ao fornecedor.",
+      "info": "id",
+      "x": 700,
+      "y": 1030
+    },
+    {
+      "id": "n12",
+      "label": "Enviar OrdemDeCompra ao Fornecedor",
+      "nodeType": "task",
+      "taskNome": "Enviar OrdemDeCompra ao Fornecedor",
+      "taskDescricao": "A ordem de compra é enviada ao fornecedor para que ele possa fornecer o produto.",
+      "descricao": "A ordem de compra é enviada ao fornecedor para que ele possa fornecer o produto.",
+      "info": "",
+      "x": 700,
+      "y": 840
+    },
+    {
+      "id": "n13",
+      "label": "Fornecedor",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_fornecedor",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "status",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "descricao",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Fornecedor",
+      "descricao": "O fornecedor recebe a ordem de compra e fornece o produto.",
+      "info": "id",
+      "x": 700,
+      "y": 650
+    },
+    {
+      "id": "n14",
+      "label": "Fornecedor recebe OrdemDeCompra",
+      "nodeType": "task",
+      "taskNome": "Fornecedor recebe OrdemDeCompra",
+      "taskDescricao": "O fornecedor recebe a ordem de compra e inicia o processo de fornecimento do produto.",
+      "descricao": "O fornecedor recebe a ordem de compra e inicia o processo de fornecimento do produto.",
+      "info": "",
+      "x": 700,
+      "y": 460
+    },
+    {
+      "id": "n15",
+      "label": "Finalizar Processo",
+      "nodeType": "task",
+      "taskNome": "Finalizar Processo",
+      "taskDescricao": "O processo de aprovação de pedido de compra é finalizado após a ordem de compra ser enviada ao fornecedor.",
+      "descricao": "O processo de aprovação de pedido de compra é finalizado após a ordem de compra ser enviada ao fornecedor.",
+      "info": "",
+      "x": 700,
+      "y": 270
+    },
+    {
+      "id": "n16",
+      "label": "Cliente",
+      "nodeType": "entidade",
+      "campos": [
+        {
+          "nome": "id_cliente",
+          "tipo": "numero",
+          "obrigatorio": true,
+          "keyType": "PK",
+          "relacionamento": null
+        },
+        {
+          "nome": "nome",
+          "tipo": "texto",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "status",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "email",
+          "tipo": "texto",
+          "obrigatorio": false,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        },
+        {
+          "nome": "data_criacao",
+          "tipo": "data",
+          "obrigatorio": true,
+          "keyType": "NORMAL",
+          "relacionamento": null
+        }
+      ],
+      "entidadeNome": "Cliente",
+      "descricao": "O cliente solicita a compra de um produto.",
+      "info": "id",
+      "x": 700,
+      "y": 80
     }
   ],
   "connections": [
     {
-      "id": "conn-1777474870961-node-1-node-2",
-      "from": "node-1",
-      "to": "node-2",
-      "fromHandle": "right",
-      "toHandle": "left",
-      "decision": ""
+      "id": "c1",
+      "from": "n1",
+      "to": "n2",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
     },
     {
-      "id": "conn-1777474874347-node-2-node-3",
-      "from": "node-2",
-      "to": "node-3",
+      "id": "c2",
+      "from": "n2",
+      "to": "n3",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c3",
+      "from": "n3",
+      "to": "n4",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c4",
+      "from": "n4",
+      "to": "n6",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "sim",
+      "label": "✔"
+    },
+    {
+      "id": "c5",
+      "from": "n4",
+      "to": "n5",
       "fromHandle": "right",
+      "toHandle": "left",
+      "decision": "nao",
+      "label": "✘"
+    },
+    {
+      "id": "c6",
+      "from": "n5",
+      "to": "n7",
+      "fromHandle": "bottom",
+      "toHandle": "right",
+      "decision": "merge",
+      "label": ""
+    },
+    {
+      "id": "c7",
+      "from": "n6",
+      "to": "n7",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c8",
+      "from": "n7",
+      "to": "n8",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c9",
+      "from": "n8",
+      "to": "n10",
+      "fromHandle": "bottom",
+      "toHandle": "top",
+      "decision": "sim",
+      "label": "✔"
+    },
+    {
+      "id": "c10",
+      "from": "n8",
+      "to": "n9",
+      "fromHandle": "right",
+      "toHandle": "left",
+      "decision": "nao",
+      "label": "✘"
+    },
+    {
+      "id": "c11",
+      "from": "n9",
+      "to": "n11",
+      "fromHandle": "top",
+      "toHandle": "right",
+      "decision": "merge",
+      "label": ""
+    },
+    {
+      "id": "c12",
+      "from": "n10",
+      "to": "n11",
+      "fromHandle": "top",
       "toHandle": "bottom",
-      "decision": ""
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c13",
+      "from": "n11",
+      "to": "n12",
+      "fromHandle": "top",
+      "toHandle": "bottom",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c14",
+      "from": "n12",
+      "to": "n13",
+      "fromHandle": "top",
+      "toHandle": "bottom",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c15",
+      "from": "n13",
+      "to": "n14",
+      "fromHandle": "top",
+      "toHandle": "bottom",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c16",
+      "from": "n14",
+      "to": "n15",
+      "fromHandle": "top",
+      "toHandle": "bottom",
+      "decision": "",
+      "label": ""
+    },
+    {
+      "id": "c17",
+      "from": "n15",
+      "to": "n16",
+      "fromHandle": "top",
+      "toHandle": "bottom",
+      "decision": "",
+      "label": ""
     }
   ],
-  "updated_at": "2026-04-29T12:01:24.380688"
+  "updated_at": "2026-05-19T08:57:14.638329"
 }
