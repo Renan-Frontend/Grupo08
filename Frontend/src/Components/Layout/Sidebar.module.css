@@ -194,24 +194,37 @@ button.addButton:hover {
 }
 
 .sidebarFooter {
-  position: static;
+  position: sticky;
+  bottom: 8px;
   width: 100%;
-  padding: 0.35rem 0.75rem;
+  padding: 0.56rem 0.75rem calc(0.56rem + env(safe-area-inset-bottom));
   background: #dff4ea;
   border-radius: 0;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   border-top: 1px solid #9fcfb5;
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.45rem;
   margin-top: auto;
   z-index: 5;
-  height: auto;
+  min-height: 2.45rem;
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.footerUser {
+  display: flex;
+  align-items: center;
+  gap: 0.36rem;
+  min-width: 0;
+  flex: 1;
+  min-height: 1.55rem;
+  overflow: visible;
 }
 
 .footerIcon {
-  font-size: 1rem;
+  font-size: 0.95rem;
   flex-shrink: 0;
 }
 
@@ -220,12 +233,18 @@ button.addButton:hover {
   font-weight: 800;
   flex: 1;
   text-align: left;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: normal;
+  padding-bottom: 1px;
 }
 
 .logoutButton.logoutButton {
   width: 3.6rem;
   min-width: 3.6rem;
-  height: 1.45rem;
+  height: 1.55rem;
   padding: 0 !important;
   background: #e74c3c;
   color: white;
@@ -353,26 +372,31 @@ button.addButton:hover {
     border-radius: 0 0 10px 10px;
     border-top: 1px solid #e5e7eb;
     background: #ffffff;
-    padding: 0.2rem clamp(0.2rem, 1.7vw, 0.52rem) 0.22rem;
-    gap: 0.14rem;
-    font-size: 0.52rem;
+    padding: 0.3rem clamp(0.3rem, 1.8vw, 0.58rem)
+      calc(0.3rem + env(safe-area-inset-bottom));
+    gap: 0.3rem;
+    font-size: 0.72rem;
+  }
+
+  .footerUser {
+    gap: 0.28rem;
   }
 
   .footerIcon {
-    font-size: 0.66rem;
+    font-size: 0.8rem;
   }
 
   .footerText {
-    font-size: 0.5rem;
+    font-size: 0.72rem;
     line-height: 1.1;
   }
 
   .logoutButton.logoutButton {
-    width: 2.5rem;
-    min-width: 2.5rem;
+    width: 2.85rem;
+    min-width: 2.85rem;
     height: 1.5rem;
     border-radius: 999px;
-    font-size: 0.6rem;
+    font-size: 0.64rem;
   }
 }
 

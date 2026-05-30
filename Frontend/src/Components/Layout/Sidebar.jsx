@@ -188,10 +188,15 @@ const Sidebar = ({ onNavigateItem }) => {
       </div>
 
       <div className={styles.sidebarFooter}>
-        <span className={styles.footerIcon}>👤</span>
-        <span className={styles.footerText}>
-          {user?.nome || user?.username || "Usuário"}
-        </span>
+        <div className={styles.footerUser}>
+          <span className={styles.footerIcon}>👤</span>
+          <span
+            className={styles.footerText}
+            title={user?.nome || user?.username || "Usuário"}
+          >
+            {user?.nome || user?.username || "Usuário"}
+          </span>
+        </div>
         <Button
           className={styles.logoutButton}
           onClick={handleLogout}
