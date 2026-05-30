@@ -2,7 +2,7 @@
   width: 250px;
   background: #efefef80;
   color: white;
-  padding: 0.7rem 0 0 0;
+  padding: 0.9rem 0 0 0;
   position: fixed;
   top: 0;
   left: 0;
@@ -22,20 +22,20 @@
 }
 
 .sidebarSection {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.58rem;
   padding: 0 0.85rem;
 }
 
 .sidebarSection:first-of-type {
-  padding-top: 0.5rem;
+  padding-top: 0.72rem;
 }
 
 .sidebarTitle {
-  font-size: 0.8rem;
+  font-size: 0.86rem;
   color: #4d4d4dd9;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  margin-bottom: 0.34rem;
+  margin-bottom: 0.4rem;
   font-weight: 700;
 }
 
@@ -50,11 +50,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 0;
-  margin-bottom: 0.12rem;
+  margin-bottom: 0.14rem;
   border-radius: 6px;
   transition: background 0.2s;
   color: #4d4d4db2;
-  font-size: 0.86rem;
+  font-size: 0.92rem;
 }
 
 .menuItemContent {
@@ -62,7 +62,7 @@
   align-items: center;
   flex: 1 1 0;
   min-width: 0;
-  padding: 0.44rem 0.4rem 0.44rem 0.76rem;
+  padding: 0.5rem 0.44rem 0.5rem 0.8rem;
   cursor: pointer;
 }
 
@@ -199,8 +199,8 @@ button.addButton:hover {
 }
 
 .icon {
-  margin-right: 0.42rem;
-  font-size: 0.88rem;
+  margin-right: 0.48rem;
+  font-size: 0.94rem;
 }
 
 .sidebarFooter {
