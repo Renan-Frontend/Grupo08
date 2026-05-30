@@ -4,7 +4,10 @@
   color: white;
   padding: 1.2rem 0 0 0;
   position: fixed;
-  min-height: 100vh;
+  top: 0;
+  left: 0;
+  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
