@@ -7,8 +7,14 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebarContent {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .sidebarSection {
@@ -211,6 +217,7 @@ button.addButton:hover {
   min-height: 2.45rem;
   box-sizing: border-box;
   overflow: visible;
+  flex-shrink: 0;
 }
 
 .footerUser {
@@ -296,6 +303,10 @@ button.addButton:hover {
     border: 1px solid #e5e7eb;
     margin-top: 0;
     animation: mobileSidebarDrop 180ms ease-out;
+  }
+
+  .sidebarContent {
+    overflow: visible;
   }
 
   .sidebarSection {
