@@ -1,7 +1,10 @@
 const truthy = (value) =>
   ['true', '1', 'yes', 'on'].includes(String(value || '').toLowerCase());
 
-const DEMO_HOSTNAMES = new Set(['grupo08-1.onrender.com']);
+const DEMO_HOSTNAMES = new Set([
+  'grupo08-1.onrender.com',
+  'renan-frontend.github.io',
+]);
 
 const isDemoHost =
   typeof window !== 'undefined' &&
