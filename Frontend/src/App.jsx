@@ -11,6 +11,7 @@ import { EntidadesProvider } from "./Context/EntidadesContext";
 import ProtectedRoute from "./Components/Helper/ProtectedRoute";
 import { ContatosPage as Contatos } from "./Components/Contatos/ContatosPage";
 import { ProcessosPage as Processos } from "./Components/Processos/Processos";
+import { isDemoMode } from "./config/demoMode";
 
 const DashboardRoutes = React.lazy(
   () => import("./Components/Home/DashboardRoutes"),
@@ -92,9 +93,9 @@ function AppContent() {
       window.removeEventListener("offline", onOffline);
     };
   }, []);
-  const shouldBlockPublicLogin = authLoading && hasSessionToken;
+  const shouldBlockPublicLogin = authLoading && hasSessionToken && !isDemoMode;
 
-  const loginElement = shouldBlockPublicLogin ? null : isLogged ? (
+  const loginElement = shouldBlockPublicLogin ? null : isLogged || isDemoMode ? (
     <Navigate to="/tutorial" replace />
   ) : (
     <Login isLogged={isLogged} />
@@ -113,7 +114,7 @@ function AppContent() {
     }
   }, [isLogged]);
 
-  if (authLoading && hasSessionToken) {
+  if (authLoading && hasSessionToken && !isDemoMode) {
     return (
       <div className="authLoadingScreen" role="status" aria-live="polite">
         <div className="authLoadingCard">
@@ -127,6 +128,12 @@ function AppContent() {
 
   return (
     <div>
+      {isDemoMode && isLogged && (
+        <div className="demoBanner" role="status">
+          <span className="demoBannerIcon">◆</span>
+          Modo demonstração — acesso automático com dados de exemplo.
+        </div>
+      )}
       {isOffline && (
         <div className="offlineBanner" role="alert">
           <span className="offlineBannerIcon">⚡</span>

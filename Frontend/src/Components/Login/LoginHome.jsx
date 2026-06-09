@@ -7,6 +7,7 @@ import useForm from "../../Hooks/useForm";
 import useFormSubmit from "../../Hooks/useFormSubmit";
 
 import { UserContext } from "../../Context/UserContext";
+import { isDemoMode } from "../../config/demoMode";
 import Error from "../Helper/Error";
 import useFetch from "../../Hooks/useFetch";
 import { USER_POST, PASSWORD_LOST, PASSWORD_RESET } from "../../Api";
@@ -23,7 +24,14 @@ const LoginHome = () => {
   const [resetSuccessNotice, setResetSuccessNotice] = React.useState(false);
   const navigate = useNavigate();
 
-  const { userLogin } = React.useContext(UserContext);
+  const { userLogin, enterDemoSession, user, authLoading } =
+    React.useContext(UserContext);
+
+  React.useEffect(() => {
+    if (!isDemoMode || authLoading) return;
+    enterDemoSession();
+    navigate("/tutorial", { replace: true });
+  }, [authLoading, enterDemoSession, navigate]);
 
   // Verificar se está acessando via link de reset
   React.useEffect(() => {
@@ -164,6 +172,41 @@ const LoginHome = () => {
         setResetSuccessNotice(true);
       }
     }
+  }
+
+  if (isDemoMode) {
+    return (
+      <section className={styles.loginHome}>
+        <div className={styles.loginContainer}>
+          <div className={styles.loginPanel}>
+            <h1 className={styles.title}>Modo Demonstração</h1>
+            <p
+              style={{
+                textAlign: "center",
+                color: "#fff",
+                marginBottom: "1.5rem",
+              }}
+            >
+              {authLoading || !user
+                ? "Entrando automaticamente..."
+                : "Redirecionando para o painel..."}
+            </p>
+            <div className={styles.buttonRow}>
+              <ButtonLogin
+                className={stylesBtn.outline}
+                type="button"
+                onClick={() => {
+                  enterDemoSession();
+                  navigate("/tutorial", { replace: true });
+                }}
+              >
+                Entrar como visitante
+              </ButtonLogin>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
   }
 
   return (

@@ -15,11 +15,17 @@ import {
   USER_GET_BY_ID,
   AUTH_REFRESH,
 } from "../Api";
+import {
+  demoFallbackUser,
+  demoToken,
+  isDemoMode,
+} from "../config/demoMode";
 
 export const UserContext = createContext({
   user: null,
   authLoading: true,
   userLogin: () => {},
+  enterDemoSession: () => {},
   userLogout: () => {},
   getUser: () => {},
   createUser: () => {},
@@ -218,8 +224,22 @@ export const UserStorage = ({ children }) => {
     [getUser],
   );
 
+  const enterDemoSession = useCallback(() => {
+    window.sessionStorage.setItem("token", demoToken);
+    setUser(demoFallbackUser);
+    writeCachedUser(demoFallbackUser);
+    writeOfflineSession(demoToken, demoFallbackUser);
+  }, []);
+
   // API proxy: logout (just remove token)
   const userLogout = useCallback(() => {
+    if (isDemoMode) {
+      window.sessionStorage.setItem("token", demoToken);
+      setUser(demoFallbackUser);
+      writeCachedUser(demoFallbackUser);
+      return;
+    }
+
     window.sessionStorage.removeItem("token");
     window.sessionStorage.removeItem("refresh_token");
     window.localStorage.removeItem("token");
@@ -234,11 +254,20 @@ export const UserStorage = ({ children }) => {
     const restoreUserSession = async () => {
       try {
         const legacyPersistentToken = window.localStorage.getItem("token");
-        const sessionToken = window.sessionStorage.getItem("token");
+        let sessionToken = window.sessionStorage.getItem("token");
+
+        if (isDemoMode) {
+          sessionToken = demoToken;
+          window.sessionStorage.setItem("token", demoToken);
+          if (isMounted) {
+            setUser(demoFallbackUser);
+            writeCachedUser(demoFallbackUser);
+          }
+        }
 
         // If the user still has the legacy persistent token, invalidate
         // current auth once so the app asks for account credentials again.
-        if (legacyPersistentToken) {
+        if (!isDemoMode && legacyPersistentToken) {
           window.sessionStorage.removeItem("token");
           window.localStorage.removeItem("token");
           clearCachedUser();
@@ -250,6 +279,12 @@ export const UserStorage = ({ children }) => {
         window.localStorage.removeItem(USER_SESSION_CACHE_KEY);
 
         if (!sessionToken) {
+          if (isDemoMode) {
+            setUser(demoFallbackUser);
+            writeCachedUser(demoFallbackUser);
+            return;
+          }
+
           // Offline recovery: no session token but we have a persisted
           // offline session — restore it without any network call.
           if (!navigator.onLine) {
@@ -272,6 +307,20 @@ export const UserStorage = ({ children }) => {
           // NOTE: do NOT set authLoading=false here — the token still
           // needs network validation / refresh.  Other components that
           // guard on authLoading must wait until the token is confirmed.
+        }
+
+        if (isDemoMode) {
+          try {
+            const userData = await getUser(sessionToken);
+            if (isMounted) {
+              setUser(userData);
+              writeCachedUser(userData);
+              writeOfflineSession(sessionToken, userData);
+            }
+          } catch {
+            // Mantém o usuário demo local já definido acima.
+          }
+          return;
         }
 
         // Skip network validation when offline — the cached user is enough.
@@ -323,6 +372,14 @@ export const UserStorage = ({ children }) => {
         // Keep offline session fresh with the latest user data.
         writeOfflineSession(activeToken, userData);
       } catch (error) {
+        if (isDemoMode) {
+          if (isMounted) {
+            setUser(demoFallbackUser);
+            writeCachedUser(demoFallbackUser);
+          }
+          return;
+        }
+
         // If we already have a cached user, keep the session alive
         // instead of logging out on a transient network/timeout error.
         const cachedUser = readCachedUser();
@@ -457,6 +514,7 @@ export const UserStorage = ({ children }) => {
       user,
       authLoading,
       userLogin,
+      enterDemoSession,
       userLogout,
       getUser,
       createUser,
@@ -473,6 +531,7 @@ export const UserStorage = ({ children }) => {
       user,
       authLoading,
       userLogin,
+      enterDemoSession,
       userLogout,
       getUser,
       createUser,

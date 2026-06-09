@@ -35,6 +35,10 @@ services:
     envVars:
       - key: VITE_API_URL
         sync: false
+      - key: VITE_DEMO_MODE
+        sync: false
+      - key: VITE_DEMO_USER_ID
+        sync: false
       - key: VITE_SUPABASE_URL
         sync: false
         value: https://moiqicowkqtfjvvakeud.supabase.co

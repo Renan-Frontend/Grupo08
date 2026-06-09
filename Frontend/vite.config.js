@@ -14,6 +14,7 @@ const basePath = normalizeBase(process.env.VITE_BASE_PATH || '/');
 export default defineConfig({
   base: basePath,
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: {

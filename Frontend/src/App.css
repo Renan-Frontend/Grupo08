@@ -328,6 +328,30 @@ main {
 }
 
 /* ===== OFFLINE BANNER ===== */
+.demoBanner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.55rem 1rem;
+  background: #0f5132;
+  color: #d1e7dd;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  animation: slideDown 0.3s ease;
+}
+
+.demoBannerIcon {
+  font-size: 0.75rem;
+}
+
 .offlineBanner {
   position: fixed;
   top: 0;
