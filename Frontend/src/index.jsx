@@ -15,3 +15,7 @@ window.addEventListener('vite:preloadError', () => {
 });
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+
+// Remove o splash estático assim que o React monta (evita tela branca longa).
+const bootSplash = document.getElementById('boot-splash');
+if (bootSplash) bootSplash.hidden = true;

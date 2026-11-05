@@ -95,6 +95,7 @@ function AppContent() {
   }, []);
   const shouldBlockPublicLogin = authLoading && hasSessionToken && !isDemoMode;
 
+  // Em demo (GitHub Pages / VITE_DEMO_MODE) pula o login e vai direto ao app.
   const loginElement = shouldBlockPublicLogin ? null : isLogged || isDemoMode ? (
     <Navigate to="/tutorial" replace />
   ) : (

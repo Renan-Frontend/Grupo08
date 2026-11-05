@@ -34,11 +34,50 @@
         if (isGithubPagesHost && window.location.pathname === '/') {
           window.location.replace('/Grupo08/');
         }
+        // Aquece a API do Render enquanto o JS carrega (reduz tela branca no 1º acesso).
+        try {
+          fetch('https://grupo08.onrender.com/health', {
+            method: 'GET',
+            mode: 'cors',
+            cache: 'no-store',
+          }).catch(function () {});
+        } catch (e) {}
       })();
     </script>
+    <style>
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #0b0b0f;
+        color: #f5f5f5;
+      }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #0b0b0f;
+        font-family: system-ui, sans-serif;
+        z-index: 9999;
+      }
+      #boot-splash[hidden] {
+        display: none;
+      }
+      #boot-splash p {
+        margin: 0;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        opacity: 0.8;
+      }
+    </style>
   </head>
 
   <body>
+    <div id="boot-splash" aria-live="polite">
+      <p>Carregando BP Company…</p>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/index.jsx"></script>
   </body>

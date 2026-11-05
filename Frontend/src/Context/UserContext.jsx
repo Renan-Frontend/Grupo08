@@ -120,8 +120,12 @@ const clearCachedUser = () => {
 };
 
 export const UserStorage = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  // Em demo, já nasce logado (sem tela de login / flash branco).
+  if (typeof window !== "undefined" && isDemoMode) {
+    window.sessionStorage.setItem("token", demoToken);
+  }
+  const [user, setUser] = useState(() => (isDemoMode ? demoFallbackUser : null));
+  const [authLoading, setAuthLoading] = useState(() => !isDemoMode);
 
   // API proxy: get current user info
   const getUser = useCallback(async (token) => {
@@ -310,16 +314,9 @@ export const UserStorage = ({ children }) => {
         }
 
         if (isDemoMode) {
-          try {
-            const userData = await getUser(sessionToken);
-            if (isMounted) {
-              setUser(userData);
-              writeCachedUser(userData);
-              writeOfflineSession(sessionToken, userData);
-            }
-          } catch {
-            // Mantém o usuário demo local já definido acima.
-          }
+          // Não bloqueia a UI esperando /users/me (cold start do Render).
+          // O token fake-token-<id> já é aceito pela API nas rotas protegidas.
+          writeOfflineSession(sessionToken, demoFallbackUser);
           return;
         }
 
