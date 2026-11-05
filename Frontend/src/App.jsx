@@ -95,8 +95,8 @@ function AppContent() {
   }, []);
   const shouldBlockPublicLogin = authLoading && hasSessionToken && !isDemoMode;
 
-  // Mostra a tela de login até o usuário entrar (com ou sem senha).
-  const loginElement = shouldBlockPublicLogin ? null : isLogged ? (
+  // Em demo (GitHub Pages / VITE_DEMO_MODE) pula o login e vai direto ao app.
+  const loginElement = shouldBlockPublicLogin ? null : isLogged || isDemoMode ? (
     <Navigate to="/tutorial" replace />
   ) : (
     <Login isLogged={isLogged} />
