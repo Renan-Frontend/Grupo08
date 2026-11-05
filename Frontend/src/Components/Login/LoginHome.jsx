@@ -7,7 +7,6 @@ import useForm from "../../Hooks/useForm";
 import useFormSubmit from "../../Hooks/useFormSubmit";
 
 import { UserContext } from "../../Context/UserContext";
-import { isDemoMode } from "../../config/demoMode";
 import Error from "../Helper/Error";
 import useFetch from "../../Hooks/useFetch";
 import { USER_POST, PASSWORD_LOST, PASSWORD_RESET } from "../../Api";
@@ -24,14 +23,10 @@ const LoginHome = () => {
   const [resetSuccessNotice, setResetSuccessNotice] = React.useState(false);
   const navigate = useNavigate();
 
-  const { userLogin, enterDemoSession, user, authLoading } =
-    React.useContext(UserContext);
-
-  React.useEffect(() => {
-    if (!isDemoMode || authLoading) return;
-    enterDemoSession();
-    navigate("/tutorial", { replace: true });
-  }, [authLoading, enterDemoSession, navigate]);
+  const { userLogin, enterDemoSession } = React.useContext(UserContext);
+  const [loginLoading, setLoginLoading] = React.useState(false);
+  const [loginError, setLoginError] = React.useState(null);
+  const [loginTouched, setLoginTouched] = React.useState(false);
 
   // Verificar se está acessando via link de reset
   React.useEffect(() => {
@@ -46,26 +41,46 @@ const LoginHome = () => {
   }, []);
 
   // ======================
-  // LOGIN
+  // LOGIN (senha opcional → entra como visitante)
   // ======================
   const username = useForm("email");
   const password = useForm();
 
-  const {
-    handleSubmit: handleLogin,
-    loading: loginLoading,
-    error: loginError,
-    touched: loginTouched,
-  } = useFormSubmit({
-    fields: {
-      email: username,
-      senha: password,
-    },
-    onSubmit: async () => {
+  /** Entra com credenciais ou, sem senha, como visitante (sem API). */
+  async function handleLogin(event) {
+    event.preventDefault();
+    setLoginTouched(true);
+    setLoginError(null);
+
+    const hasPassword = Boolean(String(password.value || "").trim());
+
+    // Sem senha: acesso livre para demonstração no portfólio / Pages.
+    if (!hasPassword) {
+      setLoginLoading(true);
+      try {
+        enterDemoSession();
+        navigate("/tutorial", { replace: true });
+      } finally {
+        setLoginLoading(false);
+      }
+      return;
+    }
+
+    if (!username.value || !username.validate()) {
+      setLoginError("Preencha um email válido para entrar com senha.");
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
       await userLogin(username.value, password.value);
       navigate("/gerar-bpmn");
-    },
-  });
+    } catch (err) {
+      setLoginError(err?.message || "Não foi possível entrar. Tente novamente.");
+    } finally {
+      setLoginLoading(false);
+    }
+  }
 
   // ======================
   // CADASTRO
@@ -174,41 +189,6 @@ const LoginHome = () => {
     }
   }
 
-  if (isDemoMode) {
-    return (
-      <section className={styles.loginHome}>
-        <div className={styles.loginContainer}>
-          <div className={styles.loginPanel}>
-            <h1 className={styles.title}>Modo Demonstração</h1>
-            <p
-              style={{
-                textAlign: "center",
-                color: "#fff",
-                marginBottom: "1.5rem",
-              }}
-            >
-              {authLoading || !user
-                ? "Entrando automaticamente..."
-                : "Redirecionando para o painel..."}
-            </p>
-            <div className={styles.buttonRow}>
-              <ButtonLogin
-                className={stylesBtn.outline}
-                type="button"
-                onClick={() => {
-                  enterDemoSession();
-                  navigate("/tutorial", { replace: true });
-                }}
-              >
-                Entrar como visitante
-              </ButtonLogin>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section className={styles.loginHome}>
       <div className={styles.loginContainer}>
@@ -298,24 +278,29 @@ const LoginHome = () => {
               <h1 className={styles.title}>Bem-vindo!</h1>
               <form onSubmit={handleLogin}>
                 <Input
-                  placeholder="Email"
+                  placeholder="Email (opcional)"
                   {...username}
                   error={
-                    loginTouched && !username.value
+                    loginTouched && password.value && !username.value
                       ? "Preencha o email"
                       : username.error
                   }
                 />
                 <Input
-                  placeholder="Senha"
+                  placeholder="Senha (deixe em branco para entrar sem senha)"
                   type="password"
                   {...password}
-                  error={
-                    loginTouched && !password.value
-                      ? "Preencha a senha"
-                      : password.error
-                  }
                 />
+                <p
+                  style={{
+                    color: "rgba(255,255,255,0.85)",
+                    fontSize: "0.9rem",
+                    textAlign: "center",
+                    margin: "0.75rem 0 0",
+                  }}
+                >
+                  Pode clicar em <strong>Entrar</strong> sem preencher nada.
+                </p>
                 <div className={styles.buttonRow}>
                   <ButtonLogin
                     className={stylesBtn.outline}
